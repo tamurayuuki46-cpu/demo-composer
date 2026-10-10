@@ -18,6 +18,10 @@ v0.2-dev
 - Key移調でMIDI Note 0〜127を外れる場合は更新全体を中止して元Projectを維持
 - Scale変更はChord / Melody / Bassがある場合は安全のため拒否
 - Chord: ダイアトニック7候補 + 基準音C〜B + Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
+- Chordのダイアトニック7候補を五度圏の扇形UIで表示
+- Major扇形: 左 IV / ii、中央 I / vi、右 V / iii、下 vii°
+- Minor扇形: 左 VI / iv、中央 III / i、右 VII / v、下 ii°
+- 扇形UIは既存 `data-add-chord` Buttonのclick処理を変更せず、表示classだけを付与
 - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
 - Chord Presetは現在Key / Scaleへ自動変換し、通常の `project.chords[]` として適用
 - Chord Preset適用後は個別追加 / 削除 / Clearで修正可能
@@ -31,23 +35,26 @@ v0.2-dev
 - project.json手動Backup Export
 - Vercel静的Build
 - GitHub Pages Fallback（developから公開）
-- MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change Smoke Test、Syntax Check、Static BuildのCI
+- MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Diatonic Fan Smoke Test、Syntax Check、Static BuildのCI
 
 Repository統合状況:
 - v0.2基礎機能統合commit: `c21bb9b0b343e8dc807c6fd884ceaf670c48cd43`
 - Chord Preset統合commit: `5f0c6cb3d964ccd2d0ba93ed3bb43d81ecef6eb3`
 - Hub Key変更修正統合commit: `5b7f43003a64281bef051d74590e7badb66f5fb7`
+- Diatonic Fan UI統合commit: `77376bf75929618266171ea7da34628828b99ca4`
 - PR #26 GitHub Pages Fallback: merged
 - PR #27 v0.2 Chord Quality + Schema v2 + Rhythm Preset統合: merged
 - PR #30 Chord Preset 6種類: merged
 - PR #32 Hub Key変更時のHarmony自動移調: merged
+- PR #34 Diatonic Fan UI: merged
 - PR #23 Chord Quality + Schema v2: #27で置換済みとしてclose。branchは保持
 - PR #24 Rhythm Preset: #27で置換済みとしてclose。branchは保持
-- GitHub Pages Key修正版 Deploy: success
+- GitHub Pages Diatonic Fan版 Deploy: success
 - GitHub Pages公開URL: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 - v0.2統合前復元点: `restore/v0.1-before-v0.2-integration`
 - Chord Preset追加前復元点: `restore/v0.2-before-chord-presets`
 - Key変更修正前復元点: `restore/v0.2-before-key-change-fix`
+- Diatonic Fan UI変更前復元点: `restore/v0.2-before-diatonic-fan-ui`
 - 作業branchは履歴として保持
 - `main` はstable専用。変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
@@ -73,22 +80,23 @@ v0.2 CI確認済み:
 - Chord types smoke test: success
 - Chord preset smoke test: success
 - Hub key-change smoke test: success
+- Diatonic fan smoke test: success
 - Static build: success
 - GitHub Pages Deploy: success
 
 開発中:
-- Hub Key変更修正のdevelop統合 / GitHub Pages公開は完了
-- 次はAndroid実機でKey変更とPreset機能の回帰確認
+- Diatonic Fan UIのdevelop統合 / GitHub Pages公開は完了
+- 次はAndroid実機で扇形UIと既存Chord操作の回帰確認
 
 次に実装 / 確認:
-1. GitHub Pages公開版でHubのKeyを変更し、選択値が元へ戻らないことを確認
-2. Chordがある状態でKey変更し、コード進行が同じDegree関係のまま移調されることを確認
-3. Melody / Bassがある状態でKey変更し、同じ半音幅で移調されることを確認
-4. Key変更でDrumsが変わらないことを確認
-5. Chord / Melody / Bassがある状態のScale変更は安全に拒否されることを確認
+1. GitHub Pages公開版でChord画面のダイアトニック7候補が扇形表示になることを確認
+2. C Major等で左 IV / ii、中央 I / vi、右 V / iii、下 vii° の配置を確認
+3. Minor Keyで左 VI / iv、中央 III / i、右 VII / v、下 ii° の配置を確認
+4. 各扇形ButtonをTapして従来どおり1小節ずつChord追加できることを確認
+5. 狭いAndroid画面で横スクロール / 文字切れ / 誤タップがないことを確認
 6. Chord Preset 6種類のSelect / Preview / 適用 / 個別修正を確認
 7. Rhythm Drum Preset 6種類のSelect / 適用 / 上書き確認 / 手動修正を確認
-8. Demo Player / Chord.mid / Melody.mid / Bass.mid / Song.midへKey変更後の結果が反映されることを確認
+8. Hub Key変更後も扇形のChord名が新Keyへ追従することを確認
 9. 問題なければChord Tone表示の仕様案を作る
 10. その後Melody Analyzerを検討
 
@@ -120,6 +128,9 @@ v0.2 CI確認済み:
 
 最近の重要な設計判断:
 - Android Chromeを主対象とする
+- ダイアトニック7候補は単純Gridより、五度圏の関係が直感的に見える扇形UIを優先する
+- Majorは IV / ii - I / vi - V / iii + vii°、Minorは VI / iv - III / i - VII / v + ii° の対応で配置する
+- Diatonic FanはProject Dataを変更せず、既存Chord ButtonへUI classを付与する表示レイヤーとして実装する
 - Key変更はHubが他Moduleを直接書き換えず、Core Project StateのGlobal OperationとしてChord / Melody / Bassを1回でAtomicに移調する
 - Key移調は最短半音幅を使用し、不要な1オクターブ移動を避ける
 - Key移調はChord quality / degree、Note timing / duration / velocityを維持し、Drumsは変更しない
@@ -138,7 +149,7 @@ v0.2 CI確認済み:
 - Vercelを残し、GitHub Pagesを第二公開先として運用する
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented。Chord Preset / Drum Preset / Key移調は専用Schemaを追加せず、既存Project Dataを利用する。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented。Chord Preset / Drum Preset / Key移調 / Diatonic Fanは専用Schemaを追加せず、既存Project Dataを利用する。
 
 最終更新:
 2026-10-10
