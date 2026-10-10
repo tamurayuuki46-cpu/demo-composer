@@ -3,6 +3,7 @@ import { chordSymbol, rootToPitchClass } from "../chord/chord-theory.js";
 import { analyzeMelody, describeMelody } from "../core/melody-analysis.js";
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
+import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar } from "./melody-candidates.js";
 import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 
 const EIGHTH_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
@@ -107,6 +108,7 @@ export function createMelodyController({ projectStore, rerender }) {
       && barIndex + bars * 2 <= MAX_TOTAL_BARS;
 
     const chordTones = chordTonePitchClasses(chord);
+    const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave });
 
     const gridRows = pitches.map((pitch) => {
       const name = pitchName(pitch);
@@ -144,6 +146,26 @@ export function createMelodyController({ projectStore, rerender }) {
           <button id="melody-degree-toggle" class="degree-toggle${showDegrees ? " active" : ""}" aria-pressed="${showDegrees}">${showDegrees ? "度数 ON" : "度数 OFF"}</button>
         </div>
         ${showDegrees ? `<p class="hint degree-hint">鍵盤の文字は「${chord ? "このコードのルート" : "Keyの主音"}から何度か」です（R=ルート、3=3度、5=5度）。</p>` : ""}
+
+        <section class="melody-candidate-panel" aria-label="メロディ候補">
+          <div class="melody-candidate-heading">
+            <div>
+              <strong>メロディ候補</strong>
+              <small>Bar ${barIndex + 1} の叩き台を3つ</small>
+            </div>
+            <span>C${octave}–B${octave}</span>
+          </div>
+          <div class="melody-candidate-list">
+            ${melodyCandidates.map((candidate) => `
+              <button type="button" data-melody-candidate="${candidate.id}" aria-label="${escapeHtml(candidate.label)}をBar ${barIndex + 1}へ適用">
+                <strong>${escapeHtml(candidate.label)}</strong>
+                <small>${escapeHtml(candidate.description)}</small>
+                <span class="melody-candidate-dots" aria-hidden="true">${escapeHtml(melodyCandidateDots(candidate))}</span>
+              </button>
+            `).join("")}
+          </div>
+          <p class="hint">候補を選ぶと現在の1小節だけ置き換えます。選んだ後は下のPiano Rollで1音ずつ直せます（↶ で戻せます）。</p>
+        </section>
 
         <div class="melody-toolbar">
           <button id="melody-prev-bar"${barIndex === 0 ? " disabled" : ""}>← Bar</button>
@@ -203,6 +225,29 @@ export function createMelodyController({ projectStore, rerender }) {
     const project = projectStore.getSnapshot();
     const { barTicks, stepTicks, barCount } = metrics(project);
     const barStartTick = barIndex * barTicks;
+    const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave });
+
+    document.querySelectorAll("[data-melody-candidate]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const candidate = melodyCandidates.find((item) => item.id === button.dataset.melodyCandidate);
+        if (!candidate) return;
+
+        const latest = projectStore.getSnapshot();
+        const notes = getMelodyNotes(latest);
+        if (
+          hasMelodyInBars(notes, { barIndex, bars: 1, barTicks })
+          && !globalThis.confirm(`Bar ${barIndex + 1} のメロディを「${candidate.label}」候補で置き換えますか？（↶ で戻せます）`)
+        ) {
+          return;
+        }
+
+        projectStore.updateMelodyNotes(applyMelodyCandidate(notes, barIndex, candidate, { barTicks }));
+        resolution = 8;
+        half = 0;
+        message = `Bar ${barIndex + 1} に「${candidate.label}」候補を適用しました。Piano Rollで自由に修正できます。`;
+        rerender("melody");
+      });
+    });
 
     document.querySelectorAll("[data-melody-pitch]").forEach((button) => {
       button.addEventListener("click", () => {

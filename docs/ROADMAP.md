@@ -34,34 +34,36 @@ Current focus:
 - Rhythm
   - Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
   - Bass音程選択 / 半音ずらし / 音の長さ
+  - Bass候補3案
 - Melody
   - 8分 / 16分入力
   - 音の長さ指定
+  - Chord Tone強調 / 度数表示
+  - Melody Analyzer
+  - Copy Bar / Copy 2小節
+  - Melody候補3案: 安定 / キャッチー / 浮遊感（現在Barへ適用後、通常Noteとして修正）
 - Undo / Redo
 - project.json Import
 - Demo Player パート聴き分け（Mute / Solo）
-- Hub AI相談用テキストコピー
+- Hub AI相談用テキストコピー / Cubaseでやることメモ
 - Arrange Section（v0.3予定から基本構成だけ先行）
   - 構成Template / 小節増減 / Sectionコピー / Section再生 / MIDI Marker
 - Sound Sketch Lite（v0.4予定から最小機能だけ先行）
   - Chord / Melody / Bassの仮音色Preset
   - Natural / Bright / Soft / Warm / Dark / Airy / Aggressive のToneタグ
   - Demo Playerのみ音色変更、MIDI Noteは変更しない
-- Chord Tone表示
-- Melody Analyzer
-- Bass候補生成の設計 / 試作
 - Section Energyの仕様検討
 
 Backing Patternは曲の骨子を決める最小4Presetに留める。詳細なPattern Sequencer / DAW級Arpeggiatorは追加せず、必要な細部はCubasis / Cubaseへ渡す。
 
-Chord Tone表示は、Chord / Rhythm / Arrange / Sound Sketch Lite / Backing PatternのAndroid実機回帰確認後に仕様案を1枚作り、Melody Gridのどの音をどう強調するかを確認してから実装する。
+Melody候補も曲全体を自動完成させず、現在Barの3候補 → 選択 → Piano Rollで修正、という学習可能な流れを維持する。
 
 ## v0.3
 
 - Arrange / Song Structureの正式整理
   - v0.2で先行したSection機能を実制作で検証・改善
 - Section Energy（Low / Mid / High）の検討
-- Melody候補生成の設計 / 試作
+- Melody候補の実制作検証と必要最小限の改善
 
 ## v0.4
 

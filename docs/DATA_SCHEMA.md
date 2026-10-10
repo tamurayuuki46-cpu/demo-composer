@@ -134,6 +134,18 @@ Rhythm UIでは16分音符Gridを使用するため、1 step = 120 tick。
 
 MelodyとBassはUI上同一stepに1音だけ入力するMonophonic方式。Drumsは同一stepにKick / Snare / HHなど複数Noteを保持できる。
 
+### Melody Candidate Generation
+
+Melody候補（安定 / キャッチー / 浮遊感）は専用Schemaを追加しない。
+
+- 候補一覧そのものはUIで毎回計算し、Project Dataへ保存しない
+- 候補適用時は現在BarのMelody Noteだけを通常の `tracks[role=melody].notes[]` へ置き換える
+- 他BarのMelody Noteは保持する
+- 生成Noteも通常Noteと同じ `id / pitch / startTick / durationTick / velocity` を持つ
+- AutoSave / Undo / Redo / Demo Player / Melody.mid / Song.midは既存Note処理をそのまま利用する
+- Chord未設定BarではHubのKey / Scaleを基準に候補を生成する
+- 追加Migrationは不要で、schemaVersion 2を維持する
+
 ## Instrument / Sound Sketch Data
 
 Sound Sketch Liteは既存の `instruments[]` を利用する。schemaVersionは2のまま維持する。
@@ -232,7 +244,7 @@ v2ではProjectの基本構造は変更せず、`chords[].quality` の許可値�
 
 v1で使用していた `major / minor / diminished` はv2でも有効なため、Chordデータ自体の変換は不要。
 
-Arrange Section / Sound Sketch Lite / Backing Patternはいずれもv2に既に存在する `structure.sections` / `instruments` を利用するため、追加のschemaVersion変更は行わない。
+Arrange Section / Sound Sketch Lite / Backing Pattern / Melody Candidateはいずれもv2の既存領域を利用するため、追加のschemaVersion変更は行わない。
 
 ## Migration Rule
 
