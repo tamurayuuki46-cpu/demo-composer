@@ -54,6 +54,9 @@ jobs:
       - name: Sound Sketch smoke test
         run: npm run test:sound
 
+      - name: Backing pattern smoke test
+        run: npm run test:backing
+
       - name: project.json import smoke test
         run: npm run test:import
 
