@@ -8,6 +8,7 @@ import {
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
+import { bindEditHistory } from "./core/edit-history-ui.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
@@ -531,6 +532,14 @@ async function boot() {
   });
   bindPlayerControls();
   updatePlayerUi(playerState);
+  bindEditHistory({
+    projectStore,
+    rerender: render,
+    getCurrentScreen: () => currentScreen,
+    onMessage: (message) => {
+      startupMessage = message;
+    }
+  });
 
   projectStore.subscribe((project) => {
     projectTitle.textContent = project.metadata.title;

@@ -4,6 +4,8 @@ import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
 const KEY_NAMES = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
 const VALID_KEYS = new Set(KEY_NAMES);
 const VALID_SCALES = new Set(["major", "minor"]);
+// Undoで戻れる最大操作数。履歴はメモリ上だけに持ち、保存しない（Schema変更なし）。
+export const HISTORY_LIMIT = 50;
 
 function clone(value) {
   return typeof structuredClone === "function"
@@ -294,12 +296,29 @@ export function validateProject(project) {
 export function createProjectStore(initialProject = createDefaultProject()) {
   let state = clone(initialProject);
   const listeners = new Set();
+  const undoStack = [];
+  const redoStack = [];
 
   validateProject(state);
 
   function emit() {
     const snapshot = clone(state);
     listeners.forEach((listener) => listener(snapshot));
+  }
+
+  // 通常の編集はすべてここを通す。直前のProjectを履歴へ積み、Redo履歴は捨てる。
+  function commit(next) {
+    undoStack.push(state);
+    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+    redoStack.length = 0;
+    state = next;
+    emit();
+  }
+
+  // Undo / Redoは過去のデータへ戻すが、revisionは保存の新旧判定に使うため増やし続ける。
+  function restore(snapshot) {
+    state = { ...clone(snapshot), revision: state.revision + 1 };
+    emit();
   }
 
   return {
@@ -341,8 +360,7 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       next.revision = state.revision + 1;
       validateProject(next);
 
-      state = next;
-      emit();
+      commit(next);
 
       return clone(state);
     },
@@ -357,8 +375,7 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       validateChords(next.chords);
 
       next.revision = state.revision + 1;
-      state = next;
-      emit();
+      commit(next);
 
       return clone(state);
     },
@@ -371,10 +388,32 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       validateTracks(next.tracks);
 
       next.revision = state.revision + 1;
-      state = next;
-      emit();
+      commit(next);
 
       return clone(state);
+    },
+
+    undo() {
+      if (undoStack.length === 0) return null;
+      redoStack.push(state);
+      restore(undoStack.pop());
+      return clone(state);
+    },
+
+    redo() {
+      if (redoStack.length === 0) return null;
+      undoStack.push(state);
+      restore(redoStack.pop());
+      return clone(state);
+    },
+
+    getHistoryState() {
+      return {
+        canUndo: undoStack.length > 0,
+        canRedo: redoStack.length > 0,
+        undoCount: undoStack.length,
+        redoCount: redoStack.length
+      };
     },
 
     updateRhythmNotes({ bassNotes = [], drumNotes = [] } = {}) {
@@ -389,8 +428,7 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       validateTracks(next.tracks);
 
       next.revision = state.revision + 1;
-      state = next;
-      emit();
+      commit(next);
 
       return clone(state);
     }

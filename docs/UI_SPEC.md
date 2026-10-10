@@ -14,6 +14,16 @@ Android Chrome / Android smartphone.
 - 重要操作を画面下部へ寄せる
 - PC DAWを縮小したUIにしない
 
+## Undo / Redo
+
+画面上部のバー右側に `↶`（元に戻す）/ `↷`（やり直す）を常設する。どの画面でも使える。
+
+- 対象はHub / Chord / Melody / Rhythmの編集すべて（Project全体で1本の履歴）
+- 戻せる操作がないときはボタンを無効表示にする
+- 最大50操作まで。アプリを開き直すと履歴は空になる（データ自体は保存されている）
+- Key変更は1回で元のKey・コード・メロディ・ベースへ戻る
+- Clear / Preset適用 / Copyなど、まとめて変わる操作も1回で戻る
+
 ## Navigation
 
 Bottom Navigation:

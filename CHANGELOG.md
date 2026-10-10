@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- Undo / Redo（Project全体で1本の編集履歴、最大50操作、画面上部の `↶` `↷`）
+- Edit History Smoke Test（`npm run test:history`、CI対象）
+- Undo実装前の復元ブランチ `restore/v0.2-before-undo`
 - Chordの基準音Select（C〜B）
 - 基準音ごとの9種類のChord Quality: Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
 - 共通Chord Quality定義 `src/core/chord-qualities.js`
