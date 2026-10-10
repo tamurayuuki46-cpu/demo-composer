@@ -25,7 +25,7 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 ## Status
 
-現在は、Hub / Chord / Melody / Rhythm の実データ入力、schemaVersion 2準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
+現在は、Hub / Chord / Melody / Rhythm の実データ入力、曲の構成（Arrange）、Undo / Redo、schemaVersion 2準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
 
 HubではProject名 / BPM / Key / Scaleを編集できます。Key変更時はChord / Melody / Bassを同じ最短半音幅で自動移調し、Drumsは変更しません。Scale変更はChord / Melody / Bassがある場合は安全のため拒否します。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。
 
