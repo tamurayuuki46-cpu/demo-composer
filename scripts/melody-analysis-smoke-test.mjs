@@ -75,7 +75,7 @@ const one = analyzeMelody(project([n(60, 0)]));
 assert.equal(one.leaps.motions, 0);
 assert.equal(describeMelody(one).find((r) => r.id === "leap").value, "音が1つだけ");
 
-// 説明: 既存6項目 + Key度数 / Chord度数 / Scale内率の3項目
+// 説明: 既存6項目 + Key度数 / Chord度数 / Scale内率 + 旋律の3つの見方
 const rows = describeMelody(a);
 assert.deepEqual(rows.map((r) => r.id), [
   "range",
@@ -86,7 +86,11 @@ assert.deepEqual(rows.map((r) => r.id), [
   "tone",
   "density",
   "same",
-  "motif"
+  "motif",
+  "perspective-note",
+  "perspective-kusano",
+  "perspective-yonezu",
+  "perspective-ayase"
 ]);
 assert.ok(rows.every((r) => r.label && r.value));
 assert.equal(rows[0].value, "C4〜C5（1オクターブ）");
@@ -94,5 +98,12 @@ assert.equal(rows.find((r) => r.id === "key-degree").value, "1 50%・3 33%・5 1
 assert.equal(rows.find((r) => r.id === "chord-degree").value, "5 50%・3 33%・R 17%");
 assert.equal(rows.find((r) => r.id === "scale-fit").value, "100%");
 assert.match(rows.find((r) => r.id === "same").comment, /同じ音が続く/);
+assert.equal(rows.find((r) => r.id === "perspective-kusano").value, "跳躍 9%・2(9th)/6th 0%");
+assert.equal(rows.find((r) => r.id === "perspective-yonezu").value, "最大跳躍 8半音・Scale外 0音");
+assert.equal(rows.find((r) => r.id === "perspective-ayase").value, "4.0音/小節・同型反復 1/3小節");
+
+// Chordが無い場合は草野参考の2(9th)/6thを未集計として表示する
+const noChordRows = describeMelody(noChord);
+assert.match(noChordRows.find((r) => r.id === "perspective-kusano").value, /2\(9th\)\/6th —/);
 
 console.log("melody analysis smoke test passed");

@@ -1,6 +1,6 @@
 # Melody Module
 
-Melody ModuleはMain MelodyのNote Dataと将来のMelody Analyzerを担当する。
+Melody ModuleはMain MelodyのNote DataとMelody Analyzerを担当する。
 
 ## v0.1-dev implemented
 
@@ -16,6 +16,29 @@ Melody ModuleはMain MelodyのNote Dataと将来のMelody Analyzerを担当す�
 - 同じstepはMonophonic。別PitchをTapすると置換
 - Clear Bar
 - MIDI Note形式で`tracks[role=melody].notes[]`へ保存
+
+## v0.2-dev implemented
+
+- Note Length編集
+- Chord Tone強調
+- 度数表示
+- Copy Bar / Copy 2小節
+- Melody候補3案（安定 / キャッチー / 浮遊感）と4つのVariation Set
+- 山の位置ガイド
+- Melody Analyzer
+  - 音域
+  - Keyからの度数
+  - Chordからの度数
+  - Scale内率
+  - 跳躍
+  - コードトーン率
+  - リズム密度
+  - 同音連打
+  - モチーフ反復
+  - Sectionごとの比べ
+  - 旋律の3つの見方: 歌心・浮遊型（草野マサムネ参考） / 輪郭・違和感型（米津玄師参考） / 推進・高密度型（Ayase / YOASOBI参考）
+
+「旋律の3つの見方」は特定曲のコピーや本人らしさの採点ではなく、既存の分析値を作曲時にどう見るかを整理する参考表示。Project Dataには保存せず、候補生成へ自動反映もしない。
 
 ## v0.1 Note Grid
 
@@ -42,11 +65,6 @@ Android狭幅では、縦ピアノの幅・カード余白・Grid Gapを縮め�
 
 ## Later
 
-- 16分音符
-- Note Length編集
 - Velocity編集
-- コードトーン強調
 - Scale表示
-- Melody Analyzer
-- Melody候補3案
 - 音符試聴
