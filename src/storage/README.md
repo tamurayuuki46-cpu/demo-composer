@@ -10,7 +10,16 @@ StorageはProject Dataの永続化・Backup・Migrationを担当する。
 - `projects` storeへProject Snapshotを保存
 - `meta` storeへactiveProjectIdを保存
 - Active Projectの読込
-- Save時に利用可能なら `navigator.storage.persist()` を要求
+- Save Now時に利用可能なら `navigator.storage.persist()` を要求
+
+`autosave.js`
+
+- Project State変更を購読
+- 変更後1.5秒操作がなければIndexedDBへ保存
+- 連続変更時はタイマーを更新し、最新Snapshotを保存
+- 書き込み中に次の変更が来た場合は最新SnapshotをQueueして順次保存
+- `visibilitychange`でアプリがhiddenになる時は即時保存
+- AutoSave失敗時はUIへエラー通知可能
 
 手動Backup:
 
@@ -23,11 +32,12 @@ StorageはProject Dataの永続化・Backup・Migrationを担当する。
 
 Storage ModuleはProject StoreからSnapshotを受け取り保存し、起動時は保存済みProjectを返す。
 
+AutoSaveはProject Storeの`subscribe()`を利用し、Stateやrevisionを変更しない。
+
 `project.json` DownloadはExport UIから現在のProject Snapshotをシリアライズする。
 
 ## Not Yet Implemented
 
-- Autosave
 - Snapshot履歴
 - project.json Import
 - Migration

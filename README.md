@@ -25,11 +25,9 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 ## Status
 
-初期Repository / 共同開発基盤を作成済み。
+現在は、Hub / Chord / Melody / Rhythm の実データ入力、schemaVersion 1準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
 
-現在は、Hub / Chord / Melody / Rhythm の実データ入力、schemaVersion 1準拠の共通Project State、IndexedDBによる端末保存、常設Demo Player、MIDI / project.json Exportを実装しています。
-
-HubではProject名 / BPM / Key / Scaleを編集でき、Saveで現在のProjectを端末に保存できます。次回起動時は保存済みProjectを自動で読み込みます。
+HubではProject名 / BPM / Key / Scaleを編集できます。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。
 
 Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを候補表示し、タップで1小節ずつ進行へ追加できます。追加済みコードの削除 / Clearにも対応しています。
 
@@ -41,7 +39,7 @@ Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量�
 
 Exportでは `Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `project.json` をダウンロードできます。Song / Part MIDIはSMF Type 1、PPQ 480です。
 
-現段階では手動Saveのみです。Autosave / project.json Import / Migrationは後続実装です。
+未実装の主要項目は、project.json Import、Migration、PWA Service Worker、Android/Cubasis/Cubase実機確認です。
 
 ## AI共同開発
 
@@ -85,20 +83,3 @@ python -m http.server 8080
 ```
 
 その後 `http://localhost:8080/` を開きます。
-
-## Repository Structure
-
-```text
-demo-composer/
-├─ src/
-├─ public/
-├─ docs/
-├─ versions/
-├─ README.md
-├─ CHANGELOG.md
-├─ VERSION
-├─ CLAUDE.md
-├─ AGENTS.md
-├─ package.json
-└─ index.html
-```

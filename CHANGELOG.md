@@ -44,6 +44,10 @@
 - Hub Export PanelとAll MIDI / 個別MIDI Download
 - project.json手動Backup Download
 - MIDI構造変更前の復元ブランチ `restore/v0.1-before-midi-export`
+- Project State変更後1.5秒のDebounced AutoSave
+- アプリがhiddenになる時の即時AutoSave
+- AutoSaveの保存Queueによる同時書き込み防止
+- AutoSave実装前の復元ブランチ `restore/v0.1-before-autosave`
 
 ### 変更
 - Hub表示を固定値からProject State参照へ変更
@@ -58,6 +62,8 @@
 - Bass Noteが存在する間はChord変更を拒否してRoot不整合を防止
 - 画面下部にDemo Playerを常設し、その下にModule Navigationを維持
 - HubのExportを有効化し、DAW受け渡しとProject Backupを同じPanelに集約
+- 通常編集の保存を手動中心からAutoSave中心へ変更
+- 手動Saveを`Save Now`として即時保存・Persistent Storage要求用途に整理
 
 ### 修正
 - Chord作成後のKey / Scale変更で表示とDegreeが不整合になる問題を予防
@@ -65,7 +71,7 @@
 - Bassが旧Chord Rootのまま見えなくなる問題を避けるため、Bass stepはstartTick単位で表示しTap時に現在Rootへ置換可能にした
 
 ### 未対応
-- Autosave / Snapshot履歴
+- Snapshot履歴
 - project.json Import
 - Migration
 - Chord並べ替え / 長さ変更 / 7th / 借用和音

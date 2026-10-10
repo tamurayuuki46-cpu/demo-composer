@@ -15,9 +15,10 @@ v0.1-dev
 - Project Validation / Snapshot / Subscription / Revision更新
 - HubからProject名 / BPM / Key / Scaleを編集
 - Project名をTop Barへ同期
-- IndexedDBへの手動Save
-- 保存済みActive Projectの起動時読込
-- Save時のPersistent Storage要求
+- IndexedDBへの保存 / Active Project起動時読込
+- Project変更後1.5秒のAutoSave
+- アプリがhiddenになる時の即時AutoSave
+- Save Now時の即時保存 / Persistent Storage要求
 - Chord Moduleのダイアトニックコード候補表示
 - Chord候補タップによる1小節追加
 - Chord削除 / Clear / startTick再配置
@@ -35,15 +36,15 @@ v0.1-dev
 - Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid Export
 - SMF Type 1 / Conductor Track / Tempo / 4/4 / Key Signature
 - project.json手動Backup Export
+- MIDI Smoke Test / Pull Request CI
 
 開発中:
 - v0.1仕上げ / 実機確認準備
 
 次に実装:
-- Autosave
-- project.json Import
-- PWA Service Worker
 - Android実機テスト用チェックリスト
+- project.json Importは安全な復元設計を固めてから判断
+- PWA Service Workerは開発中のstale cache対策を決めてから判断
 
 既知の問題:
 - Chordは現在1コード=1小節固定
@@ -58,7 +59,7 @@ v0.1-dev
 - Demo PlayerはPlay時点のProject Snapshotを再生し、再生中の編集は次回Playから反映
 - All MIDIはブラウザの複数Download制限を受ける場合がある。その場合は個別Downloadを使う
 - MIDIのCubasis / Cubase / BandLab実Import確認はAndroid/PC実機テストが必要
-- Saveは手動のみでAutosave未実装
+- AutoSaveはIndexedDB保存。Snapshot履歴は未実装
 - project.json Import未実装
 - Migration未実装
 - Service Worker未実装のため完全なPWAオフライン対応ではない
@@ -77,7 +78,11 @@ v0.1-dev
 - ModuleはProjectオブジェクトを直接書き換えず、責務別の更新APIを通す
 - State変更ごとにrevisionを増やす
 - IndexedDB永続化はsrc/storageへ分離し、Project State自体は保存方式に依存させない
-- 保存方式変更前の復元ポイントとして `restore/v0.1-before-indexeddb` を作成
+- AutoSaveはsrc/storage/autosave.jsへ分離し、Project Storeのsubscribe()を利用する
+- AutoSaveは1.5秒Debounce + visibilitychange(hidden)即時保存
+- AutoSave自体はProject Stateやrevisionを変更しない
+- 手動SaveはSave Nowとして残し、Persistent Storage要求にも利用する
+- 保存方式変更前の復元ポイントとして `restore/v0.1-before-indexeddb` / `restore/v0.1-before-autosave` を作成
 - Chord候補計算はsrc/chord/chord-theory.jsへ分離
 - Chord Moduleはproject.chords[]だけを書き換える
 - v0.1のChordは4/4・PPQ480で1コード=1小節（1920 tick）
@@ -108,7 +113,7 @@ v0.1-dev
 - 重要仕様はCLAUDE.md / AGENTS.mdではなくdocsへ保存
 
 現在のデータSchema:
-schemaVersion 1 / PPQ 480 / 4/4固定。Chord / Melody / Bass / Drumsは既存Schema内で具体化。MIDI Export追加によるschemaVersion変更なし。
+schemaVersion 1 / PPQ 480 / 4/4固定。AutoSave追加によるschemaVersion変更なし。
 
 最終更新:
 2026-10-10
