@@ -4,6 +4,13 @@
 更新日: 2026-10-10
 
 ### 追加
+- Chord: 好きな進行ライブラリ。現在のコード進行を名前を付けて「度数（主音からの距離 + コードの種類）」で保存し、別のKeyの曲にも当てはめられる。この端末のlocalStorageにだけ保存（project.jsonには入れない、Schema変更なし。最大50件・32小節まで。`src/chord/progression-library.js`）
+- Progression Library Smoke Test（`npm run test:library`、CI対象）
+- CSS Brace Balance Test（`npm run test:css`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-progression-library`
+
+### 修正
+- `src/chord/chord-presets.css` の閉じ括弧 `}` が1つ抜けていて、そのあとに書いた「次のコード候補」「ひとスパイス」「コードの役割」の見た目が効かなくなっていた。原因: Backing Pattern統合時のrebaseで両側を残した際の取り違え。再発防止としてCSS括弧のテストをCIに追加
 - Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
 - Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
 - コピー処理を `src/hub/clipboard.js` に共通化
