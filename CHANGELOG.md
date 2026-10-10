@@ -7,6 +7,12 @@
 - Section Variation にメロディの候補を2つ追加（`少し違う版にする` の中）: `メロディの音程だけ少し変える`（リズムはそのまま。各小節の2つ目・4つ目の音を、Keyの音階で偶数小節は1つ上・奇数小節は1つ下へ。1つ目の音は残してモチーフを保つ。音階外の音は触らない）、`メロディのリズムだけ変える`（音程と順番はそのまま。各小節の2つ目・4つ目の音が拍の頭なら8分後ろへ。次の音に届かないときは動かさず、2回当てても動かない）。既存の `メロディの終わりを変える` と合わせてメロディ3候補。Schema変更なし
 - Section Variation Smoke Testに音程だけ / リズムだけを追加
 - 追加前の復元ブランチ `restore/v0.2-before-melody-variation`
+- Hub 出発点: `質問で決める`（3つの質問: 雰囲気 / テンポ / 聴かせ方 → 出発点3候補）。ジャンル名を知らなくても始められる入口（`suggestByAnswers`）
+- Arrange: `📈 感情曲線から構成を作る`。4〜8列の曲線（Low / Mid / High）を指で選ぶと、イントロ / Aメロ / Bメロ / サビ / 間奏 / Cメロ / アウトロの並び・小節数・盛り上がり（Energy）の叩き台を作る。作った後は自由に直せる。`src/core/energy-curve.js`
+- Arrange: `🎼 構成ライブラリ`。好きな曲の構成（Sectionの種類・小節数・盛り上がりだけ。曲の中身は保存しない）を名前を付けて端末に保存し、別の曲へ「当てはめる」。見本3種つき。この端末のlocalStorageのみ、Schema変更なし。`src/arrange/structure-library.js`
+- Melody: `⛰ 山の位置から作る`。最高音（山）を置く小節と形（じわじわ上る / 溜めてから一気に / 山のあとに余韻）を選ぶと、そこへ向かう各小節のコード構成音の目安を出し、空の小節にだけ置ける。`src/melody/peak-guide.js`
+- Smoke Test追加: `npm run test:energy-curve` / `test:structure-library` / `test:peak-guide`（CI対象）、出発点テストに質問ウィザードを追加
+- 追加前の復元ブランチ `restore/v0.2-before-skeleton-entries`（Schema変更なし）
 - Melody Analyzer: `Sectionごとの比べ`。構成（Section）ごとに音域 / 音数 / リズム密度（1小節あたり）を並べ、サビと直前のAメロ / Bメロの差（最高音・平均の高さ・音域のひろさ・密度）を表示。差が小さいと「差が小さめ」と気づかせる一言を出す（評価ではなく気づき）。`src/core/section-compare.js`
 - Section Compare Smoke Test（`npm run test:section-compare`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-section-compare`（Schema変更なし）
@@ -142,6 +148,7 @@
 - CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Backing Pattern / Hub Key Change / Diatonic Fan / Undo / Arrange / Sound Sketch / Part Switch / AI Consult / Import / Static Buildを確認する構成へ更新
 
 ### 修正
+- Demo Player: Loop中（または再生中）にコード・メロディなどを編集しても、Stop→Playし直すまで古い音が鳴り続けていた問題を修正。Loopの次の周に入るたびに最新の曲（Section再生なら最新のSection範囲）を読み直して鳴らす。再生中の1周の途中には反映されず、次の周から変わる。Schema変更なし
 - `src/chord/chord-presets.css` の閉じ括弧 `}` が1つ抜けていて、そのあとに書いた「次のコード候補」「ひとスパイス」「コードの役割」の見た目が効かなくなっていた。原因: Backing Pattern統合時のrebaseで両側を残した際の取り違え。再発防止としてCSS括弧のテストをCIに追加
 - `package.json` に重複していた `test:syntax` 定義を1つへ統合し、ドラムフィルを含む最新Syntax CheckとMelody候補ファイルをまとめて検査するようにした
 - Backing Pattern旧PR #45は作業中のdevelop先行更新と競合したためマージせず、最新developからPR #50用branchを作り直し、Bass音程 / Melody長さ / Import / Part Mute/Solo / AI相談を保持したまま再統合した

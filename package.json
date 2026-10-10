@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build-static.mjs",
     "serve": "python -m http.server 8080",
-    "test:syntax": "node --check src/main.js && node --check src/chord/chord-theory.js && node --check src/chord/chord-presets.js && node --check src/chord/diatonic-fan.js && node --check src/chord/chord-next.js && node --check src/chord/chord-role.js && node --check src/core/chord-qualities.js && node --check src/core/backing-patterns.js && node --check src/core/sound-presets.js && node --check src/core/project-schema.js && node --check src/core/project-state.js && node --check src/core/project-migration.js && node --check src/core/edit-history-ui.js && node --check src/core/section-ops.js && node --check src/core/note-placement.js && node --check src/core/display-settings.js && node --check src/core/melody-analysis.js && node --check src/audio/demo-player.js && node --check src/audio/part-switch-ui.js && node --check src/midi/midi-export.js && node --check src/rhythm/drum-presets.js && node --check src/rhythm/drum-fills.js && node --check src/rhythm/bass-candidates.js && node --check src/rhythm/rhythm-screen.js && node --check src/melody/melody-candidates.js && node --check src/melody/melody-screen.js && node --check src/arrange/arrange-screen.js && node --check src/sound/sound-screen.js && node --check src/storage/project-import.js && node --check src/hub/consult-text.js && node --check src/hub/consult-ui.js && node --check src/hub/song-card.js && node --check src/hub/cubase-memo.js && node --check src/hub/memo-ui.js && node --check src/hub/clipboard.js && node --check src/chord/progression-library.js && node --check src/core/loop-guide.js && node --check src/chord/chord-for-melody.js && node --check src/hub/starting-point.js && node --check src/hub/starting-point-ui.js && node --check src/core/section-compare.js",
+    "test:syntax": "node --check src/main.js && node --check src/chord/chord-theory.js && node --check src/chord/chord-presets.js && node --check src/chord/diatonic-fan.js && node --check src/chord/chord-next.js && node --check src/chord/chord-role.js && node --check src/core/chord-qualities.js && node --check src/core/backing-patterns.js && node --check src/core/sound-presets.js && node --check src/core/project-schema.js && node --check src/core/project-state.js && node --check src/core/project-migration.js && node --check src/core/edit-history-ui.js && node --check src/core/section-ops.js && node --check src/core/note-placement.js && node --check src/core/display-settings.js && node --check src/core/melody-analysis.js && node --check src/audio/demo-player.js && node --check src/audio/part-switch-ui.js && node --check src/midi/midi-export.js && node --check src/rhythm/drum-presets.js && node --check src/rhythm/drum-fills.js && node --check src/rhythm/bass-candidates.js && node --check src/rhythm/rhythm-screen.js && node --check src/melody/melody-candidates.js && node --check src/melody/melody-screen.js && node --check src/arrange/arrange-screen.js && node --check src/sound/sound-screen.js && node --check src/storage/project-import.js && node --check src/hub/consult-text.js && node --check src/hub/consult-ui.js && node --check src/hub/song-card.js && node --check src/hub/cubase-memo.js && node --check src/hub/memo-ui.js && node --check src/hub/clipboard.js && node --check src/chord/progression-library.js && node --check src/core/loop-guide.js && node --check src/chord/chord-for-melody.js && node --check src/hub/starting-point.js && node --check src/hub/starting-point-ui.js && node --check src/core/section-compare.js && node --check src/core/energy-curve.js && node --check src/arrange/structure-library.js && node --check src/melody/peak-guide.js",
     "test:midi": "node scripts/midi-smoke-test.mjs",
     "test:rhythm": "node scripts/rhythm-copy-smoke-test.mjs && node scripts/bass-pitch-smoke-test.mjs",
     "test:rhythm-presets": "node scripts/rhythm-preset-smoke-test.mjs",
@@ -26,12 +26,15 @@
     "test:analysis": "node scripts/melody-analysis-smoke-test.mjs",
     "test:display": "node scripts/display-settings-smoke-test.mjs",
     "test:import": "node scripts/project-import-smoke-test.mjs",
+    "test:energy-curve": "node scripts/energy-curve-smoke-test.mjs",
+    "test:structure-library": "node scripts/structure-library-smoke-test.mjs",
     "test:css": "node scripts/css-balance-test.mjs",
     "test:library": "node scripts/progression-library-smoke-test.mjs",
     "test:variation": "node scripts/section-variation-smoke-test.mjs",
     "test:loop-guide": "node scripts/loop-guide-smoke-test.mjs",
     "test:melody-chords": "node scripts/chord-for-melody-smoke-test.mjs",
     "test:starting-point": "node scripts/starting-point-smoke-test.mjs",
-    "test:section-compare": "node scripts/section-compare-smoke-test.mjs"
+    "test:section-compare": "node scripts/section-compare-smoke-test.mjs",
+    "test:peak-guide": "node scripts/peak-guide-smoke-test.mjs"
   }
 }

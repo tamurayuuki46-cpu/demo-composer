@@ -2,6 +2,7 @@ import { getSections, MAX_TOTAL_BARS, sectionLabel, totalSectionBars } from "../
 import { chordSymbol, rootToPitchClass } from "../chord/chord-theory.js";
 import { analyzeMelody, describeMelody, pitchLabel } from "../core/melody-analysis.js";
 import { compareSections, contrastHints } from "../core/section-compare.js";
+import { applyPeakGuide, buildPeakGuide, currentPeak, defaultPeakBar, PEAK_SHAPES } from "./peak-guide.js";
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar } from "./melody-candidates.js";
@@ -36,6 +37,10 @@ export function createMelodyController({ projectStore, rerender }) {
   let showDegrees = false;
   // 特徴パネルの開閉（UI状態のみ）
   let analyzerOpen = false;
+  // 山の位置パネルの開閉・山の小節（nullなら既定値）・形（UI状態のみ）
+  let peakOpen = false;
+  let peakBar = null;
+  let peakShapeId = "rise";
   let message = "セルをタップして8分音符を入力します。";
 
   function stepTickSize(barTicks) {
@@ -126,6 +131,40 @@ export function createMelodyController({ projectStore, rerender }) {
         ` : `<p class="hint">サビと、その前のAメロ / Bメロの両方にメロディがあると、差を見られます。</p>`}
       </div>
     `;
+  }
+
+  // 山の位置から作る: 最高音を置く小節と形を選ぶと、そこへ向かう目安の音（各小節のコード構成音）を出す。
+  function peakPanelHtml(project, barCount) {
+    const toggle = `<button id="melody-peak-toggle" class="analyzer-toggle" aria-expanded="${peakOpen}">⛰ 山の位置から作る${peakOpen ? " ▲" : " ▼"}</button>`;
+    if (!peakOpen) return toggle;
+
+    const maxBar = Math.max(barCount - 1, 0);
+    const bar = Math.min(peakBar ?? defaultPeakBar(project), maxBar);
+    const guide = buildPeakGuide(project, { peakBar: bar, shapeId: peakShapeId });
+    const now = currentPeak(project);
+    return `
+      ${toggle}
+      <div class="analyzer-panel peak-panel">
+        <p class="hint">サビの最高音（山）をどの小節に置くかを先に決めて、そこへ向かう目安を出します。${now ? `いまの最高音は Bar ${now.bar + 1}（${escapeHtml(pitchLabel(now.pitch))}）です。` : ""}</p>
+        <div class="peak-bar-row">
+          <button id="melody-peak-prev" aria-label="山を前の小節へ"${bar <= 0 ? " disabled" : ""}>← Bar</button>
+          <strong>山: Bar ${bar + 1}</strong>
+          <button id="melody-peak-next" aria-label="山を次の小節へ"${bar >= maxBar ? " disabled" : ""}>Bar →</button>
+        </div>
+        <div class="peak-shapes" role="group" aria-label="山の形">
+          ${PEAK_SHAPES.map((shape) => `
+            <button class="peak-shape${shape.id === peakShapeId ? " active" : ""}" data-peak-shape="${shape.id}" aria-pressed="${shape.id === peakShapeId}">
+              <strong>${escapeHtml(shape.label)}</strong>
+              <small>${escapeHtml(shape.description)}</small>
+            </button>
+          `).join("")}
+        </div>
+        <ol class="peak-list">
+          ${guide.bars.map((item) => `<li class="${item.role}">Bar ${item.bar + 1}: ${escapeHtml(pitchLabel(item.pitch))}（${escapeHtml(item.chordText)}）${item.role === "peak" ? " ★山" : item.role === "after" ? " 余韻" : ""}</li>`).join("")}
+        </ol>
+        <button class="primary" id="melody-peak-apply">目安の音を置く（空の小節だけ）</button>
+        <p class="hint">置くのは各小節に1音ずつの目安です。入力済みの小節は変えません。置いたあと、Piano Rollで音を足して歌にしていきます（↶で戻せます）。</p>
+      </div>`;
   }
 
   function render() {
@@ -250,6 +289,7 @@ export function createMelodyController({ projectStore, rerender }) {
           <button id="copy-melody-2bars"${canCopy(2) ? "" : " disabled"}>Copy 2小節 → Bar ${barIndex + 3}–${barIndex + 4}</button>
         </div>
 
+        ${peakPanelHtml(project, barCount)}
         <button id="melody-analyzer-toggle" class="analyzer-toggle" aria-expanded="${analyzerOpen}">メロディの特徴${analyzerOpen ? " ▲" : " ▼"}</button>
         ${analyzerOpen ? analyzerPanelHtml(project) : ""}
 
@@ -369,6 +409,41 @@ export function createMelodyController({ projectStore, rerender }) {
       barIndex = targetBarIndex;
       rerender("melody");
     };
+
+    const peakMax = () => Math.max(metrics(projectStore.getSnapshot()).barCount - 1, 0);
+    const peakNow = () => Math.min(peakBar ?? defaultPeakBar(projectStore.getSnapshot()), peakMax());
+    document.querySelector("#melody-peak-toggle")?.addEventListener("click", () => {
+      peakOpen = !peakOpen;
+      if (peakOpen) peakBar = null;
+      rerender("melody");
+    });
+    document.querySelector("#melody-peak-prev")?.addEventListener("click", () => {
+      peakBar = Math.max(peakNow() - 1, 0);
+      rerender("melody");
+    });
+    document.querySelector("#melody-peak-next")?.addEventListener("click", () => {
+      peakBar = Math.min(peakNow() + 1, peakMax());
+      rerender("melody");
+    });
+    document.querySelectorAll("[data-peak-shape]").forEach((button) => {
+      button.addEventListener("click", () => {
+        peakShapeId = button.dataset.peakShape;
+        rerender("melody");
+      });
+    });
+    document.querySelector("#melody-peak-apply")?.addEventListener("click", () => {
+      const latest = projectStore.getSnapshot();
+      const guide = buildPeakGuide(latest, { peakBar: peakNow(), shapeId: peakShapeId });
+      const result = applyPeakGuide(getMelodyNotes(latest), guide, { barTicks: latest.basic.ppq * 4 });
+      if (result.placed === 0) {
+        message = "目安を置ける空の小節がありませんでした（入力済みの小節は変えません）。";
+      } else {
+        projectStore.updateMelodyNotes(result.notes);
+        message = `目安の音を${result.placed}小節に置きました${result.skipped > 0 ? `（入力済みの${result.skipped}小節は変えていません）` : ""}。山は Bar ${peakNow() + 1} です。`;
+        barIndex = Math.max(peakNow() - 3, 0);
+      }
+      rerender("melody");
+    });
 
     document.querySelector("#melody-analyzer-toggle")?.addEventListener("click", () => {
       analyzerOpen = !analyzerOpen;

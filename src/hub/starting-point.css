@@ -79,3 +79,42 @@
   color: #111;
   font-weight: 700;
 }
+
+.sp-modes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sp-modes .sp-chip {
+  flex: 1;
+}
+
+.sp-step {
+  margin: 8px 0 0;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.sp-answers {
+  display: grid;
+  gap: 8px;
+}
+
+.sp-answer,
+.sp-secondary {
+  min-height: 52px;
+  border: 1px solid #383842;
+  border-radius: 14px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-weight: 700;
+}
+
+.sp-secondary {
+  width: 100%;
+  margin-top: 10px;
+  min-height: 48px;
+  font-weight: 400;
+}
