@@ -44,7 +44,10 @@ assert.equal(hasCounter(project), false);
 assert.equal(COUNTER_ROLE, "counter");
 assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook"]);
 assert.match(COUNTER_STYLES[0].description, /米津/);
-assert.match(COUNTER_STYLES[1].description, /YOASOBI/);
+assert.match(COUNTER_STYLES[1].description, /YOASOBI \/ Ayase/);
+assert.match(COUNTER_STYLES[1].description, /コードトーン型/);
+assert.match(COUNTER_STYLES[1].description, /テンション型/);
+assert.match(COUNTER_STYLES[1].description, /別コード感型/);
 assert.match(COUNTER_STYLES[2].description, /Oasis/);
 assert.ok(COUNTER_STYLES.every((item) => item.description.includes("特定曲のコピーではありません")));
 
@@ -71,6 +74,21 @@ sparse.notes.forEach((note) => {
 const active = candidates.find((item) => item.id === "active");
 assert.ok(active.notes.length > sparse.notes.length, "active is denser than sparse");
 assert.ok(active.notes.every((note) => note.durationTick === STEP), "active uses eighth-note motion");
+
+// ActiveのC Major / Cコードでは、1小節内で
+// ①コードトーン → ②テンション → ③E-G-Bの薄い別コード感 を順番に混ぜる。
+const activeBar0 = active.notes.filter((note) => Math.floor(note.startTick / BAR) === 0);
+assert.deepEqual(activeBar0.map((note) => note.startTick % BAR), [0, 240, 480, 960, 1200, 1440]);
+const chordPcs = [0, 4, 7];
+const scalePcs = [0, 2, 4, 5, 7, 9, 11];
+const upperStructurePcs = [4, 7, 11];
+[0, 3].forEach((index) => assert.ok(chordPcs.includes(activeBar0[index].pitch % 12), `active chord tone ${index}`));
+[1, 4].forEach((index) => {
+  const pc = activeBar0[index].pitch % 12;
+  assert.ok(scalePcs.includes(pc), `active tension stays in scale ${index}`);
+  assert.ok(!chordPcs.includes(pc), `active tension is outside chord ${index}`);
+});
+[2, 5].forEach((index) => assert.ok(upperStructurePcs.includes(activeBar0[index].pitch % 12), `active upper structure ${index}`));
 
 // Hook: 各小節で同じ 1拍目→2拍目→3拍目 の3音輪郭を繰り返す
 const hook = candidates.find((item) => item.id === "hook");
