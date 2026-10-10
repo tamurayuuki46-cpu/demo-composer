@@ -14,6 +14,9 @@ v0.2-dev
 - schemaVersion 1 → 2 Migration
 - Migration前ProjectをIndexedDB `meta` storeへ退避
 - Hub: Project名 / BPM / Key / Scale
+- Hub Key変更: Chord root / Melody pitch / Bass pitchを元Key→新Keyの最短半音幅でAtomicに自動移調し、Drumsは変更しない
+- Key移調でMIDI Note 0〜127を外れる場合は更新全体を中止して元Projectを維持
+- Scale変更はChord / Melody / Bassがある場合は安全のため拒否
 - Chord: ダイアトニック7候補 + 基準音C〜B + Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
 - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
 - Chord Presetは現在Key / Scaleへ自動変換し、通常の `project.chords[]` として適用
@@ -28,22 +31,24 @@ v0.2-dev
 - project.json手動Backup Export
 - Vercel静的Build
 - GitHub Pages Fallback（developから公開）
-- MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset Smoke Test、Syntax Check、Static BuildのCI
+- MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change Smoke Test、Syntax Check、Static BuildのCI
 
 Repository統合状況:
 - v0.2基礎機能統合commit: `c21bb9b0b343e8dc807c6fd884ceaf670c48cd43`
 - Chord Preset統合commit: `5f0c6cb3d964ccd2d0ba93ed3bb43d81ecef6eb3`
+- Hub Key変更修正統合commit: `5b7f43003a64281bef051d74590e7badb66f5fb7`
 - PR #26 GitHub Pages Fallback: merged
 - PR #27 v0.2 Chord Quality + Schema v2 + Rhythm Preset統合: merged
 - PR #30 Chord Preset 6種類: merged
+- PR #32 Hub Key変更時のHarmony自動移調: merged
 - PR #23 Chord Quality + Schema v2: #27で置換済みとしてclose。branchは保持
 - PR #24 Rhythm Preset: #27で置換済みとしてclose。branchは保持
-- GitHub Pages Chord Preset版 Deploy: success
+- GitHub Pages Key修正版 Deploy: success
 - GitHub Pages公開URL: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 - v0.2統合前復元点: `restore/v0.1-before-v0.2-integration`
 - Chord Preset追加前復元点: `restore/v0.2-before-chord-presets`
-- Chord Preset作業branch: `chatgpt/v0.2-chord-presets`（履歴として保持）
-- 元の機能別復元点 / branchも削除せず保持
+- Key変更修正前復元点: `restore/v0.2-before-key-change-fix`
+- 作業branchは履歴として保持
 - `main` はstable専用。変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
 
@@ -67,22 +72,23 @@ v0.2 CI確認済み:
 - Melody grid smoke test: success
 - Chord types smoke test: success
 - Chord preset smoke test: success
+- Hub key-change smoke test: success
 - Static build: success
 - GitHub Pages Deploy: success
 
 開発中:
-- Chord Preset実装とdevelop統合は完了
-- 次はAndroid実機でChord Preset / Drum Presetの回帰確認
+- Hub Key変更修正のdevelop統合 / GitHub Pages公開は完了
+- 次はAndroid実機でKey変更とPreset機能の回帰確認
 
 次に実装 / 確認:
-1. GitHub Pages公開版でChord画面に `Chord Preset` が表示されることを確認
-2. 6種類のPreset Select / 説明 / 実コードPreviewを確認
-3. Preset適用で現在進行が置き換わることを確認
-4. 既存進行がある時の上書き確認を確認
-5. Bass Noteがある時に安全にChord変更を拒否することを確認
-6. Preset適用後の個別追加 / 削除 / Clearを確認
-7. Demo Player / Chord.mid / Song.midへPreset結果がそのまま反映されることを確認
-8. Rhythm Drum Preset 6種類のSelect / 適用 / 上書き確認 / 手動修正を公開版で回帰確認
+1. GitHub Pages公開版でHubのKeyを変更し、選択値が元へ戻らないことを確認
+2. Chordがある状態でKey変更し、コード進行が同じDegree関係のまま移調されることを確認
+3. Melody / Bassがある状態でKey変更し、同じ半音幅で移調されることを確認
+4. Key変更でDrumsが変わらないことを確認
+5. Chord / Melody / Bassがある状態のScale変更は安全に拒否されることを確認
+6. Chord Preset 6種類のSelect / Preview / 適用 / 個別修正を確認
+7. Rhythm Drum Preset 6種類のSelect / 適用 / 上書き確認 / 手動修正を確認
+8. Demo Player / Chord.mid / Melody.mid / Bass.mid / Song.midへKey変更後の結果が反映されることを確認
 9. 問題なければChord Tone表示の仕様案を作る
 10. その後Melody Analyzerを検討
 
@@ -91,7 +97,8 @@ v0.2 CI確認済み:
 - Chord並べ替え / 長さ変更は未対応
 - 借用和音を目的別に整理した支援UIは未対応
 - Chord Presetは初期6種類のみ。Scaler / Melody Sauce / Cubase / 書籍等からの分類拡張は未対応
-- Key / Scale変更時の既存Chord / Melody / Bass自動移調は未対応
+- Scale変更時の既存Chord / Melody / Bass自動変換は未対応。Harmony依存データがある場合は変更を拒否する
+- Key移調でMIDI Note範囲外になる場合はKey変更を拒否する
 - Bass Noteがある間はChord変更を拒否する
 - Melody Note Length / Velocity編集は未対応
 - Melody入力単位はUI状態のみで保存されない
@@ -113,6 +120,11 @@ v0.2 CI確認済み:
 
 最近の重要な設計判断:
 - Android Chromeを主対象とする
+- Key変更はHubが他Moduleを直接書き換えず、Core Project StateのGlobal OperationとしてChord / Melody / Bassを1回でAtomicに移調する
+- Key移調は最短半音幅を使用し、不要な1オクターブ移動を避ける
+- Key移調はChord quality / degree、Note timing / duration / velocityを維持し、Drumsは変更しない
+- Key移調でMIDI範囲外が発生する場合はProjectを部分更新せず全体を元のまま維持する
+- Scale変更はKey移調と分離し、Harmony依存データがある場合は拒否する
 - v0.2 Chord Qualityは「基準音を1つ選ぶ → 9種類から選ぶ」として候補を大量表示しない
 - ダイアトニック7候補は初心者導線として残す
 - Chord Quality定義はcoreへ集約し、Chord / Demo Player / MIDIで共有する
@@ -124,10 +136,9 @@ v0.2 CI確認済み:
 - Drum Presetは完成形の自動生成ではなく、叩き台を選んで16 stepを手動修正する機能とする
 - Drum Preset選択状態は保存せず、結果だけ通常のDrum Note Dataとして保存する
 - Vercelを残し、GitHub Pagesを第二公開先として運用する
-- PR #23 / #24は過去branchを上書きせず、最新developから作ったPR #27で安全に統合した
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented。Chord Preset / Drum Presetは専用Schemaを持たず、適用結果を既存Chord / Note Dataへ展開する。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented。Chord Preset / Drum Preset / Key移調は専用Schemaを追加せず、既存Project Dataを利用する。
 
 最終更新:
 2026-10-10
