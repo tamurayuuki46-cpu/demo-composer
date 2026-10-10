@@ -1,3 +1,4 @@
+import { chordIntervals } from "../core/chord-qualities.js";
 import { placeMonophonicNote } from "../core/note-placement.js";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -60,4 +61,10 @@ function createCopyId() {
   }
 
   return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+// コードの構成音（ピッチクラス 0〜11）。コード未設定なら空。Melody画面の強調表示用。
+export function chordTonePitchClasses(chord) {
+  if (!chord) return new Set();
+  return new Set(chordIntervals(chord.quality).map((interval) => (chord.root + interval) % 12));
 }

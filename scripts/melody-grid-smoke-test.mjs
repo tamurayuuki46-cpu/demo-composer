@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { toggleMonophonicStep, clearBar, copyMelodyBars, hasMelodyInBars } from "../src/melody/melody-grid.js";
+import { toggleMonophonicStep, clearBar, copyMelodyBars, hasMelodyInBars, chordTonePitchClasses } from "../src/melody/melody-grid.js";
 
 const EIGHTH = 240;
 const SIXTEENTH = 120;
@@ -66,5 +66,10 @@ assert.equal(hasMelodyInBars(src, { barIndex: 3, bars: 1, barTicks: 1920 }), fal
 const two = copyMelodyBars(src, { sourceBarIndex: 0, targetBarIndex: 2, bars: 2, barTicks: 1920 });
 assert.ok(two.some((n) => n.startTick === 3840 && n.pitch === C4));
 assert.ok(two.some((n) => n.startTick === 3840 + 1920 + 480 && n.pitch === G4));
+
+// Chord Tone: C major = C,E,G / Am7 = A,C,E,G / コード無し = 空
+assert.deepEqual([...chordTonePitchClasses({ root: 0, quality: "major" })].sort((a, b) => a - b), [0, 4, 7]);
+assert.deepEqual([...chordTonePitchClasses({ root: 9, quality: "minor7" })].sort((a, b) => a - b), [0, 4, 7, 9]);
+assert.equal(chordTonePitchClasses(undefined).size, 0);
 
 console.log("Melody grid smoke test passed");
