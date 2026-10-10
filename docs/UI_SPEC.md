@@ -50,6 +50,8 @@ v0.1の基本入力:
 - Clearで進行全削除
 - 削除後はstartTickを1小節単位で詰め直す
 
+Bass Noteが存在する間はChord変更を拒否し、Root不整合を防止する。Chordを変更するときはRhythmでClear Bassを行う。
+
 v0.1では並べ替え・コード長変更・借用和音・高度なコード編集は後回し。
 
 ## Melody
@@ -79,6 +81,26 @@ v0.1では並べ替え・コード長変更・借用和音・高度なコード�
 
 ## Rhythm
 
-- Bass / Kick / Snare / Hi-Hat
-- BassとKickを同時確認
-- 16 Stepを基本
+Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
+
+- 1 Bar = 16 step（16分音符）
+- スマホでは1 Beat = 4 stepだけ表示
+- Beat 1〜4ボタンで表示範囲を切替
+- `← Bar` / `Bar →` で小節移動
+- Bassは現在BarのChord Rootを使用
+- Chord未設定BarではKey Rootを使用
+- Bass / Kickを同時に確認可能
+- Kick / Snare / HHはGM準拠Noteを使用
+- Tapでstep ON/OFF
+- `Clear Bar` で現在BarのBass + Drumsを削除
+- `Clear Bass` でBass全体を削除し、Chord変更可能な状態へ戻す
+
+16列を横一列に縮小せず、4列ずつ見せることでタップ領域を確保する。
+
+後続:
+
+- Bass Pitch手動編集
+- Root / 5th / Approach候補
+- Velocity
+- Open HH / Percussion / Tom
+- Pattern Copy
