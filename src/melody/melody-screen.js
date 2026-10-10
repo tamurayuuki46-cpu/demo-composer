@@ -1,7 +1,7 @@
 import { chordSymbol } from "../chord/chord-theory.js";
 import { clearBar, getMelodyNotes, getOctavePitches, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 
-const STEP_LABELS = ["1", "1&", "2", "2&", "3", "3&", "4", "4&"];
+const STEP_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
 const BLACK_PITCH_CLASSES = new Set([1, 3, 6, 8, 10]);
 
 function escapeHtml(value) {
@@ -20,7 +20,6 @@ function pianoKeyClass(pitch) {
 export function createMelodyController({ projectStore, rerender }) {
   let barIndex = 0;
   let octave = 4;
-  let stepPage = 0;
   let message = "セルをタップして8分音符を入力します。";
 
   function metrics(project) {
@@ -44,8 +43,7 @@ export function createMelodyController({ projectStore, rerender }) {
 
     const notes = getMelodyNotes(project);
     const pitches = getOctavePitches(octave);
-    const firstStep = stepPage * 4;
-    const visibleSteps = [firstStep, firstStep + 1, firstStep + 2, firstStep + 3];
+    const visibleSteps = Array.from({ length: 8 }, (_, step) => step);
     const barStartTick = barIndex * barTicks;
     const chord = project.chords[barIndex];
     const chordLabel = chord ? `${chordSymbol(chord.root, chord.quality)} (${chord.degree})` : "コード未設定";
@@ -60,14 +58,15 @@ export function createMelodyController({ projectStore, rerender }) {
           ${visibleSteps.map((step) => {
             const startTick = barStartTick + step * stepTicks;
             const active = notes.some((note) => note.startTick === startTick && note.pitch === pitch);
-            return `<button class="note-cell${active ? " active" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${STEP_LABELS[step]}"></button>`;
+            const beatStartClass = step % 2 === 0 ? " beat-start" : "";
+            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${STEP_LABELS[step]}"></button>`;
           }).join("")}
         </div>
       `;
     }).join("");
 
     return `
-      <section class="card">
+      <section class="card melody-card">
         <div class="section-heading">
           <div>
             <h2>Melody</h2>
@@ -88,21 +87,16 @@ export function createMelodyController({ projectStore, rerender }) {
           <button id="melody-octave-up"${octave >= 6 ? " disabled" : ""}>Oct +</button>
         </div>
 
-        <div class="step-page-switch" role="group" aria-label="小節内の表示範囲">
-          <button data-step-page="0" class="${stepPage === 0 ? "active" : ""}">Beat 1–2</button>
-          <button data-step-page="1" class="${stepPage === 1 ? "active" : ""}">Beat 3–4</button>
-        </div>
-
-        <div class="melody-grid" aria-label="縦ピアノ付きメロディグリッド">
+        <div class="melody-grid" aria-label="縦ピアノ付き8分音符メロディグリッド">
           <div class="melody-row melody-header">
             <span class="piano-key-spacer" aria-hidden="true"></span>
-            ${visibleSteps.map((step) => `<span>${STEP_LABELS[step]}</span>`).join("")}
+            ${visibleSteps.map((step) => `<span class="${step % 2 === 0 ? "beat-start" : ""}">${STEP_LABELS[step]}</span>`).join("")}
           </div>
           ${gridRows}
         </div>
 
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
-        <p class="hint">左の縦ピアノを音程の目印にして入力します。同じステップでは1音だけ入力し、別の音をタップすると置き換わります。</p>
+        <p class="hint">1小節を `1 & 2 & 3 & 4 &` の8マスで表示します。左の縦ピアノを音程の目印にして入力し、同じステップでは1音だけ入力します。</p>
       </section>
     `;
   }
@@ -160,13 +154,6 @@ export function createMelodyController({ projectStore, rerender }) {
     document.querySelector("#melody-octave-up")?.addEventListener("click", () => {
       octave = Math.min(6, octave + 1);
       rerender("melody");
-    });
-
-    document.querySelectorAll("[data-step-page]").forEach((button) => {
-      button.addEventListener("click", () => {
-        stepPage = Number(button.dataset.stepPage) === 1 ? 1 : 0;
-        rerender("melody");
-      });
     });
   }
 
