@@ -4,6 +4,7 @@
   "private": true,
   "description": "Android-first songwriting support PWA",
   "scripts": {
+    "build": "node scripts/build-static.mjs",
     "serve": "python -m http.server 8080",
     "test:midi": "node scripts/midi-smoke-test.mjs"
   }
