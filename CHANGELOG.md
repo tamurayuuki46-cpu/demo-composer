@@ -4,6 +4,10 @@
 更新日: 2026-10-10
 
 ### 追加
+- Chord: 進行カードにコードの役割ラベル（安定 / つなぎ / 浮遊 / ひらける / 緊張 / 切ない / 不安定。Key外のコードは「借用」）。Melodyの見出しにも表示（`src/chord/chord-role.js`）
+- Melody: 度数表示ボタン。鍵盤の文字を、コードのルートから見た度数（R / ♭3 / 3 / 5 / ♭7 …）に切り替える（コードが無い小節はKeyの主音基準。画面の状態のみ、Schema変更なし）
+- Smoke Test追加: `chordRole` / `degreeLabel`（`npm run test:candidates` に含む）
+- 追加前の復元ブランチ `restore/v0.2-before-learning-labels`
 - Chord Backing Pattern 4種類（Block / 8分刻み / Arpeggio / Syncopation）。コード進行自体は変えず、伴奏の鳴らし方だけを選択できる（Schema変更なし）
 - Backing Pattern Smoke Test（`npm run test:backing`）。Pattern生成 / AutoSave対象データ / Undo・Redo / Chord.midへの反映をCIで確認
 - Backing Pattern最終統合前の復元ブランチ `restore/v0.2-before-backing-pattern-final`

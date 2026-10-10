@@ -121,3 +121,12 @@
 .spice-item {
   border-color: #b8860b;
 }
+
+/* コードの役割ラベル */
+.chord-role {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-style: normal;
+  color: #93c5fd;
+}

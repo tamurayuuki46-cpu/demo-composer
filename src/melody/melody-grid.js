@@ -68,3 +68,10 @@ export function chordTonePitchClasses(chord) {
   if (!chord) return new Set();
   return new Set(chordIntervals(chord.quality).map((interval) => (chord.root + interval) % 12));
 }
+
+// コードのルートから見た度数ラベル（R, ♭3, 3, 4, ♭5, 5, ♭6, 6, ♭7, 7 ...）。
+const DEGREE_LABELS = ["R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+
+export function degreeLabel(pitch, rootPitchClass) {
+  return DEGREE_LABELS[(((pitch - rootPitchClass) % 12) + 12) % 12];
+}

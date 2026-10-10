@@ -29,6 +29,7 @@ v0.2-dev
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
 - Chord 次のコード候補3つ（`chord-next.js`）/ Rhythm Bass候補3つ（`bass-candidates.js`）。どちらもタップで確定、Schema変更なし
 - Chord ひとスパイス（借用和音3候補、`suggestSpiceChords`）
+- Chord役割ラベル（`chord-role.js`）/ Melody度数表示（画面のみ）
 - 画面の文字サイズ3段階（`src/core/display-settings.js`、端末のlocalStorageのみ）
 - Melody Chord Tone強調（`chordTonePitchClasses`、見た目のみ）
 - Melody Copy Bar / Copy 2小節（`copyMelodyBars`）、Rhythm Drum PresetのSection一括適用（`applyDrumPresetToBars`）、Arrange骨子の進み具合表示（`sectionProgress`、Schema変更なし）

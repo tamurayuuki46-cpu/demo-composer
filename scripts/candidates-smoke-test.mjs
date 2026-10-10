@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { suggestNextChords, suggestSpiceChords } from "../src/chord/chord-next.js";
 import { getDiatonicChords } from "../src/chord/chord-theory.js";
+import { chordRole } from "../src/chord/chord-role.js";
+import { degreeLabel } from "../src/melody/melody-grid.js";
 import { applyBassCandidate, bassCandidatesForBar, bassPatternDots } from "../src/rhythm/bass-candidates.js";
 
 const BAR = 1920;
@@ -39,6 +41,26 @@ for (const scale of ["major", "minor"]) {
     assert.ok(spice.every((c) => !diatonic.has(`${c.root}:${c.quality}`)), `${key} ${scale} spice is borrowed`);
   }
 }
+
+// --- コードの役割: 全ダイアトニックに一言があり、ダイアトニック外は「借用」、コード無しは null
+for (const scale of ["major", "minor"]) {
+  for (const key of KEYS) {
+    for (const chord of getDiatonicChords(key, scale)) {
+      const role = chordRole(chord, { key, scale });
+      assert.ok(role.label && role.hint, `${key} ${scale} ${chord.degree}`);
+      assert.notEqual(role.label, "借用");
+    }
+  }
+}
+assert.equal(chordRole({ root: 0, quality: "major" }, { key: "C", scale: "major" }).label, "安定");
+assert.equal(chordRole({ root: 7, quality: "major" }, { key: "C", scale: "major" }).label, "緊張");
+assert.equal(chordRole({ root: 5, quality: "minor" }, { key: "C", scale: "major" }).label, "借用");
+assert.equal(chordRole(undefined, { key: "C", scale: "major" }), null);
+
+// --- 度数ラベル（Cをルートにした C4=R / E4=3 / G4=5、Gをルートにした B=3 / F=♭7）
+assert.deepEqual([60, 64, 67, 70, 71].map((p) => degreeLabel(p, 0)), ["R", "3", "5", "♭7", "7"]);
+assert.deepEqual([71, 65, 67].map((p) => degreeLabel(p, 7)), ["3", "♭7", "R"]);
+assert.equal(degreeLabel(48, 7), "4", "octave independent, below root pc");
 
 // --- Bass候補
 const project = (drumNotes = [], chord = { root: 0, quality: "major" }) => ({
