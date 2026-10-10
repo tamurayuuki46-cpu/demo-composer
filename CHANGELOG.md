@@ -4,6 +4,10 @@
 更新日: 2026-10-10
 
 ### 追加
+- Melody Analyzer（Melody内の `メロディの特徴` パネル）: 音域 / 跳躍 / コードトーン率 / リズム密度 / 同音連打 / モチーフ反復 の6項目を、数字と一言で表示。評価ではなく特徴の説明（`src/core/melody-analysis.js`）
+- Hub: `曲の特徴カード`（構成 / コード進行 / 音域 / 跳躍 / モチーフ反復 / 入力済みパート。`src/hub/song-card.js`）
+- Melody Analysis Smoke Test（`npm run test:analysis`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-analyzer`（Schema変更なし）
 - Chord: 進行カードにコードの役割ラベル（安定 / つなぎ / 浮遊 / ひらける / 緊張 / 切ない / 不安定。Key外のコードは「借用」）。Melodyの見出しにも表示（`src/chord/chord-role.js`）
 - Melody: 度数表示ボタン。鍵盤の文字を、コードのルートから見た度数（R / ♭3 / 3 / 5 / ♭7 …）に切り替える（コードが無い小節はKeyの主音基準。画面の状態のみ、Schema変更なし）
 - Smoke Test追加: `chordRole` / `degreeLabel`（`npm run test:candidates` に含む）
