@@ -48,6 +48,7 @@ Module Navigationの上に常設。
 - Loop
 - Position progress
 - 現在時間 / 全体時間
+- Loop中は、次の周に入るたびに最新の曲（Section再生なら最新のSection範囲）を読み直して鳴らす。再生中に編集した内容は、Stopしなくても次の周から聴こえる（1周の途中には反映しない）
 
 作曲確認用のため、Mix / FX / 音量調整を持つTrack Mixer等はPlayerへ追加しない。
 
