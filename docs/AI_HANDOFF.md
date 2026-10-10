@@ -28,6 +28,7 @@ v0.2-dev
 - Rhythm: Bass（音程選択: ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下、半音ずらし±6、長さ指定）/ Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
 - Chord 次のコード候補3つ（`chord-next.js`）/ Rhythm Bass候補3つ（`bass-candidates.js`）。どちらもタップで確定、Schema変更なし
+- Arrange ループから曲にする案内（`src/core/loop-guide.js`、Core `appendSectionCopy`。#60の上に積んでいる）
 - Chord ひとスパイス（借用和音3候補、`suggestSpiceChords`）
 - Section Variation（`少し違う版にする`: ドラム / ベース / メロディの3候補。`src/core/section-variation.js`）
 - Section Energy（Low/Mid/High）/ Transition（Keep/Fill/Stop/Build/Drop）: `structure.sections[]` の任意項目（schemaVersion 2のまま追記）。`src/core/section-ops.js`

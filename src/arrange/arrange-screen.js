@@ -1,4 +1,5 @@
 import { SECTION_VARIATIONS } from "../core/section-variation.js";
+import { loopGuide, suggestedCopyKind } from "../core/loop-guide.js";
 import {
   ENERGY_LEVELS,
   TRANSITIONS,
@@ -57,6 +58,9 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   let addKind = "verse";
   // 「少し違う版」の候補を開いているSection（画面の状態のみ）
   let variationOpenIndex = null;
+  // ループ案内の開閉と、複製するSectionの種類（画面の状態のみ）
+  let guideOpen = false;
+  let guideKind = null;
 
   function run(action, successMessage) {
     try {
@@ -144,6 +148,74 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
     `;
   }
 
+  // 8小節ループ → Section の流れの案内。いまの段階を判定して、次にやることを1つだけ出す。
+  function loopGuideHtml(project) {
+    const guide = loopGuide(project);
+    const current = guide.steps.findIndex((step) => step.status === "now");
+    const title = guide.phase === "done"
+      ? "ループから曲にする流れ ✓"
+      : `ループから曲にする（いま: ${current + 1}. ${guide.steps[current].label}）`;
+    const toggle = `<button id="arrange-guide-toggle" class="arrange-guide-toggle" aria-expanded="${guideOpen}">🔁 ${escapeHtml(title)}${guideOpen ? " ▲" : " ▼"}</button>`;
+    if (!guideOpen) return toggle;
+
+    const sections = getSections(project);
+    const kind = guideKind ?? suggestedCopyKind(sections.length);
+    let action = "";
+    if (guide.phase === "start") {
+      action = `
+        <p>まず、曲の一部になる8小節だけを作ります。サビやAメロのアイデア出し向けです。</p>
+        <button class="primary" id="arrange-guide-start">8小節ループから始める</button>`;
+    } else if (guide.phase === "build") {
+      action = `
+        <p>${sections[0].name}（${sections[0].bars}小節）に、コードを全小節ぶん入れて、メロディかドラムも入れましょう。入ったら次へ進みます。</p>
+        <div class="arrange-guide-links">
+          <button data-arrange-guide-go="chord">Chordへ</button>
+          <button data-arrange-guide-go="melody">Melodyへ</button>
+          <button data-arrange-guide-go="rhythm">Rhythmへ</button>
+        </div>`;
+    } else if (guide.phase === "grow") {
+      action = `
+        <p>ループができました。同じ中身を新しいSectionにコピーして、曲の長さを増やします。コピーしたあとで変えていきます。</p>
+        <div class="arrange-add">
+          <select id="arrange-guide-kind" aria-label="複製して追加するSectionの種類">
+            ${Object.entries(SECTION_KINDS).map(([id, def]) => `<option value="${escapeHtml(id)}"${id === kind ? " selected" : ""}>${escapeHtml(def.label)}</option>`).join("")}
+          </select>
+          <button class="primary" id="arrange-guide-copy">ループを複製して追加</button>
+        </div>`;
+    } else if (guide.phase === "vary") {
+      const ranges = sectionRanges(sections);
+      action = `
+        <p>次のSectionはループと同じ中身のままです。「少し違う版にする」で、ドラム・ベース・メロを少し変えると、曲らしくなります。</p>
+        <div class="arrange-guide-links">
+          ${guide.identical.map((index) => `<button data-arrange-guide-vary="${index}">${escapeHtml(ranges[index].section.name)}を違う版に</button>`).join("")}
+        </div>
+        <div class="arrange-add">
+          <select id="arrange-guide-kind" aria-label="複製して追加するSectionの種類">
+            ${Object.entries(SECTION_KINDS).map(([id, def]) => `<option value="${escapeHtml(id)}"${id === kind ? " selected" : ""}>${escapeHtml(def.label)}</option>`).join("")}
+          </select>
+          <button id="arrange-guide-copy">ループをもう1つ複製</button>
+        </div>`;
+    } else {
+      action = `
+        <p>すべてのSectionに違いが出ています。盛り上がり設計（Energy / つなぎ方）と、Melodyの「Sectionごとの比べ」で、サビの差を確かめてみましょう。足りなければ、ループを複製して増やせます。</p>
+        <div class="arrange-add">
+          <select id="arrange-guide-kind" aria-label="複製して追加するSectionの種類">
+            ${Object.entries(SECTION_KINDS).map(([id, def]) => `<option value="${escapeHtml(id)}"${id === kind ? " selected" : ""}>${escapeHtml(def.label)}</option>`).join("")}
+          </select>
+          <button id="arrange-guide-copy">ループを複製して追加</button>
+        </div>`;
+    }
+
+    return `
+      ${toggle}
+      <div class="arrange-guide">
+        <ol class="arrange-guide-steps">
+          ${guide.steps.map((step) => `<li class="${step.status}">${step.status === "done" ? "✓ " : ""}${escapeHtml(step.label)}</li>`).join("")}
+        </ol>
+        ${action}
+      </div>`;
+  }
+
   function render() {
     const project = projectStore.getSnapshot();
     const sections = getSections(project);
@@ -199,6 +271,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           </div>
           ${sections.length > 0 ? `<button id="arrange-play-all" class="small-action">▶ 全体</button>` : ""}
         </div>
+        ${loopGuideHtml(project)}
         ${body}
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
       </section>
@@ -208,6 +281,36 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   function bind() {
     const query = (selector) => document.querySelectorAll(selector);
     const indexOf = (button, key) => Number(button.dataset[key]);
+
+    document.querySelector("#arrange-guide-toggle")?.addEventListener("click", () => {
+      guideOpen = !guideOpen;
+      rerender("arrange");
+    });
+    document.querySelector("#arrange-guide-start")?.addEventListener("click", () => run(
+      () => projectStore.applySectionTemplate("loop-8"),
+      "8小節ループを作りました。コード・メロディ・ドラムを入れていきましょう。"
+    ));
+    query("[data-arrange-guide-go]").forEach((button) => {
+      button.addEventListener("click", () => rerender(button.dataset.arrangeGuideGo));
+    });
+    document.querySelector("#arrange-guide-kind")?.addEventListener("change", (event) => {
+      guideKind = event.target.value;
+    });
+    document.querySelector("#arrange-guide-copy")?.addEventListener("click", () => {
+      const kind = guideKind ?? suggestedCopyKind(getSections(projectStore.getSnapshot()).length);
+      run(
+        () => projectStore.appendSectionCopy(0, kind),
+        `ループを${SECTION_KINDS[kind].label}として複製しました。「少し違う版にする」で変えていきましょう。`
+      );
+      guideKind = null;
+    });
+    query("[data-arrange-guide-vary]").forEach((button) => {
+      button.addEventListener("click", () => {
+        variationOpenIndex = Number(button.dataset.arrangeGuideVary);
+        message = "「少し違う版にする」を開きました。候補を1つ選んで、聴いてみましょう。";
+        rerender("arrange");
+      });
+    });
 
     query("[data-arrange-template]").forEach((button) => {
       button.addEventListener("click", () => run(

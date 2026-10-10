@@ -212,3 +212,76 @@
   line-height: 1.4;
   color: #9ca3af;
 }
+
+/* ループから曲にする案内 */
+.arrange-guide-toggle {
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 8px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-weight: 700;
+}
+
+.arrange-guide {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.arrange-guide p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.arrange-guide-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arrange-guide-steps li {
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: #26262d;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.arrange-guide-steps li.now {
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+  opacity: 1;
+}
+
+.arrange-guide-steps li.done {
+  opacity: 0.9;
+}
+
+.arrange-guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.arrange-guide-links button {
+  min-height: 48px;
+  flex: 1 1 30%;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+}
