@@ -85,6 +85,8 @@ jobs:
         run: npm run test:variation
       - name: Melody to chord candidates smoke test
         run: npm run test:melody-chords
+      - name: Starting point smoke test
+        run: npm run test:starting-point
 
       - name: Display settings smoke test
         run: npm run test:display

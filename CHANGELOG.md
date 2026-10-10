@@ -28,6 +28,10 @@
 - Chord: `🎤 メロディからコードを付ける`。鼻歌（メロディ）を先に作ったあと、小節ごとに「合うコード候補3つ」を出す（Key/Scaleのダイアトニック7和音から、メロの音がコードの構成音に乗る度合いで選ぶ。長い音・拍の頭の音を重く数える。理由と役割ラベル付き）。選ぶとその小節のコードになり次の小節へ進む。`メロのある小節に1つ目の候補をまとめて付ける`（置き換え時は確認、↶で戻せる）。`src/chord/chord-for-melody.js`
 - Melody to Chord Smoke Test（`npm run test:melody-chords`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-melody-to-chords`（Schema変更なし）
+- Hub 出発点: 候補カードにコード名の進行（例: Dm → A# → F → C）と `▶ 試聴` を追加。試聴は保存せず仮のProjectを鳴らすだけ（曲のデータは変わらない。Bassは外して鳴らす）
+- Hub: `🧭 出発点を選ぶ（ジャンル × ムード）`。ジャンル（ポップ / バラード / ロック / ダンス / ボカロ風）とムード（切ない / 明るい / 夜 / 力強い / やさしい）を選ぶと、Key / BPM / コード進行 / ドラム / 伴奏 / 音色の方向性をまとめた出発点を3つ出す（14種のレシピ、どちらか片方の選択でも可）。選ぶと1回の編集（Undo1回）で反映。コード・ドラム（出発点の小節数分）・Key/BPM/音色/伴奏を置き換え、メロディは残す。Bassがある間は不可。`src/hub/starting-point.js` / `starting-point-ui.js`、Storeに `applyStartingPoint`
+- Starting Point Smoke Test（`npm run test:starting-point`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-starting-point`（Schema変更なし。`metadata.genre` / `metadata.mood` を既存フィールドとして使用）
 - Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
 - Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
 - コピー処理を `src/hub/clipboard.js` に共通化
