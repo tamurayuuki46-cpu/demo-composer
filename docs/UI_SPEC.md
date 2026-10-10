@@ -22,6 +22,9 @@ Bottom Navigation:
 - Chord
 - Melody
 - Rhythm
+- Sound
+
+5 Moduleをスマホ下部に並べるため、各Buttonは短いLabelを使い、横スクロールを使わない。
 
 ## Demo Player
 
@@ -222,3 +225,42 @@ Presetは完成パターンを自動で作るためではなく、初心者が16
 - Root / 5th / Approach候補
 - Velocity
 - Open HH / Percussion / Tom
+
+## Sound Sketch Lite
+
+本来v0.4予定のSound Moduleから、スマホで「音色の方向性」を決める最小機能だけをv0.2-devへ先行実装する。
+
+対象Part:
+
+- Chord: Keys / Pad / Piano
+- Melody: Lead / Keys / Pluck
+- Bass: Soft Bass / Synth Bass / Deep Bass
+
+Tone方向タグ:
+
+- Natural
+- Bright
+- Soft
+- Warm
+- Dark
+- Airy
+- Aggressive
+
+UIルール:
+
+- Bottom Navigationに `Sound` を追加する
+- PartごとにPreset Selectを1つ置く
+- Toneは44px以上のButtonで選ぶ
+- 選択中Toneを明確にActive表示する
+- 変更後は常設Demo PlayerのPlayで確認する
+- Sound画面にSynth Parameter / Mixer / FX Rackは追加しない
+- Drums音色変更はLiteでは対象外
+
+動作ルール:
+
+- Sound選択はAutoSave対象
+- Sound選択は `project.instruments[]` に保存する
+- Chord / Melody / BassのMIDI Note、Chord Data、Rhythm Dataは変更しない
+- Demo PlayerのWeb Audio仮音色だけを変更する
+- MIDI Program Change / CCは出力しない
+- 最終音色の作り込みはCubasis / Cubase / Plugin側へ任せる
