@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node scripts/build-static.mjs",
     "serve": "python -m http.server 8080",
-    "test:midi": "node scripts/midi-smoke-test.mjs"
+    "test:midi": "node scripts/midi-smoke-test.mjs",
+    "test:rhythm": "node scripts/rhythm-copy-smoke-test.mjs"
   }
 }
