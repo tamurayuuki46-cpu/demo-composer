@@ -15,24 +15,24 @@ Module同士は直接呼び合わない。
 - Arrange
 - Sound
 
-v0.1では Hub / Chord / Melody / Rhythm を優先。
+現在は Hub / Chord / Melody / Rhythm を実装済み。
 
 ## Core Responsibilities
 
 `src/core/`
 
 - project state
-- event bus
+- schema / migration
 - validation
-- shared utilities
+- shared music constants / utilities
 
 ### Project State
 
 `src/core/project-state.js` が、Demo Composer内の共通Project Dataをメモリ上で管理する。
 
-v0.1-dev時点では以下を実装済み。
+v0.2-dev時点:
 
-- DATA_SCHEMA.mdのschemaVersion 1に沿ったDefault Project生成
+- DATA_SCHEMA.mdのschemaVersion 2に沿ったDefault Project生成
 - Project全体のValidation
 - Snapshot取得
 - State変更通知（subscribe）
@@ -40,6 +40,16 @@ v0.1-dev時点では以下を実装済み。
 - 更新ごとのrevision増加
 
 Project StateはModuleから直接オブジェクトを書き換えさせず、責任Module用の更新APIを通す。
+
+### Schema / Migration
+
+- `project-schema.js`: 現在のappVersion / schemaVersion
+- `project-migration.js`: 旧Projectを現在Schemaへ変換
+- `chord-qualities.js`: Chord Qualityと構成音の共通定義
+
+Chord / Audio / MIDIは同じChord Quality定義を参照し、表示・試聴・MIDIで構成音が食い違わないようにする。
+
+schemaVersion 1 → 2ではProject構造自体は維持し、Chord Qualityの許可値を拡張する。旧major / minor / diminishedはそのまま有効。
 
 ## Storage
 
@@ -52,6 +62,7 @@ Storageは `src/storage/` に分離し、coreはIndexedDBへ直接依存しな�
 - `meta` storeへactiveProjectIdを保存
 - 起動時にActive Projectを読み込む
 - Save Nowから手動保存
+- Schema Migration前のProjectを`meta` storeへ退避
 - Save Now時に `navigator.storage.persist()` が利用可能なら永続ストレージ保護を要求
 
 `autosave.js`:
@@ -63,11 +74,9 @@ Storageは `src/storage/` に分離し、coreはIndexedDBへ直接依存しな�
 - `visibilitychange`でhiddenになる時は即時保存
 - Project Stateやrevision自体は変更しない
 
-Hub Exportから`project.json`を手動Backupとしてダウンロードできる。Importは未実装。
+Hub Exportから`project.json`を手動Backupとしてダウンロードできる。Import / Snapshot履歴は未実装。
 
-現時点ではSnapshot履歴 / Migrationは未実装。
-
-保存済みProjectが読み込めない、または現在のSchema Validationに通らない場合は、新規Default Projectへフォールバックする。
+保存済みschemaVersion 1 Projectは、移行前データを退避してからschemaVersion 2へMigrationし、Active Projectとして保存する。未対応Schemaや不正データは安全側へ倒して新規Default Projectへフォールバックする。
 
 ## Module Ownership
 
@@ -94,16 +103,15 @@ Demo Playerは共通UIとして画面下部、Module Navigationの上に常設�
 
 Chord / Melody / Bass / Drumsを軽量な仮音で再生する。
 
+Chordは`src/core/chord-qualities.js`の構成音を使うため、Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / augを試聴できる。
+
 Android Chromeでは、ユーザー操作後に`AudioContext.resume()`を行い、必要時はsilent bufferを経由してAudioContextをrunningへ復帰させる。
 
 スマホ本体スピーカーで作曲判断しやすくするため、Demo Playerの仮音だけ以下を適用する。
 
-- Chord previewはProject/MIDI本体を変更せず、再生時だけ1オクターブ上のvoicingを使用
+- Chord previewはProject/MIDI本体を変更せず、再生時だけ聞き取りやすい音域を使用
 - Bass previewは低域の聞き取りを補うためtriangle波を使用
 - 出力は `master → loudness gain → compressor → limiter → output gain → destination`
-- 単純な後段2倍ブーストはAndroid実機でクリップが目立ったため不採用
-
-これらはDemo Player専用の再生処理であり、Project DataやMIDI ExportのNote/Pitchには影響させない。
 
 Playbackは作曲判断の確認用途だけを担当し、高度なSynth / Mixing / Mastering機能は持たない。
 
@@ -116,7 +124,7 @@ MIDI出力は `src/midi/` に集約する。
 
 Project Stateや各ModuleはMIDI byte構造を知らない。
 
-v0.1 Export:
+Export:
 
 - Song.mid
 - Chord.mid
@@ -127,4 +135,6 @@ v0.1 Export:
 
 MIDIはSMF Type 1 / PPQ 480。Song.midはConductor + Chord + Melody + Bass + Drums、Part MIDIはConductor + 対象Partで生成する。
 
-Program ChangeとCCはv0.1では出力しない。最終音源はCubasis / Cubase側で差し替える。
+Chord MIDIも`chord-qualities.js`の共通構成音定義を利用する。
+
+Program ChangeとCCは現時点では出力しない。最終音源はBandLab / Cubasis / Cubase側で差し替える。
