@@ -1,3 +1,4 @@
+import { createDemoPlayer } from "./audio/demo-player.js";
 import { chordSymbol, getDiatonicChords } from "./chord/chord-theory.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createMelodyController } from "./melody/melody-screen.js";
@@ -7,6 +8,8 @@ import { loadActiveProject, requestPersistentStorage, saveProject } from "./stor
 let projectStore;
 let melodyController;
 let rhythmController;
+let demoPlayer;
+let playerState = { playing: false, loop: false, position: 0, duration: 0 };
 let currentScreen = "hub";
 let startupMessage = "Projectを編集できます。変更後はSaveで端末に保存してください。";
 let chordMessage = "下の候補をタップしてコードを追加します。";
@@ -121,6 +124,11 @@ const screens = {
 const screen = document.querySelector("#screen");
 const buttons = [...document.querySelectorAll(".nav-btn")];
 const projectTitle = document.querySelector(".topbar h1");
+const playerPlay = document.querySelector("#player-play");
+const playerStop = document.querySelector("#player-stop");
+const playerLoop = document.querySelector("#player-loop");
+const playerProgress = document.querySelector("#player-progress");
+const playerTime = document.querySelector("#player-time");
 
 function escapeHtml(value) {
   return String(value)
@@ -133,6 +141,29 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value);
+}
+
+function formatTime(seconds) {
+  const safe = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
+  const minutes = Math.floor(safe / 60);
+  const secs = Math.floor(safe % 60).toString().padStart(2, "0");
+  return `${minutes}:${secs}`;
+}
+
+function updatePlayerUi(nextState) {
+  playerState = nextState;
+  playerPlay?.classList.toggle("active", nextState.playing);
+  playerLoop?.classList.toggle("active", nextState.loop);
+  playerLoop?.setAttribute("aria-pressed", String(nextState.loop));
+
+  if (playerProgress) {
+    playerProgress.max = nextState.duration || 1;
+    playerProgress.value = Math.min(nextState.position, nextState.duration || 1);
+  }
+
+  if (playerTime) {
+    playerTime.textContent = `${formatTime(nextState.position)} / ${formatTime(nextState.duration)}`;
+  }
 }
 
 function setHubMessage(message, isError = false) {
@@ -262,6 +293,27 @@ function bindChordControls() {
   });
 }
 
+function bindPlayerControls() {
+  playerPlay?.addEventListener("click", async () => {
+    try {
+      await demoPlayer.play(projectStore.getSnapshot());
+    } catch (error) {
+      demoPlayer.stop();
+      if (playerTime) {
+        playerTime.textContent = error instanceof Error ? error.message : "再生できません。";
+      }
+    }
+  });
+
+  playerStop?.addEventListener("click", () => {
+    demoPlayer.stop();
+  });
+
+  playerLoop?.addEventListener("click", () => {
+    demoPlayer.setLoop(!playerState.loop);
+  });
+}
+
 function render(name) {
   currentScreen = name;
   screen.innerHTML = screens[name]();
@@ -298,10 +350,13 @@ async function boot() {
 
   melodyController = createMelodyController({ projectStore, rerender: render });
   rhythmController = createRhythmController({ projectStore, rerender: render });
+  demoPlayer = createDemoPlayer({ onStateChange: updatePlayerUi });
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => render(button.dataset.screen));
   });
+  bindPlayerControls();
+  updatePlayerUi(playerState);
 
   projectStore.subscribe((project) => {
     projectTitle.textContent = project.metadata.title;
