@@ -57,6 +57,7 @@ Repository統合状況:
 - PR #45 Backing Pattern旧統合: develop先行更新と競合したため未mergeでclose。branchは履歴として保持
 - PR #50 Backing Pattern最終統合: merged
 - Backing Pattern統合merge commit: `0f1b4fd20b0fd5795fa0ae55174639fc24e4dad1`
+- GitHub Pages Backing Pattern版 Build / Deploy: success
 - GitHub Pages公開URL: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 - v0.2統合前復元点: `restore/v0.1-before-v0.2-integration`
 - Chord Preset追加前復元点: `restore/v0.2-before-chord-presets`
@@ -100,10 +101,10 @@ v0.2 CI確認済み:
 - project.json Import smoke test: success
 - Static build: success
 - PR #50 CI: success
+- GitHub Pages Backing Pattern版 Build / Deploy: success
 
 開発中:
-- Backing Patternのdevelop統合は完了
-- GitHub PagesへのBacking Pattern版Deployを確認中 / 完了後Android実機回帰へ進む
+- Backing Patternのdevelop統合 / GitHub Pages公開は完了
 - Arrange / Undo / Sound / Backingを含むAndroid実機回帰確認が次の作業
 - Cloudflare Pagesは導入手順のみRepositoryへ追加済み。Cloudflare Dashboard側のGitHub接続・Pages Project作成は未実施
 
