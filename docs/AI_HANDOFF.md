@@ -36,6 +36,7 @@ v0.2-dev
 - Section Variation（`少し違う版にする`: ドラム / ベース / メロディ3種（終わり・音程だけ・リズムだけ）の5候補。`src/core/section-variation.js`）
 - Section Energy（Low/Mid/High）/ Transition（Keep/Fill/Stop/Build/Drop）: `structure.sections[]` の任意項目（schemaVersion 2のまま追記）。`src/core/section-ops.js`
 - Counter Melody（裏メロ）: Arrangeの各Sectionで3候補（ロングトーン / レスポンス / 3度下）を聴いて当てる。`tracks[role=counter]`（Schema追記のみ）、`src/core/counter-melody.js`、MIDI `CounterMelody.mid`
+- MIDI読み込み（Hub Export内。提案 → 確かめる → 取り込む。`src/midi/midi-reader.js` / `midi-import.js`、Schema変更なし）
 - Hub 作編曲の手引き（16手順のチェックリスト。✓は端末のlocalStorageのみ。`src/hub/guide.js`）
 - Hub 骨子完成チェック（✓ / △ / －、`src/core/skeleton-check.js`、読むだけ）
 - Chord メロディからコード候補3つ（`src/chord/chord-for-melody.js`、小節ごと・まとめ付け）
@@ -81,7 +82,8 @@ v0.2-dev
 10. 裏メロ: Sectionごとに3候補を試聴 → 適用 → ↶ / 消す。パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
 11. Hubの `骨子チェック` の ✓ / △ / － と、「次に決めること」のボタン遷移を確認
 12. 新機能の追加はいったん止めて、`docs/REAL_SONG_TEST.md` の手順で実制作テスト（1曲を通して作り、MIDIをCubasis / Cubaseへ渡す）を優先
-13. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
+13. MIDI読み込み: アプリで書き出したSong.midと、DAWで作ったMIDIを読み込み、役割の提案・BPM・Key・コード判定が妥当か、取り込み後に↶で戻せることを確認
+14. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
 
 既知の問題:
 - Melody候補は1小節単位。Section単位 / 複数小節一括生成は未対応

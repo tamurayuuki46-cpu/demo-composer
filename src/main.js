@@ -23,6 +23,9 @@ import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
 import { songCardHtml } from "./hub/song-card.js";
 import { skeletonCheckHtml, skeletonCheckSummary } from "./hub/skeleton-check-ui.js";
 import { guideHtml, guideSummary, refreshGuideDom } from "./hub/guide-ui.js";
+import { midiImportConvert, midiImportHtml } from "./hub/midi-import-ui.js";
+import { MAX_MIDI_BYTES, parseMidi } from "./midi/midi-reader.js";
+import { suggestRoles } from "./midi/midi-import.js";
 import { loadGuideProgress, saveGuideProgress, toggleGuideStep } from "./hub/guide.js";
 import { bindStartingPoint, startingPointHtml } from "./hub/starting-point-ui.js";
 import { previewProject } from "./hub/starting-point.js";
@@ -61,6 +64,7 @@ let melodyChordOpen = false;
 let melodyChordBar = 0;
 let songCardOpen = false;
 let skeletonOpen = false;
+let midiImport = null; // MIDI取り込みの確認中の状態（画面だけ。取り込むまでProjectは変えない）
 let guideOpen = false;
 let guideDone = null; // 手引きの✓（この端末のlocalStorageだけ。初めて開くときに読む）
 function getGuideDone() {
@@ -127,6 +131,8 @@ function hubScreen() {
         <button id="toggle-consult" class="primary-action" aria-expanded="false">AI相談</button>
       </div>
 
+      ${midiImport ? midiImportHtml(midiImport) : ""}
+
       <button id="toggle-skeleton" class="song-card-toggle" aria-expanded="${skeletonOpen}">✅ ${escapeHtml(skeletonCheckSummary(project))}${skeletonOpen ? " ▲" : " ▼"}</button>
       ${skeletonOpen ? skeletonCheckHtml(project) : ""}
 
@@ -162,6 +168,9 @@ function hubScreen() {
         <h3 class="import-heading">読み込み</h3>
         <button id="import-project-json" class="import-button">project.jsonを読み込む</button>
         <input id="import-project-file" type="file" accept=".json,application/json" hidden />
+        <button id="import-midi" class="import-button">MIDIを読み込む（.mid）</button>
+        <input id="import-midi-file" type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden />
+        <p class="hint">MIDIを読み込むと、トラックごとの役割（Chord / Melody / Bass / Drums / 裏メロ）を確かめてから取り込めます。</p>
         <p class="hint">書き出したproject.jsonから曲を戻します。いまの曲は置き換わります（画面上部の ↶ で元に戻せます）。</p>
         <p class="hint">All MIDIはSong.midとパート別MIDIをまとめてダウンロードします。Androidで複数ダウンロードが止められた場合は個別ボタンを使ってください。</p>
       </section>
@@ -582,10 +591,71 @@ function bindHubControls() {
     if (file) await importProjectFile(file);
   });
 
+  const midiFile = document.querySelector("#import-midi-file");
+  document.querySelector("#import-midi")?.addEventListener("click", () => midiFile?.click());
+  midiFile?.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) await openMidiImport(file);
+  });
+
+  document.querySelectorAll("[data-midi-role]").forEach((select) => {
+    select.addEventListener("change", () => {
+      if (!midiImport) return;
+      const roles = [...midiImport.roles];
+      roles[Number(select.dataset.midiRole)] = select.value;
+      // 同じ役割は1つのトラックだけ。あとから選んだほうを優先し、前のトラックは「使わない」にする
+      if (select.value !== "none") roles.forEach((role, index) => { if (index !== Number(select.dataset.midiRole) && role === select.value) roles[index] = "none"; });
+      midiImport = { ...midiImport, roles };
+      render("hub");
+    });
+  });
+  document.querySelector("#midi-key")?.addEventListener("change", (event) => {
+    midiImport = { ...midiImport, key: event.target.value || null };
+    render("hub");
+  });
+  document.querySelector("#midi-scale")?.addEventListener("change", (event) => {
+    midiImport = { ...midiImport, scale: event.target.value || null };
+    render("hub");
+  });
+  document.querySelector("#midi-import-cancel")?.addEventListener("click", () => {
+    midiImport = null;
+    render("hub");
+  });
+  document.querySelector("#midi-import-apply")?.addEventListener("click", () => applyMidiImport());
+
   document.querySelector("#export-project-json")?.addEventListener("click", () => {
     downloadProjectJson(projectStore.getSnapshot());
     setHubMessage("project.jsonを書き出しました。バックアップとして保管できます。");
   });
+}
+
+async function openMidiImport(file) {
+  try {
+    if (file.size > MAX_MIDI_BYTES) throw new Error("MIDIファイルが大きすぎます（2MBまで）。");
+    const parsed = parseMidi(new Uint8Array(await file.arrayBuffer()));
+    midiImport = { fileName: file.name, parsed, roles: suggestRoles(parsed), key: null, scale: null };
+    render("hub");
+    setHubMessage("MIDIを読み込みました。役割を確かめて「この内容で取り込む」を押してください。");
+  } catch (error) {
+    setHubMessage(error instanceof Error ? error.message : "MIDIを読み込めませんでした。", true);
+  }
+}
+
+function applyMidiImport() {
+  if (!midiImport) return;
+  try {
+    const { project, report } = midiImportConvert(midiImport);
+    if (!globalThis.confirm(`「${project.metadata.title}」を取り込みます。いまの曲は置き換わります（↶ で戻せます）。よろしいですか？`)) return;
+    demoPlayer.stop();
+    chordRootSelection = null;
+    projectStore.replaceProject(project);
+    midiImport = null;
+    render(currentScreen);
+    setHubMessage(`MIDIを取り込みました（${report.bars}小節）。コードはChord画面で確認してください。`);
+  } catch (error) {
+    setHubMessage(error instanceof Error ? error.message : "取り込めませんでした。", true);
+  }
 }
 
 async function importProjectFile(file) {
