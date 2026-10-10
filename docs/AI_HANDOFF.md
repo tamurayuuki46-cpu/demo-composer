@@ -35,7 +35,7 @@ v0.2-dev
 - ArrangeのSection単体再生でもSound設定を保持
 - MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid
 - Sound Sketch LiteはMIDI Program Change / CCを出力しない
-- project.json手動Backup Export
+- project.json手動Backup Export / 読み込み（検証・Migration・確認・Undo可。`src/storage/project-import.js`）
 - Vercel静的Build
 - GitHub Pages Fallback（developから公開）
 - Cloudflare Pages Fallback導入手順を `docs/CLOUDFLARE_PAGES.md` に追加済み。Dashboard接続は別途必要
@@ -130,7 +130,7 @@ v0.2 CI確認済み:
 - SoundはChord / Melody / Bassのみ。Drums音色変更は未対応
 - Soundを単独で鳴らす専用Preview Buttonは未実装。曲データをDemo Playerで再生して確認する
 - 6 Module Bottom Navigationの実機可読性・誤タップは要確認
-- Snapshot履歴 / project.json Import / Service Workerは未実装
+- Snapshot履歴 / Service Workerは未実装
 - Cubasis実機確認 / PC Cubase Importは未実施
 
 触らない部分:

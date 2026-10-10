@@ -158,7 +158,7 @@ Storageは `src/storage/` に分離し、coreはIndexedDBへ直接依存しな�
 - `visibilitychange`でhiddenになる時は即時保存
 - Project Stateやrevision自体は変更しない
 
-Hub Exportから`project.json`を手動Backupとしてダウンロードできる。Import / Snapshot履歴は未実装。
+Hub Exportから`project.json`を手動Backupとしてダウンロードできる。`src/storage/project-import.js` の `parseProjectJson` が読み込み時の検証とMigrationを行い、Storeの `replaceProject` が中身を置き換える（Project IDは維持。通常の編集と同じくUndo可）。Snapshot履歴は未実装。
 
 保存済みschemaVersion 1 Projectは、移行前データを退避してからschemaVersion 2へMigrationし、Active Projectとして保存する。未対応Schemaや不正データは安全側へ倒して新規Default Projectへフォールバックする。
 

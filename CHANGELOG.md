@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- project.json読み込み（Hub > Export > 読み込み。検証・schema v1移行・確認ダイアログ・Undo可）
+- project.json Import Smoke Test（`npm run test:import`、CI対象）
+- Import実装前の復元ブランチ `restore/v0.2-before-project-import`
 - 曲の構成（Arrange / Section）: 叩き台3種類、小節数の増減、追加・削除、Section間コピー、Section単位の再生、Melody / Rhythm見出しへのSection表示、MIDI Section Marker（Schema変更なし）
 - Section Smoke Test（`npm run test:section`、CI対象）
 - Section実装前の復元ブランチ `restore/v0.2-before-arrange-sections`
