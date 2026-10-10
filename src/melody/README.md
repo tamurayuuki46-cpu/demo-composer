@@ -5,8 +5,9 @@ Melody ModuleはMain MelodyのNote Dataと将来のMelody Analyzerを担当す�
 ## v0.1-dev implemented
 
 - スマホ向け簡易Piano Roll
+- 左端に白鍵 / 黒鍵を区別した縦ピアノKeyboard
 - 1小節 = 8分音符8 step
-- 画面には4 stepずつ表示し、Beat 1–2 / Beat 3–4を切替
+- `1 & 2 & 3 & 4 &` の8 stepを1画面に同時表示
 - 1オクターブずつ表示し、Oct − / Oct +で移動
 - Bar単位で前後移動
 - ChordがあるBarでは現在Chord名 + Degreeを表示
@@ -21,14 +22,19 @@ PPQ 480 / 4/4固定。
 
 - 1 Bar = 1920 tick
 - 1 Step = 240 tick
+- 8 Step = `1 & 2 & 3 & 4 &`
 - Note duration = 240 tick
 - Default velocity = 96
 
 ## Mobile UX
 
-16個の細いstepを横並びにせず、4 stepずつ表示する。
+Beat 1–2 / Beat 3–4のページ切替は使わず、1小節8 stepを同時表示する。
 
-目的はPC Piano Rollの縮小ではなく、Androidスマホでタップしやすい入力UIにすること。
+Android狭幅では、縦ピアノの幅・カード余白・Grid Gapを縮めて横スクロールを避ける。Beat頭は視覚的に区切り、1小節全体のメロディ形状を一目で確認できることを優先する。
+
+縦ピアノ自体はv0.1では表示専用で、Note入力はGrid cell Tapで行う。
+
+目的はPC Piano Rollの縮小ではなく、Androidスマホで曲の流れを把握しながら入力できるUIにすること。
 
 ## Later
 

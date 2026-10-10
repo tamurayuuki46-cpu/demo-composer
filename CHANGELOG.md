@@ -24,7 +24,11 @@
 - Chord State Validation / updateChords API
 - Melody Track Validation / updateMelodyNotes API
 - スマホ向け簡易Melody Piano Roll
-- MelodyのBar / Octave / Beat表示切替
+- Melody左端の縦ピアノKeyboard（白鍵 / 黒鍵 + Note名表示）
+- Melody縦ピアノUI変更前の復元ブランチ `restore/v0.1-before-melody-vertical-piano`
+- Melody 8マスUI変更前の復元ブランチ `restore/v0.1-before-melody-8step-grid`
+- Rhythm 16マスUI変更前の復元ブランチ `restore/v0.1-before-rhythm-16step-grid`
+- feature-complete統合前の復元ブランチ `restore/v0.1-before-feature-complete-integration`
 - Monophonicな8分音符Tap入力 / Clear Bar
 - Melody UI大幅変更前の復元ブランチ `restore/v0.1-before-melody-roll`
 - Bass / Drums Track更新API
@@ -62,6 +66,11 @@
 - Chord画面を固定サンプルからProject Data連動UIへ変更
 - Chord進行が存在する間はKey / Scale変更を拒否し、Degree不整合を防止
 - Melody画面をPlaceholderからProject Data連動の簡易Piano Rollへ変更
+- MelodyのPitch表示を文字列だけの列から、白鍵 / 黒鍵が分かる縦ピアノ表示へ変更
+- MelodyのBeat 1–2 / Beat 3–4切替を廃止し、`1 & 2 & 3 & 4 &` の8分音符8マスを1画面に同時表示する方式へ変更
+- Rhythmの1 Beat=4 step表示を廃止し、`1 e & a / 2 e & a / 3 e & a / 4 e & a` の16マスを1画面に同時表示する方式へ変更
+- RhythmのBeat 1〜4ボタンを表示切替からCopy Beatのコピー元選択へ変更（セルTapでもBeatを選択）
+- `milestone/v0.1-feature-complete`（655fc14）のコードを新しい統合branch経由で `develop` へ反映（PR #15 / #16を置き換え）
 - Melody Noteが存在する間もKey / Scale変更を拒否して整合性を保護
 - Rhythm画面をPlaceholderからBass / Drums同時入力UIへ変更
 - Bass Noteが存在する間はChord変更を拒否してRoot不整合を防止
@@ -80,8 +89,10 @@
 - VercelでDeploymentがREADYでも公開ファイルが生成されず404になる配布設定を修正
 - Android ChromeでAudioContextがsuspendedのまま無音になる可能性に対しresume処理とfallbackを追加
 - 単純な後段2倍出力で発生したクリップ / 音割れを、前段loudness gain + compressor + limiter構成へ置き換えて改善
-- Demo PlayerのLoop終端を常に4小節固定にせず、最後に使用している小節の終端へ合わせるよう修正
+- Demo PlayerのLoop終端を常に4小節固定にせず、最後に使用しているBarの終端へ合わせるよう修正
 - Rhythmの16分Grid見出しがBeat切替後も `1 e & a` 固定だった表示を、選択Beatへ追従するよう修正
+- Melody 8マス化後にCSSが4列のまま残っていた不整合を修正
+- Melody説明文内の未エスケープBacktickでJavaScript Module全体がParse ErrorになりHubから操作不能になった問題を修正
 
 ### 未対応
 - Snapshot履歴

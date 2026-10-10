@@ -20,6 +20,8 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - 単純な最終出力2倍ではクリップして音割れしたため不採用
 - loudness gain + compressor + limiter方式へ変更し、ユーザー実機で「このくらい」で採用判断
 - Demo Player Loopの固定4小節待ちを修正し、最後に使用しているBar終端で反復する方式を実機で採用判断
+- Melodyを縦ピアノ + 1小節8 step同時表示へ変更。Androidでセル幅・横スクロールを追加確認する
+- Rhythmを1小節16 step同時表示へ変更。Androidでセル幅・誤タップ・横スクロールを追加確認する
 - Chord以外のMelody / Bass / Drums、Stop / Position等は引き続き確認する
 
 ---
@@ -66,21 +68,29 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 
 ## 5. Melody
 
+- [ ] 左端に縦ピアノKeyboardが表示される
+- [ ] 白鍵 / 黒鍵が見分けやすい
+- [ ] 縦ピアノのNote名が現在Octaveと一致する
+- [ ] `1 & 2 & 3 & 4 &` の8マスが同時表示される
+- [ ] Beat 1 / 2 / 3 / 4の頭が視覚的に区切られている
+- [ ] 8 step表示でも横スクロールが発生しない
+- [ ] 8 stepのNote cellを実用上タップできる
 - [ ] Bar移動ができる
-- [ ] Beat 1–2 / Beat 3–4を切り替えられる
 - [ ] Octaveを上下できる
 - [ ] Note cellをTapして音符を追加できる
 - [ ] 同じcellを再Tapして削除できる
 - [ ] 同じstepの別PitchをTapすると置き換わる
 - [ ] 現在BarのChord名 + Degreeが表示される
 - [ ] Clear Barが動く
-- [ ] 4 step表示でセルが小さすぎない
 
 ## 6. Rhythm
 
 - [ ] Bass / Kick / Snare / HHが同一画面に表示される
-- [ ] Beat 1〜4を切り替えられる
-- [ ] Beat切替時にGrid見出しが `1 e & a`〜`4 e & a` へ追従する
+- [ ] `1 e & a / 2 e & a / 3 e & a / 4 e & a` の16マスが同時表示される
+- [ ] Beat 1 / 2 / 3 / 4の頭が視覚的に区切られている
+- [ ] 16 step表示でも横スクロールが発生しない
+- [ ] Beat 1〜4ボタンでCopy元Beatを選べ、選択中Beatが背景色で分かる
+- [ ] セルTap後、そのセルのBeatがCopy元として選択される
 - [ ] BassとKickを同時に確認しやすい
 - [ ] Bass Tapで現在Chord Rootが入力される
 - [ ] Chord未設定BarではKey Rootが入力される
@@ -95,7 +105,7 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] Beat / Barのコピー先に既存Rhythmがある場合は上書き確認が表示される
 - [ ] Clear Barが動く
 - [ ] Clear Bassが動く
-- [ ] 4 step表示でタップ領域が十分ある
+- [ ] 16 step表示でも隣のセルを誤タップしにくい（狭幅端末で特に確認）
 
 ## 7. Demo Player
 
