@@ -30,8 +30,9 @@ v0.1-dev
 - BassのChord Root / Key Root入力
 - Beat 1〜4切替 / Bar移動 / Clear Bar / Clear Bass
 - Rhythm 16分Grid見出しのBeat番号追従
+- Rhythm Beat Copy（現在BeatのBass / Drumsを次Beatへコピー。Beat 4は次Bar Beat 1へコピー）
 - Rhythm Bar Copy（現在BarのBass / Drumsを次Barへコピー）
-- Rhythm Bar Copy時のBass Pitchをコピー先Chord Root / Key Rootへ自動追従
+- Rhythm Beat / Bar CopyでBarをまたぐBass Pitchをコピー先Chord Root / Key Rootへ自動追従
 - Key/ScaleおよびChord変更時のHarmony整合性ガード
 - 常設Demo Player
 - Play / Stop / Loop / Position
@@ -44,17 +45,20 @@ v0.1-dev
 - SMF Type 1 / Conductor Track / Tempo / 4/4 / Key Signature
 - project.json手動Backup Export
 - MIDI Smoke Test / Pull Request CI
+- Rhythm Beat / Bar Copy Smoke Test
 - Android v0.1実機テストチェックリスト
 - Vercel PreviewのAndroid Chrome起動確認
 - Chordを使ったDemo Player実音再生と音割れ改善の実機確認
 
 開発中:
 - v0.1 Android実機確認
-- Rhythm Bar CopyのAndroid実機確認
+- Rhythm Beat / Bar CopyのAndroid実機確認
 
 次に実施:
 - `docs/ANDROID_TEST_CHECKLIST.md`の未確認項目を継続テスト
 - Melody / Bass / Drumsを含むDemo Player再生、Stop / Loop / Position確認
+- Rhythm Beat CopyでBass / Drumsの4 stepパターンが次Beatへ正しくコピーされることを確認
+- Beat 4 Copyが次Bar Beat 1へ移り、Bassがコピー先Rootへ追従することを確認
 - Rhythm Bar CopyでBass / Drumsの16分パターンが次Barへ正しくコピーされることを確認
 - AutoSave / Restore実機確認
 - MIDI Export実機確認
@@ -111,9 +115,11 @@ Stable化前には実装しない / 慎重に判断:
 - スマホのTap領域確保のためMelodyは4 stepずつ表示する
 - v0.1 Rhythmは1 Bar=16 step、1 step=120 tick
 - スマホのTap領域確保のためRhythmは1 Beat=4 stepずつ表示する
+- Rhythm Beat Copyは現在BeatのBass / Drumsを次Beatへコピーし、コピー後は次Beatへ移動する
+- Rhythm Beat 4 Copyは次BarのBeat 1へコピーし、そのBarへ移動する
 - Rhythm Bar Copyは現在BarのBass / Drumsを次Barへコピーし、コピー後は次Barへ移動する
-- Rhythm Bar Copyはコピー先に既存Rhythmがある場合のみ上書き確認を出す
-- Rhythm Bar CopyのBassはNote位置をコピーし、Pitchはコピー先Chord Root（Chord未設定時はKey Root）へ合わせる
+- Rhythm Beat / Bar Copyはコピー先に既存Rhythmがある場合のみ上書き確認を出す
+- Rhythm Beat / Bar CopyのBassはNote位置をコピーし、Barをまたぐ場合はPitchをコピー先Chord Root（Chord未設定時はKey Root）へ合わせる
 - BassはChord Root優先、Chord未設定時はKey Rootを使う
 - DrumsはGM準拠のKick36 / Snare38 / ClosedHH42、MIDI Channel 10
 - Demo Playerは作曲確認用の仮音のみ。高度な音作りはCubasis / Cubaseへ任せる
