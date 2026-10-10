@@ -6,6 +6,7 @@ export function createAutosave({ projectStore, delay = 1500, onError } = {}) {
   let started = false;
   let saving = false;
   let queuedProject = null;
+  let drainPromise = Promise.resolve(true);
 
   function clearTimer() {
     if (timer) clearTimeout(timer);
@@ -13,8 +14,9 @@ export function createAutosave({ projectStore, delay = 1500, onError } = {}) {
   }
 
   async function drainQueue() {
-    if (saving) return;
+    if (saving) return true;
     saving = true;
+    let success = true;
 
     try {
       while (queuedProject) {
@@ -23,31 +25,37 @@ export function createAutosave({ projectStore, delay = 1500, onError } = {}) {
         try {
           await saveProject(project);
         } catch (error) {
+          success = false;
           onError?.(error);
         }
       }
     } finally {
       saving = false;
     }
+
+    return success;
   }
 
   function queueSave(project = projectStore.getSnapshot()) {
     queuedProject = project;
-    void drainQueue();
+    if (!saving) {
+      drainPromise = drainQueue();
+    }
+    return drainPromise;
   }
 
   function schedule(project) {
     clearTimer();
     timer = setTimeout(() => {
       timer = null;
-      queueSave(project);
+      void queueSave(project);
     }, delay);
   }
 
   function handleVisibilityChange() {
     if (document.visibilityState !== "hidden") return;
     clearTimer();
-    queueSave(projectStore.getSnapshot());
+    void queueSave(projectStore.getSnapshot());
   }
 
   return {
@@ -60,7 +68,7 @@ export function createAutosave({ projectStore, delay = 1500, onError } = {}) {
 
     flush() {
       clearTimer();
-      queueSave(projectStore.getSnapshot());
+      return queueSave(projectStore.getSnapshot());
     },
 
     stop() {
