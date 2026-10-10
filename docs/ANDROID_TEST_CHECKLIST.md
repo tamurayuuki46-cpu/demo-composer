@@ -20,6 +20,7 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - 単純な最終出力2倍ではクリップして音割れしたため不採用
 - loudness gain + compressor + limiter方式へ変更し、ユーザー実機で「このくらい」で採用判断
 - Demo Player Loopの固定4小節待ちを修正し、最後に使用しているBar終端で反復する方式を実機で採用判断
+- Melodyを縦ピアノ + 1小節8 step同時表示へ変更。Androidでセル幅・横スクロールを追加確認する
 - Chord以外のMelody / Bass / Drums、Stop / Position等は引き続き確認する
 
 ---
@@ -69,10 +70,11 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] 左端に縦ピアノKeyboardが表示される
 - [ ] 白鍵 / 黒鍵が見分けやすい
 - [ ] 縦ピアノのNote名が現在Octaveと一致する
-- [ ] 縦ピアノを追加しても横スクロールが発生しない
-- [ ] 4 stepのNote cellが小さすぎず押しやすい
+- [ ] `1 & 2 & 3 & 4 &` の8マスが同時表示される
+- [ ] Beat 1 / 2 / 3 / 4の頭が視覚的に区切られている
+- [ ] 8 step表示でも横スクロールが発生しない
+- [ ] 8 stepのNote cellを実用上タップできる
 - [ ] Bar移動ができる
-- [ ] Beat 1–2 / Beat 3–4を切り替えられる
 - [ ] Octaveを上下できる
 - [ ] Note cellをTapして音符を追加できる
 - [ ] 同じcellを再Tapして削除できる
