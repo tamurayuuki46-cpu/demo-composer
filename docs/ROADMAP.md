@@ -66,8 +66,8 @@ Melody候補も曲全体を自動完成させず、現在Barの3候補 → 選�
 - Melody候補の実制作検証と必要最小限の改善
 - 骨子作り支援（計画: `docs/V0_3_SKELETON_PLAN.md`。実装は合意後）
   - 第1段階: 骨子レシピ（感情の言葉 + Section構成 / Energy / つなぎ。感情曲線・Section Energy・Transitionを再利用。Schema変更なし）
-  - 第2段階: 骨子チェックの「今は後でOK」表示、手引きの文言追加
-  - 第3段階: 聴かせたいもの（曲の芯 + Sectionの役割）。保存する場合はSchema・Migration方針・復元ポイントが先
+  - 第2段階: 骨子チェックの「今は後でOK」表示、手引きの文言追加、「なぜ？」表示の統一、空白Sectionアシスト（レシピとセット）
+  - 第3段階: 曲の方針（曲の芯 + 聴かせたいもの + 3語コンセプト）。保存する場合はSchema・Migration方針・復元ポイントが先
   - 新しい独立機能は増やさず、既存のHub / Chord / Melody / Rhythm / Arrange / Soundを一本の流れにつなぐ
 
 ## v0.4
