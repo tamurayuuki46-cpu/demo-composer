@@ -2,7 +2,7 @@
 
 Rhythm Moduleは `bass` / `drums` Trackを担当する。
 
-## v0.1-dev implemented
+## implemented
 
 - Bass / Kick / Snare / Closed Hi-Hatを同じ画面に表示
 - 1 Bar = 16 step（16分音符）
@@ -17,8 +17,34 @@ Rhythm Moduleは `bass` / `drums` Trackを担当する。
 - Drumは同一stepに複数パートを置ける
 - Clear Bar
 - Clear Bass（全Bass消去）
+- Rhythm Beat Copy / Bar Copy
 
-## v0.1 Timing
+## v0.2 Drum Preset candidate
+
+スマホでリズムの叩き台をすぐ作り、その後16 stepを手動修正できるようにする。
+
+初期Preset:
+
+- 8ビート 基本
+- 4つ打ち
+- Pop
+- Rock
+- Half Time
+- 16分HH
+
+動作:
+
+- `Drum Preset` のselectでパターンを選ぶ
+- `適用` で現在BarのKick / Snare / Closed HHだけを置き換える
+- Bassは変更しない
+- 他BarのDrum Noteは変更しない
+- 将来追加されるOpen HH / Percussion等のPitchも勝手に消さない
+- 現在BarにKick / Snare / HHがある場合は上書き確認を出す
+- 適用後は通常の16 stepセルをTapして自由に修正できる
+
+Presetは完成形を自動生成する機能ではなく、作曲判断の出発点として使う。
+
+## Timing
 
 PPQ 480 / 4/4固定。
 
@@ -26,7 +52,8 @@ PPQ 480 / 4/4固定。
 - 1 Beat = 480 tick
 - 1 Step = 120 tick
 - Bass default velocity = 96
-- Drum default velocity = 100
+- Drum manual input default velocity = 100
+- PresetはKick 105 / Snare 100 / HH 88を基本値とする
 
 ## Track
 
@@ -41,7 +68,7 @@ Drums:
 
 ## Harmony Safety
 
-Bass入力後にChordだけ変更するとRootが食い違うため、v0.1ではBass Noteがある間はChord変更を拒否する。
+Bass入力後にChordだけ変更するとRootが食い違うため、Bass Noteがある間はChord変更を拒否する。
 
 Chordを変更するときはRhythm画面の `Clear Bass` を使う。
 
@@ -52,5 +79,4 @@ Chordを変更するときはRhythm画面の `Clear Bass` を使う。
 - Kick連動Bass候補
 - Open HH / Percussion / Tom
 - Velocity編集
-- Pattern Copy
 - Rhythm候補3案
