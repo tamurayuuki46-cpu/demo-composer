@@ -24,7 +24,7 @@ v0.1-dev
 - project.json手動Backup Export
 - MIDI Smoke Test / Rhythm Copy Smoke Test / PR CI
 
-重要: 「機能完成スナップショット」の復元点は以下。統合PRがmergeされた後は `develop` のコードもこれと同一になる。
+重要: 「機能完成スナップショット」の復元点は以下。PR #18のmergeにより、`develop`（de51bc0）のJS / CSS / HTMLはこれと完全一致している。
 - branch: `milestone/v0.1-feature-complete`
 - commit: `655fc1419340c313ed2f6f727c057db35b8ae6f5`
 - このスナップショットには、Melodyの縦ピアノ + 1小節8マス同時表示（`1 & 2 & 3 & 4 &`）と、Rhythmの1小節16マス同時表示（`1 e & a / 2 e & a / 3 e & a / 4 e & a`）まで含む。
@@ -38,7 +38,7 @@ Repository統合状況:
 - そのため既存PRはrebaseせず、Claudeが `claude/v0.1-integrate-feature-complete` を最新developから作成し、`655fc14` の `index.html` / `src/` をそのまま適用した（JS / CSS / HTMLはmilestoneと完全一致。`src/rhythm/README.md` のみ16 step表示に合わせて文言更新）。
 - docsはdevelopのAI_HANDOFFを土台に、milestone側のMelody 8 step記述と、未反映だったRhythm 16 step記述を統合。
 - 統合前の復元点: `restore/v0.1-before-feature-complete-integration`（= 統合前develop 2af9bda）。
-- 統合PRがmergeされたら、PR #15 / #16 / #12は「統合PRで置換済み」としてcloseする（branchは削除しない）。
+- 統合PR #18はmerge済み（develop: de51bc0）。PR #15 / #16 / #12は「#18で置換済み」とコメントしてclose済み（branchは残している）。
 - `main` は実機確認済みstableだけを置く方針なので、まだ触らない。
 
 Android実機で確認済み / ユーザー受入済み:
@@ -66,7 +66,6 @@ Google Drive Backup:
 次に実装:
 - まず新機能を追加しない。
 - Claudeが引き継ぐ場合は、最初に `README.md` / `VERSION` / `docs/AI_HANDOFF.md` / `docs/PRODUCT_SPEC.md` / `docs/ARCHITECTURE.md` / `docs/DATA_SCHEMA.md` / `CHANGELOG.md` を読む。
-- 統合PR（`claude/v0.1-integrate-feature-complete` → `develop`）をレビュー / mergeし、PR #15 / #16 / #12をcloseする。
 - AndroidでHub → Chord → Melody → Rhythm、Melody 8マス、Rhythm 16マス、Beat Copy / Bar Copy、Play / Stop / Loop / Position、AutoSaveを回帰確認する。
 - PC CubaseへのMIDI Importは未確認。stable化判定に含めるなら最後に確認する。
 - stable条件を満たした場合のみ `v0.1-stable` 候補を作成し、その後に `main` へ入れる。
