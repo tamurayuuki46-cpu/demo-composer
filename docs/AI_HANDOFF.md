@@ -39,7 +39,7 @@ v0.2-dev
 - Arrange ループから曲にする案内（`src/core/loop-guide.js`、Core `appendSectionCopy`。#60の上に積んでいる）
 - Section Variation（`少し違う版にする`: ドラム / ベース / メロディ3種（終わり・音程だけ・リズムだけ）の5候補。`src/core/section-variation.js`）
 - Section Energy（Low/Mid/High）/ Transition（Keep/Fill/Stop/Build/Drop）: `structure.sections[]` の任意項目（schemaVersion 2のまま追記）。`src/core/section-ops.js`
-- Counter Melody（裏メロ）: Arrangeの各Sectionで3候補 `Sparse（隙間型） / Active（動く型） / Hook（フック型）` を聴いて当てる。候補説明の小さな補足で `Sparse=米津系 / Active=YOASOBI系 / Hook=Oasis系` を参考イメージとして示し、特定曲のコピーではないことを明記。`tracks[role=counter]`（Schema追記のみ）、`src/core/counter-melody.js`、MIDI `CounterMelody.mid`。詳細は `docs/COUNTER_MELODY_STYLES.md`
+- Counter Melody（裏メロ）: Arrangeの各Sectionで4候補 `Sparse（隙間型） / Active（動く型） / Hook（フック型） / Answer（応答型）` を聴いて当てる。候補説明の小さな補足で `Sparse=米津系 / Active=YOASOBI系 / Hook=Oasis系 / Answer=Mr.Children系` を参考イメージとして示し、特定曲のコピーではないことを明記。`tracks[role=counter]`（Schema追記のみ）、`src/core/counter-melody.js`、MIDI `CounterMelody.mid`。詳細は `docs/COUNTER_MELODY_STYLES.md`
 - MIDI読み込み（Hub Export内。提案 → 確かめる → 取り込む。`src/midi/midi-reader.js` / `midi-import.js`、Schema変更なし）
 - Hub 作編曲の手引き（16手順のチェックリスト。✓は端末のlocalStorageのみ。`src/hub/guide.js`）
 - Hub 骨子完成チェック（✓ / △ / －、`src/core/skeleton-check.js`、読むだけ）
@@ -60,6 +60,8 @@ v0.2-dev
 - PR #71 Melody Variation（音程だけ / リズムだけ）: merged。PR #73の後にdevelopへ統合され、Refreshを含む親commitを保持
 - PR #91 Melody Analyzer 旋律の3つの見方: merged / CI success
 - PR #93 Rhythm Bass候補5タイプ: CI success。`ルート / リフ / ファンク / シンセウェーブ / 裏メロ` を1 Bar候補として提示（Schema変更なし）
+- PR #95 Counter Melody Answer（応答型）: merged。現行developへ載せ直し、4候補化。Schema / MIDI形式は変更なし
+- 旧PR #90 Counter Melody Answer初期版: PR #95で置き換えたためclosed（履歴保持）
 - Melody候補統合merge commit: `6a7f1ce482af9a21eaa30fd6e3b91fd896b4f821`
 - Melody候補Refresh merge commit: `9891c2208287289e13feed4a71b1f8d6aa36bb74`
 - Melody候補Refresh PR CI: success
@@ -71,6 +73,7 @@ v0.2-dev
 - Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`
 - 新規Project追加前復元点: `restore/v0.2-before-new-project-final`
 - Counter Melody 3系統整理前復元点: `restore/v0.2-before-counter-style-3ways`
+- Counter Melody Answer追加前復元点: `restore/v0.2-before-counter-answer-style-merge`
 - Bass候補5タイプ追加前復元点: `restore/v0.2-before-bass-style-5ways`
 - `main` はstable専用で変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
@@ -78,6 +81,7 @@ v0.2-dev
 開発中:
 - Melody候補の4 Variation Set / Refreshはdevelop統合済み
 - Rhythm Bass候補5タイプはPR #93でCI success。Android実機で候補の差・縦スクロール量・Kick有無のファンク型を確認する段階
+- Counter Melody 4候補はPR #95でdevelop統合済み。Android実機でSparse / Active / Hook / Answerの差、特にSparseとAnswerの聞き分けを確認する段階
 - Android実機で `↻ 候補を更新` と3候補の差・試聴・編集を確認する段階
 - v0.2は機能が増えてきたため、追加機能より実制作での使いやすさ確認を優先する
 
@@ -92,7 +96,7 @@ v0.2-dev
 8. Melody.mid / Song.midをExportして通常Noteとして出力されることを確認
 9. Melody Variation（終わり / 音程だけ / リズムだけ）・ドラムフィル / Backing / Bass候補 / Chord候補 / Arrange / Sound / Import等のAndroid回帰確認
 10. Rhythm Bass候補5タイプを同じChordで順に試聴し、`ルート / リフ / ファンク / シンセウェーブ / 裏メロ` の差が分かること、Kick有無でファンク型が破綻しないこと、適用後に16 step編集・↶が使えることを確認
-11. 裏メロ: Sectionごとに `Sparse / Active / Hook` を試聴 → 適用 → ↶ / 消す。説明の `※` 補足が小さく表示されること、パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
+11. 裏メロ: Sectionごとに `Sparse / Active / Hook / Answer` を試聴 → 適用 → ↶ / 消す。説明の `※` 補足が小さく表示されること、SparseとAnswerの差が分かること、パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
 12. Hubの `骨子チェック` の ✓ / △ / － と、「次に決めること」のボタン遷移を確認
 13. 新機能の追加はいったん止めて、`docs/REAL_SONG_TEST.md` の手順で実制作テスト（1曲を通して作り、MIDIをCubasis / Cubaseへ渡す）を優先
 14. v0.3「骨子作り支援」の計画は `docs/V0_3_SKELETON_PLAN.md`（計画のみ・コード未変更）。ChatGPT案23件 + Claude案のレビュー結果と、骨子レシピ8案、3段階の優先順位、未決事項を記載。実装前にユーザーと未決事項を決める
@@ -146,10 +150,10 @@ v0.2-dev
 - Melody候補専用Schema / MIDI形式を作らず、既存のNote処理・Undo・AutoSave・Player・MIDI Exportを再利用する
 - Melody候補の実装中にPR #57のDrum Fillがdevelopへ先行統合されたため、旧PR #61を無理にマージせず、最新developからPR #66を作り直して統合した
 - Backing PatternはChord Module内、Melody候補はMelody Module内に置き、新Moduleを増やさない
-- 生成・候補機能はDemo Composer共通思想の「3候補 → 選択 → 修正」を優先する
+- 生成・候補機能はDemo Composer共通思想の「候補提示 → 選択 → 修正」を優先する
 - Rhythm Bass候補は既存の3候補を無制限生成へ広げず、役割が明確な5タイプ `ルート / リフ / ファンク / シンセウェーブ / 裏メロ` に整理する。The Weeknd等は「短い低音リフをフック化する考え方」の参考に留め、特定曲コピーはしない
 - Bass候補名 / 候補IDはProject Dataへ保存せず、適用結果だけ通常の `tracks[role=bass].notes[]` に保存する。既存のUndo / AutoSave / Demo Player / MIDI Exportを再利用し、schemaVersion 2を維持する
-- Counter Melodyも同じ思想で、`Sparse / Active / Hook` の役割が明確に違う3候補へ整理する。アーティスト名は小さな参考イメージに限定し、特定曲の旋律再現・コピーはしない
+- Counter Melodyは `Sparse / Active / Hook / Answer` の4役割に整理する。Answerは主旋律の語尾・後半へ少し長めに返し、3度・7度などコード色を優先する。アーティスト名は小さな参考イメージに限定し、特定曲の旋律再現・コピーはしない
 - Counter Melody候補名 / 候補IDはProject Dataへ保存しない。適用結果だけ `tracks[role=counter].notes[]` に保存するため、候補方式を変えてもschemaVersion 2を維持できる
 - v0.2のSchemaは2のまま維持し、今回Migrationは追加しない
 - GitHub Pagesを現在の公開確認先とし、Vercel自動配信は停止状態を維持する
