@@ -1,7 +1,8 @@
 import { isChordQuality } from "./chord-qualities.js";
 import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
 
-const VALID_KEYS = new Set(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
+const KEY_NAMES = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
+const VALID_KEYS = new Set(KEY_NAMES);
 const VALID_SCALES = new Set(["major", "minor"]);
 
 function clone(value) {
@@ -16,6 +17,58 @@ function createProjectId() {
   }
 
   return `project-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function keyToPitchClass(key) {
+  const pitchClass = KEY_NAMES.indexOf(key);
+  if (pitchClass === -1) {
+    throw new Error("Keyが不正です。");
+  }
+  return pitchClass;
+}
+
+function keyTransposeDelta(fromKey, toKey) {
+  let delta = keyToPitchClass(toKey) - keyToPitchClass(fromKey);
+  if (delta > 6) delta -= 12;
+  if (delta < -6) delta += 12;
+  return delta;
+}
+
+function transposeNotePitch(pitch, delta) {
+  const nextPitch = pitch + delta;
+  if (nextPitch < 0 || nextPitch > 127) {
+    throw new Error("Key変更でMelody / Bassの音域がMIDI範囲外になります。該当Noteを調整してから変更してください。");
+  }
+  return nextPitch;
+}
+
+function transposeHarmonyForKey(project, toKey) {
+  const delta = keyTransposeDelta(project.basic.key, toKey);
+  const next = clone(project);
+  next.basic.key = toKey;
+
+  if (delta === 0) return next;
+
+  next.chords = next.chords.map((chord) => ({
+    ...chord,
+    root: (chord.root + delta + 12) % 12
+  }));
+
+  next.tracks = next.tracks.map((track) => {
+    if (track.role !== "melody" && track.role !== "bass") {
+      return track;
+    }
+
+    return {
+      ...track,
+      notes: (track.notes ?? []).map((note) => ({
+        ...note,
+        pitch: transposeNotePitch(note.pitch, delta)
+      }))
+    };
+  });
+
+  return next;
 }
 
 export function createDefaultProject() {
@@ -264,15 +317,16 @@ export function createProjectStore(initialProject = createDefaultProject()) {
     },
 
     updateHub({ metadata = {}, basic = {} } = {}) {
-      const harmonyChanged =
-        (Object.hasOwn(basic, "key") && basic.key !== state.basic.key) ||
-        (Object.hasOwn(basic, "scale") && basic.scale !== state.basic.scale);
+      const keyChanged = Object.hasOwn(basic, "key") && basic.key !== state.basic.key;
+      const scaleChanged = Object.hasOwn(basic, "scale") && basic.scale !== state.basic.scale;
 
-      if (harmonyChanged && hasHarmonyDependentContent(state)) {
-        throw new Error("コード・メロディ・ベースがある間はKey/Scaleを変更できません。関連データをクリアしてから変更してください。");
+      if (scaleChanged && hasHarmonyDependentContent(state)) {
+        throw new Error("コード・メロディ・ベースがある間はScaleを変更できません。関連データをクリアしてから変更してください。");
       }
 
-      const next = clone(state);
+      const next = keyChanged
+        ? transposeHarmonyForKey(state, basic.key)
+        : clone(state);
 
       next.metadata = {
         ...next.metadata,
@@ -284,10 +338,9 @@ export function createProjectStore(initialProject = createDefaultProject()) {
         ...basic
       };
 
-      validateMetadata(next.metadata);
-      validateBasic(next.basic);
-
       next.revision = state.revision + 1;
+      validateProject(next);
+
       state = next;
       emit();
 

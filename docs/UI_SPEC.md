@@ -54,6 +54,16 @@ Module Navigationの上に常設。
 
 `Save Now`は即時保存とPersistent Storage要求のために残す。
 
+### Key / Scale Change
+
+- HubでKeyを変更した場合、現在のChord / Melody / Bassを新しいKeyへ同じ半音幅で自動移調する
+- Key移調は元Keyから新Keyへの最短半音幅を使用し、極端な1オクターブ移動を避ける
+- Chordはrootだけを移調し、quality / degree / startTick / durationTickは維持する
+- Melody / Bassはpitchだけを同じ半音幅で移調し、リズム / duration / velocityは維持する
+- DrumsはKeyに依存しないため変更しない
+- 移調結果がMIDI Note 0〜127を外れる場合はKey変更全体を中止し、元Projectを維持する
+- Scale変更は音の意味が変わるため、Chord / Melody / Bassがある場合は引き続き拒否する
+
 ### Export Panel
 
 Exportボタンで開閉する。

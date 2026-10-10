@@ -41,6 +41,20 @@ v0.2-dev時点:
 
 Project StateはModuleから直接オブジェクトを書き換えさせず、責任Module用の更新APIを通す。
 
+### Global Key Change
+
+Key変更はHubから開始するが、Chord / Melody / Bassをまたぐため、各Moduleを直接操作せず `src/core/project-state.js` が1回のAtomicなProject更新として処理する。
+
+- 元Keyから新Keyへの最短半音差を計算
+- `chords[].root` を同じ半音幅で移調
+- Melody / Bassの `notes[].pitch` を同じ半音幅で移調
+- Chord quality / degree / timing、Note timing / duration / velocityは維持
+- Drumsは変更しない
+- MIDI Note 0〜127を外れるNoteが1つでもある場合は更新全体を中止し、元Stateを維持
+- Scale変更は別処理とし、Harmony依存データがある間は引き続き拒否する
+
+この処理はModule Ownershipの例外としてHubが他Moduleを直接書き換えるのではなく、CoreがProject全体の整合性を保つために行うGlobal Operationとして扱う。
+
 ### Schema / Migration
 
 - `project-schema.js`: 現在のappVersion / schemaVersion
