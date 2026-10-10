@@ -81,15 +81,21 @@ export function createRhythmController({ projectStore, rerender }) {
               <span class="rhythm-label">${escapeHtml(row.label)}</span>
               ${visibleSteps.map((step) => {
                 const startTick = barStartTick + step * stepTicks;
-                const active = row.notes.some((note) => note.startTick === startTick && note.pitch === row.pitch);
+                const active = row.role === "bass"
+                  ? row.notes.some((note) => note.startTick === startTick)
+                  : row.notes.some((note) => note.startTick === startTick && note.pitch === row.pitch);
                 return `<button class="rhythm-cell${active ? " active" : ""}" data-rhythm-role="${row.role}" data-rhythm-pitch="${row.pitch}" data-rhythm-step="${step}" aria-label="${escapeHtml(row.label)} step ${step + 1}"></button>`;
               }).join("")}
             </div>
           `).join("")}
         </div>
 
+        <div class="rhythm-secondary-actions">
+          <button id="clear-all-bass"${bassNotes.length ? "" : " disabled"}>Clear Bass</button>
+        </div>
+
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
-        <p class="hint">Bassは現在ChordのRootを使います。Chord未設定時はKey Root。変更後はHubのSaveで保存してください。</p>
+        <p class="hint">Bassは現在ChordのRootを使います。Chord未設定時はKey Root。Chordを変更したい場合は先にClear Bassしてください。</p>
       </section>
     `;
   }
@@ -128,6 +134,16 @@ export function createRhythmController({ projectStore, rerender }) {
       const nextDrums = clearRhythmBar(getTrackNotes(latest, "drums"), { barStartTick, barDurationTick: barTicks });
       projectStore.updateRhythmNotes({ bassNotes: nextBass, drumNotes: nextDrums });
       message = `Bar ${barIndex + 1} のRhythmをクリアしました。`;
+      rerender("rhythm");
+    });
+
+    document.querySelector("#clear-all-bass")?.addEventListener("click", () => {
+      const latest = projectStore.getSnapshot();
+      projectStore.updateRhythmNotes({
+        bassNotes: [],
+        drumNotes: getTrackNotes(latest, "drums")
+      });
+      message = "Bassを全てクリアしました。Chordを変更できます。";
       rerender("rhythm");
     });
 
