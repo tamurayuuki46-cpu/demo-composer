@@ -27,7 +27,7 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 現在は、Hub / Chord / Melody / Rhythm の実データ入力、schemaVersion 2準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
 
-HubではProject名 / BPM / Key / Scaleを編集できます。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。
+HubではProject名 / BPM / Key / Scaleを編集できます。Key変更時はChord / Melody / Bassを同じ最短半音幅で自動移調し、Drumsは変更しません。Scale変更はChord / Melody / Bassがある場合は安全のため拒否します。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。
 
 Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを従来どおり候補表示します。さらに基準音をC〜Bから選び、`Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug` の9種類を1小節ずつ進行へ追加できます。加えて `Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行` の6種類のChord Presetを現在のKey / Scaleへ自動変換して適用できます。Preset適用後も個別追加・削除で修正できます。追加済みコードの削除 / Clearにも対応し、新しいQualityはDemo PlayerとMIDI Exportにも反映されます。
 
