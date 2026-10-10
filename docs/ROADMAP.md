@@ -2,13 +2,27 @@
 
 ## v0.1
 
+Core implementation complete on `develop`.
+
+Implemented:
+
 - Hub
 - Chord
 - Melody
 - Rhythm
-- Save
+- IndexedDB Save / AutoSave
 - Demo Player
 - MIDI Export
+- project.json Backup Export
+
+Before stable:
+
+- Android実機テスト
+- Cubasis / Cubase MIDI Import確認
+- 重大バグ修正
+- `docs/ANDROID_TEST_CHECKLIST.md`のStable判定項目を通す
+
+Stable条件を満たすまで`main`へ統合しない。
 
 ## v0.2
 
