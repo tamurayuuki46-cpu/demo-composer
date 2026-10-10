@@ -296,6 +296,10 @@ export function createProjectStore(initialProject = createDefaultProject()) {
     },
 
     updateChords(chords) {
+      if (getTrackNotes(state, "bass").length > 0) {
+        throw new Error("Bassがある間はChordを変更できません。RhythmでBassをClearしてから変更してください。");
+      }
+
       const next = clone(state);
       next.chords = clone(chords);
       validateChords(next.chords);
