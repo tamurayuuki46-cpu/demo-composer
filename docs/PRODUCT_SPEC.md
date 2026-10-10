@@ -69,6 +69,12 @@ Melody Module内に、現在の1小節へ適用するルールベースのMelody
 
 目的は「完成メロディの自動作曲」ではなく、初心者が3つの方向性を聴き比べ、選び、直しながらメロディを作ること。初期版では1小節単位に限定し、曲全体の一括自動生成や無制限のランダム再生成は持たせない。
 
+## v0.2 New Project
+
+Hubから `＋ 新規Project` を選ぶと、現在のProjectを端末へ保存した上で、別IDの空Projectへ切り替える。旧Projectは削除しない。目的は、起動時に最後のActive Projectが復元される保存仕様を維持しつつ、ユーザーが明示的に別の曲を開始できるようにすること。
+
+切替時はDemo Playerを停止し、旧Projectの保存完了を確認してからreloadする。reload境界では旧ページのvisibility AutoSaveと競合しないよう、次回bootで `main.js` より先に新ProjectをActiveとして保存する。Project一覧・過去Projectを選んで開くUIはこの初期実装には含めない。schemaVersionは2のまま。
+
 ## v0.2 Early Sound Sketch Lite
 
 本来v0.4で予定しているSound Sketchのうち、スマホで「音色の方向性」を決める最小機能だけをv0.2-devへ先行導入する。

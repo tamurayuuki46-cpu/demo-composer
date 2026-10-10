@@ -185,6 +185,8 @@ Storageは `src/storage/` に分離し、coreはIndexedDBへ直接依存しな�
 - Save Nowから手動保存
 - Schema Migration前のProjectを`meta` storeへ退避
 - Save Now時に `navigator.storage.persist()` が利用可能なら永続ストレージ保護を要求
+- Hubの `＋ 新規Project` は現在Projectを保存後、別IDのDefault Projectを `projects` storeへ追加して `activeProjectId` を切り替える。旧Projectは削除しない
+- 起動Entryは `src/hub/app-entry.js`。新規Project要求がある場合だけ `main.js` のbootより先に新ProjectをActive保存し、旧ページのvisibility AutoSaveとの競合を避ける
 
 `autosave.js`:
 

@@ -11,6 +11,7 @@ v0.2-dev
 - Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite の6 Module
 - schemaVersion 2 / PPQ 480 / 4/4固定の共通Project State
 - IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now
+- Hub `＋ 新規Project`: 現在Projectを保存してから別IDの空ProjectをActiveにする。旧Projectは端末内に保持。`src/hub/app-entry.js` / `new-project.js` / `new-project-ui.js`
 - schemaVersion 1 → 2 Migration / Migration前Project退避
 - Project全体Undo / Redo（最大50操作、メモリのみ）
 - Hub: Project名 / BPM / Key / Scale、Key変更時のChord / Melody / Bass Atomic移調、文字サイズ3段階、曲の特徴カード、AI相談テキスト / 相談テンプレート、Cubaseでやることメモ
@@ -60,6 +61,7 @@ v0.2-dev
 - Melody候補Refresh前復元点: `restore/v0.2-before-melody-candidate-refresh`
 - Backing Pattern追加前復元点: `restore/v0.2-before-backing-pattern-final`
 - Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`
+- 新規Project追加前復元点: `restore/v0.2-before-new-project-final`
 - `main` はstable専用で変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
 
@@ -84,6 +86,7 @@ v0.2-dev
 13. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
 
 既知の問題:
+- 新規Projectで旧Projectデータは端末内に残るが、保存済みProject一覧 / 過去Projectを選んで再度開くUIは未実装。現時点の復元手段はproject.json Backup / Importを優先する
 - Melody候補は1小節単位。Section単位 / 複数小節一括生成は未対応
 - Melody候補の別案は有限4Set。無制限ランダム生成はしない
 - Melody候補はルールベースの叩き台で、歌詞のアクセント / フレーズ文脈 / 前後小節の自然な接続まではまだ評価しない
@@ -113,6 +116,8 @@ v0.2-dev
 - 高度なSynth / Mix / Mastering / Audio Editing / Vocal Editing / Plugin HostingはCubasis / Cubase側へ任せる方針
 
 最近の重要な設計判断:
+- `＋ 新規Project` は現在Projectの中身をClearするのではなく、新しいProject IDを作る。旧Projectを上書き・削除しない
+- reload時のvisibility AutoSaveとの競合を避けるため、新規Project要求はsessionStorageでreload境界へ渡し、`app-entry.js` が `main.js` のboot前にActive Projectを確定する。schemaVersionは変更しない
 - Melody自動生成は「完成させる」機能ではなく、1小節につき3候補 → ユーザーが選ぶ → Piano Rollで修正する方式にする
 - Melody候補は外部AI / APIを使わず、説明可能なルールベースから開始する
 - `安定` はChord Tone中心、`キャッチー` は8分中心 + 短い反復、`浮遊感` は2度 / 6度等のScale Tone + 長めの音を使う

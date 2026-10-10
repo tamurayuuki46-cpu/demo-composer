@@ -4,6 +4,9 @@
 更新日: 2026-10-11
 
 ### 追加
+- Hub: `＋ 新規Project` を追加。現在のProjectを `Save Now` で確定してからDemo Playerを停止し、空の新しいProjectへ切り替える。旧ProjectはIndexedDBの `projects` storeから削除せず、新しいProjectだけを `activeProjectId` にする（Schema変更なし）
+- 新規Project切替は `src/hub/app-entry.js` / `new-project.js` / `new-project-ui.js` で実装。reload直前の `visibilitychange` AutoSaveが旧Projectを再びActiveにする競合を避けるため、次回bootで `main.js` を読み込む前に新ProjectのActive保存を確定する
+- New Project Smoke Testを `test:history` に追加。追加前の復元ブランチ `restore/v0.2-before-new-project-final`
 - Hub `📖 作編曲の手引き`: 出発点 → 作曲 → 編曲 → 確認・受け渡し の16手順を、スマホで読めるリストにした。各手順は説明とコツを開閉でき、左の丸で「済み」にできる。ChordやArrangeなど、該当画面への移動ボタン付き。✓はこの端末のlocalStorageにだけ保存し、曲のデータには入れない（`src/hub/guide.js` / `guide-ui.js`、Schema変更なし）
 - 手引きのSmoke Test（`npm run test:guide`、CI対象）
 - `docs/REAL_SONG_TEST.md`: Android実機で1曲を通して作り、MIDIをCubasis / Cubaseへ渡すまでのテスト手順・判定・記録シート
