@@ -14,7 +14,7 @@ Android Chrome / Android smartphone.
 - 重要操作を画面下部へ寄せる
 - PC DAWを縮小したUIにしない
 
-## v0.1 Navigation
+## Navigation
 
 Bottom Navigation:
 
@@ -72,20 +72,24 @@ Androidブラウザが複数ダウンロードを制限した場合を想定し�
 
 ## Chord
 
-v0.1の基本入力:
+v0.2の基本入力:
 
 - Hubで設定したKey / Scaleを参照
-- そのKey / Scaleのダイアトニックコード7つを候補表示
+- そのKey / Scaleのダイアトニックコード7つを従来どおり候補表示
 - コード名 + Degreeを併記
+- 「基準音」SelectでC〜Bの12音を選べる
+- 選択した基準音に対して Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug の9種類を表示
 - 候補を1回タップすると1小節追加
 - 追加済みコードをカード表示
 - 各カードの×で削除
 - Clearで進行全削除
 - 削除後はstartTickを1小節単位で詰め直す
 
+ダイアトニック候補は初心者向けの基本導線として残し、基準音からの9種類は「少し色を変えたい」「7th / susを試したい」ときの追加導線にする。候補を大量に一画面へ並べず、基準音を1つ選んでからQualityを選ぶことでスマホ画面を複雑化しない。
+
 Bass Noteが存在する間はChord変更を拒否し、Root不整合を防止する。Chordを変更するときはRhythmでClear Bassを行う。
 
-v0.1では並べ替え・コード長変更・借用和音・高度なコード編集は後回し。
+v0.2でも並べ替え・コード長変更は後回し。
 
 ## Melody
 
@@ -112,7 +116,6 @@ v0.1では並べ替え・コード長変更・借用和音・高度なコード�
 
 後続:
 
-- 16分音符
 - Note Length / Velocity
 - Scale表示
 - Chord Tone強調
