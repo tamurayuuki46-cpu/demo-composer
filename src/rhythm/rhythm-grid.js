@@ -61,6 +61,31 @@ export function clearRhythmBar(notes, { barStartTick, barDurationTick }) {
   return notes.filter((note) => note.startTick < barStartTick || note.startTick >= barEndTick);
 }
 
+export function copyRhythmBeat(notes, {
+  sourceBeatStartTick,
+  targetBeatStartTick,
+  beatDurationTick,
+  pitch = null
+}) {
+  const sourceBeatEndTick = sourceBeatStartTick + beatDurationTick;
+  const targetBeatEndTick = targetBeatStartTick + beatDurationTick;
+  const tickOffset = targetBeatStartTick - sourceBeatStartTick;
+
+  const retained = notes.filter(
+    (note) => note.startTick < targetBeatStartTick || note.startTick >= targetBeatEndTick
+  );
+  const copied = notes
+    .filter((note) => note.startTick >= sourceBeatStartTick && note.startTick < sourceBeatEndTick)
+    .map((note) => ({
+      ...note,
+      id: createNoteId(),
+      pitch: pitch ?? note.pitch,
+      startTick: note.startTick + tickOffset
+    }));
+
+  return [...retained, ...copied].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+}
+
 export function copyRhythmBar(notes, {
   sourceBarStartTick,
   targetBarStartTick,
