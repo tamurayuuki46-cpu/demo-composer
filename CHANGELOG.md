@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- Chord Backing Pattern 4種類（Block / 8分刻み / Arpeggio / Syncopation）。コード進行自体は変えず、伴奏の鳴らし方だけを選択できる（Schema変更なし）
+- Backing Pattern Smoke Test（`npm run test:backing`）。Pattern生成 / AutoSave対象データ / Undo・Redo / Chord.midへの反映をCIで確認
+- Backing Pattern最終統合前の復元ブランチ `restore/v0.2-before-backing-pattern-final`
 - Demo Playerのパート聴き分け（Chord / Melody / Bass / Drumsのミュート、ソロ）。再生中も反映、保存・MIDIには影響しない（Schema変更なし）
 - AI相談用テキストのコピー（Hub > AI相談。曲の基本情報・構成・コード・メロディ・ベース・ドラム + 相談したいこと。APIなし）
 - Part Switch Smoke Test（`npm run test:parts`）/ AI Consult Text Smoke Test（`npm run test:consult`）、CI対象
@@ -50,6 +53,9 @@
 - ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
+- Backing Pattern選択を `project.instruments[]` の `part: chord-backing` entryとして保存し、AutoSave / Undo / Redo対象にした。未設定ProjectはBlockへFallbackする
+- Demo PlayerのChord発音と `Chord.mid / Song.mid` のChord Track Note配置へBacking Patternを反映。Chord Dataそのものは変更しない
+- `instruments[]` の責任をpart単位で分離し、Soundは `chord / melody / bass`、Chordは `chord-backing` を更新する方式にした
 - Vercelの自動配信を停止（`vercel.json` に `git.deploymentEnabled: false`）。PRにVercelのチェックが出ないようにした。設定ファイルと手順は残し、公開確認はGitHub Pagesを使う
 - Rhythm Copy: 長いBassがコピー先の範囲からはみ出さないよう収め、コピー先に食い込む前の音を短くする
 - BarをまたぐBass Copyを、全ノートをルートへそろえる動作から、音程関係を保ってコピー先のルートへ移す動作へ変更
@@ -71,9 +77,10 @@
 - Scale変更はChord / Melody / Bassが存在する場合は引き続き拒否し、意図しないMajor/Minor変換を行わない
 - `VERSION` / 画面内Version / package versionをv0.2-devへ更新
 - DATA_SCHEMAをschemaVersion 2へ更新
-- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Diatonic Fan / Undo / Arrange / Sound Sketch / Static Buildを確認する構成へ更新
+- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Backing Pattern / Hub Key Change / Diatonic Fan / Undo / Arrange / Sound Sketch / Part Switch / AI Consult / Import / Static Buildを確認する構成へ更新
 
 ### 修正
+- Backing Pattern旧PR #45は作業中のdevelop先行更新と競合したためマージせず、最新developからPR #50用branchを作り直し、Bass音程 / Melody長さ / Import / Part Mute/Solo / AI相談を保持したまま再統合した
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
 - PR #23 / #24がGitHub Pages統合後のdevelopと競合するため、現在developから統合branchを作って安全に再統合した
 - Sound Sketch作業中にUndo / Arrangeがdevelopへ先行統合されたため、旧PR #39をマージせず最新developから統合branchを作り直し、Arrange / Undoを保持したままSoundを再統合した
@@ -84,9 +91,10 @@
 - Chord並べ替え / 長さ変更
 - 借用和音を目的別に整理した候補
 - Chord Preset Libraryの追加分類（Scaler / Melody Sauce / Cubase / 書籍等）
+- Backing PatternのSection別 / Bar別指定、詳細Step編集
 - Chord Tone強調
 - Melody Analyzer
-- Snapshot履歴 / project.json Import
+- Snapshot履歴
 - Arrange / Song Structureの実制作検証・正式整理
 - Drums音色変更
 - 本格Sound Sketch整理（詳細Synth / FX / Mixerは原則追加しない）
@@ -195,7 +203,6 @@
 
 ### 未対応
 - Snapshot履歴
-- project.json Import
 - Chord並べ替え / 長さ変更 / 借用和音
 - Melody Note Length / Velocity編集
 - Scale表示 / Chord Tone強調 / Melody Analyzer

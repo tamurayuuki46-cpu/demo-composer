@@ -22,7 +22,7 @@ Android Chrome / Android smartphone.
 - 戻せる操作がないときはボタンを無効表示にする
 - 最大50操作まで。アプリを開き直すと履歴は空になる（データ自体は保存されている）
 - Key変更は1回で元のKey・コード・メロディ・ベースへ戻る
-- Clear / Preset適用 / Copy / Sound変更など、まとめて変わる操作も1回で戻る
+- Clear / Preset適用 / Copy / Sound変更 / Backing Pattern変更など、まとめて変わる操作も1回で戻る
 
 ## Navigation
 
@@ -60,6 +60,7 @@ Playerの `パート` ボタンで、Player下部に聴き分けパネルを開�
 - 再生中でもすぐ反映され、再生位置は止まらない
 - どれかを消している間は `パート` ボタンが白くなる
 - 画面だけの状態で、project.json / MIDI Exportには影響しない。アプリを開き直すと全部鳴る状態に戻る
+- Backing Patternで複数回発音するChordもChordパートとして一緒にMute / Soloされる
 
 ## Arrange（曲の構成）
 
@@ -204,9 +205,33 @@ Presetは完成曲を自動生成する機能ではなく、コード進行の�
 - Preset選択状態自体はProject Dataへ保存しない
 - 適用結果は通常の `project.chords[]` としてAutoSave / Demo Player / MIDI Exportへそのまま利用する
 
-Bass Noteが存在する間はChord変更を拒否し、Root不整合を防止する。Chordを変更するときはRhythmでClear Bassを行う。
+### v0.2 Backing Pattern
 
-v0.2でも並べ替え・コード長変更は後回し。
+Chord Presetの直下に、コード進行を変えず伴奏の鳴らし方だけを選ぶ `Backing Pattern` Selectを置く。
+
+初期Pattern:
+
+- `Block`: 1小節を伸ばして鳴らす
+- `8分刻み`: 8分音符でコードを刻む
+- `Arpeggio`: コード構成音を8分で順に鳴らす
+- `Syncopation`: 1拍目と裏拍を中心に鳴らす
+
+UI / 動作ルール:
+
+- Select 1つ + 選択中Patternの短い説明だけにし、Pattern Buttonを大量に並べない
+- AndroidでSelectは最低44px以上のTap領域を維持する
+- 選択すると即時保存し、Demo Playerで確認できる
+- `↶ / ↷` でBacking Pattern変更をUndo / Redoできる
+- コード進行の `root / quality / degree / startTick / durationTick` は変更しない
+- `Chord.mid / Song.mid` のChord Trackには選択したPatternのNote配置を反映する
+- `Block` 未設定Projectは自動でBlockとして扱う
+- Section単体再生でも同じBacking Patternを使う
+- Backing Patternの発音はChordパート扱いなので、PlayerのChord Mute / Soloに従う
+- 詳細なStep編集やDAW級Arpeggiatorは追加しない
+
+Bass Noteが存在する間はChord変更を拒否し、Root不整合を防止する。Backing Pattern変更はChord Data自体を変えないためBassが存在していても変更可能。
+
+v0.2でもコード並べ替え・コード長変更は後回し。
 
 ## Melody
 
@@ -293,7 +318,6 @@ Presetは完成パターンを自動で作るためではなく、初心者が16
 
 後続:
 
-- Bass Pitch手動編集
 - Root / 5th / Approach候補
 - Velocity
 - Open HH / Percussion / Tom
@@ -332,7 +356,8 @@ UIルール:
 
 - Sound選択はAutoSave対象
 - Sound選択はProject全体のUndo / Redo対象
-- Sound選択は `project.instruments[]` に保存する
+- Sound選択は `project.instruments[]` のSound用entryへ保存する
+- Backing Patternの `part: chord-backing` entryはSound変更で消さない
 - Chord / Melody / BassのMIDI Note、Chord Data、Rhythm Dataは変更しない
 - Demo PlayerのWeb Audio仮音色だけを変更する
 - Section単体再生でも同じSound設定を使う

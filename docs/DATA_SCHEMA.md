@@ -138,7 +138,7 @@ MelodyとBassはUI上同一stepに1音だけ入力するMonophonic方式。Drums
 
 Sound Sketch Liteは既存の `instruments[]` を利用する。schemaVersionは2のまま維持する。
 
-1 Partにつき最大1件:
+Sound entry例:
 
 ```json
 {
@@ -148,7 +148,7 @@ Sound Sketch Liteは既存の `instruments[]` を利用する。schemaVersionは
 }
 ```
 
-対応Part:
+対応Sound Part:
 
 - `chord`
 - `melody`
@@ -170,14 +170,40 @@ Tone:
 - `airy`
 - `aggressive`
 
+## Chord Backing Pattern Data
+
+Backing Patternも既存の `instruments[]` 内に専用entryを1件だけ持つ。schemaVersionは2のまま維持する。
+
+```json
+{
+  "part": "chord-backing",
+  "preset": "eighth",
+  "tone": "natural"
+}
+```
+
+対応 `preset`:
+
+- `block`
+- `eighth`
+- `arpeggio`
+- `syncopation`
+
+ルール:
+
+- `part: chord-backing` が無いProjectは `block` として扱う
+- Backing Pattern選択はAutoSave / Undo / Redo対象
+- Chord Dataそのもの（root / quality / degree / timing）は変更しない
+- Demo Playerでは選択Patternに応じてChordの発音タイミングを展開する
+- `Chord.mid / Song.mid` ではChord Track Note配置へPatternを反映する
+- Sound Preset / Toneとは別entryなので、Sound変更でBacking Patternを消さず、Backing変更でSoundを消さない
+- 既存 `instruments[]` を使うため追加Migrationは不要
+
 互換性ルール:
 
-- `instruments: []` は有効で、各Partは既定Preset + `natural` へFallbackする
-- Sound未設定の旧ProjectもMigration不要
-- Sound変更はProject全体Undo / RedoとAutoSaveの対象
-- Section再生はProjectをsliceしても `instruments` を保持するため同じSound設定で鳴る
-- Sound選択はDemo Playerの仮音色だけへ反映する
-- Chord / Melody / BassのNote Data、Chord Data、Rhythm Dataは変更しない
+- `instruments: []` は有効で、Sound各Partは既定Preset + `natural`、Backingは `block` へFallbackする
+- Sound / Backing未設定の旧ProjectもMigration不要
+- Section再生はProjectをsliceしても `instruments` を保持するため同じSound / Backing設定で鳴る
 - MIDI Program Change / CCは現時点では出力しない
 
 ## Ownership
@@ -187,7 +213,10 @@ Tone:
 - melody track → Melody
 - bass/drums → Rhythm
 - structure/counterMelody → Arrange
-- instruments → Sound
+- `instruments[]` の `chord / melody / bass` entry → Sound
+- `instruments[]` の `chord-backing` entry → Chord
+
+同じentryを複数Moduleが書き換えない。`instruments[]` は共通Containerだが、`part` ごとに責任Moduleを分ける。
 
 ## Schema v1 → v2 Migration
 
@@ -203,7 +232,7 @@ v2ではProjectの基本構造は変更せず、`chords[].quality` の許可値�
 
 v1で使用していた `major / minor / diminished` はv2でも有効なため、Chordデータ自体の変換は不要。
 
-ArrangeのSectionとSound Sketch Liteはいずれもv2に既に存在する `structure.sections` / `instruments` を利用するため、追加のschemaVersion変更は行わない。
+Arrange Section / Sound Sketch Lite / Backing Patternはいずれもv2に既に存在する `structure.sections` / `instruments` を利用するため、追加のschemaVersion変更は行わない。
 
 ## Migration Rule
 

@@ -26,6 +26,7 @@ Module同士は直接呼び合わない。
 - validation
 - shared music constants / utilities
 - shared sound preset / playback profile definitions
+- shared Chord Backing Pattern definitions
 
 ### Project State
 
@@ -39,7 +40,7 @@ v0.2-dev時点:
 - State変更通知（subscribe）
 - 責任Module別の更新API
 - 更新ごとのrevision増加
-- Sound Module向け `updateInstruments()`
+- `updateInstruments()` によるSound / Backing設定更新
 
 Project StateはModuleから直接オブジェクトを書き換えさせず、責任Module用の更新APIを通す。
 
@@ -53,10 +54,10 @@ Project Store全体で1本の編集履歴を持つ。Moduleごとの履歴は持
 - 新しい編集をするとRedo履歴は捨てる
 - 失敗した編集（Validation / 範囲外）は履歴に残さない
 - Key変更（Global Key Change）は1回のAtomicな操作として、1回のUndoで元に戻る
-- Sound Preset / Tone変更も通常編集として1回ずつUndo / Redoできる
+- Sound Preset / Tone / Backing Pattern変更も通常編集として1回ずつUndo / Redoできる
 - `revision` は戻しても増え続ける（保存の新旧判定のため）。Undo / Redoも通常の変更として通知され、AutoSaveされる
 - 履歴はメモリ上だけで、`project.json` / IndexedDBへは保存しない。再読み込みで空になる。Schema変更なし
-- ボタンUIは `src/core/edit-history-ui.js`。ModuleはUndoを意識せず、画面は `rerender` で最新Projectを描き直すだけ
+- ボタンUIは `src/core/edit-history-ui.js`。ModuleはUndoを意識せず、画面は `rerender` で最新Projectへ描き直すだけ
 
 ### Global Key Change
 
@@ -84,35 +85,56 @@ Key変更はHubから開始するが、Chord / Melody / Bassをまたぐため�
 - Melody / Rhythm画面は `sectionLabel` で「サビ 3/8小節」を見出しに表示し、`totalSectionBars` で小節数の下限を決める
 - MIDI ExportはConductor Trackに各Sectionの先頭Markerを入れる（Cubasis / Cubaseで構成が見える）
 - Demo Playerは `play(project, { lengthTick })` でSection範囲だけを再生できる。Loopも同じ範囲を繰り返す
-- `sliceProject()` はProjectをcloneして範囲内Note / Chordだけを切り出すため、Soundの `instruments[]` は保持される
+- `sliceProject()` はProjectをcloneして範囲内Note / Chordだけを切り出すため、`instruments[]` のSound / Backing設定は保持される
 
 ### Schema / Migration
 
 - `project-schema.js`: 現在のappVersion / schemaVersion
 - `project-migration.js`: 旧Projectを現在Schemaへ変換
 - `chord-qualities.js`: Chord Qualityと構成音の共通定義
+- `backing-patterns.js`: Backing Pattern定義と発音Event展開
 - `sound-presets.js`: Chord / Melody / BassのSound Preset、Tone方向タグ、Demo Player用Playback Profile定義
+- `note-placement.js`: Melody / BassのNote配置・長さに関する共通処理
 
 Chord / Audio / MIDIは同じChord Quality定義を参照し、表示・試聴・MIDIで構成音が食い違わないようにする。
+
+Backing PatternはChord UI / Demo Player / MIDI Exportが同じ `core/backing-patterns.js` を参照する。UI・Audio・MIDIのどこにもPattern内容を重複定義しない。
 
 Sound UIとDemo Playerは同じ `core/sound-presets.js` を参照する。Sound ModuleがAudio Moduleを直接呼び出さず、共通定義をCoreへ置くことでModule間の直接依存を避ける。
 
 schemaVersion 1 → 2ではProject構造自体は維持し、Chord Qualityの許可値を拡張する。旧major / minor / diminishedはそのまま有効。
 
-Arrange SectionとSound Sketch Liteは既存の `structure.sections` / `instruments` を利用するためschemaVersion 2を維持し、追加Migrationは行わない。
+Arrange Section / Sound Sketch Lite / Backing Patternは既存の `structure.sections` / `instruments` を利用するためschemaVersion 2を維持し、追加Migrationは行わない。
 
 ## Chord Assistance
 
-Chord Module内の補助ロジックは `src/chord/` に置く。
+Chord Module内の補助ロジックは `src/chord/` と共通純粋定義 `src/core/backing-patterns.js` を利用する。
 
 - `chord-theory.js`: Scale / Degree / Chord Symbol / Quality候補
 - `chord-presets.js`: Degree配列で定義したChord Presetを現在Key / Scaleの通常Chord Dataへ展開
 - `diatonic-fan.js`: 既存のダイアトニック7候補ButtonをDegreeごとの五度圏スロットへ割り当てるUI enhancer
 - `diatonic-fan.css`: Androidスマホ向け扇形レイアウト / タップ領域 / 色分け
+- `chord-presets.css`: Chord Preset / Backing Patternのスマホ向けPanel表示
+- `core/backing-patterns.js`: Block / 8分刻み / Arpeggio / Syncopationを共通Eventへ展開
 
 Chord PresetはProject Schemaへ専用データを追加しない。Preset選択状態も保存せず、適用結果だけ `project.chords[]` として保持する。これによりAutoSave / Demo Player / MIDI Exportは既存Chord処理をそのまま利用する。
 
-Diatonic FanもProject DataやChord追加ロジックを変更しない。`data-add-chord` を持つ既存7候補へ表示用classだけを付与し、Chord画面が再Renderされた場合は `MutationObserver` で再適用する。Major / MinorのDegree文字列からスロットを判定し、候補Button自体のclick処理は従来の `main.js` に残す。
+Diatonic FanもProject DataやChord追加ロジックを変更しない。`data-add-chord` を持つ既存7候補へ表示用classだけを付与し、Chord画面が再Renderされた場合は `MutationObserver` で再適用する。Major / MinorのDegree文字列からスロットを判定し、候補Button自体のclick処理は `main.js` に残す。
+
+### Backing Pattern
+
+Backing PatternはChordの責任機能とする。
+
+- Chord画面に `Backing Pattern` Selectを置く
+- 初期4種類: Block / 8分刻み / Arpeggio / Syncopation
+- 選択は `project.instruments[]` の `part: chord-backing` entryへ保存
+- `part: chord-backing` entryだけをChord責任とし、Soundの `chord / melody / bass` entryとは分離する
+- 未設定ProjectはBlockへFallbackする
+- 選択変更は `updateInstruments()` を通し、AutoSave / Undo / Redo対象にする
+- Chord Dataそのものは書き換えない
+- Demo PlayerとMIDI ExportはProject SnapshotからBacking設定を読み取る
+
+これは「完成伴奏の自動生成」ではなく、コード進行のリズム方向を判断するための少数Presetである。DAW級のPattern Sequencer / Arpeggiatorは実装しない。
 
 ## Sound Sketch Lite
 
@@ -122,7 +144,7 @@ Sound Moduleの最小実装は `src/sound/` に置く。
 - `sound.css`: Androidスマホ向けSound UIと6 Module Bottom Navigationの調整
 - `README.md`: Sound Moduleの責務
 
-選択データは `project.instruments[]` に保存する。Sound Moduleだけがこのデータを更新し、Demo PlayerはSnapshotを読み取り専用で参照する。
+Sound選択データは `project.instruments[]` の `part: chord / melody / bass` entryに保存する。Sound Moduleはこの3 entryだけを更新し、`part: chord-backing` は更新しない。Demo PlayerはSnapshotを読み取り専用で参照する。
 
 Sound Sketch Liteは以下だけを担当する。
 
@@ -165,13 +187,13 @@ Hub Exportから`project.json`を手動Backupとしてダウンロードでき�
 ## Module Ownership
 
 - Hub: metadata / basic
-- Chord: chords
+- Chord: chords + `instruments[part=chord-backing]`
 - Melody: melody notes
 - Rhythm: bass / drums
 - Arrange: structure / counterMelody
-- Sound: instruments
+- Sound: `instruments[part=chord|melody|bass]`
 
-同じデータを複数Moduleが直接書き換えない。
+同じentryを複数Moduleが直接書き換えない。`instruments[]` は共通Containerだが `part` 単位で責任を分離する。
 
 ## Playback
 
@@ -191,13 +213,15 @@ Chordは`src/core/chord-qualities.js`の構成音を使うため、Major / Minor
 
 Chord / Melody / Bassは `src/core/sound-presets.js` のSound Profileを使い、Sound Sketch Liteの選択を再生時だけ反映する。
 
+Chordはさらに `src/core/backing-patterns.js` のEvent定義を使い、選択中のBacking Patternに応じて同じChord構成音をBlock / 刻み / Arpeggio / Syncopationで発音する。ProjectのChord Data自体は変更しない。
+
 Android Chromeでは、ユーザー操作後に`AudioContext.resume()`を行い、必要時はsilent bufferを経由してAudioContextをrunningへ復帰させる。
 
 スマホ本体スピーカーで作曲判断しやすくするため、Demo Playerの仮音だけ以下を適用する。
 
 - Chord previewはProject/MIDI本体を変更せず、再生時だけ聞き取りやすい音域を使用
 - Sound Presetに応じてwaveform / filter / envelope / gainを軽量変更
-- 出力は `master → loudness gain → compressor → limiter → output gain → destination`
+- 出力は `part bus → master → loudness gain → compressor → limiter → output gain → destination`
 
 Playbackは作曲判断の確認用途だけを担当し、高度なSynth / Mixing / Mastering機能は持たない。
 
@@ -205,6 +229,8 @@ Playbackは作曲判断の確認用途だけを担当し、高度なSynth / Mixi
 
 - AI相談: `src/hub/consult-text.js`（Projectを読むだけの純粋関数）と `src/hub/consult-ui.js`（Hub内のパネル / コピー）。外部サービスへは送信しない
 - パート聴き分け: Demo Playerがパートごとの出力バス（`chord / melody / bass / drums`）を持ち、`setPartMuted(role, muted)` でgainを切り替える。UIは `src/audio/part-switch-ui.js`。状態は画面だけで、Project Data / MIDI Exportには触れない
+
+Backing Patternで発音される複数Chord Noteも `chord` busへ送るため、既存のChord Mute / Soloがそのまま効く。
 
 ## Export
 
@@ -226,6 +252,6 @@ Export:
 
 MIDIはSMF Type 1 / PPQ 480。Song.midはConductor + Chord + Melody + Bass + Drums、Part MIDIはConductor + 対象Partで生成する。
 
-Chord MIDIも`chord-qualities.js`の共通構成音定義を利用する。Song.midのConductor TrackにはArrange SectionのMarkerを入れる。
+Chord MIDIは`chord-qualities.js`の共通構成音定義と `backing-patterns.js` の発音Event定義を利用する。Backing PatternはChord TrackのNote startTick / durationTick / velocity /発音数へ反映し、Chord Data自体は変更しない。Song.midのConductor TrackにはArrange SectionのMarkerを入れる。
 
 Sound Sketch Liteの選択はDemo Player用であり、Program ChangeとCCは現時点では出力しない。最終音源はBandLab / Cubasis / Cubase側で差し替える。

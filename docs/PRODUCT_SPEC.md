@@ -34,6 +34,23 @@ Demo Composer
 
 初期UIシェルではHub / Chord / Melody / Rhythmのみ可視化。
 
+## v0.2 Backing Pattern
+
+Chord Module内に、コード進行自体は変えず伴奏の鳴らし方を決める `Backing Pattern` を追加する。
+
+初期Pattern:
+
+- Block
+- 8分刻み
+- Arpeggio
+- Syncopation
+
+目的は「コード進行を決める」だけでなく、「この進行をどんなノリで鳴らすか」までスマホで判断できるようにすること。
+
+選択は通常のProject DataとしてAutoSave / Undo / Redo対象にし、Demo Playerへ反映する。Cubasis / Cubaseへ受け渡せるよう `Chord.mid / Song.mid` のChord Track Note配置にも反映する。
+
+Patternは完成伴奏を自動作曲する機能ではなく、曲の骨子を判断するための少数Presetとする。詳細な伴奏編集やDAW級のArpeggiatorは追加しない。
+
 ## v0.2 Early Sound Sketch Lite
 
 本来v0.4で予定しているSound Sketchのうち、スマホで「音色の方向性」を決める最小機能だけをv0.2-devへ先行導入する。
@@ -61,6 +78,7 @@ Demo Composerでは以下を本格実装しない。
 - 本格Synth設計
 - PC DAWの完全再現
 - Sound Sketch内の詳細Synth Parameter / FX Rack / Track Mixer
+- DAW級のPattern Sequencer / Arpeggiator
 
 ## AI Philosophy
 

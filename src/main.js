@@ -1,5 +1,11 @@
 import { createDemoPlayer } from "./audio/demo-player.js";
 import {
+  BACKING_PATTERNS,
+  getBackingPattern,
+  getBackingPatternSelection,
+  upsertBackingPattern
+} from "./core/backing-patterns.js";
+import {
   buildChordPreset,
   CHORD_PRESETS,
   chordPresetPreview,
@@ -125,6 +131,8 @@ function chordScreen() {
     key: project.basic.key,
     scale: project.basic.scale
   }).join(" → ");
+  const backingPatternId = getBackingPatternSelection(project.instruments);
+  const backingPattern = getBackingPattern(backingPatternId);
   const progression = project.chords.length
     ? project.chords.map((chord, index) => `
         <div class="chord-card progression-card">
@@ -156,6 +164,17 @@ function chordScreen() {
         </div>
         <small>${escapeHtml(selectedPreset.description)}</small>
         <p class="chord-preset-preview">${escapeHtml(presetPreview)}</p>
+      </div>
+
+      <div class="backing-pattern-panel">
+        <label class="field" for="backing-pattern-select">
+          <span>Backing Pattern</span>
+          <select id="backing-pattern-select" aria-label="Chord Backing Pattern">
+            ${BACKING_PATTERNS.map((pattern) => `<option value="${pattern.id}"${pattern.id === backingPatternId ? " selected" : ""}>${escapeHtml(pattern.label)}</option>`).join("")}
+          </select>
+        </label>
+        <small>${escapeHtml(backingPattern.description)}</small>
+        <p class="backing-pattern-hint">コード進行は変えず、鳴らし方だけを変更します。Demo PlayerとChord.mid / Song.midに反映されます。</p>
       </div>
 
       <h3>進行</h3>
@@ -448,6 +467,19 @@ function bindChordControls() {
     });
 
     commitChordUpdate(next, `「${preset.label}」を適用しました。個別に修正できます。`);
+  });
+
+  document.querySelector("#backing-pattern-select")?.addEventListener("change", (event) => {
+    try {
+      const patternId = event.target.value;
+      const latest = projectStore.getSnapshot();
+      const pattern = getBackingPattern(patternId);
+      projectStore.updateInstruments(upsertBackingPattern(latest.instruments, patternId));
+      chordMessage = `Backing Patternを「${pattern.label}」に変更しました。Demo Playerで確認できます。`;
+    } catch (error) {
+      chordMessage = error instanceof Error ? error.message : "Backing Patternの変更に失敗しました。";
+    }
+    render("chord");
   });
 
   document.querySelectorAll("[data-add-chord]").forEach((button) => {
