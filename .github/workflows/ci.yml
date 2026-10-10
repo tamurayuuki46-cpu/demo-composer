@@ -60,6 +60,9 @@ jobs:
       - name: AI consult text smoke test
         run: npm run test:consult
 
+      - name: Next chord / bass candidates smoke test
+        run: npm run test:candidates
+
       - name: project.json import smoke test
         run: npm run test:import
 

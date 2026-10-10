@@ -5,9 +5,12 @@ import {
   chordPresetPreview,
   getChordPreset
 } from "./chord/chord-presets.js";
+import { suggestNextChords } from "./chord/chord-next.js";
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
+import { bindConsultPanel, consultPanelHtml } from "./hub/consult-ui.js";
+import { bindPartSwitch } from "./audio/part-switch-ui.js";
 import { bindEditHistory } from "./core/edit-history-ui.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createArrangeController } from "./arrange/arrange-screen.js";
@@ -85,8 +88,10 @@ function hubScreen() {
       <div class="actions">
         <button id="save-project" class="primary-action">Save Now</button>
         <button id="toggle-export" class="primary-action" aria-expanded="false">Export</button>
-        <button disabled>AI相談</button>
+        <button id="toggle-consult" class="primary-action" aria-expanded="false">AI相談</button>
       </div>
+
+      ${consultPanelHtml()}
 
       <section id="export-panel" class="export-panel" hidden>
         <h3>Export</h3>
@@ -121,6 +126,7 @@ function chordScreen() {
     key: project.basic.key,
     scale: project.basic.scale
   }).join(" → ");
+  const nextChords = suggestNextChords(project.chords, { key: project.basic.key, scale: project.basic.scale });
   const progression = project.chords.length
     ? project.chords.map((chord, index) => `
         <div class="chord-card progression-card">
@@ -158,6 +164,18 @@ function chordScreen() {
       <div class="progression">${progression}</div>
 
       <p id="chord-message" class="status-message" aria-live="polite">${escapeHtml(chordMessage)}</p>
+
+      <h3>${project.chords.length ? "次のコード候補（3つ）" : "最初のコード候補（3つ）"}</h3>
+      <div class="chord-next">
+        ${nextChords.map((candidate, index) => `
+          <button class="candidate-chord chord-next-item" data-next-chord="${index}">
+            <strong>${escapeHtml(candidate.symbol)}</strong>
+            <span>${escapeHtml(candidate.degree)}</span>
+            <small>${escapeHtml(candidate.reason)}</small>
+          </button>
+        `).join("")}
+      </div>
+      <p class="hint">直前のコードから、次に来やすい3つです。選んだあとも、削除や別のコードへの変更ができます。</p>
 
       <h3>ダイアトニック候補</h3>
       <div class="chord-candidates">
@@ -305,6 +323,7 @@ function bindHubControls() {
   const saveButton = document.querySelector("#save-project");
   const exportToggle = document.querySelector("#toggle-export");
   const exportPanel = document.querySelector("#export-panel");
+  bindConsultPanel({ projectStore, setMessage: setHubMessage });
 
   title?.addEventListener("change", (event) => {
     commitHubChange({ metadata: { title: event.target.value.trim() } });
@@ -419,6 +438,13 @@ function bindChordControls() {
 
     commitChordUpdate(next, `${candidate.symbol} (${candidate.degree}) を追加しました。`);
   }
+
+  const nextChords = suggestNextChords(project.chords, { key: project.basic.key, scale: project.basic.scale });
+  document.querySelectorAll("[data-next-chord]").forEach((button) => {
+    button.addEventListener("click", () => {
+      appendCandidate(nextChords[Number(button.dataset.nextChord)]);
+    });
+  });
 
   document.querySelector("#chord-preset-select")?.addEventListener("change", (event) => {
     chordPresetSelection = event.target.value;
@@ -595,6 +621,7 @@ async function boot() {
     button.addEventListener("click", () => render(button.dataset.screen));
   });
   bindPlayerControls();
+  bindPartSwitch({ demoPlayer });
   updatePlayerUi(playerState);
   bindEditHistory({
     projectStore,

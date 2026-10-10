@@ -5,6 +5,8 @@ function midiToFrequency(pitch) {
   return 440 * Math.pow(2, (pitch - 69) / 12);
 }
 
+export const PART_ROLES = Object.freeze(["chord", "melody", "bass", "drums"]);
+
 function projectEndTick(project) {
   const barTicks = project.basic.ppq * 4;
   const chordEnd = project.chords.reduce(
@@ -107,7 +109,8 @@ function scheduleNoiseHit(context, destination, activeSources, startTime, {
   activeSources.add(source);
 }
 
-function scheduleProject(context, masterGain, activeSources, project, startTime) {
+// buses: パート別の出力先（{chord, melody, bass, drums}）。ミュートは各busのgainで行う
+function scheduleProject(context, buses, activeSources, project, startTime) {
   const chordSound = resolveSoundProfile(project.instruments, "chord");
   const melodySound = resolveSoundProfile(project.instruments, "melody");
   const bassSound = resolveSoundProfile(project.instruments, "bass");
@@ -116,7 +119,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
     const chordStart = startTime + tickToSeconds(project, chord.startTick);
     const duration = Math.max(0.08, tickToSeconds(project, chord.durationTick) * 0.92);
     chordIntervals(chord.quality).forEach((interval) => {
-      scheduleTone(context, masterGain, activeSources, {
+      scheduleTone(context, buses.chord, activeSources, {
         // Demo Player only: use a phone-speaker-friendly voicing one octave above
         // the original preview. Project/MIDI pitch data is not changed.
         pitch: 60 + chord.root + interval,
@@ -137,7 +140,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
       const duration = Math.max(0.04, tickToSeconds(project, note.durationTick) * 0.92);
 
       if (track.role === "melody") {
-        scheduleTone(context, masterGain, activeSources, {
+        scheduleTone(context, buses.melody, activeSources, {
           pitch: note.pitch,
           startTime: noteStart,
           duration,
@@ -151,7 +154,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
       }
 
       if (track.role === "bass") {
-        scheduleTone(context, masterGain, activeSources, {
+        scheduleTone(context, buses.bass, activeSources, {
           pitch: note.pitch,
           startTime: noteStart,
           duration,
@@ -166,15 +169,15 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
 
       if (track.role === "drums") {
         if (note.pitch === 36) {
-          scheduleKick(context, masterGain, activeSources, noteStart);
+          scheduleKick(context, buses.drums, activeSources, noteStart);
         } else if (note.pitch === 38) {
-          scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
+          scheduleNoiseHit(context, buses.drums, activeSources, noteStart, {
             duration: 0.12,
             gainAmount: 0.18,
             highpass: 900
           });
         } else if (note.pitch === 42) {
-          scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
+          scheduleNoiseHit(context, buses.drums, activeSources, noteStart, {
             duration: 0.045,
             gainAmount: 0.11,
             highpass: 5000
@@ -188,6 +191,9 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
 export function createDemoPlayer({ onStateChange } = {}) {
   let context = null;
   let masterGain = null;
+  let buses = null;
+  // パートごとのミュート状態（再生の聴き分け用。プロジェクトには保存しない）
+  const mutedParts = { chord: false, melody: false, bass: false, drums: false };
   let activeSources = new Set();
   let playing = false;
   let loop = false;
@@ -243,6 +249,13 @@ export function createDemoPlayer({ onStateChange } = {}) {
       context = new AudioContextClass({ latencyHint: "interactive" });
       masterGain = context.createGain();
       masterGain.gain.value = 1;
+
+      buses = {};
+      PART_ROLES.forEach((role) => {
+        buses[role] = context.createGain();
+        buses[role].gain.value = mutedParts[role] ? 0 : 1;
+        buses[role].connect(masterGain);
+      });
 
       // Raise the average level before dynamics processing instead of applying
       // a large gain after it. This keeps Android phone-speaker playback louder
@@ -303,7 +316,7 @@ export function createDemoPlayer({ onStateChange } = {}) {
     duration = tickToSeconds(currentProject, lengthTick ?? projectEndTick(currentProject));
     startTime = context.currentTime + 0.06;
     activeSources = new Set();
-    scheduleProject(context, masterGain, activeSources, currentProject, startTime);
+    scheduleProject(context, buses, activeSources, currentProject, startTime);
     playing = true;
     emit();
 
@@ -331,6 +344,14 @@ export function createDemoPlayer({ onStateChange } = {}) {
     play,
     stop,
     setLoop,
+    // 再生中でもすぐ反映される（パートのgainを切り替えるだけ。Position / 再生は止まらない）
+    setPartMuted(role, muted) {
+      if (!PART_ROLES.includes(role)) return;
+      mutedParts[role] = Boolean(muted);
+      if (buses?.[role] && context) {
+        buses[role].gain.setTargetAtTime(mutedParts[role] ? 0 : 1, context.currentTime, 0.01);
+      }
+    },
     getState() {
       return { playing, loop, position: 0, duration };
     }

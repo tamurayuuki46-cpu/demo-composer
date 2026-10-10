@@ -4,6 +4,10 @@
 更新日: 2026-10-10
 
 ### 追加
+- Chord: 次のコード候補（3つ）。直前のコードに応じて、次に来やすいダイアトニックコードを理由つきで3つ表示。空のときは「最初のコード候補」。タップで追加（`src/chord/chord-next.js`）
+- Rhythm: Bass候補（3つ）。現在の小節のBassを、Kickに合わせる（Kickがある場合）/ どっしり / ルート+5度 / はずむ（オクターブ）の3案から選んで置き換え。16マスで1音ずつ直せる（`src/rhythm/bass-candidates.js`）
+- Candidates Smoke Test（`npm run test:candidates`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-candidates`（Schema変更なし）
 - Melody: `Copy Bar`（次の小節へ複製）/ `Copy 2小節`（2小節を続けて複製）。コピー先に音があれば上書き確認、音の長さは保つがコピー先の終わりを超えない
 - Rhythm: Drum Presetを「Section全体に適用」（Kick / Snare / Closed HHのみ。Bassは変更しない）
 - Arrange: 骨子の進み具合表示（曲全体と各Sectionで コード / メロ / ベース / ドラム の入力済み小節数。✓ / △ / －）

@@ -11,8 +11,10 @@
   <link rel="stylesheet" href="./src/chord/diatonic-fan.css" />
   <link rel="stylesheet" href="./src/melody/melody.css" />
   <link rel="stylesheet" href="./src/hub/export.css" />
+  <link rel="stylesheet" href="./src/hub/consult.css" />
   <link rel="stylesheet" href="./src/core/edit-history.css" />
   <link rel="stylesheet" href="./src/arrange/arrange.css" />
+  <link rel="stylesheet" href="./src/audio/part-switch.css" />
   <link rel="stylesheet" href="./src/rhythm/rhythm-presets.css" />
   <link rel="stylesheet" href="./src/sound/sound.css" />
 </head>
@@ -38,9 +40,20 @@
       <button id="player-play" class="player-main" aria-label="再生">▶</button>
       <button id="player-stop" aria-label="停止">■</button>
       <button id="player-loop" aria-pressed="false">Loop</button>
+      <button id="player-parts" aria-expanded="false" aria-controls="part-panel">パート</button>
       <div class="player-position">
         <progress id="player-progress" max="1" value="0"></progress>
         <span id="player-time">0:00 / 0:00</span>
+      </div>
+      <div id="part-panel" class="part-panel" hidden>
+        <div class="part-buttons" role="group" aria-label="鳴らすパート">
+          <button data-part="chord" aria-pressed="true">Chord</button>
+          <button data-part="melody" aria-pressed="true">Melody</button>
+          <button data-part="bass" aria-pressed="true">Bass</button>
+          <button data-part="drums" aria-pressed="true">Drums</button>
+          <button id="part-solo" class="part-solo" aria-pressed="false">ソロ</button>
+        </div>
+        <p id="part-hint" class="part-hint"></p>
       </div>
     </section>
 

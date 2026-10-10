@@ -1,7 +1,7 @@
-import { getSections, sectionLabel, totalSectionBars } from "../core/section-ops.js";
+import { getSections, MAX_TOTAL_BARS, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol } from "../chord/chord-theory.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
-import { clearBar, getMelodyNotes, getOctavePitches, pitchName, toggleMonophonicStep } from "./melody-grid.js";
+import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 
 const EIGHTH_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
 const SIXTEENTH_LABELS = ["1", "e", "&", "a", "2", "e", "&", "a", "3", "e", "&", "a", "4", "e", "&", "a"];
@@ -75,12 +75,19 @@ export function createMelodyController({ projectStore, rerender }) {
     const chord = project.chords[barIndex];
     const chordLabel = chord ? `${chordSymbol(chord.root, chord.quality)} (${chord.degree})` : "コード未設定";
 
+    // コピーできるか: コピー元にメロディがあり、コピー先が最大小節数(128)に収まる
+    const canCopy = (bars) => hasMelodyInBars(notes, { barIndex, bars, barTicks })
+      && barIndex + bars * 2 <= MAX_TOTAL_BARS;
+
+    const chordTones = chordTonePitchClasses(chord);
+
     const gridRows = pitches.map((pitch) => {
       const name = pitchName(pitch);
       const keyClass = pianoKeyClass(pitch);
 
+      const toneClass = chordTones.has(pitch % 12) ? " chord-tone" : "";
       return `
-        <div class="melody-row">
+        <div class="melody-row${toneClass}">
           <span class="piano-key ${keyClass}" aria-hidden="true">${escapeHtml(name)}</span>
           ${visibleSteps.map((step) => {
             const startTick = barStartTick + step * stepTicks;
@@ -105,6 +112,7 @@ export function createMelodyController({ projectStore, rerender }) {
           </div>
           <button id="clear-melody-bar" class="small-action">Clear Bar</button>
         </div>
+        ${chord ? `<p class="chord-tone-legend"><span class="chord-tone-dot" aria-hidden="true"></span>色付きの行 ＝ このコードの構成音（合う音）</p>` : ""}
 
         <div class="melody-toolbar">
           <button id="melody-prev-bar"${barIndex === 0 ? " disabled" : ""}>← Bar</button>
@@ -142,6 +150,11 @@ export function createMelodyController({ projectStore, rerender }) {
             ${visibleSteps.map((step) => `<span class="${isBeatStart(step) ? "beat-start" : ""}">${stepLabel(step)}</span>`).join("")}
           </div>
           ${gridRows}
+        </div>
+
+        <div class="melody-secondary-actions">
+          <button id="copy-melody-bar"${canCopy(1) ? "" : " disabled"}>Copy Bar → Bar ${barIndex + 2}</button>
+          <button id="copy-melody-2bars"${canCopy(2) ? "" : " disabled"}>Copy 2小節 → Bar ${barIndex + 3}–${barIndex + 4}</button>
         </div>
 
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
@@ -213,6 +226,33 @@ export function createMelodyController({ projectStore, rerender }) {
       message = `Bar ${barIndex + 1} のメロディをクリアしました。`;
       rerender("melody");
     });
+
+    // 現在の小節（bars=2なら現在と次の小節）を、すぐ後ろへコピーする。モチーフの繰り返し用
+    const copyForward = (bars) => {
+      const latest = projectStore.getSnapshot();
+      const notes = getMelodyNotes(latest);
+      const targetBarIndex = barIndex + bars;
+
+      if (
+        hasMelodyInBars(notes, { barIndex: targetBarIndex, bars, barTicks })
+        && !globalThis.confirm(`Bar ${targetBarIndex + 1}${bars > 1 ? `–${targetBarIndex + bars}` : ""} のメロディを上書きしますか？（↶ で戻せます）`)
+      ) {
+        return;
+      }
+
+      projectStore.updateMelodyNotes(copyMelodyBars(notes, {
+        sourceBarIndex: barIndex,
+        targetBarIndex,
+        bars,
+        barTicks
+      }));
+      message = `Bar ${barIndex + 1}${bars > 1 ? `–${barIndex + bars}` : ""} を Bar ${targetBarIndex + 1}${bars > 1 ? `–${targetBarIndex + bars}` : ""} へコピーしました。`;
+      barIndex = targetBarIndex;
+      rerender("melody");
+    };
+
+    document.querySelector("#copy-melody-bar")?.addEventListener("click", () => copyForward(1));
+    document.querySelector("#copy-melody-2bars")?.addEventListener("click", () => copyForward(2));
 
     document.querySelector("#melody-prev-bar")?.addEventListener("click", () => {
       barIndex = Math.max(0, barIndex - 1);

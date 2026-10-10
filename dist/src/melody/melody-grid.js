@@ -1,3 +1,4 @@
+import { chordIntervals } from "../core/chord-qualities.js";
 import { placeMonophonicNote } from "../core/note-placement.js";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -25,4 +26,45 @@ export function toggleMonophonicStep(notes, options) {
 export function clearBar(notes, { barStartTick, barDurationTick }) {
   const barEndTick = barStartTick + barDurationTick;
   return notes.filter((note) => note.startTick < barStartTick || note.startTick >= barEndTick);
+}
+
+// 小節の中身(メロディ)を、別の小節へ上書きコピーする。bars=2なら2小節ぶんをまとめて写す（モチーフの繰り返し用）。
+export function copyMelodyBars(notes, { sourceBarIndex, targetBarIndex, bars = 1, barTicks }) {
+  const sourceStart = sourceBarIndex * barTicks;
+  const sourceEnd = (sourceBarIndex + bars) * barTicks;
+  const targetStart = targetBarIndex * barTicks;
+  const targetEnd = (targetBarIndex + bars) * barTicks;
+  const offset = targetStart - sourceStart;
+
+  const retained = notes.filter((note) => note.startTick < targetStart || note.startTick >= targetEnd);
+  const copied = notes
+    .filter((note) => note.startTick >= sourceStart && note.startTick < sourceEnd)
+    .map((note) => ({
+      ...note,
+      id: createCopyId(),
+      startTick: note.startTick + offset,
+      durationTick: Math.min(note.durationTick, targetEnd - (note.startTick + offset))
+    }));
+
+  return [...retained, ...copied].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+}
+
+export function hasMelodyInBars(notes, { barIndex, bars = 1, barTicks }) {
+  const start = barIndex * barTicks;
+  const end = (barIndex + bars) * barTicks;
+  return notes.some((note) => note.startTick >= start && note.startTick < end);
+}
+
+function createCopyId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+// コードの構成音（ピッチクラス 0〜11）。コード未設定なら空。Melody画面の強調表示用。
+export function chordTonePitchClasses(chord) {
+  if (!chord) return new Set();
+  return new Set(chordIntervals(chord.quality).map((interval) => (chord.root + interval) % 12));
 }
