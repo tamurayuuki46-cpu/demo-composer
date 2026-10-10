@@ -91,6 +91,22 @@ Melody Analyzerの既存分析値を、作曲時に「どこを見るか」が�
 
 これは特定曲のコピー、本人らしさの判定、類似度スコアではない。既存の `analyzeMelody()` が計算済みの値を読みやすく束ねるだけで、Project Dataは変更しない。候補生成にも自動反映せず、人間が分析を見て判断・修正するための学習補助とする。Schema変更・Migrationは不要。
 
+## v0.2 Melodic Function Guide
+
+Melody Analyzer内で、メロディを次の3層から読めるようにする。
+
+- `和声での役割`: Guide Tone / Chord Tone / Tension / Other Non-chord Tone
+- `非和声音の使い方`: 経過音 / 刺繍音 / Approach / 倚音 / 逸音 / 先取音 / 係留音候補
+- `フレーズ語彙`: モチーフ / リック / リフ / シーケンスの違いを短く表示
+
+Guide Toneはコードトーンのうち3rd / 7th系として扱い、Chord Toneの内数として表示する。Tensionは初期版では自然な9th / 11th / 13th相当を対象とする。
+
+非和声音は、前後関係が明確な場合だけ説明可能なルールで検出する。係留音は本来の「保持 → 不協和 → 解決」すべてを断定せず、小節線を越えて前Chordのコードトーンが次Chordでは非和声音になる場合を `係留音候補` として扱う。
+
+リック / リフはジャンルや反復文脈に依存するため、自動判定しない。既存のモチーフ反復値をそのままリック / リフと断定せず、学習用の概念整理に留める。
+
+分析結果はProject Dataへ保存せず、Chord / Melody Noteから毎回派生計算する。Melody候補生成へ自動反映せず、人間が見て判断・修正する。schemaVersion 2を維持し、Migration / MIDI形式変更は行わない。詳細は `docs/MELODY_FUNCTIONS.md`。
+
 ## v0.2 New Project
 
 Hubから `＋ 新規Project` を選ぶと、現在のProjectを端末へ保存した上で、別IDの空Projectへ切り替える。旧Projectは削除しない。目的は、起動時に最後のActive Projectが復元される保存仕様を維持しつつ、ユーザーが明示的に別の曲を開始できるようにすること。
