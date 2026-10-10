@@ -30,11 +30,12 @@ v0.2-dev
 - Bass Sound: Soft Bass / Synth Bass / Deep Bass
 - Sound Tone: Natural / Bright / Soft / Warm / Dark / Airy / Aggressive
 - Sound選択は `project.instruments[]` に保存し、AutoSave / Undo / Redo対象
-- Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drums軽量再生
+- Demo Player: Play / Stop / Loop / Position、パート聴き分け（ミュート / ソロ。画面のみ）、Chord / Melody / Bass / Drums軽量再生
 - Demo PlayerのChord / Melody / BassはSound Preset / Toneに応じてwaveform / low-pass filter / attack / release / gainを軽量変更
 - ArrangeのSection単体再生でもSound設定を保持
 - MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid
 - Sound Sketch LiteはMIDI Program Change / CCを出力しない
+- Hub AI相談: 相談用テキストのコピー（`src/hub/consult-text.js`。API送信なし）
 - project.json手動Backup Export / 読み込み（検証・Migration・確認・Undo可。`src/storage/project-import.js`）
 - 静的Build（`npm run build`。Vercel設定は残すが自動配信は停止）
 - GitHub Pages公開（developから公開。現在の公開確認先）

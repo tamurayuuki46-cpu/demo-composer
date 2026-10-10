@@ -201,6 +201,11 @@ Android Chromeでは、ユーザー操作後に`AudioContext.resume()`を行い�
 
 Playbackは作曲判断の確認用途だけを担当し、高度なSynth / Mixing / Mastering機能は持たない。
 
+## AI Consult / Part Switch
+
+- AI相談: `src/hub/consult-text.js`（Projectを読むだけの純粋関数）と `src/hub/consult-ui.js`（Hub内のパネル / コピー）。外部サービスへは送信しない
+- パート聴き分け: Demo Playerがパートごとの出力バス（`chord / melody / bass / drums`）を持ち、`setPartMuted(role, muted)` でgainを切り替える。UIは `src/audio/part-switch-ui.js`。状態は画面だけで、Project Data / MIDI Exportには触れない
+
 ## Export
 
 MIDI出力は `src/midi/` に集約する。

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build-static.mjs",
     "serve": "python -m http.server 8080",
-    "test:syntax": "node --check src/main.js && node --check src/chord/chord-theory.js && node --check src/chord/chord-presets.js && node --check src/chord/diatonic-fan.js && node --check src/core/chord-qualities.js && node --check src/core/sound-presets.js && node --check src/core/project-schema.js && node --check src/core/project-state.js && node --check src/core/project-migration.js && node --check src/audio/demo-player.js && node --check src/midi/midi-export.js && node --check src/rhythm/drum-presets.js && node --check src/rhythm/rhythm-screen.js && node --check src/core/edit-history-ui.js && node --check src/core/section-ops.js && node --check src/arrange/arrange-screen.js && node --check src/sound/sound-screen.js && node --check src/storage/project-import.js && node --check src/core/note-placement.js",
+    "test:syntax": "node --check src/main.js && node --check src/chord/chord-theory.js && node --check src/chord/chord-presets.js && node --check src/chord/diatonic-fan.js && node --check src/core/chord-qualities.js && node --check src/core/sound-presets.js && node --check src/core/project-schema.js && node --check src/core/project-state.js && node --check src/core/project-migration.js && node --check src/audio/demo-player.js && node --check src/midi/midi-export.js && node --check src/rhythm/drum-presets.js && node --check src/rhythm/rhythm-screen.js && node --check src/core/edit-history-ui.js && node --check src/core/section-ops.js && node --check src/arrange/arrange-screen.js && node --check src/sound/sound-screen.js && node --check src/storage/project-import.js && node --check src/core/note-placement.js && node --check src/audio/part-switch-ui.js && node --check src/hub/consult-text.js && node --check src/hub/consult-ui.js",
     "test:midi": "node scripts/midi-smoke-test.mjs",
     "test:rhythm": "node scripts/rhythm-copy-smoke-test.mjs && node scripts/bass-pitch-smoke-test.mjs",
     "test:rhythm-presets": "node scripts/rhythm-preset-smoke-test.mjs",
@@ -18,6 +18,8 @@
     "test:history": "node scripts/history-smoke-test.mjs",
     "test:section": "node scripts/section-smoke-test.mjs",
     "test:sound": "node scripts/sound-sketch-smoke-test.mjs",
+    "test:parts": "node scripts/part-switch-smoke-test.mjs",
+    "test:consult": "node scripts/consult-text-smoke-test.mjs",
     "test:import": "node scripts/project-import-smoke-test.mjs"
   }
 }

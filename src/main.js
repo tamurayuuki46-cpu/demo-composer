@@ -8,6 +8,8 @@ import {
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
+import { bindConsultPanel, consultPanelHtml } from "./hub/consult-ui.js";
+import { bindPartSwitch } from "./audio/part-switch-ui.js";
 import { bindEditHistory } from "./core/edit-history-ui.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createArrangeController } from "./arrange/arrange-screen.js";
@@ -85,8 +87,10 @@ function hubScreen() {
       <div class="actions">
         <button id="save-project" class="primary-action">Save Now</button>
         <button id="toggle-export" class="primary-action" aria-expanded="false">Export</button>
-        <button disabled>AI相談</button>
+        <button id="toggle-consult" class="primary-action" aria-expanded="false">AI相談</button>
       </div>
+
+      ${consultPanelHtml()}
 
       <section id="export-panel" class="export-panel" hidden>
         <h3>Export</h3>
@@ -305,6 +309,7 @@ function bindHubControls() {
   const saveButton = document.querySelector("#save-project");
   const exportToggle = document.querySelector("#toggle-export");
   const exportPanel = document.querySelector("#export-panel");
+  bindConsultPanel({ projectStore, setMessage: setHubMessage });
 
   title?.addEventListener("change", (event) => {
     commitHubChange({ metadata: { title: event.target.value.trim() } });
@@ -595,6 +600,7 @@ async function boot() {
     button.addEventListener("click", () => render(button.dataset.screen));
   });
   bindPlayerControls();
+  bindPartSwitch({ demoPlayer });
   updatePlayerUi(playerState);
   bindEditHistory({
     projectStore,
