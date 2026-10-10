@@ -13,7 +13,7 @@ v0.1-dev
 - IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now
 - Hub: Project名 / BPM / Key / Scale
 - Chord: ダイアトニック候補、1コード=1小節、追加 / 削除 / Clear
-- Melody: 8分音符入力、Monophonic、Bar / Octave切替、Clear Bar
+- Melody: 8分 / 16分音符の入力単位切替（16分は前半・後半表示）、Monophonic、Bar / Octave切替、Clear Bar
 - Rhythm: Bass / Kick / Snare / Closed HH、16分音符、Clear、Beat Copy、Bar Copy
 - Rhythm CopyでBarをまたぐBassをコピー先Chord Root / Key Rootへ追従
 - Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drums軽量再生
@@ -37,6 +37,7 @@ Repository統合状況:
 - PR #15 / #16のconflictは内容の衝突ではなく、Rhythm CopyがdevelopではSquash、milestoneでは個別commitで入ったことによる履歴の不一致。
 - そのため既存PRはrebaseせず、Claudeが `claude/v0.1-integrate-feature-complete` を最新developから作成し、`655fc14` の `index.html` / `src/` をそのまま適用した（JS / CSS / HTMLはmilestoneと完全一致。`src/rhythm/README.md` のみ16 step表示に合わせて文言更新）。
 - docsはdevelopのAI_HANDOFFを土台に、milestone側のMelody 8 step記述と、未反映だったRhythm 16 step記述を統合。
+- Melody 16分音符の入力単位切替は、feature-complete（655fc14）の後に `claude/v0.1-melody-16th-toggle` で追加（ユーザー依頼）。`develop` はmilestoneより新しい。復元点は `restore/v0.1-before-melody-16th-toggle`。
 - 統合前の復元点: `restore/v0.1-before-feature-complete-integration`（= 統合前develop 2af9bda）。
 - 統合PR #18はmerge済み（develop: de51bc0）。PR #15 / #16 / #12は「#18で置換済み」とコメントしてclose済み（branchは残している）。
 - `main` は実機確認済みstableだけを置く方針なので、まだ触らない。
@@ -82,7 +83,8 @@ Google Drive Backup:
 - Chord並べ替え / 長さ変更 / 7th / 借用和音は未対応
 - Key / Scale変更時の既存Chord / Melody / Bass自動移調は未対応
 - Bass Noteがある間はChord変更を拒否する
-- Melodyは8分音符固定。16分音符 / Note Length / Velocity編集は未対応
+- Melodyは音符の長さが入力単位（8分=240tick / 16分=120tick）固定。Note Length（伸ばす）/ Velocity編集は未対応
+- Melodyの入力単位切替はUI状態のみで保存されない（再起動すると8分に戻る。Noteは保存される）
 - Melody縦ピアノは表示専用で、鍵盤Tap試聴は未対応
 - Rhythm 16 step同時表示は、幅360px級の端末で1セル約18px幅になり44pxの推奨Tap幅を下回る。見出し文字も7px。実機回帰確認で誤タップを重点確認する（stable前にUIを変える場合は復元点を作ってから）
 - Melody Gridのスタイルが `src/core/app.css` と `src/melody/melody.css` に二重定義されている（後読みのmelody.cssが優先。例: 列幅54px vs 50px）。現状は正しく動くが、stable後に整理候補
@@ -110,7 +112,7 @@ Google Drive Backup:
 
 最近の重要な設計判断:
 - Android Chromeを主対象とする
-- Melodyは1 Bar=8 step、1 step=240 tick、8マス同時表示
+- Melodyは初期状態で1 Bar=8 step、1 step=240 tick、8マス同時表示。16分切替時は1 step=120 tickで、タップ幅確保のため半小節ずつ表示（Schema変更なし）
 - Melody Pitch目印は縦ピアノKeyboard（白鍵 / 黒鍵 + Note名）
 - Rhythmは1 Bar=16 step、1 step=120 tick、16マス同時表示
 - Beat Copy / Bar Copyは残し、コピー後に編集するUXを重視する

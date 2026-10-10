@@ -27,6 +27,9 @@
 - Melody左端の縦ピアノKeyboard（白鍵 / 黒鍵 + Note名表示）
 - Melody縦ピアノUI変更前の復元ブランチ `restore/v0.1-before-melody-vertical-piano`
 - Melody 8マスUI変更前の復元ブランチ `restore/v0.1-before-melody-8step-grid`
+- Melodyの入力単位切替（8分音符 / 16分音符）。16分は前半 / 後半に分けて表示
+- Melody 16分切替前の復元ブランチ `restore/v0.1-before-melody-16th-toggle`
+- Melody Grid Smoke Test（`npm run test:melody`、CI対象）
 - Rhythm 16マスUI変更前の復元ブランチ `restore/v0.1-before-rhythm-16step-grid`
 - feature-complete統合前の復元ブランチ `restore/v0.1-before-feature-complete-integration`
 - Monophonicな8分音符Tap入力 / Clear Bar
@@ -71,6 +74,7 @@
 - Rhythmの1 Beat=4 step表示を廃止し、`1 e & a / 2 e & a / 3 e & a / 4 e & a` の16マスを1画面に同時表示する方式へ変更
 - RhythmのBeat 1〜4ボタンを表示切替からCopy Beatのコピー元選択へ変更（セルTapでもBeatを選択）
 - `milestone/v0.1-feature-complete`（655fc14）のコードを新しい統合branch経由で `develop` へ反映（PR #15 / #16を置き換え）
+- Melodyで8分と16分を混在させても重ならないよう、既存Noteを短縮 / 新Noteの長さを制限するMonophonic処理へ拡張（8分のみの従来動作は変更なし）
 - Melody Noteが存在する間もKey / Scale変更を拒否して整合性を保護
 - Rhythm画面をPlaceholderからBass / Drums同時入力UIへ変更
 - Bass Noteが存在する間はChord変更を拒否してRoot不整合を防止

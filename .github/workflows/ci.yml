@@ -23,3 +23,6 @@ jobs:
 
       - name: Rhythm copy smoke test
         run: npm run test:rhythm
+
+      - name: Melody grid smoke test
+        run: npm run test:melody
