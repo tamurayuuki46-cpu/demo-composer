@@ -1,0 +1,9 @@
+{
+  "name": "demo-composer",
+  "version": "0.1.0-dev",
+  "private": true,
+  "description": "Android-first songwriting support PWA",
+  "scripts": {
+    "serve": "python -m http.server 8080"
+  }
+}
