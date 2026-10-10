@@ -1,4 +1,4 @@
-import { getSections, sectionAtBar, sectionLabel, totalSectionBars } from "../core/section-ops.js";
+import { getSections, sectionAtBar, sectionRanges, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol } from "../chord/chord-theory.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import {
@@ -9,6 +9,7 @@ import {
   getDrumPreset,
   hasEditableDrumsInBar
 } from "./drum-presets.js";
+import { DRUM_FILLS, applyDrumFill, applyDrumFillToSectionEnds, getDrumFill } from "./drum-fills.js";
 import { applyBassCandidate, bassCandidatesForBar, bassPatternDots } from "./bass-candidates.js";
 import {
   bassChoicesForBar,
@@ -95,7 +96,8 @@ export function createRhythmController({ projectStore, rerender }) {
       : `Copy Beat → Bar ${barIndex + 2} Beat 1`;
     const selectedPreset = getDrumPreset(selectedPresetId);
     // この小節が属するSection（Arrangeで構成を決めているときだけ）。Drum PresetをSection全体へ適用できる
-    const currentSection = sectionAtBar(getSections(project), barIndex);
+    const sections = getSections(project);
+    const currentSection = sectionAtBar(sections, barIndex);
 
     const bassCandidates = bassCandidatesForBar(project, barIndex, { barTicks, stepTicks });
 
@@ -132,6 +134,16 @@ export function createRhythmController({ projectStore, rerender }) {
           </div>
           ${currentSection ? `<button id="apply-drum-preset-section" class="rhythm-preset-section">${escapeHtml(currentSection.section.name)}（Bar ${currentSection.startBar + 1}–${currentSection.endBar}）全体に適用</button>` : ""}
           <small>${escapeHtml(selectedPreset.description)}</small>
+        </div>
+
+        <div class="drum-fill-panel">
+          <h3>ドラムフィル</h3>
+          <small>${currentSection ? `${escapeHtml(currentSection.section.name)}の最後（Bar ${currentSection.endBar}）の後半だけを変えます。` : "Sectionが無いので、この小節の後半だけを変えます。"}</small>
+          <div class="drum-fill-buttons">
+            ${DRUM_FILLS.map((fill) => `<button data-drum-fill="${fill.id}">${escapeHtml(fill.label)}</button>`).join("")}
+          </div>
+          ${sections.length >= 2 ? `<button id="apply-fill-section-ends" class="drum-fill-all">各Sectionの最後に入れる（最後のSectionを除く）</button>` : ""}
+          <small>${DRUM_FILLS.map((fill) => `${escapeHtml(fill.label)}: ${escapeHtml(fill.description)}`).join("<br />")}</small>
         </div>
 
         <div class="bass-candidate-panel">
@@ -248,6 +260,41 @@ export function createRhythmController({ projectStore, rerender }) {
         message = `Bar ${barIndex + 1} のBassを「${candidate.label}」にしました。`;
         rerender("rhythm");
       });
+    });
+
+    document.querySelectorAll("[data-drum-fill]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const latest = projectStore.getSnapshot();
+        const fill = getDrumFill(button.dataset.drumFill);
+        const range = sectionAtBar(getSections(latest), barIndex);
+        const targetBar = range ? range.endBar - 1 : barIndex;
+
+        projectStore.updateRhythmNotes({
+          bassNotes: getTrackNotes(latest, "bass"),
+          drumNotes: applyDrumFill(getTrackNotes(latest, "drums"), {
+            fillId: fill.id,
+            barStartTick: targetBar * barTicks,
+            stepTicks
+          })
+        });
+        message = `Bar ${targetBar + 1} の後半に「${fill.label}」を入れました。（↶ で戻せます）`;
+        rerender("rhythm");
+      });
+    });
+
+    document.querySelector("#apply-fill-section-ends")?.addEventListener("click", () => {
+      const latest = projectStore.getSnapshot();
+      const fill = getDrumFill(DRUM_FILLS[0].id);
+      const ranges = sectionRanges(getSections(latest));
+      if (ranges.length < 2) return;
+      if (!globalThis.confirm(`最後のSectionを除く${ranges.length - 1}か所のSection最後の小節（後半）に「${fill.label}」を入れますか？（↶ で戻せます）`)) return;
+
+      projectStore.updateRhythmNotes({
+        bassNotes: getTrackNotes(latest, "bass"),
+        drumNotes: applyDrumFillToSectionEnds(getTrackNotes(latest, "drums"), { fillId: fill.id, ranges, barTicks, stepTicks })
+      });
+      message = `${ranges.length - 1}か所のSection最後に「${fill.label}」を入れました。`;
+      rerender("rhythm");
     });
 
     document.querySelector("#apply-drum-preset-section")?.addEventListener("click", () => {

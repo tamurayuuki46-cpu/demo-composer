@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- Rhythm: ドラムフィル（スネア8分 / スネアロール / ブレイク）。Sectionの最後の小節の後半（3・4拍）だけを変え、前半は残す。Sectionが無いときは現在の小節。`各Sectionの最後に入れる` で最後のSectionを除く全Sectionへ一括（`src/rhythm/drum-fills.js`、Schema変更なし）
+- Smoke Test追加: `applyDrumFill` / `applyDrumFillToSectionEnds`（`npm run test:rhythm-presets` に含む）
+- 追加前の復元ブランチ `restore/v0.2-before-drum-fill`
 - Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
 - Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
 - コピー処理を `src/hub/clipboard.js` に共通化

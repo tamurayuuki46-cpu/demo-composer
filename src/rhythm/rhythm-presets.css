@@ -95,3 +95,36 @@
   overflow: hidden;
   white-space: nowrap;
 }
+
+/* ドラムフィル */
+.drum-fill-panel {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.drum-fill-panel h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.drum-fill-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.drum-fill-buttons button,
+.drum-fill-all {
+  min-height: 48px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-size: 13px;
+}
