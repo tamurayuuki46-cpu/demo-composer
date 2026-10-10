@@ -29,6 +29,7 @@ v0.2-dev
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
 - Chord 次のコード候補3つ（`chord-next.js`）/ Rhythm Bass候補3つ（`bass-candidates.js`）。どちらもタップで確定、Schema変更なし
 - Chord ひとスパイス（借用和音3候補、`suggestSpiceChords`）
+- Hub Cubaseでやることメモ（`src/hub/cubase-memo.js`）/ AI相談テンプレート
 - Melody Analyzer（Melody内パネル、`src/core/melody-analysis.js`）/ Hub曲の特徴カード（`src/hub/song-card.js`）
 - Chord役割ラベル（`chord-role.js`）/ Melody度数表示（画面のみ）
 - 画面の文字サイズ3段階（`src/core/display-settings.js`、端末のlocalStorageのみ）

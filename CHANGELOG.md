@@ -4,6 +4,11 @@
 更新日: 2026-10-10
 
 ### 追加
+- Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
+- Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
+- コピー処理を `src/hub/clipboard.js` に共通化
+- Cubase Memo Smoke Test（`npm run test:memo`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-hub-memo`（Schema変更なし）
 - Melody Analyzer（Melody内の `メロディの特徴` パネル）: 音域 / 跳躍 / コードトーン率 / リズム密度 / 同音連打 / モチーフ反復 の6項目を、数字と一言で表示。評価ではなく特徴の説明（`src/core/melody-analysis.js`）
 - Hub: `曲の特徴カード`（構成 / コード進行 / 音域 / 跳躍 / モチーフ反復 / 入力済みパート。`src/hub/song-card.js`）
 - Melody Analysis Smoke Test（`npm run test:analysis`、CI対象）

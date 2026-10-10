@@ -125,6 +125,17 @@ function rangeSummary(notes) {
   return `音数 ${notes.length} / 音域 ${pitchName(Math.min(...pitches))}〜${pitchName(Math.max(...pitches))}`;
 }
 
+// 「いま悩んでいること」のテンプレート。タップで相談欄に入り、あとから自由に書き換えられる。
+export const CONSULT_TEMPLATES = Object.freeze([
+  { id: "next-chord", label: "次のコード", text: "次に続くコードの候補を知りたい（今のコード進行を活かしたまま）。" },
+  { id: "chorus", label: "サビを盛り上げる", text: "サビをもっと盛り上げたい。メロディ・コード・リズムのどこを変えるとよいか知りたい。" },
+  { id: "melody", label: "メロディを覚えやすく", text: "メロディをもっと覚えやすく・歌いやすくしたい。直す場所の候補を知りたい。" },
+  { id: "bass", label: "ベース", text: "ベースラインをもっと動かしたい。今のコードに合う動きの候補を知りたい。" },
+  { id: "contrast", label: "Aメロとサビの差", text: "Aメロとサビの差をもっとはっきり出したい。" },
+  { id: "arrange", label: "構成の見直し", text: "曲の構成（Section の並びと長さ）を見直したい。" },
+  { id: "daw", label: "Cubaseで次にやること", text: "この骨子をCubase / Cubasisに持っていったあと、最初にやるとよいことを順番に知りたい。" }
+]);
+
 export const CONSULT_PLACEHOLDER = "（ここに相談したいことを書いてください）";
 
 export function buildConsultText(project, question = "") {

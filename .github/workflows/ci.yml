@@ -66,6 +66,9 @@ jobs:
       - name: Next chord / bass candidates smoke test
         run: npm run test:candidates
 
+      - name: Cubase memo / consult template smoke test
+        run: npm run test:memo
+
       - name: Melody analysis smoke test
         run: npm run test:analysis
 

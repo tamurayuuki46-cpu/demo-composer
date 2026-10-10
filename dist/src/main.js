@@ -1,14 +1,23 @@
 import { createDemoPlayer } from "./audio/demo-player.js";
 import {
+  BACKING_PATTERNS,
+  getBackingPattern,
+  getBackingPatternSelection,
+  upsertBackingPattern
+} from "./core/backing-patterns.js";
+import {
   buildChordPreset,
   CHORD_PRESETS,
   chordPresetPreview,
   getChordPreset
 } from "./chord/chord-presets.js";
-import { suggestNextChords } from "./chord/chord-next.js";
+import { chordRole } from "./chord/chord-role.js";
+import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
+import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
+import { songCardHtml } from "./hub/song-card.js";
 import { bindConsultPanel, consultPanelHtml } from "./hub/consult-ui.js";
 import { bindPartSwitch } from "./audio/part-switch-ui.js";
 import { bindEditHistory } from "./core/edit-history-ui.js";
@@ -20,6 +29,7 @@ import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJso
 import { MAX_IMPORT_BYTES, parseProjectJson } from "./storage/project-import.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
 import { createSoundController } from "./sound/sound-screen.js";
+import { applyTextSize, loadTextSize, saveTextSize, TEXT_SIZES } from "./core/display-settings.js";
 import { createAutosave } from "./storage/autosave.js";
 import { backupProjectForMigration, loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
@@ -35,6 +45,10 @@ let currentScreen = "hub";
 let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存されます。";
 let chordMessage = "下の候補をタップしてコードを追加します。";
 let chordRootSelection = null;
+let spiceOpen = false;
+let songCardOpen = false;
+let textSize = loadTextSize();
+applyTextSize(textSize);
 let chordPresetSelection = CHORD_PRESETS[0].id;
 
 const KEY_OPTIONS = [...NOTE_NAMES];
@@ -91,7 +105,20 @@ function hubScreen() {
         <button id="toggle-consult" class="primary-action" aria-expanded="false">AI相談</button>
       </div>
 
+      <button id="toggle-song-card" class="song-card-toggle" aria-expanded="${songCardOpen}">曲の特徴カード${songCardOpen ? " ▲" : " ▼"}</button>
+      ${songCardOpen ? songCardHtml(project) : ""}
+
+      ${cubaseMemoHtml(project)}
+
       ${consultPanelHtml()}
+
+      <section class="display-settings">
+        <h3>文字の大きさ</h3>
+        <div class="text-size-switch" role="group" aria-label="文字の大きさ">
+          ${TEXT_SIZES.map((size) => `<button data-text-size-option="${size.id}" class="${size.id === textSize ? "active" : ""}" aria-pressed="${size.id === textSize}">${size.label}</button>`).join("")}
+        </div>
+        <p class="hint">この端末だけの設定です（曲のデータには入りません）。上のバー・再生ボタン・下のナビの大きさは変わりません。</p>
+      </section>
 
       <section id="export-panel" class="export-panel" hidden>
         <h3>Export</h3>
@@ -126,13 +153,17 @@ function chordScreen() {
     key: project.basic.key,
     scale: project.basic.scale
   }).join(" → ");
+  const backingPatternId = getBackingPatternSelection(project.instruments);
+  const backingPattern = getBackingPattern(backingPatternId);
   const nextChords = suggestNextChords(project.chords, { key: project.basic.key, scale: project.basic.scale });
+  const spiceChords = suggestSpiceChords({ key: project.basic.key, scale: project.basic.scale });
   const progression = project.chords.length
     ? project.chords.map((chord, index) => `
         <div class="chord-card progression-card">
           <button class="remove-chord" data-remove-chord="${index}" aria-label="${escapeAttribute(chordSymbol(chord.root, chord.quality))}を削除">×</button>
           <strong>${escapeHtml(chordSymbol(chord.root, chord.quality))}</strong>
           <span>${escapeHtml(chord.degree)}</span>
+          <em class="chord-role">${escapeHtml(chordRole(chord, { key: project.basic.key, scale: project.basic.scale }).label)}</em>
           <small>${index + 1}小節目</small>
         </div>
       `).join("")
@@ -160,6 +191,17 @@ function chordScreen() {
         <p class="chord-preset-preview">${escapeHtml(presetPreview)}</p>
       </div>
 
+      <div class="backing-pattern-panel">
+        <label class="field" for="backing-pattern-select">
+          <span>Backing Pattern</span>
+          <select id="backing-pattern-select" aria-label="Chord Backing Pattern">
+            ${BACKING_PATTERNS.map((pattern) => `<option value="${pattern.id}"${pattern.id === backingPatternId ? " selected" : ""}>${escapeHtml(pattern.label)}</option>`).join("")}
+          </select>
+        </label>
+        <small>${escapeHtml(backingPattern.description)}</small>
+        <p class="backing-pattern-hint">コード進行は変えず、鳴らし方だけを変更します。Demo PlayerとChord.mid / Song.midに反映されます。</p>
+      </div>
+
       <h3>進行</h3>
       <div class="progression">${progression}</div>
 
@@ -176,6 +218,20 @@ function chordScreen() {
         `).join("")}
       </div>
       <p class="hint">直前のコードから、次に来やすい3つです。選んだあとも、削除や別のコードへの変更ができます。</p>
+
+      <button id="toggle-spice" class="spice-toggle" aria-expanded="${spiceOpen}">✨ ひとスパイス（借用和音）${spiceOpen ? " ▲" : " ▼"}</button>
+      ${spiceOpen ? `
+        <div class="chord-next">
+          ${spiceChords.map((candidate, index) => `
+            <button class="candidate-chord chord-next-item spice-item" data-spice-chord="${index}">
+              <strong>${escapeHtml(candidate.symbol)}</strong>
+              <span>${escapeHtml(candidate.degree)}</span>
+              <small>${escapeHtml(candidate.reason)}</small>
+            </button>
+          `).join("")}
+        </div>
+        <p class="hint">同じ主音の${project.basic.scale === "major" ? "Minor" : "Major"}から和音を1つ借りる候補です。入れすぎず、1つだけ混ぜると雰囲気が変わります。</p>
+      ` : ""}
 
       <h3>ダイアトニック候補</h3>
       <div class="chord-candidates">
@@ -324,6 +380,21 @@ function bindHubControls() {
   const exportToggle = document.querySelector("#toggle-export");
   const exportPanel = document.querySelector("#export-panel");
   bindConsultPanel({ projectStore, setMessage: setHubMessage });
+  bindCubaseMemo({ projectStore, setMessage: setHubMessage, rerender: () => render("hub") });
+
+  document.querySelector("#toggle-song-card")?.addEventListener("click", () => {
+    songCardOpen = !songCardOpen;
+    render("hub");
+  });
+
+  document.querySelectorAll("[data-text-size-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      textSize = button.dataset.textSizeOption;
+      applyTextSize(textSize);
+      saveTextSize(textSize);
+      render("hub");
+    });
+  });
 
   title?.addEventListener("change", (event) => {
     commitHubChange({ metadata: { title: event.target.value.trim() } });
@@ -446,6 +517,17 @@ function bindChordControls() {
     });
   });
 
+  const spiceChords = suggestSpiceChords({ key: project.basic.key, scale: project.basic.scale });
+  document.querySelector("#toggle-spice")?.addEventListener("click", () => {
+    spiceOpen = !spiceOpen;
+    render("chord");
+  });
+  document.querySelectorAll("[data-spice-chord]").forEach((button) => {
+    button.addEventListener("click", () => {
+      appendCandidate(spiceChords[Number(button.dataset.spiceChord)]);
+    });
+  });
+
   document.querySelector("#chord-preset-select")?.addEventListener("change", (event) => {
     chordPresetSelection = event.target.value;
     render("chord");
@@ -469,6 +551,19 @@ function bindChordControls() {
     });
 
     commitChordUpdate(next, `「${preset.label}」を適用しました。個別に修正できます。`);
+  });
+
+  document.querySelector("#backing-pattern-select")?.addEventListener("change", (event) => {
+    try {
+      const patternId = event.target.value;
+      const latest = projectStore.getSnapshot();
+      const pattern = getBackingPattern(patternId);
+      projectStore.updateInstruments(upsertBackingPattern(latest.instruments, patternId));
+      chordMessage = `Backing Patternを「${pattern.label}」に変更しました。Demo Playerで確認できます。`;
+    } catch (error) {
+      chordMessage = error instanceof Error ? error.message : "Backing Patternの変更に失敗しました。";
+    }
+    render("chord");
   });
 
   document.querySelectorAll("[data-add-chord]").forEach((button) => {

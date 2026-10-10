@@ -16,6 +16,7 @@ import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
+import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
 import { songCardHtml } from "./hub/song-card.js";
 import { bindConsultPanel, consultPanelHtml } from "./hub/consult-ui.js";
 import { bindPartSwitch } from "./audio/part-switch-ui.js";
@@ -106,6 +107,8 @@ function hubScreen() {
 
       <button id="toggle-song-card" class="song-card-toggle" aria-expanded="${songCardOpen}">曲の特徴カード${songCardOpen ? " ▲" : " ▼"}</button>
       ${songCardOpen ? songCardHtml(project) : ""}
+
+      ${cubaseMemoHtml(project)}
 
       ${consultPanelHtml()}
 
@@ -377,6 +380,7 @@ function bindHubControls() {
   const exportToggle = document.querySelector("#toggle-export");
   const exportPanel = document.querySelector("#export-panel");
   bindConsultPanel({ projectStore, setMessage: setHubMessage });
+  bindCubaseMemo({ projectStore, setMessage: setHubMessage, rerender: () => render("hub") });
 
   document.querySelector("#toggle-song-card")?.addEventListener("click", () => {
     songCardOpen = !songCardOpen;
