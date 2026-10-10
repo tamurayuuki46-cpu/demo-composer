@@ -1,7 +1,9 @@
-import { createProjectStore } from "./core/project-state.js";
+import { createDefaultProject, createProjectStore } from "./core/project-state.js";
+import { loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
-const projectStore = createProjectStore();
+let projectStore;
 let currentScreen = "hub";
+let startupMessage = "Projectを編集できます。変更後はSaveで端末に保存してください。";
 
 const KEY_OPTIONS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -48,10 +50,10 @@ function hubScreen() {
         <span>Revision ${project.revision}</span>
       </div>
 
-      <p id="hub-message" class="status-message" aria-live="polite">変更は現在このセッション内だけで保持されます。</p>
+      <p id="hub-message" class="status-message" aria-live="polite">${escapeHtml(startupMessage)}</p>
 
       <div class="actions">
-        <button disabled>Save</button>
+        <button id="save-project" class="primary-action">Save</button>
         <button disabled>Export</button>
         <button disabled>AI相談</button>
       </div>
@@ -96,15 +98,21 @@ const screen = document.querySelector("#screen");
 const buttons = [...document.querySelectorAll(".nav-btn")];
 const projectTitle = document.querySelector(".topbar h1");
 
-function escapeAttribute(value) {
+function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
     .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
 }
 
 function setHubMessage(message, isError = false) {
+  startupMessage = message;
   const target = document.querySelector("#hub-message");
   if (!target) return;
 
@@ -115,10 +123,29 @@ function setHubMessage(message, isError = false) {
 function commitHubChange(change) {
   try {
     projectStore.updateHub(change);
-    setHubMessage("Project Stateを更新しました。");
+    setHubMessage("変更しました。Saveすると端末に保存されます。");
   } catch (error) {
     render("hub");
     setHubMessage(error instanceof Error ? error.message : "更新に失敗しました。", true);
+  }
+}
+
+async function saveCurrentProject() {
+  const saveButton = document.querySelector("#save-project");
+  if (saveButton) saveButton.disabled = true;
+
+  try {
+    await saveProject(projectStore.getSnapshot());
+    const persistent = await requestPersistentStorage();
+    setHubMessage(
+      persistent
+        ? "端末に保存しました。ストレージ保護も有効です。"
+        : "端末に保存しました。必要に応じてproject.jsonバックアップも利用してください。"
+    );
+  } catch (error) {
+    setHubMessage(error instanceof Error ? error.message : "保存に失敗しました。", true);
+  } finally {
+    if (saveButton) saveButton.disabled = false;
   }
 }
 
@@ -127,6 +154,7 @@ function bindHubControls() {
   const bpm = document.querySelector("#project-bpm");
   const key = document.querySelector("#project-key");
   const scale = document.querySelector("#project-scale");
+  const saveButton = document.querySelector("#save-project");
 
   title?.addEventListener("change", (event) => {
     commitHubChange({ metadata: { title: event.target.value.trim() } });
@@ -143,6 +171,8 @@ function bindHubControls() {
   scale?.addEventListener("change", (event) => {
     commitHubChange({ basic: { scale: event.target.value } });
   });
+
+  saveButton?.addEventListener("click", saveCurrentProject);
 }
 
 function render(name) {
@@ -158,18 +188,41 @@ function render(name) {
   }
 }
 
-buttons.forEach((button) => {
-  button.addEventListener("click", () => render(button.dataset.screen));
-});
+async function boot() {
+  let initialProject;
 
-projectStore.subscribe((project) => {
-  projectTitle.textContent = project.metadata.title;
-
-  if (currentScreen === "hub") {
-    const revision = document.querySelector(".project-meta span:last-child");
-    if (revision) revision.textContent = `Revision ${project.revision}`;
+  try {
+    initialProject = await loadActiveProject();
+    startupMessage = initialProject
+      ? "保存済みProjectを端末から読み込みました。"
+      : "新しいProjectです。変更後はSaveで端末に保存してください。";
+  } catch {
+    initialProject = null;
+    startupMessage = "保存データを読み込めなかったため、新しいProjectで開始しました。";
   }
-});
 
-projectTitle.textContent = projectStore.getSnapshot().metadata.title;
-render("hub");
+  try {
+    projectStore = createProjectStore(initialProject ?? createDefaultProject());
+  } catch {
+    projectStore = createProjectStore(createDefaultProject());
+    startupMessage = "保存データが現在のSchemaで不正なため、新しいProjectで開始しました。";
+  }
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => render(button.dataset.screen));
+  });
+
+  projectStore.subscribe((project) => {
+    projectTitle.textContent = project.metadata.title;
+
+    if (currentScreen === "hub") {
+      const revision = document.querySelector(".project-meta span:last-child");
+      if (revision) revision.textContent = `Revision ${project.revision}`;
+    }
+  });
+
+  projectTitle.textContent = projectStore.getSnapshot().metadata.title;
+  render("hub");
+}
+
+boot();

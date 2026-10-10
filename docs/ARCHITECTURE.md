@@ -41,7 +41,24 @@ v0.1-dev時点では以下を実装済み。
 
 Project StateはModuleから直接オブジェクトを書き換えさせず、責任Module用の更新APIを通す。
 
-現時点では永続化しない。IndexedDB Saveは次工程で `src/storage/` に追加し、Project Stateと保存方式を分離する。
+## Storage
+
+`src/storage/indexeddb-storage.js` がブラウザ保存を担当する。
+
+Project Stateと保存方式は分離し、coreはIndexedDBへ直接依存しない。
+
+v0.1-devのStorage実装:
+
+- IndexedDB database: `demo-composer`
+- `projects` storeへProject Snapshotを保存
+- `meta` storeへactiveProjectIdを保存
+- 起動時にActive Projectを読み込む
+- HubのSaveから手動保存
+- Save時に `navigator.storage.persist()` が利用可能なら永続ストレージ保護を要求
+
+現時点ではAutosave / Snapshot履歴 / Migration / project.json Backupは未実装。
+
+保存済みProjectが読み込めない、または現在のSchema Validationに通らない場合は、新規Default Projectへフォールバックする。
 
 ## Module Ownership
 
