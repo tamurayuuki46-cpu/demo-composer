@@ -119,6 +119,7 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
 - 1 Bar = 16 step（16分音符）
 - スマホでは1 Beat = 4 stepだけ表示
 - Beat 1〜4ボタンで表示範囲を切替
+- 16分Gridの見出しは選択Beatに合わせて `1 e & a`〜`4 e & a` と表示
 - `← Bar` / `Bar →` で小節移動
 - Bassは現在BarのChord Rootを使用
 - Chord未設定BarではKey Rootを使用
@@ -127,6 +128,11 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
 - Tapでstep ON/OFF
 - `Clear Bar` で現在BarのBass + Drumsを削除
 - `Clear Bass` でBass全体を削除し、Chord変更可能な状態へ戻す
+- `Copy Beat → Beat N` で現在BeatのBass + Drumsパターンを次Beatへコピーし、そのBeatへ移動する
+- Beat 4からのBeat Copyは次BarのBeat 1へコピーし、次Barへ移動する
+- `Copy Bar → Bar N` で現在BarのBass + Drumsパターンを次Barへコピーし、そのBarへ移動する
+- Beat / Barのコピー先にRhythmがある場合は上書き確認を表示する
+- Bassはリズム位置だけをコピーし、Barをまたぐ場合はPitchをコピー先のChord Root（Chord未設定時はKey Root）へ追従させる
 
 16列を横一列に縮小せず、4列ずつ見せることでタップ領域を確保する。
 
@@ -136,4 +142,3 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
 - Root / 5th / Approach候補
 - Velocity
 - Open HH / Percussion / Tom
-- Pattern Copy

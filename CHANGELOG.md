@@ -32,6 +32,8 @@
 - Beat 1〜4切替 / Bar移動 / Clear Bar / Clear Bass
 - BassをChord RootまたはKey Rootから入力する方式
 - GM準拠Kick 36 / Snare 38 / Closed HH 42
+- Rhythm Beat Copy（現在BeatのBass / Drumsを次Beatへコピー。Beat 4は次BarのBeat 1へコピー）
+- Rhythm Bar Copy（現在BarのBass / Drumsを次Barへコピー。Bassはコピー先Rootへ追従）
 - Rhythm UI変更前の復元ブランチ `restore/v0.1-before-rhythm-sequencer`
 - Web Audio APIベースの常設Demo Player
 - Demo Player Play / Stop / Loop / Position表示
@@ -79,6 +81,7 @@
 - Android ChromeでAudioContextがsuspendedのまま無音になる可能性に対しresume処理とfallbackを追加
 - 単純な後段2倍出力で発生したクリップ / 音割れを、前段loudness gain + compressor + limiter構成へ置き換えて改善
 - Demo PlayerのLoop終端を常に4小節固定にせず、最後に使用している小節の終端へ合わせるよう修正
+- Rhythmの16分Grid見出しがBeat切替後も `1 e & a` 固定だった表示を、選択Beatへ追従するよう修正
 
 ### 未対応
 - Snapshot履歴
@@ -87,7 +90,7 @@
 - Chord並べ替え / 長さ変更 / 7th / 借用和音
 - Melody 16分音符 / Note Length / Velocity編集
 - Scale表示 / Chord Tone強調 / Melody Analyzer
-- Bass Pitch手動編集 / Velocity / Pattern Copy
+- Bass Pitch手動編集 / Velocity
 - Open HH / Percussion / Tom
 - WAV Export
 - PWA Service Worker
