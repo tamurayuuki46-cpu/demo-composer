@@ -45,5 +45,8 @@ jobs:
       - name: Diatonic fan smoke test
         run: npm run test:diatonic-fan
 
+      - name: History (Undo / Redo) smoke test
+        run: npm run test:history
+
       - name: Static build
         run: npm run build

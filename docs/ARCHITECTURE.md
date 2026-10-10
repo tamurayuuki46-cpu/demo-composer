@@ -41,6 +41,20 @@ v0.2-dev時点:
 
 Project StateはModuleから直接オブジェクトを書き換えさせず、責任Module用の更新APIを通す。
 
+### Edit History (Undo / Redo)
+
+Project Store全体で1本の編集履歴を持つ。Moduleごとの履歴は持たない。
+
+- 通常の更新API（`updateHub` / `updateChords` / `updateMelodyNotes` / `updateRhythmNotes`）は、成功時だけ直前のProjectを履歴へ積む
+- `undo()` / `redo()` / `getHistoryState()` を公開する
+- 上限は `HISTORY_LIMIT`（50操作）。古い操作から捨てる
+- 新しい編集をするとRedo履歴は捨てる
+- 失敗した編集（Validation / 範囲外）は履歴に残さない
+- Key変更（Global Key Change）は1回のAtomicな操作として、1回のUndoで元に戻る
+- `revision` は戻しても増え続ける（保存の新旧判定のため）。Undo / Redoも通常の変更として通知され、AutoSaveされる
+- 履歴はメモリ上だけで、`project.json` / IndexedDBへは保存しない。再読み込みで空になる。Schema変更なし
+- ボタンUIは `src/core/edit-history-ui.js`。ModuleはUndoを意識せず、画面は `rerender` で最新Projectを描き直すだけ
+
 ### Global Key Change
 
 Key変更はHubから開始するが、Chord / Melody / Bassをまたぐため、各Moduleを直接操作せず `src/core/project-state.js` が1回のAtomicなProject更新として処理する。

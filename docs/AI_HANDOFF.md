@@ -26,6 +26,7 @@ v0.2-dev
 - Chord Presetは現在Key / Scaleへ自動変換し、通常の `project.chords[]` として適用
 - Chord Preset適用後は個別追加 / 削除 / Clearで修正可能
 - Chord Quality共通定義をChord / Demo Player / MIDI Exportで共有
+- Undo / Redo: Project全体で1本の履歴（最大50操作、メモリのみ、画面上部の `↶` `↷`）
 - Melody: 8分 / 16分切替、Monophonic、Bar / Octave切替、Clear Bar、縦ピアノKeyboard
 - Rhythm: Bass / Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
@@ -72,6 +73,7 @@ Android実機で確認済み / ユーザー受入済み:
 - GitHub Pages公開URLがAndroidで表示できること
 
 v0.2 CI確認済み:
+- History (Undo / Redo) smoke test: success
 - JavaScript syntax check: success
 - MIDI smoke test: success
 - Rhythm copy smoke test: success
@@ -85,6 +87,8 @@ v0.2 CI確認済み:
 - GitHub Pages Deploy: success
 
 開発中:
+- Claude: Undo / Redo（`claude/v0.2-undo`）→ その後 曲の構成Section（`claude/v0.2-arrange-sections`、Schema変更なし。`structure.sections` を使う）。`src/core/edit-history*` / `src/arrange/` / `project-state.js` / `midi-export.js` / `demo-player.js` を触る。ChatGPTは同じファイルを同時に大きく編集しないこと
+- ChatGPT: Chord画面（`main.js` のChord部分）まわりを継続
 - Diatonic Fan UIのdevelop統合 / GitHub Pages公開は完了
 - 次はAndroid実機で扇形UIと既存Chord操作の回帰確認
 
@@ -114,7 +118,7 @@ v0.2 CI確認済み:
 - Rhythm 16 stepは狭い端末でセル幅が小さい
 - Drum PresetはKick / Snare / Closed HHのみ
 - Demo Playerは仮音確認専用
-- Snapshot履歴 / project.json Import / Service Workerは未実装
+- Undo履歴は保存されない（再読み込みで空になる）。Snapshot履歴 / project.json Import / Service Workerは未実装
 - Cubasis実機確認 / PC Cubase Importは未実施
 
 触らない部分:
