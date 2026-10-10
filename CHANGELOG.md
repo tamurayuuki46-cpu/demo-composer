@@ -10,6 +10,11 @@
 - Undo / Redo（Project全体で1本の編集履歴、最大50操作、画面上部の `↶` `↷`）
 - Edit History Smoke Test（`npm run test:history`、CI対象）
 - Undo実装前の復元ブランチ `restore/v0.2-before-undo`
+- Sound Sketch Lite: Chord / Melody / Bass の音色Preset変更
+- Sound Preset: Chord `Keys / Pad / Piano`、Melody `Lead / Keys / Pluck`、Bass `Soft Bass / Synth Bass / Deep Bass`
+- Sound Tone: `Natural / Bright / Soft / Warm / Dark / Airy / Aggressive`
+- Sound Sketch Smoke Test（`npm run test:sound`、Undo / RedoもCI確認）
+- Sound Sketch Lite追加前の復元ブランチ `restore/v0.2-before-sound-sketch-lite`
 - Chordの基準音Select（C〜B）
 - 基準音ごとの9種類のChord Quality: Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
 - 共通Chord Quality定義 `src/core/chord-qualities.js`
@@ -29,6 +34,11 @@
 - ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
+- Bottom Navigationを Hub / Chord / Melody / Rhythm / Arrange / Sound の6 Module構成へ拡張
+- Sound選択を既存 `project.instruments[]` に保存し、AutoSaveとProject全体Undo / Redoの対象にした
+- Demo PlayerのChord / Melody / Bass仮音をSound Preset / Toneに応じてwaveform / low-pass filter / attack / release / gain変更する方式へ拡張
+- ArrangeのSection単体再生でも同じSound設定を保持する
+- Sound Sketch LiteはMIDI Note / Chord Data / Rhythm Dataを変更せず、MIDI Program Change / CCも出力しない
 - Chord画面はダイアトニック7候補を残しつつ、任意の基準音から9種類のQualityを追加できる構成へ変更
 - Chord画面のダイアトニック7候補を2列Gridから五度圏の扇形ビューへ変更
 - Majorは `IV / ii ← I / vi → V / iii` + `vii°`、Minorは `VI / iv ← III / i → VII / v` + `ii°` として配置
@@ -42,11 +52,12 @@
 - Scale変更はChord / Melody / Bassが存在する場合は引き続き拒否し、意図しないMajor/Minor変換を行わない
 - `VERSION` / 画面内Version / package versionをv0.2-devへ更新
 - DATA_SCHEMAをschemaVersion 2へ更新
-- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Diatonic Fan / Static Buildを確認する構成へ更新
+- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Diatonic Fan / Undo / Arrange / Sound Sketch / Static Buildを確認する構成へ更新
 
 ### 修正
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
 - PR #23 / #24がGitHub Pages統合後のdevelopと競合するため、現在developから統合branchを作って安全に再統合した
+- Sound Sketch作業中にUndo / Arrangeがdevelopへ先行統合されたため、旧PR #39をマージせず最新developから統合branchを作り直し、Arrange / Undoを保持したままSoundを再統合した
 - Chord / Melody / BassがあるとHubのKey Selectが元の値へ戻り、Keyを変更できなかった問題を修正
 - Key移調でMIDI Note 0〜127を外れる場合は更新全体を中止し、元Projectを維持するようにした
 
@@ -57,7 +68,9 @@
 - Chord Tone強調
 - Melody Analyzer
 - Snapshot履歴 / project.json Import
-- Arrange / Song Structure
+- Arrange / Song Structureの実制作検証・正式整理
+- Drums音色変更
+- 本格Sound Sketch整理（詳細Synth / FX / Mixerは原則追加しない）
 
 ## v0.1-dev
 更新日: 2026-10-10
