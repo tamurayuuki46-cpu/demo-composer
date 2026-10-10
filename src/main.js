@@ -26,6 +26,7 @@ import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJso
 import { MAX_IMPORT_BYTES, parseProjectJson } from "./storage/project-import.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
 import { createSoundController } from "./sound/sound-screen.js";
+import { applyTextSize, loadTextSize, saveTextSize, TEXT_SIZES } from "./core/display-settings.js";
 import { createAutosave } from "./storage/autosave.js";
 import { backupProjectForMigration, loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
@@ -42,6 +43,8 @@ let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存�
 let chordMessage = "下の候補をタップしてコードを追加します。";
 let chordRootSelection = null;
 let spiceOpen = false;
+let textSize = loadTextSize();
+applyTextSize(textSize);
 let chordPresetSelection = CHORD_PRESETS[0].id;
 
 const KEY_OPTIONS = [...NOTE_NAMES];
@@ -99,6 +102,14 @@ function hubScreen() {
       </div>
 
       ${consultPanelHtml()}
+
+      <section class="display-settings">
+        <h3>文字の大きさ</h3>
+        <div class="text-size-switch" role="group" aria-label="文字の大きさ">
+          ${TEXT_SIZES.map((size) => `<button data-text-size-option="${size.id}" class="${size.id === textSize ? "active" : ""}" aria-pressed="${size.id === textSize}">${size.label}</button>`).join("")}
+        </div>
+        <p class="hint">この端末だけの設定です（曲のデータには入りません）。上のバー・再生ボタン・下のナビの大きさは変わりません。</p>
+      </section>
 
       <section id="export-panel" class="export-panel" hidden>
         <h3>Export</h3>
@@ -359,6 +370,15 @@ function bindHubControls() {
   const exportToggle = document.querySelector("#toggle-export");
   const exportPanel = document.querySelector("#export-panel");
   bindConsultPanel({ projectStore, setMessage: setHubMessage });
+
+  document.querySelectorAll("[data-text-size-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      textSize = button.dataset.textSizeOption;
+      applyTextSize(textSize);
+      saveTextSize(textSize);
+      render("hub");
+    });
+  });
 
   title?.addEventListener("change", (event) => {
     commitHubChange({ metadata: { title: event.target.value.trim() } });

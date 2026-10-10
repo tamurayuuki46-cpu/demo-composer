@@ -7,6 +7,9 @@
 - Chord Backing Pattern 4種類（Block / 8分刻み / Arpeggio / Syncopation）。コード進行自体は変えず、伴奏の鳴らし方だけを選択できる（Schema変更なし）
 - Backing Pattern Smoke Test（`npm run test:backing`）。Pattern生成 / AutoSave対象データ / Undo・Redo / Chord.midへの反映をCIで確認
 - Backing Pattern最終統合前の復元ブランチ `restore/v0.2-before-backing-pattern-final`
+- 画面の文字サイズ3段階（標準 / 大 / 特大。Hub > 文字の大きさ）。画面本体だけを拡大し、上部バー・Demo Player・下部ナビは変えない。この端末のlocalStorageにだけ保存（project.jsonには入れない、Schema変更なし）
+- Display Settings Smoke Test（`npm run test:display`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-font-size`
 - Chord: 次のコード候補（3つ）。直前のコードに応じて、次に来やすいダイアトニックコードを理由つきで3つ表示。空のときは「最初のコード候補」。タップで追加（`src/chord/chord-next.js`）
 - Chord: ひとスパイス（借用和音）。同主調から和音を借りる3候補（Majorなら Fm系 / ♭VII / ♭VI、Minorなら IV / V / I）を、ボタンで開いてタップ追加（`suggestSpiceChords`、Schema変更なし）
 - Rhythm: Bass候補（3つ）。現在の小節のBassを、Kickに合わせる（Kickがある場合）/ どっしり / ルート+5度 / はずむ（オクターブ）の3案から選んで置き換え。16マスで1音ずつ直せる（`src/rhythm/bass-candidates.js`）
