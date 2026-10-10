@@ -4,12 +4,37 @@
 更新日: 2026-10-10
 
 ### 追加
+- Melody Analyzer: `Sectionごとの比べ`。構成（Section）ごとに音域 / 音数 / リズム密度（1小節あたり）を並べ、サビと直前のAメロ / Bメロの差（最高音・平均の高さ・音域のひろさ・密度）を表示。差が小さいと「差が小さめ」と気づかせる一言を出す（評価ではなく気づき）。`src/core/section-compare.js`
+- Section Compare Smoke Test（`npm run test:section-compare`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-section-compare`（Schema変更なし）
 - Rhythm: ドラムフィル（スネア8分 / スネアロール / ブレイク）。Sectionの最後の小節の後半（3・4拍）だけを変え、前半は残す。Sectionが無いときは現在の小節。`各Sectionの最後に入れる` で最後のSectionを除く全Sectionへ一括（`src/rhythm/drum-fills.js`、Schema変更なし）
 - Smoke Test追加: `applyDrumFill` / `applyDrumFillToSectionEnds`（`npm run test:rhythm-presets` に含む）
 - 追加前の復元ブランチ `restore/v0.2-before-drum-fill`
 - Melody: 現在Barのメロディ候補3種類（安定 / キャッチー / 浮遊感）。Key / Scale / Chord / 表示OctaveからAPIなしのルールベースで作り、選択後は通常のPiano Rollで1音ずつ修正できる（Schema変更なし）
 - Melody Candidate Smoke Test（`npm run test:melody` に含む）。3候補生成 / Chord Tone中心の安定案 / 現在Barだけの置換 / Chord未設定時のKey・Scale fallbackをCIで確認
 - Melody候補追加前の復元ブランチ `restore/v0.2-before-melody-candidates-final`
+- Chord: 好きな進行ライブラリ。現在のコード進行を名前を付けて「度数（主音からの距離 + コードの種類）」で保存し、別のKeyの曲にも当てはめられる。この端末のlocalStorageにだけ保存（project.jsonには入れない、Schema変更なし。最大50件・32小節まで。`src/chord/progression-library.js`）
+- Progression Library Smoke Test（`npm run test:library`、CI対象）
+- CSS Brace Balance Test（`npm run test:css`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-progression-library`
+- Arrange: `🔁 ループから曲にする` の案内。8小節ループを先に作り、Sectionへ複製して増やし、「少し違う版にする」で変えていく流れを、いまの段階（①ループを作る / ②複製して増やす / ③違う版にする）を自動判定して次の1手を出す。`ループを複製して追加`（Sectionを末尾に足して中身をコピー、Undo1回。種類はおすすめ初期値あり）、ループと同じ中身のSectionから `少し違う版にする` を直接開く。`src/core/loop-guide.js`、Core Global Operation `appendSectionCopy`
+- Loop Guide Smoke Test（`npm run test:loop-guide`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-loop-to-song`（Schema変更なし）。#60（Section Variation）の上に積んでいる
+- Section Variation（Arrange: 各Sectionの `少し違う版にする`）: コピーしたSectionなどを「少しだけ違う版」にする候補3つ。ドラムを少し増やす / ベースを少し動かす / メロディの終わりを変える。押したSectionだけが変わり、元のSectionは変わらない。変更が無いときは理由を表示し、履歴も増やさない（`src/core/section-variation.js`、Schema変更なし）
+- Section Variation Smoke Test（`npm run test:variation`、CI対象）
+- Section Energy: 各Sectionに盛り上がり（Low / Mid / High）を設定。Arrangeの上部に「盛り上がり設計」（Sectionの幅 = 小節数、高さ = Energyの棒グラフ + 「イントロ Low → Aメロ Low → Bメロ Mid → サビ High」の流れ）と、気づきのヒント（サビが前より低い、Buildの次が低い、全部同じ）を表示
+- Transition: 各Sectionから次のSectionへのつなぎ（Keep / Fill / Stop / Build / Drop）をタグで設定（最後のSectionには出さない）
+- Section Energy / Transition は `structure.sections[]` の任意項目（追記のみ、schemaVersion変更なし）。無い古いProjectは、Sectionの種類ごとの初期値（イントロ Low / Aメロ Low / Bメロ Mid / サビ High / 間奏 Mid / Cメロ Mid / アウトロ Low、つなぎは Keep）で扱う
+- AI相談テキスト・Cubaseメモ・曲の特徴カードの構成欄に、盛り上がりとつなぎを反映
+- Section Smoke Testに Energy / Transition を追加
+- 追加前の復元ブランチ `restore/v0.2-before-section-energy`
+- Chord: `🎤 メロディからコードを付ける`。鼻歌（メロディ）を先に作ったあと、小節ごとに「合うコード候補3つ」を出す（Key/Scaleのダイアトニック7和音から、メロの音がコードの構成音に乗る度合いで選ぶ。長い音・拍の頭の音を重く数える。理由と役割ラベル付き）。選ぶとその小節のコードになり次の小節へ進む。`メロのある小節に1つ目の候補をまとめて付ける`（置き換え時は確認、↶で戻せる）。`src/chord/chord-for-melody.js`
+- Melody to Chord Smoke Test（`npm run test:melody-chords`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-melody-to-chords`（Schema変更なし）
+- Hub 出発点: 候補カードにコード名の進行（例: Dm → A# → F → C）と `▶ 試聴` を追加。試聴は保存せず仮のProjectを鳴らすだけ（曲のデータは変わらない。Bassは外して鳴らす）
+- Hub: `🧭 出発点を選ぶ（ジャンル × ムード）`。ジャンル（ポップ / バラード / ロック / ダンス / ボカロ風）とムード（切ない / 明るい / 夜 / 力強い / やさしい）を選ぶと、Key / BPM / コード進行 / ドラム / 伴奏 / 音色の方向性をまとめた出発点を3つ出す（14種のレシピ、どちらか片方の選択でも可）。選ぶと1回の編集（Undo1回）で反映。コード・ドラム（出発点の小節数分）・Key/BPM/音色/伴奏を置き換え、メロディは残す。Bassがある間は不可。`src/hub/starting-point.js` / `starting-point-ui.js`、Storeに `applyStartingPoint`
+- Starting Point Smoke Test（`npm run test:starting-point`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-starting-point`（Schema変更なし。`metadata.genre` / `metadata.mood` を既存フィールドとして使用）
 - Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
 - Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
 - コピー処理を `src/hub/clipboard.js` に共通化
@@ -114,6 +139,7 @@
 - CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Backing Pattern / Hub Key Change / Diatonic Fan / Undo / Arrange / Sound Sketch / Part Switch / AI Consult / Import / Static Buildを確認する構成へ更新
 
 ### 修正
+- `src/chord/chord-presets.css` の閉じ括弧 `}` が1つ抜けていて、そのあとに書いた「次のコード候補」「ひとスパイス」「コードの役割」の見た目が効かなくなっていた。原因: Backing Pattern統合時のrebaseで両側を残した際の取り違え。再発防止としてCSS括弧のテストをCIに追加
 - `package.json` に重複していた `test:syntax` 定義を1つへ統合し、ドラムフィルを含む最新Syntax CheckとMelody候補ファイルをまとめて検査するようにした
 - Backing Pattern旧PR #45は作業中のdevelop先行更新と競合したためマージせず、最新developからPR #50用branchを作り直し、Bass音程 / Melody長さ / Import / Part Mute/Solo / AI相談を保持したまま再統合した
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした

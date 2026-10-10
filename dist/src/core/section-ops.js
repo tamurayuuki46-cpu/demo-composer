@@ -19,6 +19,33 @@ export const SECTION_KINDS = Object.freeze({
   outro: { label: "アウトロ", defaultBars: 4 }
 });
 
+// 曲の盛り上がり設計（Section Energy）と、次のSectionへのつなぎ方（Transition）。
+// どちらも `structure.sections[]` の任意の項目（Schemaの追記のみ）。無い古いProjectは、Sectionの種類ごとの初期値で扱う。
+// 設計のラベルであり、音を自動では変えない（音を変えるのはVariation / Fillなどの候補から選んだとき）。
+export const ENERGY_LEVELS = Object.freeze([
+  { id: "low", label: "Low", rank: 1 },
+  { id: "mid", label: "Mid", rank: 2 },
+  { id: "high", label: "High", rank: 3 }
+]);
+
+export const DEFAULT_ENERGY_BY_KIND = Object.freeze({
+  intro: "low",
+  verse: "low",
+  prechorus: "mid",
+  chorus: "high",
+  interlude: "mid",
+  bridge: "mid",
+  outro: "low"
+});
+
+export const TRANSITIONS = Object.freeze([
+  { id: "keep", label: "Keep", description: "そのままつなぐ" },
+  { id: "fill", label: "Fill", description: "ドラムフィルなどでつなぐ" },
+  { id: "stop", label: "Stop", description: "一瞬止めてから入る（ブレイク）" },
+  { id: "build", label: "Build", description: "少しずつ盛り上げてつなぐ" },
+  { id: "drop", label: "Drop", description: "ためてから、ドンと入る" }
+]);
+
 export const MAX_SECTIONS = 24;
 export const MAX_SECTION_BARS = 32;
 export const MAX_TOTAL_BARS = 128;
@@ -119,6 +146,14 @@ export function validateStructure(structure) {
       throw new Error(`${label}の種類が不正です。`);
     }
 
+    if (section.energy !== undefined && !ENERGY_LEVELS.some((level) => level.id === section.energy)) {
+      throw new Error(`${label}の盛り上がり（Energy）が不正です。`);
+    }
+
+    if (section.transition !== undefined && !TRANSITIONS.some((item) => item.id === section.transition)) {
+      throw new Error(`${label}のつなぎ（Transition）が不正です。`);
+    }
+
     if (typeof section.name !== "string" || !section.name.trim() || section.name.length > 20) {
       throw new Error(`${label}の名前は1〜20文字にしてください。`);
     }
@@ -152,7 +187,8 @@ export function createSection(kind, bars, existingSections = []) {
     id: createId("section"),
     kind,
     name,
-    bars: bars ?? definition.defaultBars
+    bars: bars ?? definition.defaultBars,
+    energy: DEFAULT_ENERGY_BY_KIND[kind]
   };
 }
 
@@ -166,6 +202,61 @@ export function buildTemplateSections(templateId) {
     (sections, { kind, bars }) => [...sections, createSection(kind, bars, sections)],
     []
   );
+}
+
+// 保存されていなければ、Sectionの種類ごとの初期値
+export function sectionEnergy(section) {
+  return ENERGY_LEVELS.some((level) => level.id === section.energy)
+    ? section.energy
+    : (DEFAULT_ENERGY_BY_KIND[section.kind] ?? "mid");
+}
+
+export function sectionTransition(section) {
+  return TRANSITIONS.some((item) => item.id === section.transition) ? section.transition : "keep";
+}
+
+export function energyLabel(energyId) {
+  return ENERGY_LEVELS.find((level) => level.id === energyId)?.label ?? "Mid";
+}
+
+// 新しいSection配列を返す（元は変更しない）。値が不正なら例外
+export function withSectionEnergy(sections, index, energy) {
+  if (!ENERGY_LEVELS.some((level) => level.id === energy)) throw new Error("盛り上がり（Energy）が不正です。");
+  if (!sections[index]) throw new Error("Sectionが見つかりません。");
+  return sections.map((section, i) => (i === index ? { ...section, energy } : section));
+}
+
+export function withSectionTransition(sections, index, transition) {
+  if (!TRANSITIONS.some((item) => item.id === transition)) throw new Error("つなぎ（Transition）が不正です。");
+  if (!sections[index]) throw new Error("Sectionが見つかりません。");
+  return sections.map((section, i) => (i === index ? { ...section, transition } : section));
+}
+
+// 設計の一言ヒント。評価ではなく、気づきの材料。
+export function energyHints(sections) {
+  const hints = [];
+  const rank = (section) => ENERGY_LEVELS.find((level) => level.id === sectionEnergy(section)).rank;
+
+  sections.forEach((section, index) => {
+    const previous = sections[index - 1];
+    if (section.kind === "chorus" && previous && rank(section) < rank(previous)) {
+      hints.push(`${section.name}が、前の${previous.name}より盛り上がり低めです。サビを目立たせたいなら High にしてみる。`);
+    }
+    const next = sections[index + 1];
+    if (next && sectionTransition(section) === "build" && rank(next) <= rank(section)) {
+      hints.push(`${section.name}の終わりは Build ですが、次の${next.name}は同じか低めです。`);
+    }
+  });
+
+  if (sections.length >= 3 && new Set(sections.map(sectionEnergy)).size === 1) {
+    hints.push("すべてのSectionが同じ盛り上がりです。サビを High、イントロを Low にするとメリハリがつきます。");
+  }
+  return hints.slice(0, 3);
+}
+
+// 「イントロ Low → Aメロ Low → Bメロ Mid → サビ High」
+export function energyFlowText(sections) {
+  return sections.map((section) => `${section.name} ${energyLabel(sectionEnergy(section))}`).join(" → ");
 }
 
 export function totalSectionBars(sections) {

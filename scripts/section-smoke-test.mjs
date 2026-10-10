@@ -3,7 +3,8 @@ import { createDefaultProject, createProjectStore, validateProject } from "../sr
 import {
   SECTION_TEMPLATES, buildTemplateSections, createSection, getSections, sectionLabel,
   sectionRanges, sliceProject, totalSectionBars, validateStructure, barsHaveContent,
-  MAX_SECTION_BARS, MAX_TOTAL_BARS, sectionProgress
+  MAX_SECTION_BARS, MAX_TOTAL_BARS, sectionProgress,
+  sectionEnergy, sectionTransition, withSectionEnergy, withSectionTransition, energyHints, energyFlowText, ENERGY_LEVELS, TRANSITIONS
 } from "../src/core/section-ops.js";
 
 const BAR = 1920;
@@ -127,4 +128,49 @@ assert.deepEqual(prog.chord, { filled: 3, total: 4 });
 assert.deepEqual(prog.melody, { filled: 2, total: 4 });
 assert.deepEqual(prog.bass, { filled: 1, total: 4 });
 assert.deepEqual(prog.drums, { filled: 0, total: 4 });
+// --- Section Energy / Transition
+{
+  const tpl = buildTemplateSections("one-chorus");
+  assert.deepEqual(tpl.map(sectionEnergy), ["low", "low", "mid", "high", "low"], "template defaults by kind");
+  assert.equal(energyFlowText(tpl), "イントロ Low → Aメロ Low → Bメロ Mid → サビ High → アウトロ Low");
+  assert.ok(tpl.every((s) => sectionTransition(s) === "keep"), "transition defaults to keep");
+  // 古いProject（energyもtransitionも無い）でも種類ごとの初期値で扱える
+  const legacy = [{ id: "a", kind: "chorus", name: "サビ", bars: 8 }];
+  assert.equal(sectionEnergy(legacy[0]), "high");
+  assert.doesNotThrow(() => validateStructure({ sections: legacy }));
+
+  const changed = withSectionEnergy(tpl, 1, "high");
+  assert.equal(changed[1].energy, "high");
+  assert.equal(tpl[1].energy, "low", "input not mutated");
+  assert.throws(() => withSectionEnergy(tpl, 1, "max"));
+  assert.throws(() => withSectionEnergy(tpl, 99, "low"));
+  const tr = withSectionTransition(tpl, 2, "build");
+  assert.equal(sectionTransition(tr[2]), "build");
+  assert.throws(() => withSectionTransition(tpl, 2, "nope"));
+
+  // 検証: 不正な値は拒否、Section操作でも保持される
+  assert.throws(() => validateStructure({ sections: [{ ...tpl[0], energy: "extreme" }] }));
+  assert.throws(() => validateStructure({ sections: [{ ...tpl[0], transition: "jump" }] }));
+  assert.doesNotThrow(() => validateStructure({ sections: tr }));
+
+  // ヒント: サビが前より低い / Buildの次が低い / 全部同じ
+  const lowChorus = withSectionEnergy(tpl, 3, "low");
+  assert.ok(energyHints(lowChorus).some((h) => h.includes("サビ") && h.includes("低め")));
+  const badBuild = withSectionTransition(withSectionEnergy(tpl, 3, "mid"), 2, "build");
+  assert.ok(energyHints(badBuild).some((h) => h.includes("Build")));
+  const flat = tpl.map((s) => ({ ...s, energy: "mid" }));
+  assert.ok(energyHints(flat).some((h) => h.includes("同じ")));
+  assert.deepEqual(energyHints(tpl), [], "no hints for a sensible design");
+
+  // Storeに保存・Undo・Section小節数変更でも保持
+  const s2 = createProjectStore(createDefaultProject());
+  s2.applySectionTemplate("one-chorus");
+  const sections0 = getSections(s2.getSnapshot());
+  s2.setSections(withSectionEnergy(sections0, 1, "mid"));
+  assert.equal(getSections(s2.getSnapshot())[1].energy, "mid");
+  s2.resizeSection(1, 6);
+  assert.equal(getSections(s2.getSnapshot())[1].energy, "mid", "energy survives resize");
+  assert.equal(ENERGY_LEVELS.length, 3);
+  assert.equal(TRANSITIONS.length, 5);
+}
 console.log("section smoke test passed");

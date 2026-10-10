@@ -47,6 +47,9 @@ schemaVersion 2のまま、既存の `structure.sections` に次の形で入れ�
 - `kind`: `intro` / `verse` / `prechorus` / `chorus` / `interlude` / `bridge` / `outro`
 - `name`: 1〜20文字。同じ種類が複数あるときは `サビ2` のように番号を付ける
 - `bars`: 1〜32の整数。Sectionは Bar 1 から順に隙間なく並ぶ（開始Barは保存せず、並び順と `bars` の合計から計算する）
+- `energy`（任意）: `low` / `mid` / `high`。曲の盛り上がり設計。無いときはSectionの種類ごとの初期値（intro=low / verse=low / prechorus=mid / chorus=high / interlude=mid / bridge=mid / outro=low）として扱う。新しく作るSectionには初期値を保存する
+- `transition`（任意）: `keep` / `fill` / `stop` / `build` / `drop`。このSectionから「次のSection」へのつなぎ方のタグ。無いときは `keep`。最後のSectionでは使わない（保存されていても無視）
+- `energy` / `transition` は設計のラベルで、音符やコードを自動では変えない。古いアプリ・古いProjectとの互換のため任意項目とし、schemaVersionは2のまま（追記のみ）
 - 上限: 24 Section / 合計128小節
 - 音符・コードはSectionの中に持たず、従来どおりtickで保持する。Sectionは区切りの名前だけ
 - 責任Module: Arrange（ただし小節数の増減・コピーはCoreのGlobal Operation。ARCHITECTURE.md参照）

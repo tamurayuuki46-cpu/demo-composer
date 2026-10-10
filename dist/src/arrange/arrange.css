@@ -55,3 +55,160 @@
   border: 1px solid #2f2f38;
   border-radius: 12px;
 }
+
+/* Section Energy / Transition */
+.energy-design {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.energy-map {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 84px;
+}
+
+.energy-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  min-width: 0;
+  height: 100%;
+  text-align: center;
+}
+
+.energy-col small {
+  margin-top: 3px;
+  font-size: 11px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+.energy-bar {
+  display: block;
+  border-radius: 4px 4px 0 0;
+  background: var(--kind, #94a3b8);
+}
+
+.energy-bar.lvl-1 { height: 18px; }
+.energy-bar.lvl-2 { height: 40px; }
+.energy-bar.lvl-3 { height: 62px; }
+
+.energy-col.kind-intro { --kind: #60a5fa; }
+.energy-col.kind-verse { --kind: #34d399; }
+.energy-col.kind-prechorus { --kind: #fbbf24; }
+.energy-col.kind-chorus { --kind: #f87171; }
+.energy-col.kind-interlude { --kind: #a78bfa; }
+.energy-col.kind-bridge { --kind: #f472b6; }
+.energy-col.kind-outro { --kind: #94a3b8; }
+
+.energy-flow {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.energy-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #fbbf24;
+}
+
+.arrange-energy,
+.arrange-transition {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.arrange-energy {
+  grid-template-columns: auto repeat(3, minmax(0, 1fr));
+  align-items: center;
+}
+
+.arrange-energy-label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.arrange-transition-chips {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.arrange-transition small {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.arrange-energy button,
+.arrange-transition-chips button {
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 2px;
+  border: 1px solid #383842;
+  border-radius: 10px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-size: 13px;
+}
+
+.arrange-energy button.active,
+.arrange-transition-chips button.active {
+  border-color: transparent;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+/* Section Variation（少し違う版） */
+.arrange-variation-toggle {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+}
+
+.arrange-variation-toggle:disabled {
+  opacity: 0.5;
+}
+
+.arrange-variation {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.arrange-variation button {
+  display: grid;
+  gap: 3px;
+  min-height: 64px;
+  padding: 8px 12px;
+  border: 1px solid #b8860b;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  text-align: left;
+}
+
+.arrange-variation button small,
+.arrange-variation > small {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #9ca3af;
+}

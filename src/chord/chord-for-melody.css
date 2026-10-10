@@ -1,0 +1,38 @@
+/* メロディからコードを付ける */
+.melody-chord-panel {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.melody-chord-bar {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 96px;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
+.melody-chord-bar button {
+  min-height: 48px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-weight: 700;
+}
+
+.melody-chord-bar button:disabled {
+  opacity: 0.4;
+}
+
+.melody-chord-bar small {
+  font-size: 12px;
+  opacity: 0.7;
+  font-weight: 400;
+}

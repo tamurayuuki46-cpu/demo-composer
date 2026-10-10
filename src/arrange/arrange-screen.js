@@ -1,5 +1,15 @@
+import { SECTION_VARIATIONS } from "../core/section-variation.js";
+import { loopGuide, suggestedCopyKind } from "../core/loop-guide.js";
 import {
+  ENERGY_LEVELS,
+  TRANSITIONS,
   barsHaveContent,
+  energyFlowText,
+  energyHints,
+  sectionEnergy,
+  sectionTransition,
+  withSectionEnergy,
+  withSectionTransition,
   createSection,
   getSections,
   MAX_SECTION_BARS,
@@ -24,6 +34,14 @@ function progressChip(label, { filled, total }) {
   return `<span class="progress-chip ${state}">${mark} ${label} ${filled}/${total}</span>`;
 }
 
+// グラフ用の短い名前（Aメロ→A、サビ→サビ、Aメロ2→A2）
+const SHORT_NAMES = { intro: "Int", verse: "A", prechorus: "B", chorus: "サビ", interlude: "間奏", bridge: "C", outro: "Out" };
+
+function shortName(section) {
+  const digits = section.name.match(/\d+$/)?.[0] ?? "";
+  return `${SHORT_NAMES[section.kind] ?? section.name}${digits}`;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -38,6 +56,11 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   let message = "曲の構成を決めると、Melody / Rhythmで「いまサビの3小節目」が分かります。";
   let copyFromIndex = null;
   let addKind = "verse";
+  // 「少し違う版」の候補を開いているSection（画面の状態のみ）
+  let variationOpenIndex = null;
+  // ループ案内の開閉と、複製するSectionの種類（画面の状態のみ）
+  let guideOpen = false;
+  let guideKind = null;
 
   function run(action, successMessage) {
     try {
@@ -65,6 +88,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
     const progress = sectionProgress(project, startBar, endBar);
     const isCopySource = copyFromIndex === index;
     const copyTargetMode = copyFromIndex !== null && !isCopySource;
+    const isLast = index === getSections(project).length - 1;
 
     return `
       <article class="arrange-section kind-${escapeHtml(section.kind)}${isCopySource ? " copy-source" : ""}">
@@ -80,11 +104,39 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           ${PROGRESS_PARTS.map(([part, label]) => progressChip(label, progress[part])).join("")}
         </div>
 
+        <div class="arrange-energy" role="group" aria-label="${escapeHtml(section.name)}の盛り上がり">
+          <span class="arrange-energy-label">盛り上がり</span>
+          ${ENERGY_LEVELS.map((level) => `<button data-arrange-energy="${index}:${level.id}" class="${sectionEnergy(section) === level.id ? "active" : ""}" aria-pressed="${sectionEnergy(section) === level.id}">${level.label}</button>`).join("")}
+        </div>
+
+        ${isLast ? "" : `
+          <div class="arrange-transition" role="group" aria-label="${escapeHtml(section.name)}から次へのつなぎ">
+            <span class="arrange-energy-label">次へのつなぎ</span>
+            <div class="arrange-transition-chips">
+              ${TRANSITIONS.map((item) => `<button data-arrange-transition="${index}:${item.id}" class="${sectionTransition(section) === item.id ? "active" : ""}" aria-pressed="${sectionTransition(section) === item.id}">${item.label}</button>`).join("")}
+            </div>
+            <small>${escapeHtml(TRANSITIONS.find((item) => item.id === sectionTransition(section)).description)}</small>
+          </div>
+        `}
+
         <div class="arrange-bars" role="group" aria-label="${escapeHtml(section.name)}の小節数">
           <button data-arrange-shrink="${index}" aria-label="小節を1つ減らす"${section.bars <= 1 ? " disabled" : ""}>−</button>
           <strong>${section.bars}小節</strong>
           <button data-arrange-grow="${index}" aria-label="小節を1つ増やす"${section.bars >= MAX_SECTION_BARS ? " disabled" : ""}>＋</button>
         </div>
+
+        <button class="arrange-variation-toggle" data-arrange-variation-toggle="${index}" aria-expanded="${variationOpenIndex === index}"${hasContent ? "" : " disabled"}>少し違う版にする${variationOpenIndex === index ? " ▲" : " ▼"}</button>
+        ${variationOpenIndex === index ? `
+          <div class="arrange-variation">
+            ${SECTION_VARIATIONS.map((item) => `
+              <button data-arrange-variation="${index}:${item.id}">
+                <strong>${escapeHtml(item.label)}</strong>
+                <small>${escapeHtml(item.description)}</small>
+              </button>
+            `).join("")}
+            <small>コピーした2つ目のSectionなどに使います。押したSectionだけが変わり、元のSectionは変わりません。↶ で戻せます。</small>
+          </div>
+        ` : ""}
 
         <div class="arrange-actions">
           ${copyTargetMode
@@ -94,6 +146,74 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
         </div>
       </article>
     `;
+  }
+
+  // 8小節ループ → Section の流れの案内。いまの段階を判定して、次にやることを1つだけ出す。
+  function loopGuideHtml(project) {
+    const guide = loopGuide(project);
+    const current = guide.steps.findIndex((step) => step.status === "now");
+    const title = guide.phase === "done"
+      ? "ループから曲にする流れ ✓"
+      : `ループから曲にする（いま: ${current + 1}. ${guide.steps[current].label}）`;
+    const toggle = `<button id="arrange-guide-toggle" class="arrange-guide-toggle" aria-expanded="${guideOpen}">🔁 ${escapeHtml(title)}${guideOpen ? " ▲" : " ▼"}</button>`;
+    if (!guideOpen) return toggle;
+
+    const sections = getSections(project);
+    const kind = guideKind ?? suggestedCopyKind(sections.length);
+    let action = "";
+    if (guide.phase === "start") {
+      action = `
+        <p>まず、曲の一部になる8小節だけを作ります。サビやAメロのアイデア出し向けです。</p>
+        <button class="primary" id="arrange-guide-start">8小節ループから始める</button>`;
+    } else if (guide.phase === "build") {
+      action = `
+        <p>${sections[0].name}（${sections[0].bars}小節）に、コードを全小節ぶん入れて、メロディかドラムも入れましょう。入ったら次へ進みます。</p>
+        <div class="arrange-guide-links">
+          <button data-arrange-guide-go="chord">Chordへ</button>
+          <button data-arrange-guide-go="melody">Melodyへ</button>
+          <button data-arrange-guide-go="rhythm">Rhythmへ</button>
+        </div>`;
+    } else if (guide.phase === "grow") {
+      action = `
+        <p>ループができました。同じ中身を新しいSectionにコピーして、曲の長さを増やします。コピーしたあとで変えていきます。</p>
+        <div class="arrange-add">
+          <select id="arrange-guide-kind" aria-label="複製して追加するSectionの種類">
+            ${Object.entries(SECTION_KINDS).map(([id, def]) => `<option value="${escapeHtml(id)}"${id === kind ? " selected" : ""}>${escapeHtml(def.label)}</option>`).join("")}
+          </select>
+          <button class="primary" id="arrange-guide-copy">ループを複製して追加</button>
+        </div>`;
+    } else if (guide.phase === "vary") {
+      const ranges = sectionRanges(sections);
+      action = `
+        <p>次のSectionはループと同じ中身のままです。「少し違う版にする」で、ドラム・ベース・メロを少し変えると、曲らしくなります。</p>
+        <div class="arrange-guide-links">
+          ${guide.identical.map((index) => `<button data-arrange-guide-vary="${index}">${escapeHtml(ranges[index].section.name)}を違う版に</button>`).join("")}
+        </div>
+        <div class="arrange-add">
+          <select id="arrange-guide-kind" aria-label="複製して追加するSectionの種類">
+            ${Object.entries(SECTION_KINDS).map(([id, def]) => `<option value="${escapeHtml(id)}"${id === kind ? " selected" : ""}>${escapeHtml(def.label)}</option>`).join("")}
+          </select>
+          <button id="arrange-guide-copy">ループをもう1つ複製</button>
+        </div>`;
+    } else {
+      action = `
+        <p>すべてのSectionに違いが出ています。盛り上がり設計（Energy / つなぎ方）と、Melodyの「Sectionごとの比べ」で、サビの差を確かめてみましょう。足りなければ、ループを複製して増やせます。</p>
+        <div class="arrange-add">
+          <select id="arrange-guide-kind" aria-label="複製して追加するSectionの種類">
+            ${Object.entries(SECTION_KINDS).map(([id, def]) => `<option value="${escapeHtml(id)}"${id === kind ? " selected" : ""}>${escapeHtml(def.label)}</option>`).join("")}
+          </select>
+          <button id="arrange-guide-copy">ループを複製して追加</button>
+        </div>`;
+    }
+
+    return `
+      ${toggle}
+      <div class="arrange-guide">
+        <ol class="arrange-guide-steps">
+          ${guide.steps.map((step) => `<li class="${step.status}">${step.status === "done" ? "✓ " : ""}${escapeHtml(step.label)}</li>`).join("")}
+        </ol>
+        ${action}
+      </div>`;
   }
 
   function render() {
@@ -108,6 +228,20 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
         <div class="arrange-templates">${templateCards()}</div>
       `
       : `
+        <div class="energy-design" aria-label="曲の盛り上がり設計">
+          <strong>盛り上がり設計</strong>
+          <div class="energy-map">
+            ${ranges.map((range) => `
+              <div class="energy-col kind-${escapeHtml(range.section.kind)}" style="flex: ${range.section.bars} 1 0">
+                <span class="energy-bar lvl-${ENERGY_LEVELS.find((level) => level.id === sectionEnergy(range.section)).rank}"></span>
+                <small>${escapeHtml(shortName(range.section))}</small>
+              </div>
+            `).join("")}
+          </div>
+          <p class="energy-flow">${escapeHtml(energyFlowText(sections))}</p>
+          ${energyHints(sections).map((hint) => `<p class="energy-hint">💡 ${escapeHtml(hint)}</p>`).join("")}
+        </div>
+
         <div class="arrange-summary" aria-label="曲全体の入力の進み具合">
           <strong>骨子の進み具合（全${total}小節）</strong>
           <div class="arrange-progress">${PROGRESS_PARTS.map(([part, label]) => progressChip(label, sectionProgress(project, 0, total)[part])).join("")}</div>
@@ -137,6 +271,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           </div>
           ${sections.length > 0 ? `<button id="arrange-play-all" class="small-action">▶ 全体</button>` : ""}
         </div>
+        ${loopGuideHtml(project)}
         ${body}
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
       </section>
@@ -147,11 +282,77 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
     const query = (selector) => document.querySelectorAll(selector);
     const indexOf = (button, key) => Number(button.dataset[key]);
 
+    document.querySelector("#arrange-guide-toggle")?.addEventListener("click", () => {
+      guideOpen = !guideOpen;
+      rerender("arrange");
+    });
+    document.querySelector("#arrange-guide-start")?.addEventListener("click", () => run(
+      () => projectStore.applySectionTemplate("loop-8"),
+      "8小節ループを作りました。コード・メロディ・ドラムを入れていきましょう。"
+    ));
+    query("[data-arrange-guide-go]").forEach((button) => {
+      button.addEventListener("click", () => rerender(button.dataset.arrangeGuideGo));
+    });
+    document.querySelector("#arrange-guide-kind")?.addEventListener("change", (event) => {
+      guideKind = event.target.value;
+    });
+    document.querySelector("#arrange-guide-copy")?.addEventListener("click", () => {
+      const kind = guideKind ?? suggestedCopyKind(getSections(projectStore.getSnapshot()).length);
+      run(
+        () => projectStore.appendSectionCopy(0, kind),
+        `ループを${SECTION_KINDS[kind].label}として複製しました。「少し違う版にする」で変えていきましょう。`
+      );
+      guideKind = null;
+    });
+    query("[data-arrange-guide-vary]").forEach((button) => {
+      button.addEventListener("click", () => {
+        variationOpenIndex = Number(button.dataset.arrangeGuideVary);
+        message = "「少し違う版にする」を開きました。候補を1つ選んで、聴いてみましょう。";
+        rerender("arrange");
+      });
+    });
+
     query("[data-arrange-template]").forEach((button) => {
       button.addEventListener("click", () => run(
         () => projectStore.applySectionTemplate(button.dataset.arrangeTemplate),
         "構成の叩き台を作りました。小節数は自由に変えられます。"
       ));
+    });
+
+    // Energy / Transition: Sectionの項目だけを変える（音符・コードは動かさない）。Undo対象
+    const setSectionField = (button, key, apply, doneText) => {
+      const [indexText, value] = button.dataset[key].split(":");
+      button.addEventListener("click", () => run(
+        () => projectStore.setSections(apply(getSections(projectStore.getSnapshot()), Number(indexText), value)),
+        doneText
+      ));
+    };
+    query("[data-arrange-energy]").forEach((button) => setSectionField(button, "arrangeEnergy", withSectionEnergy, "盛り上がりを変えました。"));
+    query("[data-arrange-transition]").forEach((button) => setSectionField(button, "arrangeTransition", withSectionTransition, "つなぎ方を変えました。"));
+
+    query("[data-arrange-variation-toggle]").forEach((button) => {
+      const index = indexOf(button, "arrangeVariationToggle");
+      button.addEventListener("click", () => {
+        variationOpenIndex = variationOpenIndex === index ? null : index;
+        rerender("arrange");
+      });
+    });
+    query("[data-arrange-variation]").forEach((button) => {
+      const [indexText, variationId] = button.dataset.arrangeVariation.split(":");
+      button.addEventListener("click", () => {
+        const index = Number(indexText);
+        const item = SECTION_VARIATIONS.find((candidate) => candidate.id === variationId);
+        try {
+          const { changed } = projectStore.applySectionVariation(index, variationId);
+          const name = getSections(projectStore.getSnapshot())[index]?.name ?? "Section";
+          message = changed > 0
+            ? `${name}に「${item.label}」を当てました（${changed}か所）。再生して確認してください。↶ で戻せます。`
+            : `${name}には変えられる場所がありませんでした（${variationId === "drums" ? "ドラム" : variationId === "bass" ? "ベース" : "メロディとコード"}が入っているか確認してください）。`;
+        } catch (error) {
+          message = error instanceof Error ? error.message : "操作できませんでした。";
+        }
+        rerender("arrange");
+      });
     });
 
     query("[data-arrange-grow]").forEach((button) => {

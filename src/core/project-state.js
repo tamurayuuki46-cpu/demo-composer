@@ -1,6 +1,7 @@
 import { isChordQuality } from "./chord-qualities.js";
 import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
-import { validateStructure, resizeSection, removeSection, copySection, buildTemplateSections } from "./section-ops.js";
+import { applySectionVariation } from "./section-variation.js";
+import { validateStructure, resizeSection, removeSection, copySection, appendSectionCopy, buildTemplateSections } from "./section-ops.js";
 
 const KEY_NAMES = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
 const VALID_KEYS = new Set(KEY_NAMES);
@@ -459,6 +460,19 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       return applySectionOp(copySection(state, fromIndex, toIndex));
     },
 
+    // Sectionを末尾に足して、fromIndexの中身をコピーする（1回の編集）。ループから曲に増やすときに使う。
+    appendSectionCopy(fromIndex, kind) {
+      return applySectionOp(appendSectionCopy(state, fromIndex, kind));
+    },
+
+    // Sectionに「少し違う版」の候補を当てる。変更が無いときは履歴を増やさず、changed=0を返す。
+    applySectionVariation(index, variationId) {
+      const result = applySectionVariation(state, index, variationId);
+      if (result.changed === 0) return { changed: 0 };
+      applySectionOp(clone(result.project));
+      return { changed: result.changed };
+    },
+
     // project.jsonの読み込み。現在のProjectのidは維持し、中身だけを置き換える（Undoで戻せる）。
     replaceProject(project) {
       const next = clone(project);
@@ -490,6 +504,26 @@ export function createProjectStore(initialProject = createDefaultProject()) {
         undoCount: undoStack.length,
         redoCount: redoStack.length
       };
+    },
+
+    // Hubの「出発点」: 基本設定・コード・ドラム・音色/伴奏をまとめて1回の編集（Undo1回分）で反映する。
+    // 値の組み立ては呼び出し側（src/hub/starting-point.js）。ここでは検証して確定するだけ。
+    applyStartingPoint({ metadata = {}, basic = {}, chords, drumNotes, instruments } = {}) {
+      if (getTrackNotes(state, "bass").length > 0) {
+        throw new Error("Bassがある間は出発点を入れられません。RhythmでBassをClearしてから実行してください。");
+      }
+
+      const next = clone(state);
+      next.metadata = { ...next.metadata, ...metadata };
+      next.basic = { ...next.basic, ...basic };
+      if (chords) next.chords = clone(chords);
+      if (drumNotes) {
+        validateNotes(drumNotes, "Drums");
+        upsertTrackNotes(next, "drums", drumNotes);
+      }
+      if (instruments) next.instruments = clone(instruments);
+
+      return applySectionOp(next);
     },
 
     updateInstruments(instruments) {

@@ -66,11 +66,29 @@ jobs:
       - name: Next chord / bass candidates smoke test
         run: npm run test:candidates
 
+      - name: CSS brace balance test
+        run: npm run test:css
+
+      - name: Progression library smoke test
+        run: npm run test:library
+
       - name: Cubase memo / consult template smoke test
         run: npm run test:memo
 
       - name: Melody analysis smoke test
         run: npm run test:analysis
+
+      - name: Loop guide smoke test
+        run: npm run test:loop-guide
+
+      - name: Section variation smoke test
+        run: npm run test:variation
+      - name: Melody to chord candidates smoke test
+        run: npm run test:melody-chords
+      - name: Starting point smoke test
+        run: npm run test:starting-point
+      - name: Section compare smoke test
+        run: npm run test:section-compare
 
       - name: Display settings smoke test
         run: npm run test:display

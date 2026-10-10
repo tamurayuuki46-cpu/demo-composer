@@ -2,7 +2,7 @@
 // 評価ではなく「いまの曲がどんな特徴か」を知るための表示。
 
 import { analyzeMelody, describeMelody } from "../core/melody-analysis.js";
-import { getSections, sectionRanges, totalSectionBars } from "../core/section-ops.js";
+import { energyFlowText, getSections, totalSectionBars } from "../core/section-ops.js";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -28,8 +28,7 @@ function progressionText(project) {
 function structureText(project) {
   const sections = getSections(project);
   if (sections.length === 0) return "未設定（Arrangeで決められます）";
-  const ranges = sectionRanges(sections);
-  return `${ranges.map((range) => range.section.name).join(" → ")}（全${totalSectionBars(sections)}小節）`;
+  return `${energyFlowText(sections)}（全${totalSectionBars(sections)}小節）`;
 }
 
 export function songCardHtml(project) {

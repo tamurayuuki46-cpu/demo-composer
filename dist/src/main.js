@@ -11,6 +11,7 @@ import {
   chordPresetPreview,
   getChordPreset
 } from "./chord/chord-presets.js";
+import { addEntry, chordsFromProgression, loadLibrary, progressionDegreeText, progressionNameText, removeEntry, saveLibrary } from "./chord/progression-library.js";
 import { chordRole } from "./chord/chord-role.js";
 import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
@@ -46,6 +47,8 @@ let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存�
 let chordMessage = "下の候補をタップしてコードを追加します。";
 let chordRootSelection = null;
 let spiceOpen = false;
+let libraryOpen = false;
+let libraryName = "";
 let songCardOpen = false;
 let textSize = loadTextSize();
 applyTextSize(textSize);
@@ -156,6 +159,7 @@ function chordScreen() {
   const backingPatternId = getBackingPatternSelection(project.instruments);
   const backingPattern = getBackingPattern(backingPatternId);
   const nextChords = suggestNextChords(project.chords, { key: project.basic.key, scale: project.basic.scale });
+  const library = loadLibrary();
   const spiceChords = suggestSpiceChords({ key: project.basic.key, scale: project.basic.scale });
   const progression = project.chords.length
     ? project.chords.map((chord, index) => `
@@ -218,6 +222,30 @@ function chordScreen() {
         `).join("")}
       </div>
       <p class="hint">直前のコードから、次に来やすい3つです。選んだあとも、削除や別のコードへの変更ができます。</p>
+
+      <button id="toggle-library" class="spice-toggle" aria-expanded="${libraryOpen}">♪ 好きな進行ライブラリ（${library.length}件）${libraryOpen ? " ▲" : " ▼"}</button>
+      ${libraryOpen ? `
+        <section class="progression-library">
+          <div class="library-save">
+            <input id="library-name" type="text" maxlength="40" placeholder="名前（例: 好きな曲のサビ）" value="${escapeAttribute(libraryName)}" aria-label="進行の名前" />
+            <button id="library-save"${project.chords.length ? "" : " disabled"}>いまの進行を保存</button>
+          </div>
+          ${library.length === 0
+            ? `<p class="hint">好きな曲のコード進行を、まずここに作って保存します。度数で保存するので、別のKeyの曲にも当てはめられます。</p>`
+            : library.map((entry) => `
+              <div class="library-entry">
+                <strong>${escapeHtml(entry.name)}</strong>
+                <span>${escapeHtml(progressionDegreeText(entry.chords, project.basic.key))}</span>
+                <small>いまのKey（${escapeHtml(project.basic.key)}）: ${escapeHtml(progressionNameText(entry.chords, project.basic.key))}</small>
+                <div class="library-actions">
+                  <button data-library-apply="${escapeAttribute(entry.id)}">当てはめる</button>
+                  <button class="danger" data-library-remove="${escapeAttribute(entry.id)}">削除</button>
+                </div>
+              </div>
+            `).join("")}
+          <p class="hint">この端末だけに保存されます（曲のデータ・project.jsonには入りません）。ブラウザのデータを消すと無くなります。</p>
+        </section>
+      ` : ""}
 
       <button id="toggle-spice" class="spice-toggle" aria-expanded="${spiceOpen}">✨ ひとスパイス（借用和音）${spiceOpen ? " ▲" : " ▼"}</button>
       ${spiceOpen ? `
@@ -518,6 +546,48 @@ function bindChordControls() {
   });
 
   const spiceChords = suggestSpiceChords({ key: project.basic.key, scale: project.basic.scale });
+  document.querySelector("#toggle-library")?.addEventListener("click", () => {
+    libraryOpen = !libraryOpen;
+    render("chord");
+  });
+  document.querySelector("#library-name")?.addEventListener("input", (event) => {
+    libraryName = event.target.value;
+  });
+  document.querySelector("#library-save")?.addEventListener("click", () => {
+    const latest = projectStore.getSnapshot();
+    try {
+      const next = addEntry(loadLibrary(), { name: libraryName, chords: latest.chords, key: latest.basic.key });
+      chordMessage = saveLibrary(next)
+        ? `「${next.at(-1).name}」を保存しました。`
+        : "この端末では保存できませんでした（ブラウザの設定を確認してください）。";
+      libraryName = "";
+    } catch (error) {
+      chordMessage = error instanceof Error ? error.message : "保存に失敗しました。";
+    }
+    render("chord");
+  });
+  document.querySelectorAll("[data-library-apply]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const entry = loadLibrary().find((item) => item.id === button.dataset.libraryApply);
+      if (!entry) return;
+      const latest = projectStore.getSnapshot();
+      if (latest.chords.length > 0 && !globalThis.confirm(`現在のコード進行を「${entry.name}」で置き換えますか？（↶ で戻せます）`)) return;
+      commitChordUpdate(
+        chordsFromProgression(entry.chords, { key: latest.basic.key, barTicks }),
+        `「${entry.name}」を${latest.basic.key}に当てはめました。個別に修正できます。`
+      );
+    });
+  });
+  document.querySelectorAll("[data-library-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const entry = loadLibrary().find((item) => item.id === button.dataset.libraryRemove);
+      if (!entry || !globalThis.confirm(`「${entry.name}」をライブラリから削除しますか？`)) return;
+      saveLibrary(removeEntry(loadLibrary(), entry.id));
+      chordMessage = `「${entry.name}」を削除しました。`;
+      render("chord");
+    });
+  });
+
   document.querySelector("#toggle-spice")?.addEventListener("click", () => {
     spiceOpen = !spiceOpen;
     render("chord");
