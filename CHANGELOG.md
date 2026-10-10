@@ -78,6 +78,7 @@
 - VercelでDeploymentがREADYでも公開ファイルが生成されず404になる配布設定を修正
 - Android ChromeでAudioContextがsuspendedのまま無音になる可能性に対しresume処理とfallbackを追加
 - 単純な後段2倍出力で発生したクリップ / 音割れを、前段loudness gain + compressor + limiter構成へ置き換えて改善
+- Demo PlayerのLoop終端を常に4小節固定にせず、最後に使用している小節の終端へ合わせるよう修正
 
 ### 未対応
 - Snapshot履歴
