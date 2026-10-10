@@ -29,12 +29,14 @@ v0.1-dev
 - BassのChord Root / Key Root入力
 - Beat 1〜4切替 / Bar移動 / Clear Bar / Clear Bass
 - Key/ScaleおよびChord変更時のHarmony整合性ガード
+- 常設Demo Player
+- Play / Stop / Loop / Position
+- Chord / Melody / Bass / DrumsのWeb Audio軽量プレビュー
 
 開発中:
 - v0.1基本機能
 
 次に実装:
-- Demo Player
 - MIDI Export
 - Autosave / project.json Backup
 
@@ -47,6 +49,8 @@ v0.1-dev
 - Melody Scale表示 / Chord Tone強調 / Analyzerは未対応
 - Bass Pitch手動編集 / Velocity / Pattern Copyは未対応
 - DrumsはKick / Snare / Closed HHのみ
+- Demo Playerは仮音確認専用で、本格Synth / Mix / FXは未対応かつ原則追加しない
+- Demo PlayerはPlay時点のProject Snapshotを再生し、再生中の編集は次回Playから反映
 - Saveは手動のみでAutosave未実装
 - project.json手動Export/Backup未実装
 - Migration未実装
@@ -80,6 +84,10 @@ v0.1-dev
 - BassはChord Root優先、Chord未設定時はKey Rootを使う
 - DrumsはGM準拠のKick36 / Snare38 / ClosedHH42、MIDI Channel 10
 - Rhythm UI変更前の復元ポイントとして `restore/v0.1-before-rhythm-sequencer` を作成
+- Demo Playerはsrc/audio/demo-player.jsへ分離しProject Stateを読み取り専用で使用
+- Demo Playerは画面下部、Module Navigationの上に常設
+- Demo Playerは作曲確認用の仮音のみ。高度な音作りはCubasis / Cubaseへ任せる
+- Demo Player実装前の復元ポイントとして `restore/v0.1-before-demo-player` を作成
 - AIは完全自動作曲ではなく候補提示・先生役
 - 将来のBass / Melody等の生成は「3候補 → 選択 → 修正」を基本とする
 - 初期生成エンジンはAPI不要のルールベース方式を優先
