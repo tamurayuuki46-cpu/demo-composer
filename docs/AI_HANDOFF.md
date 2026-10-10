@@ -26,6 +26,7 @@ v0.2-dev
 - Chord Presetは現在Key / Scaleへ自動変換し、通常の `project.chords[]` として適用
 - Chord Preset適用後は個別追加 / 削除 / Clearで修正可能
 - Chord Quality共通定義をChord / Demo Player / MIDI Exportで共有
+- Arrange: 曲の構成Section（叩き台3種 / 小節増減 / 追加削除 / Sectionコピー / Section再生 / MIDI Marker）。Schema変更なし。`structure.sections` を使用。`src/core/section-ops.js` がCore Global Operation
 - Undo / Redo: Project全体で1本の履歴（最大50操作、メモリのみ、画面上部の `↶` `↷`）
 - Melody: 8分 / 16分切替、Monophonic、Bar / Octave切替、Clear Bar、縦ピアノKeyboard
 - Rhythm: Bass / Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy
@@ -87,7 +88,7 @@ v0.2 CI確認済み:
 - GitHub Pages Deploy: success
 
 開発中:
-- Claude: Undo / Redo（`claude/v0.2-undo`）→ その後 曲の構成Section（`claude/v0.2-arrange-sections`、Schema変更なし。`structure.sections` を使う）。`src/core/edit-history*` / `src/arrange/` / `project-state.js` / `midi-export.js` / `demo-player.js` を触る。ChatGPTは同じファイルを同時に大きく編集しないこと
+- Claude: Undo（PR #36）と曲の構成Section（`claude/v0.2-arrange-sections`）は実装済み・PR待ち。`src/core/edit-history*` / `src/core/section-ops.js` / `src/arrange/` / `project-state.js` / `midi-export.js` / `demo-player.js` を触った。ChatGPTは同じファイルを同時に大きく編集しないこと
 - ChatGPT: Chord画面（`main.js` のChord部分）まわりを継続
 - Diatonic Fan UIのdevelop統合 / GitHub Pages公開は完了
 - 次はAndroid実機で扇形UIと既存Chord操作の回帰確認
@@ -118,6 +119,7 @@ v0.2 CI確認済み:
 - Rhythm 16 stepは狭い端末でセル幅が小さい
 - Drum PresetはKick / Snare / Closed HHのみ
 - Demo Playerは仮音確認専用
+- Sectionは名前の変更UIなし。小節を増やすとき後ろにコードがあると拒否（末尾Sectionか、後ろのコードを消してから増やす）
 - Undo履歴は保存されない（再読み込みで空になる）。Snapshot履歴 / project.json Import / Service Workerは未実装
 - Cubasis実機確認 / PC Cubase Importは未実施
 
@@ -136,6 +138,7 @@ v0.2 CI確認済み:
 - Majorは IV / ii - I / vi - V / iii + vii°、Minorは VI / iv - III / i - VII / v + ii° の対応で配置する
 - Diatonic FanはProject Dataを変更せず、既存Chord ButtonへUI classを付与する表示レイヤーとして実装する
 - Key変更はHubが他Moduleを直接書き換えず、Core Project StateのGlobal OperationとしてChord / Melody / Bassを1回でAtomicに移調する
+- Sectionの増減・コピーはCore Global Operation。Chordが `chords[n]=Bar n+1` の前提のため、コード・音符を一緒にずらし、隙間ができる増加は拒否する
 - Key移調は最短半音幅を使用し、不要な1オクターブ移動を避ける
 - Key移調はChord quality / degree、Note timing / duration / velocityを維持し、Drumsは変更しない
 - Key移調でMIDI範囲外が発生する場合はProjectを部分更新せず全体を元のまま維持する

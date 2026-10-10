@@ -1,3 +1,4 @@
+import { getSections, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol } from "../chord/chord-theory.js";
 import {
   applyDrumPreset,
@@ -54,7 +55,7 @@ export function createRhythmController({ projectStore, rerender }) {
       barTicks,
       stepTicks: barTicks / 16,
       beatTicks: barTicks / 4,
-      barCount: Math.max(project.chords.length, highestNoteBar + 1, 4)
+      barCount: Math.max(project.chords.length, highestNoteBar + 1, totalSectionBars(getSections(project)), 4)
     };
   }
 
@@ -92,7 +93,7 @@ export function createRhythmController({ projectStore, rerender }) {
         <div class="section-heading">
           <div>
             <h2>Rhythm</h2>
-            <p>Bar ${barIndex + 1} / ${barCount} ・ ${escapeHtml(chordLabel)}</p>
+            <p>Bar ${barIndex + 1} / ${barCount} ・ ${escapeHtml(chordLabel)}${sectionLabel(project, barIndex) ? ` ・ ${escapeHtml(sectionLabel(project, barIndex))}` : ""}</p>
           </div>
           <button id="clear-rhythm-bar" class="small-action">Clear Bar</button>
         </div>

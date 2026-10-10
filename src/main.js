@@ -10,6 +10,8 @@ import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindEditHistory } from "./core/edit-history-ui.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
+import { createArrangeController } from "./arrange/arrange-screen.js";
+import { getSections, sectionRanges, sliceProject } from "./core/section-ops.js";
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
@@ -19,6 +21,7 @@ import { backupProjectForMigration, loadActiveProject, requestPersistentStorage,
 let projectStore;
 let melodyController;
 let rhythmController;
+let arrangeController;
 let demoPlayer;
 let autosave;
 let playerState = { playing: false, loop: false, position: 0, duration: 0 };
@@ -186,7 +189,8 @@ const screens = {
   hub: hubScreen,
   chord: chordScreen,
   melody: () => melodyController.render(),
-  rhythm: () => rhythmController.render()
+  rhythm: () => rhythmController.render(),
+  arrange: () => arrangeController.render()
 };
 
 const screen = document.querySelector("#screen");
@@ -444,6 +448,26 @@ function bindChordControls() {
   });
 }
 
+// index=null は曲全体。Sectionは範囲だけを切り出して再生し、Loopも同じ範囲を繰り返す。
+async function playSection(index) {
+  try {
+    const project = projectStore.getSnapshot();
+    if (index === null) {
+      await demoPlayer.play(project);
+      return;
+    }
+    const range = sectionRanges(getSections(project))[index];
+    const barTicks = project.basic.ppq * 4;
+    await demoPlayer.play(
+      sliceProject(project, range.startBar * barTicks, range.endBar * barTicks),
+      { lengthTick: range.section.bars * barTicks }
+    );
+  } catch (error) {
+    demoPlayer.stop();
+    if (playerTime) playerTime.textContent = error instanceof Error ? error.message : "再生できません。";
+  }
+}
+
 function bindPlayerControls() {
   playerPlay?.addEventListener("click", async () => {
     try {
@@ -477,6 +501,7 @@ function render(name) {
   if (name === "chord") bindChordControls();
   if (name === "melody") melodyController.bind();
   if (name === "rhythm") rhythmController.bind();
+  if (name === "arrange") arrangeController.bind();
 }
 
 async function boot() {
@@ -515,6 +540,11 @@ async function boot() {
   melodyController = createMelodyController({ projectStore, rerender: render });
   rhythmController = createRhythmController({ projectStore, rerender: render });
   demoPlayer = createDemoPlayer({ onStateChange: updatePlayerUi });
+  arrangeController = createArrangeController({
+    projectStore,
+    rerender: render,
+    onPlaySection: (index) => playSection(index)
+  });
   autosave = createAutosave({
     projectStore,
     delay: 1500,
