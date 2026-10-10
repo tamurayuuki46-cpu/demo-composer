@@ -57,11 +57,11 @@ function scheduleTone(context, destination, activeSources, {
 
 function scheduleKick(context, destination, activeSources, startTime) {
   const oscillator = context.createOscillator();
-  const gain = createGain(context, destination, 0.3);
+  const gain = createGain(context, destination, 0.34);
   oscillator.type = "sine";
   oscillator.frequency.setValueAtTime(150, startTime);
   oscillator.frequency.exponentialRampToValueAtTime(55, startTime + 0.12);
-  gain.gain.setValueAtTime(0.3, startTime);
+  gain.gain.setValueAtTime(0.34, startTime);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.14);
   oscillator.connect(gain);
   oscillator.start(startTime);
@@ -108,7 +108,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
         startTime: chordStart,
         duration,
         type: "triangle",
-        gain: 0.11
+        gain: 0.13
       });
     });
   });
@@ -124,7 +124,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           startTime: noteStart,
           duration,
           type: "triangle",
-          gain: 0.16
+          gain: 0.18
         });
         return;
       }
@@ -137,7 +137,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           // Triangle keeps the actual bass pitch while adding harmonics that
           // small phone speakers reproduce more clearly than a pure sine.
           type: "triangle",
-          gain: 0.22
+          gain: 0.25
         });
         return;
       }
@@ -148,13 +148,13 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
         } else if (note.pitch === 38) {
           scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
             duration: 0.12,
-            gainAmount: 0.16,
+            gainAmount: 0.18,
             highpass: 900
           });
         } else if (note.pitch === 42) {
           scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
             duration: 0.045,
-            gainAmount: 0.09,
+            gainAmount: 0.11,
             highpass: 5000
           });
         }
@@ -229,7 +229,7 @@ export function createDemoPlayer({ onStateChange } = {}) {
       compressor.release.value = 0.18;
 
       const outputGain = context.createGain();
-      outputGain.gain.value = 1.45;
+      outputGain.gain.value = 1.75;
 
       masterGain.connect(compressor);
       compressor.connect(outputGain);
