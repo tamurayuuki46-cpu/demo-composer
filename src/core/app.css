@@ -598,3 +598,44 @@ h1 {
   line-height: 1;
   pointer-events: none;
 }
+
+.bass-shift {
+  display: grid;
+  grid-template-columns: 1fr 56px 64px 56px;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  text-align: center;
+}
+.bass-shift > span { text-align: left; font-size: 13px; color: #b9b9c2; }
+.bass-shift button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #28282f;
+  color: #f5f5f5;
+  font-size: 20px;
+}
+.bass-shift button:disabled { opacity: .4; }
+.bass-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #b9b9c2;
+}
+.bass-legend i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.bass-legend i.main { background: #f1f1f1; }
+.bass-legend i.ornament { background: #fbbf24; }
+.bass-legend span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.rhythm-cell.active[data-bass-role="ornament"] {
+  background: #fbbf24;
+  border-color: #fbbf24;
+}

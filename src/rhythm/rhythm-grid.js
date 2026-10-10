@@ -59,7 +59,21 @@ export function bassChoicesForBar(project, barIndex) {
 // Bassのnoteが、その小節のルートから見てどの音程か（セル表示用の短い文字）
 export function bassShortLabel(project, barIndex, pitch) {
   const semitones = pitch - bassPitchForBar(project, barIndex);
-  return bassChoicesForBar(project, barIndex).find((choice) => choice.semitones === semitones)?.short ?? "•";
+  const found = bassChoicesForBar(project, barIndex).find((choice) => choice.semitones === semitones);
+  if (found) return found.short;
+  // 半音ずらした音は、ルートからの半音数で表示する（例: +1 / -1）
+  return semitones > 0 ? `+${semitones}` : String(semitones);
+}
+
+export const MAX_BASS_SHIFT = 6;
+
+// 見た目の区別用。「主役」= ルート系（ルート / オクターブ）とコードの5度、「飾り」= それ以外（3度・7度・ずらした音など）。
+// データには保存せず、Bassのpitchとコードから毎回計算する。
+export function bassRoleForPitch(project, barIndex, pitch) {
+  const semitones = ((pitch - bassPitchForBar(project, barIndex)) % 12 + 12) % 12;
+  const quality = project.chords[barIndex]?.quality ?? "major";
+  const fifth = chordIntervals(quality)[2] ?? 7;
+  return semitones === 0 || semitones === fifth ? "main" : "ornament";
 }
 
 export function toggleBassStep(notes, { pitch, startTick, durationTick, velocity = 96 }) {

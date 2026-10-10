@@ -8,6 +8,8 @@ import {
 } from "./drum-presets.js";
 import {
   bassChoicesForBar,
+  bassRoleForPitch,
+  MAX_BASS_SHIFT,
   bassPitchForBar,
   bassShortLabel,
   clearRhythmBar,
@@ -46,6 +48,7 @@ export function createRhythmController({ projectStore, rerender }) {
   let beatIndex = 0;
   let selectedPresetId = DRUM_PRESETS[0].id;
   let bassChoiceId = "root";
+  let bassShift = 0;
   let message = "Bass / Kick / Snare / HHを16分音符16マスで入力します。";
 
   function metrics(project) {
@@ -72,7 +75,7 @@ export function createRhythmController({ projectStore, rerender }) {
     const visibleSteps = Array.from({ length: 16 }, (_, step) => step);
     const bassChoices = bassChoicesForBar(project, barIndex);
     const bassChoice = bassChoices.find((choice) => choice.id === bassChoiceId) ?? bassChoices[0];
-    const bassPitch = bassPitchForBar(project, barIndex) + bassChoice.semitones;
+    const bassPitch = bassPitchForBar(project, barIndex) + bassChoice.semitones + bassShift;
     const bassNotes = getTrackNotes(project, "bass");
     const drumNotes = getTrackNotes(project, "drums");
     const hasRhythm = hasNotesInRange(bassNotes, barStartTick, barTicks)
@@ -131,6 +134,14 @@ export function createRhythmController({ projectStore, rerender }) {
           </div>
         </div>
 
+        <div class="bass-shift" role="group" aria-label="Bassを半音ずらす">
+          <span>半音ずらし</span>
+          <button id="bass-shift-down" aria-label="半音下げる"${bassShift <= -MAX_BASS_SHIFT ? " disabled" : ""}>−</button>
+          <strong>${bassShift === 0 ? "なし" : (bassShift > 0 ? `+${bassShift}` : bassShift)}</strong>
+          <button id="bass-shift-up" aria-label="半音上げる"${bassShift >= MAX_BASS_SHIFT ? " disabled" : ""}>＋</button>
+        </div>
+        <p class="bass-legend"><span><i class="main"></i>主役（ルート・5度）</span><span><i class="ornament"></i>飾り（3度・7度・ずらした音）</span></p>
+
         <div class="rhythm-grid" aria-label="16分音符16ステップRhythm Grid">
           <div class="rhythm-row rhythm-header">
             <span class="rhythm-label"></span>
@@ -145,7 +156,7 @@ export function createRhythmController({ projectStore, rerender }) {
                   ? row.notes.some((note) => note.startTick === startTick)
                   : row.notes.some((note) => note.startTick === startTick && note.pitch === row.pitch);
                 const bassNote = row.role === "bass" ? row.notes.find((note) => note.startTick === startTick) : null;
-                const bassMark = bassNote ? ` data-bass-mark="${escapeHtml(bassShortLabel(project, barIndex, bassNote.pitch))}"` : "";
+                const bassMark = bassNote ? ` data-bass-mark="${escapeHtml(bassShortLabel(project, barIndex, bassNote.pitch))}" data-bass-role="${bassRoleForPitch(project, barIndex, bassNote.pitch)}"` : "";
                 const beatStartClass = step % 4 === 0 ? " beat-start" : "";
                 const selectedBeatClass = Math.floor(step / 4) === beatIndex ? " selected-beat" : "";
                 return `<button class="rhythm-cell${beatStartClass}${selectedBeatClass}${active ? " active" : ""}" data-rhythm-role="${row.role}" data-rhythm-pitch="${row.pitch}" data-rhythm-step="${step}"${bassMark} aria-label="${escapeHtml(row.label)} ${STEP_LABELS[step]}"></button>`;
@@ -328,8 +339,19 @@ export function createRhythmController({ projectStore, rerender }) {
     document.querySelectorAll("[data-bass-choice]").forEach((button) => {
       button.addEventListener("click", () => {
         bassChoiceId = button.dataset.bassChoice;
+        bassShift = 0;
         rerender("rhythm");
       });
+    });
+
+    document.querySelector("#bass-shift-down")?.addEventListener("click", () => {
+      bassShift = Math.max(-MAX_BASS_SHIFT, bassShift - 1);
+      rerender("rhythm");
+    });
+
+    document.querySelector("#bass-shift-up")?.addEventListener("click", () => {
+      bassShift = Math.min(MAX_BASS_SHIFT, bassShift + 1);
+      rerender("rhythm");
     });
 
     document.querySelectorAll("[data-rhythm-beat]").forEach((button) => {

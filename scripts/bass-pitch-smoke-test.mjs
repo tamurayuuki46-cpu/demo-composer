@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createDefaultProject } from "../src/core/project-state.js";
 import {
-  bassChoicesForBar, bassPitchForBar, bassShortLabel, copyRhythmBar, copyRhythmBeat, toggleBassStep
+  bassChoicesForBar, bassPitchForBar, bassRoleForPitch, bassShortLabel, copyRhythmBar, copyRhythmBeat, toggleBassStep
 } from "../src/rhythm/rhythm-grid.js";
 
 const BAR = 1920, STEP = 120;
@@ -31,7 +31,20 @@ assert.equal(notes.length, 0);
 assert.equal(bassShortLabel(project, 0, root), "R");
 assert.equal(bassShortLabel(project, 0, root + 7), "5");
 assert.equal(bassShortLabel(project, 0, root + 12), "8");
-assert.equal(bassShortLabel(project, 0, root + 1), "•");
+assert.equal(bassShortLabel(project, 0, root + 1), "+1", "semitone-shifted notes show the offset");
+assert.equal(bassShortLabel(project, 0, root - 1), "-1");
+assert.equal(bassShortLabel(project, 0, root + 9), "+9");
+
+// 主役 / 飾り: ルート系とコードの5度が主役、それ以外が飾り
+const role = (bar, semis) => bassRoleForPitch(project, bar, bassPitchForBar(project, bar) + semis);
+assert.equal(role(0, 0), "main");
+assert.equal(role(0, 7), "main");
+assert.equal(role(0, 12), "main", "octave of root is main");
+assert.equal(role(0, -12), "main");
+assert.equal(role(0, 4), "ornament", "3rd is ornament");
+assert.equal(role(0, -1), "ornament", "approach note is ornament");
+assert.equal(role(1, 10), "ornament", "7th is ornament");
+assert.equal(role(1, 3), "ornament");
 
 // Copy: 音程関係(ルート/5度)を保ったまま、コピー先のルートへ追従
 const pattern = [
