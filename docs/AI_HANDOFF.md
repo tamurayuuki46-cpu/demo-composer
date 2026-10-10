@@ -28,7 +28,7 @@ v0.2-dev
 - MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord Smoke Test、Syntax Check、Static BuildのCI
 
 Repository統合状況:
-- `develop` HEAD: `c21bb9b0b343e8dc807c6fd884ceaf670c48cd43`
+- v0.2機能統合commit: `c21bb9b0b343e8dc807c6fd884ceaf670c48cd43`
 - PR #26 GitHub Pages Fallback: merged
 - PR #27 v0.2 Chord Quality + Schema v2 + Rhythm Preset統合: merged
 - PR #23 Chord Quality + Schema v2: #27で置換済みとしてclose。branchは保持
