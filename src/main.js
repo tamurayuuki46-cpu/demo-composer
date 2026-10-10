@@ -11,6 +11,7 @@ import {
   chordPresetPreview,
   getChordPreset
 } from "./chord/chord-presets.js";
+import { chordRole } from "./chord/chord-role.js";
 import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
@@ -154,6 +155,7 @@ function chordScreen() {
           <button class="remove-chord" data-remove-chord="${index}" aria-label="${escapeAttribute(chordSymbol(chord.root, chord.quality))}を削除">×</button>
           <strong>${escapeHtml(chordSymbol(chord.root, chord.quality))}</strong>
           <span>${escapeHtml(chord.degree)}</span>
+          <em class="chord-role">${escapeHtml(chordRole(chord, { key: project.basic.key, scale: project.basic.scale }).label)}</em>
           <small>${index + 1}小節目</small>
         </div>
       `).join("")

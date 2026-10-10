@@ -1,7 +1,8 @@
 import { getSections, MAX_TOTAL_BARS, sectionLabel, totalSectionBars } from "../core/section-ops.js";
-import { chordSymbol } from "../chord/chord-theory.js";
+import { chordSymbol, rootToPitchClass } from "../chord/chord-theory.js";
+import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
-import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
+import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 
 const EIGHTH_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
 const SIXTEENTH_LABELS = ["1", "e", "&", "a", "2", "e", "&", "a", "3", "e", "&", "a", "4", "e", "&", "a"];
@@ -28,6 +29,8 @@ export function createMelodyController({ projectStore, rerender }) {
   let half = 0;
   // 次に置く音の長さ（マス数）。UI状態のみで、project.jsonには保存しない
   let lengthSteps = 1;
+  // 度数表示（UI状態のみ）。鍵盤の文字を、音名ではなく「コードのルートから何度か」にする
+  let showDegrees = false;
   let message = "セルをタップして8分音符を入力します。";
 
   function stepTickSize(barTicks) {
@@ -73,7 +76,10 @@ export function createMelodyController({ projectStore, rerender }) {
     const visibleSteps = visibleStepNumbers();
     const barStartTick = barIndex * barTicks;
     const chord = project.chords[barIndex];
-    const chordLabel = chord ? `${chordSymbol(chord.root, chord.quality)} (${chord.degree})` : "コード未設定";
+    const role = chordRole(chord, { key: project.basic.key, scale: project.basic.scale });
+    const chordLabel = chord ? `${chordSymbol(chord.root, chord.quality)} (${chord.degree}・${role.label})` : "コード未設定";
+    // 度数の基準: コードがあればそのルート、なければKeyの主音
+    const degreeRoot = chord ? chord.root : rootToPitchClass(project.basic.key);
 
     // コピーできるか: コピー元にメロディがあり、コピー先が最大小節数(128)に収まる
     const canCopy = (bars) => hasMelodyInBars(notes, { barIndex, bars, barTicks })
@@ -88,7 +94,7 @@ export function createMelodyController({ projectStore, rerender }) {
       const toneClass = chordTones.has(pitch % 12) ? " chord-tone" : "";
       return `
         <div class="melody-row${toneClass}">
-          <span class="piano-key ${keyClass}" aria-hidden="true">${escapeHtml(name)}</span>
+          <span class="piano-key ${keyClass}" aria-hidden="true">${escapeHtml(showDegrees ? degreeLabel(pitch, degreeRoot) : name)}</span>
           ${visibleSteps.map((step) => {
             const startTick = barStartTick + step * stepTicks;
             const active = notes.some((note) => note.startTick === startTick && note.pitch === pitch);
@@ -112,7 +118,11 @@ export function createMelodyController({ projectStore, rerender }) {
           </div>
           <button id="clear-melody-bar" class="small-action">Clear Bar</button>
         </div>
-        ${chord ? `<p class="chord-tone-legend"><span class="chord-tone-dot" aria-hidden="true"></span>色付きの行 ＝ このコードの構成音（合う音）</p>` : ""}
+        <div class="melody-legend-row">
+          ${chord ? `<p class="chord-tone-legend"><span class="chord-tone-dot" aria-hidden="true"></span>色付き ＝ コードの構成音</p>` : "<span></span>"}
+          <button id="melody-degree-toggle" class="degree-toggle${showDegrees ? " active" : ""}" aria-pressed="${showDegrees}">${showDegrees ? "度数 ON" : "度数 OFF"}</button>
+        </div>
+        ${showDegrees ? `<p class="hint degree-hint">鍵盤の文字は「${chord ? "このコードのルート" : "Keyの主音"}から何度か」です（R=ルート、3=3度、5=5度）。</p>` : ""}
 
         <div class="melody-toolbar">
           <button id="melody-prev-bar"${barIndex === 0 ? " disabled" : ""}>← Bar</button>
@@ -250,6 +260,11 @@ export function createMelodyController({ projectStore, rerender }) {
       barIndex = targetBarIndex;
       rerender("melody");
     };
+
+    document.querySelector("#melody-degree-toggle")?.addEventListener("click", () => {
+      showDegrees = !showDegrees;
+      rerender("melody");
+    });
 
     document.querySelector("#copy-melody-bar")?.addEventListener("click", () => copyForward(1));
     document.querySelector("#copy-melody-2bars")?.addEventListener("click", () => copyForward(2));
