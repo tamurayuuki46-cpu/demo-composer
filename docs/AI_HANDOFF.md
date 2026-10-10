@@ -10,7 +10,7 @@ v0.1-dev
 - Repository初期構成
 - 共通仕様書
 - Claude / ChatGPT共同開発ルール
-- Hub / Chord / Melody / Rhythm の最小UIシェル
+- Hub / Chord / Melody / Rhythm の画面骨格
 - schemaVersion 1準拠の共通Project State
 - Project Validation / Snapshot / Subscription / Revision更新
 - HubからProject名 / BPM / Key / Scaleを編集
@@ -18,12 +18,14 @@ v0.1-dev
 - IndexedDBへの手動Save
 - 保存済みActive Projectの起動時読込
 - Save時のPersistent Storage要求
+- Chord Moduleのダイアトニックコード候補表示
+- Chord候補タップによる1小節追加
+- Chord削除 / Clear / startTick再配置
 
 開発中:
 - v0.1基本機能
 
 次に実装:
-- Chord入力
 - Melody簡易Piano Roll
 - Rhythm 16 Step
 - Demo Player
@@ -31,7 +33,9 @@ v0.1-dev
 - Autosave / project.json Backup
 
 既知の問題:
-- 現在のChord / Melody / Rhythm画面はUI骨格のみ
+- Chordは現在1コード=1小節固定
+- Chord並べ替え / 長さ変更 / 7th / 借用和音は未対応
+- Melody / Rhythm画面はUI骨格のみ
 - Saveは手動のみでAutosave未実装
 - project.json手動Export/Backup未実装
 - Migration未実装
@@ -52,7 +56,9 @@ v0.1-dev
 - State変更ごとにrevisionを増やす
 - IndexedDB永続化はsrc/storageへ分離し、Project State自体は保存方式に依存させない
 - 保存方式変更前の復元ポイントとして `restore/v0.1-before-indexeddb` を作成
-- v0.1ではHub / Chord / Melody / Rhythmを優先
+- Chord候補計算はsrc/chord/chord-theory.jsへ分離
+- Chord Moduleはproject.chords[]だけを書き換える
+- v0.1のChordは4/4・PPQ480で1コード=1小節（1920 tick）
 - AIは完全自動作曲ではなく候補提示・先生役
 - 将来のBass / Melody等の生成は「3候補 → 選択 → 修正」を基本とする
 - 初期生成エンジンはAPI不要のルールベース方式を優先
