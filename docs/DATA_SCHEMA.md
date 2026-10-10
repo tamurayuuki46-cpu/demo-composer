@@ -4,7 +4,7 @@
 
 Demo Composer内の正本は `project.json`。
 
-初期Schema案:
+初期Schema:
 
 ```json
 {
@@ -43,6 +43,52 @@ Demo Composer内の正本は `project.json`。
 - Scale: major / minor
 - Time Signature: 4/4
 - PPQ: 480
+
+## Chord Data
+
+`chords[]`:
+
+- `root`: 0〜11
+- `quality`: major / minor / diminished
+- `degree`: Degree文字列
+- `startTick`: 0以上の整数
+- `durationTick`: 1以上の整数
+
+v0.1のUIでは1コード=1小節（1920 tick）。
+
+## Track Data
+
+`tracks[]` は役割ごとのMIDI Track情報を持つ。
+
+Melody Track例:
+
+```json
+{
+  "role": "melody",
+  "name": "Melody",
+  "midiChannel": 2,
+  "instrumentId": null,
+  "mute": false,
+  "solo": false,
+  "volume": 1,
+  "pan": 0,
+  "notes": []
+}
+```
+
+## Note Data
+
+`tracks[].notes[]`:
+
+- `id`: 一意な文字列
+- `pitch`: MIDI Note 0〜127
+- `startTick`: 0以上の整数
+- `durationTick`: 1以上の整数
+- `velocity`: 1〜127
+
+v0.1 Melody UIでは8分音符Gridを使用するため、PPQ 480では1 step = 240 tick。
+
+UI上は同一stepに1音だけ入力するMonophonic方式だが、Schema自体は将来の拡張を妨げない。
 
 ## Ownership
 
