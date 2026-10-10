@@ -1,5 +1,5 @@
-// Counter Melody（裏メロ）: メインMelodyの隙間や下側に、そっと寄り添う旋律の候補を3つ作る。
-// 完全自動ではなく「候補を聴く → 選ぶ → 直す（別の候補にする / 消す）」。選んだSectionだけに当てる。
+// Counter Melody（裏メロ）: メインMelodyを邪魔しない範囲で、役割の違う3系統の候補を作る。
+// 完全自動ではなく「候補を聴く → 選ぶ → 必要なら別候補にする / 消す」。選んだSectionだけに当てる。
 // 保存先は tracks[] の role:"counter"（Schema追記のみ。無い古いProjectはそのまま有効）。
 // ProjectをUIにもAudioにも依存せずに読む純粋関数。元のProjectは変更しない。
 
@@ -14,19 +14,19 @@ const KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "
 
 export const COUNTER_STYLES = Object.freeze([
   {
-    id: "long",
-    label: "ロングトーン",
-    description: "コードの音を長くのばす。メロディの下で空気を作る、いちばん控えめな裏メロ。"
+    id: "sparse",
+    label: "Sparse（隙間型）",
+    description: "休符の隙間に短い返事を入れる。音数は少なめで、主旋律を立てる。※イメージ：米津系（特定曲のコピーではありません）"
   },
   {
-    id: "response",
-    label: "レスポンス",
-    description: "メロディが休んでいる隙間だけに、短い返事のフレーズを入れる。メロディが詰まっている小節は休む。"
+    id: "active",
+    label: "Active（動く型）",
+    description: "8分音符中心で下側を動き、コード感と推進力を足す。※イメージ：YOASOBI系（特定曲のコピーではありません）"
   },
   {
-    id: "simple",
-    label: "寄り添い（3度下）",
-    description: "メロディの長めの音に、音階で3度下を重ねる。シンプルなハモリ風。"
+    id: "hook",
+    label: "Hook（フック型）",
+    description: "少ない音の覚えやすい型を繰り返し、もう1つの歌えるフックを作る。※イメージ：Oasis系（特定曲のコピーではありません）"
   }
 ]);
 
@@ -53,6 +53,10 @@ export function hasCounter(project) {
 
 function notesIn(notes, startTick, endTick) {
   return notes.filter((note) => note.startTick >= startTick && note.startTick < endTick);
+}
+
+function overlappingNotes(notes, startTick, endTick) {
+  return notes.filter((note) => note.startTick < endTick && note.startTick + note.durationTick > startTick);
 }
 
 function keyPitchClass(project) {
@@ -98,7 +102,7 @@ function freeRuns(steps) {
   return runs;
 }
 
-// 候補の音を選ぶ。目標の高さに近いコード構成音のうち、同時に鳴るメロディとぶつからないものを選ぶ
+// 候補の音を選ぶ。目標の高さに近い許可音のうち、同時に鳴るメロディとぶつかりにくいものを選ぶ
 function pickPitch({ pcs, target, overlapping, previous }) {
   let best = null;
   for (let pitch = LOW; pitch <= HIGH; pitch += 1) {
@@ -109,7 +113,7 @@ function pickPitch({ pcs, target, overlapping, previous }) {
       if (distance === 1 || distance === 11) score += 20;
       else if (distance === 0) score += 6;
       else if (distance === 6) score += 8;
-      if (pitch > note.pitch - 2) score += 10; // メロディより下に置く
+      if (pitch > note.pitch - 2) score += 10; // できるだけメロディより下に置く
     });
     if (previous !== null && previous !== undefined) score += Math.abs(pitch - previous) * 0.4;
     if (best === null || score < best.score) best = { pitch, score };
@@ -117,12 +121,23 @@ function pickPitch({ pcs, target, overlapping, previous }) {
   return best ? best.pitch : null;
 }
 
-// 音階の中で pitch から degrees だけ下へ（音階外の音は、すぐ下の音階音から数える）
+// 音階の中で pitch から degrees だけ下へ
 function scaleStepDown(pitch, degrees, scale) {
   let current = pitch;
   let remaining = degrees;
   while (remaining > 0 && current > 0) {
     current -= 1;
+    if (scale.includes(current % 12)) remaining -= 1;
+  }
+  return current;
+}
+
+// 音階の中で pitch から degrees だけ上へ
+function scaleStepUp(pitch, degrees, scale) {
+  let current = pitch;
+  let remaining = degrees;
+  while (remaining > 0 && current < 127) {
+    current += 1;
     if (scale.includes(current % 12)) remaining -= 1;
   }
   return current;
@@ -137,92 +152,123 @@ function averageMelodyPitch(melody) {
   return melody.reduce((sum, note) => sum + note.pitch, 0) / melody.length;
 }
 
-function buildLong(project, melody, startBar, endBar) {
-  const barTicks = barTicksOf(project);
-  const target = averageMelodyPitch(melody) - 9;
-  const notes = [];
-  let previous = null;
-
-  for (let bar = startBar; bar < endBar; bar += 1) {
-    const barStart = bar * barTicks;
-    const overlapping = notesIn(melody, barStart, barStart + barTicks);
-    const pitch = pickPitch({ pcs: chordPitchClasses(project, bar), target, overlapping, previous });
-    if (pitch === null) continue;
-
-    const last = notes[notes.length - 1];
-    if (last && last.pitch === pitch && last.startTick + last.durationTick === barStart) {
-      last.durationTick += barTicks; // 同じ音が続くときは1本の長い音にする
-    } else {
-      notes.push(makeNote(pitch, barStart, barTicks, 62));
-    }
-    previous = pitch;
-  }
-  return notes;
-}
-
-function buildResponse(project, melody, startBar, endBar) {
+// Sparse: メロディの隙間だけに短い「返事」を置く。詰まっている小節は休む。
+function buildSparse(project, melody, startBar, endBar) {
   const barTicks = barTicksOf(project);
   const scale = scalePitchClasses(project);
-  const target = averageMelodyPitch(melody) - 7;
+  const target = averageMelodyPitch(melody) - 8;
   const notes = [];
   let previous = null;
 
   for (let bar = startBar; bar < endBar; bar += 1) {
     const barStart = bar * barTicks;
     const inBar = notesIn(melody, barStart, barStart + barTicks);
-    // メロディが無い小節は、後ろ半分（3〜4拍目）に返事を置く
     const occupied = inBar.length === 0
       ? [true, true, true, true, false, false, false, false]
       : occupiedSteps(inBar, barStart, barTicks);
     const runs = freeRuns(occupied).filter((run) => run.length >= 2);
-    if (runs.length === 0) continue; // 詰まった小節は休む
+    if (runs.length === 0) continue;
 
-    // いちばん長い隙間（同じ長さなら後ろ側）を使う。メロディの後に「返事」が来る形になる
     const run = runs.reduce((best, item) => (item.length >= best.length ? item : best));
-    const usable = Math.min(run.length, 4);
     const runStart = barStart + run.start * STEP;
-    const pitch = pickPitch({ pcs: chordPitchClasses(project, bar), target, overlapping: inBar, previous });
+    const overlap = overlappingNotes(inBar, runStart, runStart + Math.min(run.length, 3) * STEP);
+    const pitch = pickPitch({ pcs: chordPitchClasses(project, bar), target, overlapping: overlap, previous });
     if (pitch === null) continue;
-    previous = pitch;
 
-    if (usable >= 4) {
+    if (run.length >= 3) {
+      const answer = scaleStepDown(pitch, 1, scale);
       notes.push(
-        makeNote(pitch, runStart, STEP, 68),
-        makeNote(scaleStepDown(pitch, 1, scale), runStart + STEP, STEP, 62),
-        makeNote(pitch, runStart + STEP * 2, STEP * 2, 66)
+        makeNote(pitch, runStart, STEP, 66),
+        makeNote(answer, runStart + STEP, STEP * 2, 60)
       );
-    } else if (usable === 3) {
-      notes.push(
-        makeNote(pitch, runStart, STEP, 68),
-        makeNote(scaleStepDown(pitch, 1, scale), runStart + STEP, STEP * 2, 62)
-      );
+      previous = answer;
     } else {
-      notes.push(makeNote(pitch, runStart, STEP * 2, 66));
+      notes.push(makeNote(pitch, runStart, STEP * 2, 64));
+      previous = pitch;
     }
   }
   return notes;
 }
 
-function buildSimple(project, melody, startBar, endBar) {
+// Active: 8分音符中心。コードトーンを軸に、音階内で上下して推進力を出す。
+function buildActive(project, melody, startBar, endBar) {
   const barTicks = barTicksOf(project);
   const scale = scalePitchClasses(project);
-  const startTick = startBar * barTicks;
-  const endTick = endBar * barTicks;
+  const target = averageMelodyPitch(melody) - 10;
+  const notes = [];
+  let previous = null;
+  const positions = [0, 1, 2, 4, 5, 6]; // 4拍すべてを埋めず、息継ぎを残す
+  const targetMoves = [0, 2, 4, 2, -1, 1];
 
-  return notesIn(melody, startTick, endTick)
-    .filter((note) => note.durationTick >= STEP * 2)
-    .map((note) => {
-      const pitch = scaleStepDown(note.pitch, 2, scale);
-      const barEnd = (Math.floor(note.startTick / barTicks) + 1) * barTicks;
-      return { pitch, note, barEnd };
-    })
-    .filter(({ pitch }) => pitch >= 36)
-    .map(({ pitch, note, barEnd }) => makeNote(
-      pitch,
-      note.startTick,
-      Math.max(1, Math.min(note.durationTick, barEnd - note.startTick)),
-      60
-    ));
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const chordPcs = chordPitchClasses(project, bar);
+    const anchor = pickPitch({ pcs: chordPcs, target, overlapping: inBar, previous });
+    if (anchor === null) continue;
+
+    positions.forEach((step, index) => {
+      const startTick = barStart + step * STEP;
+      const endTick = startTick + STEP;
+      const overlap = overlappingNotes(inBar, startTick, endTick);
+      const move = targetMoves[index];
+      const desired = move >= 0
+        ? scaleStepUp(anchor, Math.round(move / 2), scale)
+        : scaleStepDown(anchor, Math.abs(move), scale);
+      const pcs = index === 0 || index === positions.length - 1 ? chordPcs : scale;
+      const pitch = pickPitch({ pcs, target: desired, overlapping: overlap, previous });
+      if (pitch === null) return;
+      notes.push(makeNote(pitch, startTick, STEP, index === 0 ? 65 : 58));
+      previous = pitch;
+    });
+  }
+  return notes;
+}
+
+// Hook: 各小節で同じ3音の輪郭を繰り返す。コードが変わっても「上がって戻る」形は維持する。
+function buildHook(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const target = averageMelodyPitch(melody) - 9;
+  const notes = [];
+  let previous = null;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const chordPcs = chordPitchClasses(project, bar);
+    const anchor = pickPitch({ pcs: chordPcs, target, overlapping: inBar, previous });
+    if (anchor === null) continue;
+
+    const upperTarget = scaleStepUp(anchor, 2, scale);
+    const first = pickPitch({
+      pcs: chordPcs,
+      target: anchor,
+      overlapping: overlappingNotes(inBar, barStart, barStart + STEP * 2),
+      previous
+    });
+    const second = pickPitch({
+      pcs: scale,
+      target: upperTarget,
+      overlapping: overlappingNotes(inBar, barStart + STEP * 2, barStart + STEP * 4),
+      previous: first
+    });
+    const third = pickPitch({
+      pcs: chordPcs,
+      target: anchor,
+      overlapping: overlappingNotes(inBar, barStart + STEP * 4, barStart + STEP * 8),
+      previous: second
+    });
+    if (first === null || second === null || third === null) continue;
+
+    notes.push(
+      makeNote(first, barStart, STEP * 2, 64),
+      makeNote(second, barStart + STEP * 2, STEP * 2, 60),
+      makeNote(third, barStart + STEP * 4, STEP * 4, 63)
+    );
+    previous = third;
+  }
+  return notes;
 }
 
 // Sectionの範囲（startBar〜endBar）に当てる候補を3つ作る。土台（コードかメロディ）が無いときは例外
@@ -238,7 +284,7 @@ export function counterCandidates(project, { startBar, endBar }) {
     throw new Error("このSectionにはコードもメロディもありません。先にどちらかを入れると、裏メロの候補を作れます。");
   }
 
-  const builders = { long: buildLong, response: buildResponse, simple: buildSimple };
+  const builders = { sparse: buildSparse, active: buildActive, hook: buildHook };
   return COUNTER_STYLES.map((style) => {
     const notes = builders[style.id](project, melody, startBar, endBar)
       .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
