@@ -33,6 +33,8 @@ HubではProject名 / BPM / Key / Scaleを編集でき、Saveで現在のProject
 
 Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを候補表示し、タップで1小節ずつ進行へ追加できます。追加済みコードの削除 / Clearにも対応しています。
 
+Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。1小節を8分音符8 stepとして扱い、4 stepずつ表示してタップ入力できます。Bar / Octave切替とClear Barに対応しています。
+
 現段階では手動Saveのみです。Autosave / project.json手動Backup / Migrationは後続実装です。
 
 ## AI共同開発
