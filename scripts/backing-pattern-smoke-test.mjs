@@ -5,6 +5,8 @@ import {
   getBackingPatternSelection,
   upsertBackingPattern
 } from "../src/core/backing-patterns.js";
+import { createDefaultProject, createProjectStore } from "../src/core/project-state.js";
+import { buildMidiExports } from "../src/midi/midi-export.js";
 
 assert.equal(BACKING_PATTERNS.length, 4);
 assert.equal(getBackingPatternSelection([]), "block");
@@ -35,6 +37,27 @@ assert.deepEqual(arpeggio.slice(0, 4).map((event) => event.intervals[0]), [0, 4,
 const syncopation = buildBackingEvents("syncopation", triad);
 assert.equal(syncopation.length, 4);
 assert.deepEqual(syncopation.map((event) => event.offset), [0, 6 / 16, 10 / 16, 14 / 16]);
+
+const project = createDefaultProject();
+project.chords = [{
+  startTick: 0,
+  durationTick: project.basic.ppq * 4,
+  root: 0,
+  quality: "major",
+  degree: "I"
+}];
+
+const store = createProjectStore(project);
+store.updateInstruments(upsertBackingPattern(store.getSnapshot().instruments, "eighth"));
+assert.equal(getBackingPatternSelection(store.getSnapshot().instruments), "eighth");
+store.undo();
+assert.equal(getBackingPatternSelection(store.getSnapshot().instruments), "block");
+
+const blockMidiLength = buildMidiExports(project)["Chord.mid"].length;
+const eighthProject = structuredClone(project);
+eighthProject.instruments = upsertBackingPattern(eighthProject.instruments, "eighth");
+const eighthMidiLength = buildMidiExports(eighthProject)["Chord.mid"].length;
+assert.ok(eighthMidiLength > blockMidiLength, "8分刻みはBlockより多いChord MIDI Note Eventを出力する");
 
 assert.throws(() => upsertBackingPattern([], "unknown"), /Unsupported backing pattern/);
 
