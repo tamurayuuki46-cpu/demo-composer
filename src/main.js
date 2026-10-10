@@ -16,6 +16,7 @@ import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
+import { songCardHtml } from "./hub/song-card.js";
 import { bindConsultPanel, consultPanelHtml } from "./hub/consult-ui.js";
 import { bindPartSwitch } from "./audio/part-switch-ui.js";
 import { bindEditHistory } from "./core/edit-history-ui.js";
@@ -44,6 +45,7 @@ let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存�
 let chordMessage = "下の候補をタップしてコードを追加します。";
 let chordRootSelection = null;
 let spiceOpen = false;
+let songCardOpen = false;
 let textSize = loadTextSize();
 applyTextSize(textSize);
 let chordPresetSelection = CHORD_PRESETS[0].id;
@@ -101,6 +103,9 @@ function hubScreen() {
         <button id="toggle-export" class="primary-action" aria-expanded="false">Export</button>
         <button id="toggle-consult" class="primary-action" aria-expanded="false">AI相談</button>
       </div>
+
+      <button id="toggle-song-card" class="song-card-toggle" aria-expanded="${songCardOpen}">曲の特徴カード${songCardOpen ? " ▲" : " ▼"}</button>
+      ${songCardOpen ? songCardHtml(project) : ""}
 
       ${consultPanelHtml()}
 
@@ -372,6 +377,11 @@ function bindHubControls() {
   const exportToggle = document.querySelector("#toggle-export");
   const exportPanel = document.querySelector("#export-panel");
   bindConsultPanel({ projectStore, setMessage: setHubMessage });
+
+  document.querySelector("#toggle-song-card")?.addEventListener("click", () => {
+    songCardOpen = !songCardOpen;
+    render("hub");
+  });
 
   document.querySelectorAll("[data-text-size-option]").forEach((button) => {
     button.addEventListener("click", () => {

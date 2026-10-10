@@ -1,5 +1,6 @@
 import { getSections, MAX_TOTAL_BARS, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol, rootToPitchClass } from "../chord/chord-theory.js";
+import { analyzeMelody, describeMelody } from "../core/melody-analysis.js";
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
@@ -31,6 +32,8 @@ export function createMelodyController({ projectStore, rerender }) {
   let lengthSteps = 1;
   // 度数表示（UI状態のみ）。鍵盤の文字を、音名ではなく「コードのルートから何度か」にする
   let showDegrees = false;
+  // 特徴パネルの開閉（UI状態のみ）
+  let analyzerOpen = false;
   let message = "セルをタップして8分音符を入力します。";
 
   function stepTickSize(barTicks) {
@@ -64,6 +67,24 @@ export function createMelodyController({ projectStore, rerender }) {
       stepTicks: stepTickSize(barTicks),
       barCount: Math.max(project.chords.length, highestNoteBar + 1, totalSectionBars(getSections(project)), 4)
     };
+  }
+
+  // Melody Analyzer: 評価ではなく、自分のメロディの特徴を知るためのパネル（Melody Moduleの内部）
+  function analyzerPanelHtml(project) {
+    const rows = describeMelody(analyzeMelody(project));
+    if (rows.length === 0) return `<div class="analyzer-panel"><p class="hint">メロディを入力すると、特徴が表示されます。</p></div>`;
+    return `
+      <div class="analyzer-panel">
+        ${rows.map((row) => `
+          <div class="analyzer-row">
+            <strong>${escapeHtml(row.label)}</strong>
+            <span>${escapeHtml(row.value)}</span>
+            ${row.comment ? `<small>${escapeHtml(row.comment)}</small>` : ""}
+          </div>
+        `).join("")}
+        <p class="hint">良い・悪いの評価ではなく、いまのメロディの特徴です。曲全体のメロディを数えています。</p>
+      </div>
+    `;
   }
 
   function render() {
@@ -167,6 +188,9 @@ export function createMelodyController({ projectStore, rerender }) {
           <button id="copy-melody-2bars"${canCopy(2) ? "" : " disabled"}>Copy 2小節 → Bar ${barIndex + 3}–${barIndex + 4}</button>
         </div>
 
+        <button id="melody-analyzer-toggle" class="analyzer-toggle" aria-expanded="${analyzerOpen}">メロディの特徴${analyzerOpen ? " ▲" : " ▼"}</button>
+        ${analyzerOpen ? analyzerPanelHtml(project) : ""}
+
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
         <p class="hint">${resolution === 8
           ? "1小節を 1 &amp; 2 &amp; 3 &amp; 4 &amp; の8マスで表示します。"
@@ -260,6 +284,11 @@ export function createMelodyController({ projectStore, rerender }) {
       barIndex = targetBarIndex;
       rerender("melody");
     };
+
+    document.querySelector("#melody-analyzer-toggle")?.addEventListener("click", () => {
+      analyzerOpen = !analyzerOpen;
+      rerender("melody");
+    });
 
     document.querySelector("#melody-degree-toggle")?.addEventListener("click", () => {
       showDegrees = !showDegrees;
