@@ -74,7 +74,7 @@ export function createRhythmController({ projectStore, rerender }) {
         <div class="rhythm-grid">
           <div class="rhythm-row rhythm-header">
             <span class="rhythm-label"></span>
-            ${STEP_LABELS.map((label) => `<span>${label}</span>`).join("")}
+            ${STEP_LABELS.map((label, index) => `<span>${index === 0 ? beatIndex + 1 : label}</span>`).join("")}
           </div>
           ${rows.map((row) => `
             <div class="rhythm-row">
