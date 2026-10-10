@@ -4,143 +4,127 @@
 v0.1-dev
 
 最新安定版:
-なし（実機確認中）
+なし。ユーザーは現状を「v0.1機能完成地点」として一旦完成扱いしたが、stable条件の実機チェックは未完了。
 
 現在実装済み:
-- Repository初期構成
-- 共通仕様書
-- Claude / ChatGPT共同開発ルール
-- Hub / Chord / Melody / Rhythm の実データ入力UI
+- Android Chrome向けPWAベースのDemo Composer
+- Hub / Chord / Melody / Rhythm
 - schemaVersion 1準拠の共通Project State
-- Project Validation / Snapshot / Subscription / Revision更新
-- HubからProject名 / BPM / Key / Scaleを編集
-- Project名をTop Barへ同期
-- IndexedDBへの保存 / Active Project起動時読込
-- Project変更後1.5秒のAutoSave
-- アプリがhiddenになる時の即時AutoSave
-- Save Now時の即時保存 / Persistent Storage要求
-- Chord Moduleのダイアトニックコード候補表示
-- Chord候補タップによる1小節追加
-- Chord削除 / Clear / startTick再配置
-- スマホ向け簡易Melody Piano Roll
-- Melody Bar / Octave / Beat範囲切替
-- Melody 8分音符Tap入力 / Monophonic置換 / Clear Bar
-- スマホ向けRhythm 16 Step Sequencer
-- Bass / Kick / Snare / Closed HH同時表示
-- BassのChord Root / Key Root入力
-- Beat 1〜4切替 / Bar移動 / Clear Bar / Clear Bass
-- Rhythm 16分Grid見出しのBeat番号追従
-- Rhythm Beat Copy（現在BeatのBass / Drumsを次Beatへコピー。Beat 4は次Bar Beat 1へコピー）
-- Rhythm Bar Copy（現在BarのBass / Drumsを次Barへコピー）
-- Rhythm Beat / Bar CopyでBarをまたぐBass Pitchをコピー先Chord Root / Key Rootへ自動追従
-- Key/ScaleおよびChord変更時のHarmony整合性ガード
-- 常設Demo Player
-- Play / Stop / Loop / Position
-- Chord / Melody / Bass / DrumsのWeb Audio軽量プレビュー
-- Demo Player Loopを最後に使用しているBar終端で反復
-- Android Chrome向けAudioContext resume / fallback
-- スマホ本体スピーカー向けChord/Bass preview調整
-- loudness gain + compressor + limiterによるDemo Player出力調整
-- Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid Export
-- SMF Type 1 / Conductor Track / Tempo / 4/4 / Key Signature
+- IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now
+- Hub: Project名 / BPM / Key / Scale
+- Chord: ダイアトニック候補、1コード=1小節、追加 / 削除 / Clear
+- Melody: 8分音符入力、Monophonic、Bar / Octave切替、Clear Bar
+- Rhythm: Bass / Kick / Snare / Closed HH、16分音符、Clear、Beat Copy、Bar Copy
+- Rhythm CopyでBarをまたぐBassをコピー先Chord Root / Key Rootへ追従
+- Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drums軽量再生
+- Android向けAudioContext resume / fallback
+- Demo Player出力: loudness gain → compressor → limiter。単純な後段2倍ブーストは音割れのため不採用
+- Loopは最後に使用しているBar終端で反復
+- MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid
 - project.json手動Backup Export
-- MIDI Smoke Test / Pull Request CI
-- Rhythm Beat / Bar Copy Smoke Test
-- Android v0.1実機テストチェックリスト
-- Vercel PreviewのAndroid Chrome起動確認
-- Chordを使ったDemo Player実音再生と音割れ改善の実機確認
+- MIDI Smoke Test / Rhythm Copy Smoke Test / PR CI
+
+重要: 現在の「機能完成スナップショット」は `develop` ではなく、以下を正本として扱う。
+- branch: `milestone/v0.1-feature-complete`
+- commit: `655fc1419340c313ed2f6f727c057db35b8ae6f5`
+- このスナップショットには、Melodyの縦ピアノ + 1小節8マス同時表示（`1 & 2 & 3 & 4 &`）と、Rhythmの1小節16マス同時表示（`1 e & a / 2 e & a / 3 e & a / 4 e & a`）まで含む。
+- ユーザーはこの状態を「ひとまずこれで完成でいい」と承認済み。
+
+Repository統合状況:
+- `develop` は Rhythm Beat / Bar Copyまで統合済み。
+- PR #13 Demo Player Loop timing: merged。
+- PR #14 Rhythm Beat / Bar Copy: merged。
+- PR #15 Melody縦ピアノ + 8 step同時表示: open。現在merge conflictあり。
+- PR #16 Rhythm 16 step同時表示: open。PR #15をbaseにしたstacked PR。
+- PR #12 Rhythm Beat label fix: openだが、同内容はPR #14側に取り込まれているため原則mergeしない。
+- `main` は実機確認済みstableだけを置く方針なので、まだ触らない。
+
+Android実機で確認済み / ユーザー受入済み:
+- Vercel Preview起動
+- Hub / Module Navigation復旧後の基本操作
+- Chordを使ったDemo Player実音再生
+- Demo Player音量 / 音割れ改善後のバランス
+- Loop終端を最後の使用Barへ合わせる修正
+- AutoSave / Restoreテストを実施
+- BandLab Androidへ個別MIDI（Chord / Melody / Bass / Drums）をImportし、再生できることを確認
+- ユーザーはCubasisを所持していないため、当面の実運用は `Demo Composer → BandLab Android → 後でCubase` を暫定ルートとする
+
+Google Drive Backup:
+- `Demo Composer/latest/demo_composer_latest.zip`
+- `Demo Composer/versions/v0.1-feature-complete/demo_composer_v0.1-feature-complete.zip`
+- `Demo Composer/versions/v0.1-feature-complete/【ChatGPT作成】Demo_Composer_v0.1-feature-complete_RESTORE.md`
+- `Demo Composer/VERSION_HISTORY.md`
+- ZIPはGitHub milestone commitから作成し、Drive保存後の再取得も確認済み。
 
 開発中:
-- v0.1 Android実機確認
-- Rhythm Beat / Bar CopyのAndroid実機確認
+- v0.1の機能追加は一旦停止。
+- 残作業は「repo統合」と「stable前の実機確認」が中心。
+- Feature-complete snapshotを壊さないことを最優先する。
 
-次に実施:
-- `docs/ANDROID_TEST_CHECKLIST.md`の未確認項目を継続テスト
-- Melody / Bass / Drumsを含むDemo Player再生、Stop / Loop / Position確認
-- Rhythm Beat CopyでBass / Drumsの4 stepパターンが次Beatへ正しくコピーされることを確認
-- Beat 4 Copyが次Bar Beat 1へ移り、Bassがコピー先Rootへ追従することを確認
-- Rhythm Bar CopyでBass / Drumsの16分パターンが次Barへ正しくコピーされることを確認
-- AutoSave / Restore実機確認
-- MIDI Export実機確認
-- Cubasis / CubaseへのMIDI Import確認
-- 実機テストで見つかった重大バグの最小修正
-- Stable条件を満たしたらv0.1-stable候補作成
+次に実装:
+- まず新機能を追加しない。
+- Claudeが引き継ぐ場合は、最初に `README.md` / `VERSION` / `docs/AI_HANDOFF.md` / `docs/PRODUCT_SPEC.md` / `docs/ARCHITECTURE.md` / `docs/DATA_SCHEMA.md` / `CHANGELOG.md` を読む。
+- `milestone/v0.1-feature-complete` と `develop` の差分を確認する。
+- 必要ならPR #15 / #16を安全に再整理して `develop` へ統合する。無理に既存PRをrebaseせず、新しい統合branchで最小差分を再適用してよい。
+- AndroidでHub → Chord → Melody → Rhythm、Melody 8マス、Rhythm 16マス、Beat Copy / Bar Copy、Play / Stop / Loop / Position、AutoSaveを回帰確認する。
+- PC CubaseへのMIDI Importは未確認。stable化判定に含めるなら最後に確認する。
+- stable条件を満たした場合のみ `v0.1-stable` 候補を作成し、その後に `main` へ入れる。
 
-Stable化前には実装しない / 慎重に判断:
-- project.json Importは安全な復元設計を固めてから
-- PWA Service Workerは開発中のstale cache対策を決めてから
-- 新規の大型機能追加
+将来候補（v0.1 stable前には実装しない）:
+- Rhythm Preset
+- Backing Pattern
+- Melody候補生成 / Arpeggiator
+- 優先順位案: `Rhythm Preset → Backing Pattern → Arpeggiator / Melody候補生成`
+- 自動生成は必ず `3候補 → ユーザー選択 → 手動修正` を基本とする。
 
 既知の問題:
-- Chordは現在1コード=1小節固定
+- Chordは1コード=1小節固定
 - Chord並べ替え / 長さ変更 / 7th / 借用和音は未対応
-- Key/Scale変更時の既存Chord/Melody/Bass自動移調は未対応。v0.1では関連データをClearしてから変更する
-- Bass Noteがある間はChord変更を拒否する。RhythmのClear Bassで解除する
+- Key / Scale変更時の既存Chord / Melody / Bass自動移調は未対応
+- Bass Noteがある間はChord変更を拒否する
 - Melodyは8分音符固定。16分音符 / Note Length / Velocity編集は未対応
-- Melody Scale表示 / Chord Tone強調 / Analyzerは未対応
+- Melody縦ピアノは表示専用で、鍵盤Tap試聴は未対応
+- Melody Scale表示 / Chord Tone強調 / Melody Analyzerは未対応
 - Bass Pitch手動編集 / Velocityは未対応
 - DrumsはKick / Snare / Closed HHのみ
-- Demo Playerは仮音確認専用で、本格Synth / Mix / FXは未対応かつ原則追加しない
-- Demo PlayerはPlay時点のProject Snapshotを再生し、再生中の編集は次回Playから反映
-- Android実機では単純な最終出力2倍でクリップが発生したため、その方式は不採用
-- All MIDIはブラウザの複数Download制限を受ける場合がある。その場合は個別Downloadを使う
-- MIDIのCubasis / Cubase / BandLab実Import確認はAndroid/PC実機テストが必要
-- AutoSaveはIndexedDB保存。Snapshot履歴は未実装
-- project.json Import未実装
-- Migration未実装
-- Service Worker未実装のため完全なPWAオフライン対応ではない
+- Demo Playerは仮音確認専用。本格Synth / Mix / FXは原則追加しない
+- Demo PlayerはPlay時点のProject Snapshotを再生し、再生中編集は次回Playから反映
+- All MIDIはブラウザの複数Download制限を受ける場合があるため、Androidでは個別Downloadを優先
+- Song.midのBandLab Android挙動は個別MIDIほど確実ではない
+- Cubasis実機確認は未実施
+- PC Cubase Importは未実施
+- Snapshot履歴 / project.json Import / Migration / Service Workerは未実装
+- 完全オフラインPWA対応ではない
 
 触らない部分:
-- docs/の基本思想
-- PPQ=480の方針
+- `main`（stable条件を満たすまで）
+- `milestone/v0.1-feature-complete`（復元点として保持）
+- docs/に記載したDemo Composerの基本思想
+- PPQ=480 / 4/4固定のv0.1 Schema
 - Module責務の分離
-- 「DAWを再現しない」というプロダクト境界
-- 実機確認完了前の`main`
+- `project.json`をDemo Composer内の正本とする方針
+- 「スマホ版DAWを作らない」というプロダクト境界
+- 高度なMix / Mastering / Audio Editing / Plugin HostingはCubase等へ任せる方針
 
 最近の重要な設計判断:
-- Android Chromeを主対象
-- project.jsonをDemo Composer内の正本とする
-- Module間は直接依存させない
-- 共通Project Stateはsrc/core/project-state.jsで管理する
-- ModuleはProjectオブジェクトを直接書き換えず、責務別の更新APIを通す
-- State変更ごとにrevisionを増やす
-- IndexedDB永続化はsrc/storageへ分離し、Project State自体は保存方式に依存させない
-- AutoSaveはsrc/storage/autosave.jsへ分離し、Project Storeのsubscribe()を利用する
-- AutoSaveは1.5秒Debounce + visibilitychange(hidden)即時保存
-- AutoSave自体はProject Stateやrevisionを変更しない
-- 手動SaveはSave Nowとして残し、Persistent Storage要求にも利用する
-- Chord Moduleはproject.chords[]だけを書き換える
-- v0.1のChordは4/4・PPQ480で1コード=1小節（1920 tick）
-- v0.1 Melodyは1 Bar=8 step、1 step=240 tick、Default velocity=96
-- スマホのTap領域確保のためMelodyは4 stepずつ表示する
-- v0.1 Rhythmは1 Bar=16 step、1 step=120 tick
-- スマホのTap領域確保のためRhythmは1 Beat=4 stepずつ表示する
-- Rhythm Beat Copyは現在BeatのBass / Drumsを次Beatへコピーし、コピー後は次Beatへ移動する
-- Rhythm Beat 4 Copyは次BarのBeat 1へコピーし、そのBarへ移動する
-- Rhythm Bar Copyは現在BarのBass / Drumsを次Barへコピーし、コピー後は次Barへ移動する
-- Rhythm Beat / Bar Copyはコピー先に既存Rhythmがある場合のみ上書き確認を出す
-- Rhythm Beat / Bar CopyのBassはNote位置をコピーし、Barをまたぐ場合はPitchをコピー先Chord Root（Chord未設定時はKey Root）へ合わせる
-- BassはChord Root優先、Chord未設定時はKey Rootを使う
-- DrumsはGM準拠のKick36 / Snare38 / ClosedHH42、MIDI Channel 10
-- Demo Playerは作曲確認用の仮音のみ。高度な音作りはCubasis / Cubaseへ任せる
-- Demo Player Loopは固定4小節ではなく、最後に使用しているBar終端で反復する
-- Android Demo PlayerはAudioContext resume / fallbackを持つ
-- Chord previewはスマホで聞き取りやすいよう再生時のみ1オクターブ上を使い、Project/MIDI Pitchは変更しない
-- Bass previewはスマホ本体スピーカーで倍音を得るためtriangle波を使う
-- Demo Player出力はloudness gain → compressor → limiter方式を採用し、単純な後段2倍ブーストはクリップのため不採用
-- Song.midはConductor + Chord + Melody + Bass + DrumsのSMF Type 1
-- Part MIDIもConductor + 対象PartのType 1
+- Android Chromeを主対象とする
+- Melodyは1 Bar=8 step、1 step=240 tick、8マス同時表示
+- Melody Pitch目印は縦ピアノKeyboard（白鍵 / 黒鍵 + Note名）
+- Rhythmは1 Bar=16 step、1 step=120 tick、16マス同時表示
+- Beat Copy / Bar Copyは残し、コピー後に編集するUXを重視する
+- Rhythm cellを押して所属Beatをコピー元として扱う設計
+- Chord previewはDemo Player再生時のみ1オクターブ上へ寄せ、Project/MIDI Pitchは変えない
+- Bass previewはスマホスピーカーで聞き取りやすいtriangle波
+- Demo Playerはloudness gain → compressor → limiter方式
 - MIDI ChannelsはChord1 / Melody2 / Bass3 / Drums10
 - Program Change / CCはv0.1では出力しない
-- Hub Exportからproject.jsonを手動Backupできる
-- AIは完全自動作曲ではなく候補提示・先生役
-- 将来のBass / Melody等の生成は「3候補 → 選択 → 修正」を基本とする
-- 初期生成エンジンはAPI不要のルールベース方式を優先
-- v0.1 Core完了時点の復元ポイントとして `milestone/v0.1-core-complete` を作成
-- v0.1 Stableは`docs/ANDROID_TEST_CHECKLIST.md`の必須項目を通すまでmainへ入れない
+- AIは完全自動作曲ではなく候補提示・分析・先生役
+- 初期生成はAPI不要のルールベースを優先する
+- BandLab AndroidはCubasis未所持時の暫定受け渡し先として実用確認済み
+- v0.1機能完成の復元点は `milestone/v0.1-feature-complete` / `655fc1419340c313ed2f6f727c057db35b8ae6f5`
 
 現在のデータSchema:
-schemaVersion 1 / PPQ 480 / 4/4固定。schemaVersion変更なし。
+schemaVersion 1 / PPQ 480 / 4/4固定。変更なし。
 
 最終更新:
 2026-10-10
