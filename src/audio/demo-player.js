@@ -57,11 +57,11 @@ function scheduleTone(context, destination, activeSources, {
 
 function scheduleKick(context, destination, activeSources, startTime) {
   const oscillator = context.createOscillator();
-  const gain = createGain(context, destination, 0.18);
+  const gain = createGain(context, destination, 0.24);
   oscillator.type = "sine";
   oscillator.frequency.setValueAtTime(120, startTime);
   oscillator.frequency.exponentialRampToValueAtTime(45, startTime + 0.12);
-  gain.gain.setValueAtTime(0.18, startTime);
+  gain.gain.setValueAtTime(0.24, startTime);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.14);
   oscillator.connect(gain);
   oscillator.start(startTime);
@@ -106,7 +106,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
         startTime: chordStart,
         duration,
         type: "triangle",
-        gain: 0.022
+        gain: 0.07
       });
     });
   });
@@ -122,7 +122,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           startTime: noteStart,
           duration,
           type: "triangle",
-          gain: 0.075
+          gain: 0.12
         });
         return;
       }
@@ -133,7 +133,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           startTime: noteStart,
           duration,
           type: "sine",
-          gain: 0.11
+          gain: 0.16
         });
         return;
       }
@@ -144,13 +144,13 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
         } else if (note.pitch === 38) {
           scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
             duration: 0.12,
-            gainAmount: 0.08,
+            gainAmount: 0.12,
             highpass: 900
           });
         } else if (note.pitch === 42) {
           scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
             duration: 0.045,
-            gainAmount: 0.04,
+            gainAmount: 0.07,
             highpass: 5000
           });
         }
@@ -213,14 +213,36 @@ export function createDemoPlayer({ onStateChange } = {}) {
         throw new Error("このブラウザではWeb Audioを利用できません。");
       }
 
-      context = new AudioContextClass();
+      context = new AudioContextClass({ latencyHint: "interactive" });
       masterGain = context.createGain();
-      masterGain.gain.value = 0.75;
-      masterGain.connect(context.destination);
+      masterGain.gain.value = 0.95;
+
+      const compressor = context.createDynamicsCompressor();
+      compressor.threshold.value = -12;
+      compressor.knee.value = 18;
+      compressor.ratio.value = 4;
+      compressor.attack.value = 0.003;
+      compressor.release.value = 0.2;
+
+      masterGain.connect(compressor);
+      compressor.connect(context.destination);
     }
 
-    if (context.state === "suspended") {
+    if (context.state !== "running") {
       await context.resume();
+    }
+
+    if (context.state !== "running") {
+      const silentBuffer = context.createBuffer(1, 1, context.sampleRate);
+      const source = context.createBufferSource();
+      source.buffer = silentBuffer;
+      source.connect(masterGain);
+      source.start(0);
+      await context.resume();
+    }
+
+    if (context.state !== "running") {
+      throw new Error("音声エンジンを開始できません。メディア音量とChromeの音声設定を確認してください。");
     }
   }
 
