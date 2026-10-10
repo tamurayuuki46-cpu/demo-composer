@@ -27,7 +27,7 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 初期Repository / 共同開発基盤を作成済み。
 
-現在は、Hub / Chord / Melody / Rhythm の実データ入力、schemaVersion 1準拠の共通Project State、IndexedDBによる端末保存を実装しています。
+現在は、Hub / Chord / Melody / Rhythm の実データ入力、schemaVersion 1準拠の共通Project State、IndexedDBによる端末保存、常設Demo Playerを実装しています。
 
 HubではProject名 / BPM / Key / Scaleを編集でき、Saveで現在のProjectを端末に保存できます。次回起動時は保存済みProjectを自動で読み込みます。
 
@@ -36,6 +36,8 @@ Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを候
 Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。1小節を8分音符8 stepとして扱い、4 stepずつ表示してタップ入力できます。Bar / Octave切替とClear Barに対応しています。
 
 Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを1 Beat=4 stepずつ表示し、Bassは現在ChordのRootを使用します。
+
+Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量な仮音でPlay / Stop / Loop再生できます。
 
 現段階では手動Saveのみです。Autosave / project.json手動Backup / Migrationは後続実装です。
 
