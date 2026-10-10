@@ -172,6 +172,7 @@ export function createDemoPlayer({ onStateChange } = {}) {
   let positionTimer = null;
   let endTimer = null;
   let currentProject = null;
+  let currentLengthTick = null;
 
   function emit() {
     const position = playing && context
@@ -268,12 +269,14 @@ export function createDemoPlayer({ onStateChange } = {}) {
     }
   }
 
-  async function play(project) {
+  // lengthTickを渡すと、中身の末尾ではなくその長さで再生する（Section再生で末尾の空き小節も含めるため）
+  async function play(project, { lengthTick = null } = {}) {
     stop({ notify: false });
     await ensureContext();
 
     currentProject = structuredClone(project);
-    duration = tickToSeconds(currentProject, projectEndTick(currentProject));
+    currentLengthTick = lengthTick;
+    duration = tickToSeconds(currentProject, lengthTick ?? projectEndTick(currentProject));
     startTime = context.currentTime + 0.06;
     activeSources = new Set();
     scheduleProject(context, masterGain, activeSources, currentProject, startTime);
@@ -287,7 +290,7 @@ export function createDemoPlayer({ onStateChange } = {}) {
       stop({ notify: !shouldLoop });
       if (shouldLoop && currentProject) {
         try {
-          await play(currentProject);
+          await play(currentProject, { lengthTick: currentLengthTick });
         } catch {
           stop();
         }

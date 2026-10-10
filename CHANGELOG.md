@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- 曲の構成（Arrange / Section）: 叩き台3種類、小節数の増減、追加・削除、Section間コピー、Section単位の再生、Melody / Rhythm見出しへのSection表示、MIDI Section Marker（Schema変更なし）
+- Section Smoke Test（`npm run test:section`、CI対象）
+- Section実装前の復元ブランチ `restore/v0.2-before-arrange-sections`
 - Undo / Redo（Project全体で1本の編集履歴、最大50操作、画面上部の `↶` `↷`）
 - Edit History Smoke Test（`npm run test:history`、CI対象）
 - Undo実装前の復元ブランチ `restore/v0.2-before-undo`

@@ -1,0 +1,32 @@
+/* Arrange（曲の構成）: Android縦画面1列、タップ領域44px以上 */
+.arrange-templates { display: grid; gap: 10px; }
+.arrange-template {
+  display: grid; gap: 4px; text-align: left; min-height: 64px; padding: 12px 14px;
+}
+.arrange-template span { font-size: 13px; color: #b9b9c2; font-weight: 400; }
+.arrange-list { display: grid; gap: 10px; margin-top: 10px; }
+.arrange-section {
+  --kind: #6b7280;
+  border: 1px solid #2f2f38; border-left: 6px solid var(--kind); border-radius: 12px;
+  padding: 10px 12px; display: grid; gap: 10px; background: #1b1b21;
+}
+.arrange-section.copy-source { outline: 2px solid #f1f1f1; }
+.arrange-section.kind-intro { --kind: #60a5fa; }
+.arrange-section.kind-verse { --kind: #34d399; }
+.arrange-section.kind-prechorus { --kind: #fbbf24; }
+.arrange-section.kind-chorus { --kind: #f87171; }
+.arrange-section.kind-interlude { --kind: #a78bfa; }
+.arrange-section.kind-bridge { --kind: #f472b6; }
+.arrange-section.kind-outro { --kind: #94a3b8; }
+.arrange-section-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.arrange-section-head h3 { margin: 0; }
+.arrange-section-head p { margin: 2px 0 0; font-size: 13px; color: #b9b9c2; }
+.arrange-bars { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 8px; text-align: center; }
+.arrange-bars button { min-height: 44px; font-size: 20px; }
+.arrange-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.arrange-actions button { min-height: 44px; }
+.arrange-actions .danger { color: #fca5a5; }
+.arrange-add { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.arrange-add select, .arrange-add button { min-height: 44px; }
+.arrange-reset { margin-top: 10px; width: 100%; min-height: 44px; background: transparent; color: #b9b9c2; border: 1px dashed #3a3a44; }
+.section-tag { font-size: 13px; color: #b9b9c2; }

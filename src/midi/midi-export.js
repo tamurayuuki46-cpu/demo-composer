@@ -1,7 +1,9 @@
 import { chordIntervals } from "../core/chord-qualities.js";
+import { getSections, sectionRanges } from "../core/section-ops.js";
 import {
   createMidiFile,
   keySignatureEvent,
+  markerEvent,
   noteEvents,
   tempoEvent,
   timeSignatureEvent,
@@ -47,7 +49,11 @@ function conductorEvents(project) {
     trackNameEvent("Conductor"),
     tempoEvent(project.basic.bpm),
     timeSignatureEvent(),
-    keySignatureEvent(signatureMap[project.basic.key] ?? 0, project.basic.scale === "minor")
+    keySignatureEvent(signatureMap[project.basic.key] ?? 0, project.basic.scale === "minor"),
+    // CubasisやCubaseで曲の構成が分かるよう、Sectionの先頭にマーカーを入れる
+    ...sectionRanges(getSections(project)).map((range) => (
+      markerEvent(range.startBar * project.basic.ppq * 4, range.section.name)
+    ))
   ];
 }
 

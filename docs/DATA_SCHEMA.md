@@ -36,6 +36,21 @@ Demo Composer内の正本は `project.json`。
 }
 ```
 
+## structure.sections（曲の構成）
+
+schemaVersion 2のまま、既存の `structure.sections` に次の形で入れる（Schema変更なし。`undefined` / `[]` の古いProjectもそのまま有効）。
+
+```json
+{ "id": "section-xxxx", "kind": "verse", "name": "Aメロ", "bars": 8 }
+```
+
+- `kind`: `intro` / `verse` / `prechorus` / `chorus` / `interlude` / `bridge` / `outro`
+- `name`: 1〜20文字。同じ種類が複数あるときは `サビ2` のように番号を付ける
+- `bars`: 1〜32の整数。Sectionは Bar 1 から順に隙間なく並ぶ（開始Barは保存せず、並び順と `bars` の合計から計算する）
+- 上限: 24 Section / 合計128小節
+- 音符・コードはSectionの中に持たず、従来どおりtickで保持する。Sectionは区切りの名前だけ
+- 責任Module: Arrange（ただし小節数の増減・コピーはCoreのGlobal Operation。ARCHITECTURE.md参照）
+
 ## v0.2 Constraints
 
 - BPM: 40〜240

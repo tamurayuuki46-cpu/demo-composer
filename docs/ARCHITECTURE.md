@@ -15,7 +15,7 @@ Module同士は直接呼び合わない。
 - Arrange
 - Sound
 
-現在は Hub / Chord / Melody / Rhythm を実装済み。
+現在は Hub / Chord / Melody / Rhythm / Arrange（曲の構成のみ）を実装済み。
 
 ## Core Responsibilities
 
@@ -68,6 +68,19 @@ Key変更はHubから開始するが、Chord / Melody / Bassをまたぐため�
 - Scale変更は別処理とし、Harmony依存データがある間は引き続き拒否する
 
 この処理はModule Ownershipの例外としてHubが他Moduleを直接書き換えるのではなく、CoreがProject全体の整合性を保つために行うGlobal Operationとして扱う。
+
+### Section（曲の構成）
+
+`src/core/section-ops.js` が、Sectionの検証・小節計算・操作を純粋関数として持つ（UI / Audioに依存しない）。Store APIは `setSections` / `applySectionTemplate` / `resizeSection` / `removeSection` / `copySection`。いずれも通常の編集と同じくUndoできる。
+
+- Chordは `chords[n] = Bar n+1` として先頭から隙間なく並べる前提（Melody / Rhythm / Playerが依存）。そのためSectionの小節数を変えるときは、コード・Melody・Bass・Drumsを一緒に前後へずらす
+- 小節を増やす操作は、そのSectionより後ろにコードがある場合は拒否する（コードに隙間ができるため）。末尾のSectionか、後ろのコードを消してから増やす
+- 小節を減らす / Sectionを削除する操作は、その範囲の内容を消して後ろを詰める
+- Section間コピーは、短いほうの小節数まで、コード・Melody・Bass・Drumsをまとめて上書きコピーする。コピー先の手前にコードの空きがある場合は拒否する
+- 複数Moduleのデータをまたぐため、Hub Key変更と同じくModule間の直接書き換えではなく、CoreのGlobal Operationとして扱う
+- Melody / Rhythm画面は `sectionLabel` で「サビ 3/8小節」を見出しに表示し、`totalSectionBars` で小節数の下限を決める
+- MIDI ExportはConductor Trackに各Sectionの先頭Markerを入れる（Cubasis / Cubaseで構成が見える）
+- Demo Playerは `play(project, { lengthTick })` でSection範囲だけを再生できる。Loopも同じ範囲を繰り返す
 
 ### Schema / Migration
 

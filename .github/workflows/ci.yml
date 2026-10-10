@@ -48,5 +48,8 @@ jobs:
       - name: History (Undo / Redo) smoke test
         run: npm run test:history
 
+      - name: Section (Arrange) smoke test
+        run: npm run test:section
+
       - name: Static build
         run: npm run build
