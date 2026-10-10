@@ -32,23 +32,31 @@ Current focus:
 - Rhythm Drum Preset
   - 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
   - Preset適用後に16 stepを手動修正
+- Undo / Redo
+- Arrange Section（v0.3予定から基本構成だけ先行）
+  - 構成Template / 小節増減 / Sectionコピー / Section再生 / MIDI Marker
+- Sound Sketch Lite（v0.4予定から最小機能だけ先行）
+  - Chord / Melody / Bassの仮音色Preset
+  - Natural / Bright / Soft / Warm / Dark / Airy / Aggressive のToneタグ
+  - Demo Playerのみ音色変更、MIDI Noteは変更しない
 - Chord Tone表示
 - Melody Analyzer
 - Bass候補生成の設計 / 試作
 
-Chord Tone表示は、Chord Quality拡張・Chord Preset・Rhythm PresetのAndroid実機確認後に仕様案を1枚作り、Melody Gridのどの音をどう強調するかを確認してから実装する。
+Chord Tone表示は、Chord / Rhythm / Arrange / Sound Sketch LiteのAndroid実機回帰確認後に仕様案を1枚作り、Melody Gridのどの音をどう強調するかを確認してから実装する。
 
 ## v0.3
 
-- Arrange
-- Song Structure
+- Arrange / Song Structureの正式整理
+  - v0.2で先行したSection機能を実制作で検証・改善
 - Melody候補生成の設計 / 試作
-
-Arrange / Song StructureはProject Dataへ曲構成を追加するため、Schema変更前に復元点とMigration方針を作る。
 
 ## v0.4
 
-- Sound Sketch
+- Sound Sketch 正式拡張
+  - v0.2のSound Sketch Liteを基礎としてPreset分類を整理
+  - 必要性が確認できた場合のみDrums等を追加
+  - 本格Synth / FX / Mixerは作らない
 
 ## v0.5
 
