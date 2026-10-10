@@ -48,6 +48,9 @@
 - アプリがhiddenになる時の即時AutoSave
 - AutoSaveの保存Queueによる同時書き込み防止
 - AutoSave実装前の復元ブランチ `restore/v0.1-before-autosave`
+- Vercel Preview用の静的build処理 `scripts/build-static.mjs`
+- Vercel設定 `vercel.json`（`npm run build` → `dist/`）
+- Vercel設定変更前の復元ブランチ `restore/v0.1-before-vercel-build-config`
 
 ### 変更
 - Hub表示を固定値からProject State参照へ変更
@@ -64,11 +67,13 @@
 - HubのExportを有効化し、DAW受け渡しとProject Backupを同じPanelに集約
 - 通常編集の保存を手動中心からAutoSave中心へ変更
 - 手動Saveを`Save Now`として即時保存・Persistent Storage要求用途に整理
+- Vercel配布時のみ静的buildを行い、ローカル開発は引き続きビルド不要とした
 
 ### 修正
 - Chord作成後のKey / Scale変更で表示とDegreeが不整合になる問題を予防
 - ChordをClearした後も5小節目以降のMelody Noteへ移動できるようBar数をNote Dataから補完
 - Bassが旧Chord Rootのまま見えなくなる問題を避けるため、Bass stepはstartTick単位で表示しTap時に現在Rootへ置換可能にした
+- VercelでDeploymentがREADYでも公開ファイルが生成されず404になる配布設定を修正
 
 ### 未対応
 - Snapshot履歴
@@ -81,3 +86,4 @@
 - Open HH / Percussion / Tom
 - WAV Export
 - PWA Service Worker
+- Vercel修正後PreviewのAndroid実機表示確認
