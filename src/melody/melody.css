@@ -83,3 +83,21 @@
   background: #6a6a74;
   border-color: #6a6a74;
 }
+
+.melody-secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.melody-secondary-actions button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #28282f;
+  color: #f5f5f5;
+  font-size: 13px;
+}
+.melody-secondary-actions button:disabled {
+  opacity: .4;
+}
