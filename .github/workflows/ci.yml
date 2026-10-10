@@ -45,5 +45,8 @@ jobs:
       - name: Diatonic fan smoke test
         run: npm run test:diatonic-fan
 
+      - name: Sound Sketch smoke test
+        run: npm run test:sound
+
       - name: Static build
         run: npm run build
