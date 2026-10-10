@@ -37,6 +37,13 @@
 - Demo Player Play / Stop / Loop / Position表示
 - Chord / Melody / Bass / Drumsの軽量プレビュー音
 - Demo Player実装前の復元ブランチ `restore/v0.1-before-demo-player`
+- 外部ライブラリ不要のStandard MIDI File writer
+- Song.mid（Conductor + Chord + Melody + Bass + Drums）
+- Chord.mid / Melody.mid / Bass.mid / Drums.mid
+- SMF Type 1 / PPQ 480 / Tempo / 4/4 / Key Signature
+- Hub Export PanelとAll MIDI / 個別MIDI Download
+- project.json手動Backup Download
+- MIDI構造変更前の復元ブランチ `restore/v0.1-before-midi-export`
 
 ### 変更
 - Hub表示を固定値からProject State参照へ変更
@@ -50,6 +57,7 @@
 - Rhythm画面をPlaceholderからBass / Drums同時入力UIへ変更
 - Bass Noteが存在する間はChord変更を拒否してRoot不整合を防止
 - 画面下部にDemo Playerを常設し、その下にModule Navigationを維持
+- HubのExportを有効化し、DAW受け渡しとProject Backupを同じPanelに集約
 
 ### 修正
 - Chord作成後のKey / Scale変更で表示とDegreeが不整合になる問題を予防
@@ -58,9 +66,8 @@
 
 ### 未対応
 - Autosave / Snapshot履歴
-- project.json Backup / Import
+- project.json Import
 - Migration
-- MIDI Export
 - Chord並べ替え / 長さ変更 / 7th / 借用和音
 - Melody 16分音符 / Note Length / Velocity編集
 - Scale表示 / Chord Tone強調 / Melody Analyzer
