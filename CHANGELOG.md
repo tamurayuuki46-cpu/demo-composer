@@ -14,17 +14,24 @@
 - schemaVersion 1に沿った共通Project Stateストア
 - Project Snapshot / Validation / Subscription / Revision更新
 - HubからProject名 / BPM / Key / Scaleを編集するUI
+- IndexedDB Storage Module
+- Active Projectの手動Saveと起動時自動読込
+- Save時のPersistent Storage要求
+- 保存方式変更前の復元ブランチ `restore/v0.1-before-indexeddb`
 
 ### 変更
 - Hub表示を固定値からProject State参照へ変更
 - Project名変更時にTop Barへ即時反映するよう変更
-- Project Stateの永続化はStorage Moduleへ分離する方針を明文化
+- Saveボタンを有効化
+- Project Stateと永続化処理を分離
 
 ### 修正
 - なし
 
 ### 未対応
-- Project Save / IndexedDB
+- Autosave / Snapshot履歴
+- project.json Backup / Import
+- Migration
 - Demo Player実装
 - MIDI Export
 - Chord入力ロジック
