@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## v0.2-dev
+更新日: 2026-10-10
+
+### 追加
+- Chordの基準音Select（C〜B）
+- 基準音ごとの9種類のChord Quality: Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
+- 共通Chord Quality定義 `src/core/chord-qualities.js`
+- schemaVersion 2
+- schemaVersion 1 → 2 Migration
+- Migration前ProjectをIndexedDB `meta` storeへ退避する処理
+- Chord Quality Smoke Test（`npm run test:chord`、CI対象）
+- v0.2 Chord Quality変更前の復元ブランチ `restore/v0.1-before-v0.2-chord-types`
+
+### 変更
+- Chord画面はダイアトニック7候補を残しつつ、任意の基準音から9種類のQualityを追加できる構成へ変更
+- Chord QualityをDemo Player / Chord.mid / Song.midへ共通の構成音定義で反映
+- `VERSION` / 画面内Version / package versionをv0.2-devへ更新
+- DATA_SCHEMAをschemaVersion 2へ更新
+
+### 修正
+- 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
+
+### 未対応
+- Chord並べ替え / 長さ変更
+- 借用和音を目的別に整理した候補
+- Chord Tone強調
+- Melody Analyzer
+- Snapshot履歴 / project.json Import
+- Arrange / Song Structure
+
 ## v0.1-dev
 更新日: 2026-10-10
 
@@ -101,9 +131,8 @@
 ### 未対応
 - Snapshot履歴
 - project.json Import
-- Migration
-- Chord並べ替え / 長さ変更 / 7th / 借用和音
-- Melody 16分音符 / Note Length / Velocity編集
+- Chord並べ替え / 長さ変更 / 借用和音
+- Melody Note Length / Velocity編集
 - Scale表示 / Chord Tone強調 / Melody Analyzer
 - Bass Pitch手動編集 / Velocity
 - Open HH / Percussion / Tom
