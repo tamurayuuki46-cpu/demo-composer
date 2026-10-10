@@ -17,10 +17,15 @@
 - Rhythm Preset Smoke Test（`npm run test:rhythm-presets`、CI対象）
 - Hub Key変更の回帰テスト（`npm run test:key-change`、CI対象）
 - Diatonic Fan配置Smoke Test（`npm run test:diatonic-fan`、CI対象）
+- Sound Sketch Lite: Chord / Melody / Bass の音色Preset変更
+- Sound Preset: Chord `Keys / Pad / Piano`、Melody `Lead / Keys / Pluck`、Bass `Soft Bass / Synth Bass / Deep Bass`
+- Sound Tone: `Natural / Bright / Soft / Warm / Dark / Airy / Aggressive`
+- Sound Sketch Smoke Test（`npm run test:sound`、CI対象）
 - v0.2統合前の復元ブランチ `restore/v0.1-before-v0.2-integration`
 - Chord Preset追加前の復元ブランチ `restore/v0.2-before-chord-presets`
 - Key変更修正前の復元ブランチ `restore/v0.2-before-key-change-fix`
 - ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
+- Sound Sketch Lite追加前の復元ブランチ `restore/v0.2-before-sound-sketch-lite`
 
 ### 変更
 - Chord画面はダイアトニック7候補を残しつつ、任意の基準音から9種類のQualityを追加できる構成へ変更
@@ -34,9 +39,13 @@
 - Preset適用後も通常の16 stepをTapして自由に修正できるようにした
 - HubのKey変更は、Chord root / Melody pitch / Bass pitchを同じ最短半音幅でAtomicに移調し、Drumsは変更しない方式へ変更
 - Scale変更はChord / Melody / Bassが存在する場合は引き続き拒否し、意図しないMajor/Minor変換を行わない
+- Bottom Navigationを Hub / Chord / Melody / Rhythm / Sound の5 Module構成へ拡張
+- Sound選択を既存 `project.instruments[]` に保存し、AutoSave対象にした
+- Demo PlayerのChord / Melody / Bass仮音をSound Preset / Toneに応じてwaveform / filter / attack / release / gain変更する方式へ拡張
+- Sound Sketch LiteはMIDI Note / Chord Data / Rhythm Dataを変更せず、MIDI Program Change / CCも出力しない
 - `VERSION` / 画面内Version / package versionをv0.2-devへ更新
 - DATA_SCHEMAをschemaVersion 2へ更新
-- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Diatonic Fan / Static Buildを確認する構成へ更新
+- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Diatonic Fan / Sound Sketch / Static Buildを確認する構成へ更新
 
 ### 修正
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
@@ -52,6 +61,8 @@
 - Melody Analyzer
 - Snapshot履歴 / project.json Import
 - Arrange / Song Structure
+- Drums音色変更
+- 本格Sound Module（Synth Parameter / FX / Mix等はDemo Composerでは原則追加しない）
 
 ## v0.1-dev
 更新日: 2026-10-10
