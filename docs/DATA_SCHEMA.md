@@ -99,7 +99,7 @@ Drums Track:
 - `durationTick`: 1以上の整数
 - `velocity`: 1〜127
 
-v0.1 Melody UIでは8分音符Gridを使用するため、PPQ 480では1 step = 240 tick。
+v0.1 Melody UIは8分音符Grid（1 step = 240 tick）と16分音符Grid（1 step = 120 tick）を切り替えて入力できる。どちらもNoteは `startTick` / `durationTick` で保持するため、Schemaは変更しない。
 
 v0.1 Rhythm UIでは16分音符Gridを使用するため、1 step = 120 tick。
 

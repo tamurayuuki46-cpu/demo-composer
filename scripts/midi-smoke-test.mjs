@@ -18,7 +18,9 @@ const project = {
       name: "Melody",
       midiChannel: 2,
       notes: [
-        { id: "m1", pitch: 60, startTick: 0, durationTick: 240, velocity: 96 }
+        { id: "m1", pitch: 60, startTick: 0, durationTick: 120, velocity: 96 },
+        { id: "m2", pitch: 64, startTick: 120, durationTick: 120, velocity: 96 },
+        { id: "m3", pitch: 67, startTick: 240, durationTick: 240, velocity: 96 }
       ]
     },
     {

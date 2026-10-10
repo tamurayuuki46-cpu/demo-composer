@@ -8,6 +8,7 @@ Melody ModuleはMain MelodyのNote Dataと将来のMelody Analyzerを担当す�
 - 左端に白鍵 / 黒鍵を区別した縦ピアノKeyboard
 - 1小節 = 8分音符8 step
 - `1 & 2 & 3 & 4 &` の8 stepを1画面に同時表示
+- `8分音符` / `16分音符` の入力単位を切替（16分は `1 e & a 2 e & a` / `3 e & a 4 e & a` を前半 / 後半で切替表示）
 - 1オクターブずつ表示し、Oct − / Oct +で移動
 - Bar単位で前後移動
 - ChordがあるBarでは現在Chord名 + Degreeを表示
@@ -23,7 +24,10 @@ PPQ 480 / 4/4固定。
 - 1 Bar = 1920 tick
 - 1 Step = 240 tick
 - 8 Step = `1 & 2 & 3 & 4 &`
-- Note duration = 240 tick
+- Note duration = 240 tick（8分入力時）
+- 16分入力時は 1 Step = 120 tick / Note duration = 120 tick
+- 入力単位はUI状態のみで `project.json` には保存しない。Noteは `startTick` / `durationTick` で保持するためSchema変更なし
+- 8分と16分を混在させてもMonophonicを保つ。直前のNoteが新Noteの開始位置にかかる場合は直前のNoteを短くし、新Noteは次のNoteの開始位置を超えない長さにする
 - Default velocity = 96
 
 ## Mobile UX

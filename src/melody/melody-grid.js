@@ -30,13 +30,27 @@ export function toggleMonophonicStep(notes, { pitch, startTick, durationTick, ve
     return notes.filter((note) => note.startTick !== startTick);
   }
 
+  // 8分 / 16分の混在でもMonophonicを保つ:
+  // - 直前のNoteが新Noteの開始位置にかかっていたら、そこまで短くする
+  // - 新Noteは次のNoteの開始位置を超えないよう長さを制限する
+  const others = notes.filter((note) => note.startTick !== startTick);
+  const nextStart = others
+    .filter((note) => note.startTick > startTick)
+    .reduce((min, note) => Math.min(min, note.startTick), Infinity);
+
+  const trimmed = others.map((note) => (
+    note.startTick < startTick && note.startTick + note.durationTick > startTick
+      ? { ...note, durationTick: startTick - note.startTick }
+      : note
+  ));
+
   return [
-    ...notes.filter((note) => note.startTick !== startTick),
+    ...trimmed,
     {
       id: createNoteId(),
       pitch,
       startTick,
-      durationTick,
+      durationTick: Math.min(durationTick, nextStart - startTick),
       velocity
     }
   ].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
