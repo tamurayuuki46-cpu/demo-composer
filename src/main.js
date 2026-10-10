@@ -2,6 +2,7 @@ import { createDemoPlayer } from "./audio/demo-player.js";
 import { chordSymbol, getDiatonicChords } from "./chord/chord-theory.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createMelodyController } from "./melody/melody-screen.js";
+import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
 import { loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
@@ -63,9 +64,23 @@ function hubScreen() {
 
       <div class="actions">
         <button id="save-project" class="primary-action">Save</button>
-        <button disabled>Export</button>
+        <button id="toggle-export" class="primary-action" aria-expanded="false">Export</button>
         <button disabled>AI相談</button>
       </div>
+
+      <section id="export-panel" class="export-panel" hidden>
+        <h3>Export</h3>
+        <div class="export-grid">
+          <button id="export-all-midi" class="export-primary">All MIDI</button>
+          <button data-midi-file="Song.mid">Song.mid</button>
+          <button data-midi-file="Chord.mid">Chord.mid</button>
+          <button data-midi-file="Melody.mid">Melody.mid</button>
+          <button data-midi-file="Bass.mid">Bass.mid</button>
+          <button data-midi-file="Drums.mid">Drums.mid</button>
+          <button id="export-project-json">project.json</button>
+        </div>
+        <p class="hint">All MIDIはSong.midとパート別MIDIをまとめてダウンロードします。Androidで複数ダウンロードが止められた場合は個別ボタンを使ってください。</p>
+      </section>
     </section>
   `;
 }
@@ -204,12 +219,27 @@ async function saveCurrentProject() {
   }
 }
 
+function exportMidiFile(filename) {
+  const project = projectStore.getSnapshot();
+  const files = buildMidiExports(project);
+  const bytes = files[filename];
+  if (!bytes) {
+    setHubMessage(`${filename}を生成できませんでした。`, true);
+    return;
+  }
+
+  downloadBytes(bytes, filename);
+  setHubMessage(`${filename}を書き出しました。`);
+}
+
 function bindHubControls() {
   const title = document.querySelector("#project-title");
   const bpm = document.querySelector("#project-bpm");
   const key = document.querySelector("#project-key");
   const scale = document.querySelector("#project-scale");
   const saveButton = document.querySelector("#save-project");
+  const exportToggle = document.querySelector("#toggle-export");
+  const exportPanel = document.querySelector("#export-panel");
 
   title?.addEventListener("change", (event) => {
     commitHubChange({ metadata: { title: event.target.value.trim() } });
@@ -228,6 +258,30 @@ function bindHubControls() {
   });
 
   saveButton?.addEventListener("click", saveCurrentProject);
+
+  exportToggle?.addEventListener("click", () => {
+    const open = exportPanel?.hasAttribute("hidden") ?? true;
+    if (open) {
+      exportPanel?.removeAttribute("hidden");
+    } else {
+      exportPanel?.setAttribute("hidden", "");
+    }
+    exportToggle.setAttribute("aria-expanded", String(open));
+  });
+
+  document.querySelector("#export-all-midi")?.addEventListener("click", () => {
+    downloadMidiBundle(projectStore.getSnapshot());
+    setHubMessage("Song.midとパート別MIDIの書き出しを開始しました。");
+  });
+
+  document.querySelectorAll("[data-midi-file]").forEach((button) => {
+    button.addEventListener("click", () => exportMidiFile(button.dataset.midiFile));
+  });
+
+  document.querySelector("#export-project-json")?.addEventListener("click", () => {
+    downloadProjectJson(projectStore.getSnapshot());
+    setHubMessage("project.jsonを書き出しました。バックアップとして保管できます。");
+  });
 }
 
 function reflowChords(chords, barTicks) {

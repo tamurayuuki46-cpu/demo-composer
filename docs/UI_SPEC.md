@@ -51,6 +51,22 @@ Module Navigationの上に常設。
 
 現在のSaveは手動。IndexedDBへActive Projectを保存する。
 
+### Export Panel
+
+Exportボタンで開閉する。
+
+- All MIDI
+- Song.mid
+- Chord.mid
+- Melody.mid
+- Bass.mid
+- Drums.mid
+- project.json
+
+Androidブラウザが複数ダウンロードを制限した場合を想定し、All MIDIだけでなく個別ファイルボタンも常に用意する。
+
+`project.json`は手動Backup用。Importは後続。
+
 ## Chord
 
 v0.1の基本入力:

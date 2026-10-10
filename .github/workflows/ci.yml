@@ -1,0 +1,22 @@
+name: Demo Composer CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  midi-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: MIDI smoke test
+        run: npm run test:midi

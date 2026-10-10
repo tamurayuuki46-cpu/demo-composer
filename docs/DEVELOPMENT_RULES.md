@@ -21,7 +21,21 @@ Claude / ChatGPT / Codexのどれが作業しても、共通仕様はdocsを正�
 - 大規模変更前に復元ポイントを作る
 - latestとstableを混同しない
 
-## 4. Forbidden
+## 4. Tests
+
+MIDI構造へ影響する変更では最低限、以下を確認する。
+
+```bash
+npm run test:midi
+```
+
+Pull Request時は`.github/workflows/ci.yml`でも同じSmoke Testを実行する。
+
+Smoke TestはSMF Header / Type / Track数 / PPQ / 必須Exportファイルを確認する。
+
+自動Testが通っても、Cubasis / Cubase / BandLabでの実Import確認は別途必要。
+
+## 5. Forbidden
 
 - 理由なくFramework変更
 - 全コード書き直し
@@ -33,7 +47,7 @@ Claude / ChatGPT / Codexのどれが作業しても、共通仕様はdocsを正�
 - Module間の強依存
 - 初心者UXを犠牲にした機能追加
 
-## 5. Feature Gate
+## 6. Feature Gate
 
 新機能は次を満たすか確認する。
 

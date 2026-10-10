@@ -56,7 +56,9 @@ v0.1-devのStorage実装:
 - HubのSaveから手動保存
 - Save時に `navigator.storage.persist()` が利用可能なら永続ストレージ保護を要求
 
-現時点ではAutosave / Snapshot履歴 / Migration / project.json Backupは未実装。
+Hub Exportから`project.json`を手動Backupとしてダウンロードできる。Importは未実装。
+
+現時点ではAutosave / Snapshot履歴 / Migrationは未実装。
 
 保存済みProjectが読み込めない、または現在のSchema Validationに通らない場合は、新規Default Projectへフォールバックする。
 
@@ -89,13 +91,22 @@ Playbackは作曲判断の確認用途だけを担当し、高度なSynth / Mixi
 
 ## Export
 
-MIDI出力は `src/midi/` に集約。
+MIDI出力は `src/midi/` に集約する。
 
-将来的に:
+- `midi-writer.js`: SMFの低レベルbyte生成
+- `midi-export.js`: Project DataからTrack/Eventへ変換し、Downloadを担当
+
+Project Stateや各ModuleはMIDI byte構造を知らない。
+
+v0.1 Export:
 
 - Song.mid
 - Chord.mid
 - Melody.mid
 - Bass.mid
 - Drums.mid
-- CounterMelody.mid
+- project.json
+
+MIDIはSMF Type 1 / PPQ 480。Song.midはConductor + Chord + Melody + Bass + Drums、Part MIDIはConductor + 対象Partで生成する。
+
+Program ChangeとCCはv0.1では出力しない。最終音源はCubasis / Cubase側で差し替える。
