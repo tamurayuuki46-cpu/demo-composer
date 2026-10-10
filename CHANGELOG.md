@@ -86,6 +86,7 @@
 - 単純な後段2倍出力で発生したクリップ / 音割れを、前段loudness gain + compressor + limiter構成へ置き換えて改善
 - Demo PlayerのLoop終端を常に4小節固定にせず、最後に使用している小節の終端へ合わせるよう修正
 - Rhythmの16分Grid見出しがBeat切替後も `1 e & a` 固定だった表示を、選択Beatへ追従するよう修正
+- Melodyを8マス化した際にJavaScriptは8列なのにCSSが4列のまま残り、Androidでレイアウトが崩れて操作不能に見える問題を8列Gridへ統一して修正
 
 ### 未対応
 - Snapshot履歴
