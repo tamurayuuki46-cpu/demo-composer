@@ -26,8 +26,20 @@ export const SECTION_VARIATIONS = Object.freeze([
     id: "melody",
     label: "メロディの終わりを変える",
     description: "4小節ごとの区切りの最後の音だけを、近くのコードの音に差し替える。メロディの形は大きく変えない。"
+  },
+  {
+    id: "melody-pitch",
+    label: "メロディの音程だけ少し変える",
+    description: "リズムはそのまま。各小節の2つ目・4つ目の音を、Keyの音階で1つ上（偶数小節）/ 下（奇数小節）へ。小節の1つ目の音は残るのでモチーフが保たれる。"
+  },
+  {
+    id: "melody-rhythm",
+    label: "メロディのリズムだけ変える",
+    description: "音程はそのまま。各小節の2つ目・4つ目の音が拍の頭なら、8分だけ後ろへずらす（ひとつ先の音にぶつからない時だけ）。ノリが少し変わる。"
   }
 ]);
+
+const SCALE_INTERVALS = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] };
 
 function clone(value) {
   return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value));
@@ -160,6 +172,67 @@ function varyMelody(project, range, barTicks) {
   return changed;
 }
 
+// 音程だけ: リズム（startTick / durationTick）は変えず、各小節の2つ目・4つ目の音を音階で1つ動かす。
+// 小節の1つ目の音は残す（モチーフを保つ）。Keyの音階に無い音（半音の経過音など）は触らない。
+function varyMelodyPitch(project, range, barTicks) {
+  const melody = trackNotes(project, "melody").map((note) => ({ ...note }));
+  const tonic = Math.max(0, KEY_NAMES.indexOf(project.basic.key));
+  const scale = (SCALE_INTERVALS[project.basic.scale] ?? SCALE_INTERVALS.major).map((interval) => (tonic + interval) % 12);
+  let changed = 0;
+
+  for (let bar = range.startBar; bar < range.endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = melody
+      .filter((note) => note.startTick >= barStart && note.startTick < barStart + barTicks)
+      .sort((a, b) => a.startTick - b.startTick);
+    const direction = (bar - range.startBar) % 2 === 0 ? 1 : -1;
+
+    inBar.forEach((note, i) => {
+      if (i % 2 === 0) return; // 1つ目・3つ目…はそのまま
+      if (!scale.includes(note.pitch % 12)) return;
+      let pitch = note.pitch + direction;
+      while (pitch >= 0 && pitch <= 127 && !scale.includes(pitch % 12)) pitch += direction;
+      if (pitch < 0 || pitch > 127) return;
+      note.pitch = pitch;
+      changed += 1;
+    });
+  }
+
+  setTrackNotes(project, "melody", melody);
+  return changed;
+}
+
+// リズムだけ: 音程と順番は変えず、各小節の2つ目・4つ目の音が拍の頭なら8分（2step）後ろへずらす。
+// 次の音（または小節の終わり）に届かない場合だけ動かし、長さは収まる範囲に縮める。ずらした音は拍の頭でなくなるので、2回当てても動かない。
+function varyMelodyRhythm(project, range, barTicks, stepTicks) {
+  const melody = trackNotes(project, "melody").map((note) => ({ ...note }));
+  const beatTicks = stepTicks * 4;
+  const shift = stepTicks * 2;
+  let changed = 0;
+
+  for (let bar = range.startBar; bar < range.endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const barEnd = barStart + barTicks;
+    const inBar = melody
+      .filter((note) => note.startTick >= barStart && note.startTick < barEnd)
+      .sort((a, b) => a.startTick - b.startTick);
+
+    inBar.forEach((note, i) => {
+      if (i % 2 === 0) return;
+      if ((note.startTick - barStart) % beatTicks !== 0) return;
+      const limit = Math.min(inBar[i + 1]?.startTick ?? barEnd, barEnd);
+      const newStart = note.startTick + shift;
+      if (newStart + stepTicks > limit) return; // 後ろに1step以上の長さを残せないときは動かさない
+      note.startTick = newStart;
+      note.durationTick = Math.min(note.durationTick, limit - newStart);
+      changed += 1;
+    });
+  }
+
+  setTrackNotes(project, "melody", melody);
+  return changed;
+}
+
 // 指定Sectionに、候補の1つを当てる。{ project, changed } を返す（changed=0なら何も変わっていない）。
 export function applySectionVariation(project, sectionIndex, variationId) {
   const sections = getSections(project);
@@ -173,7 +246,9 @@ export function applySectionVariation(project, sectionIndex, variationId) {
 
   const changed = variationId === "drums" ? varyDrums(next, range, barTicks, stepTicks)
     : variationId === "bass" ? varyBass(next, range, barTicks, stepTicks)
-      : varyMelody(next, range, barTicks);
+      : variationId === "melody-pitch" ? varyMelodyPitch(next, range, barTicks)
+        : variationId === "melody-rhythm" ? varyMelodyRhythm(next, range, barTicks, stepTicks)
+          : varyMelody(next, range, barTicks);
 
   return { project: changed > 0 ? next : project, changed };
 }

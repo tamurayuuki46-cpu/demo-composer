@@ -28,7 +28,7 @@ const project = store.getSnapshot();
 // full-song: イントロ4 / Aメロ8(index1, Bar 5–12) / Bメロ8 ...
 const verse = { index: 1, start: 4, end: 12 };
 
-assert.deepEqual(SECTION_VARIATIONS.map((v) => v.id), ["drums", "bass", "melody"]);
+assert.deepEqual(SECTION_VARIATIONS.map((v) => v.id), ["drums", "bass", "melody", "melody-pitch", "melody-rhythm"]);
 
 // --- ドラム: 偶数index(0,2,4,6)のHH追加、奇数index(1,3,5)のキック追加、最後の小節は触らない
 {
@@ -82,12 +82,63 @@ assert.deepEqual(SECTION_VARIATIONS.map((v) => v.id), ["drums", "bass", "melody"
   });
 }
 
+// --- メロディの音程だけ: リズム不変・1つ目の音は残る・偶数小節は上 / 奇数小節は下へ音階で1つ・Section外は不変
+{
+  const { project: out, changed } = applySectionVariation(project, verse.index, "melody-pitch");
+  assert.equal(changed, 8, "1 note per bar (2nd note) in 8 bars");
+  const before = notesOf(project, "melody");
+  const after = notesOf(out, "melody");
+  assert.equal(after.length, before.length);
+  assert.deepEqual(after.map((n) => [n.startTick, n.durationTick]), before.map((n) => [n.startTick, n.durationTick]), "rhythm unchanged");
+  const byId = new Map(before.map((n) => [n.id, n]));
+  // 小節の1つ目（m{bar}a）は変わらない
+  for (let bar = verse.start; bar < verse.end; bar += 1) assert.equal(after.find((n) => n.id === `m${bar}a`).pitch, byId.get(`m${bar}a`).pitch);
+  assert.equal(after.find((n) => n.id === `m${verse.start}b`).pitch, 76, "even bar: D -> E (scale step up)");
+  assert.equal(after.find((n) => n.id === `m${verse.start + 1}b`).pitch, 72, "odd bar: D -> C (scale step down)");
+  // 動かした音（2つ目）は Cメジャーの音階の中
+  const scale = new Set([0, 2, 4, 5, 7, 9, 11]);
+  assert.ok(after.filter((n) => n.id.endsWith("b") && n.startTick >= verse.start * BAR && n.startTick < verse.end * BAR).every((n) => scale.has(n.pitch % 12)));
+  // Section外は変わらない
+  assert.deepEqual(after.filter((n) => n.startTick < verse.start * BAR || n.startTick >= verse.end * BAR), before.filter((n) => n.startTick < verse.start * BAR || n.startTick >= verse.end * BAR));
+  // 音階外の音（C#）は触らない
+  const chromatic = JSON.parse(JSON.stringify(project));
+  chromatic.tracks.find((t) => t.role === "melody").notes.find((n) => n.id === `m${verse.start}b`).pitch = 73;
+  const c = applySectionVariation(chromatic, verse.index, "melody-pitch");
+  assert.equal(c.project.tracks.find((t) => t.role === "melody").notes.find((n) => n.id === `m${verse.start}b`).pitch, 73);
+  assert.equal(c.changed, 7);
+}
+
+// --- メロディのリズムだけ: 音程と順番は不変・2つ目の拍頭の音が8分後ろへ・重ならない・2回目は動かない
+{
+  const { project: out, changed } = applySectionVariation(project, verse.index, "melody-rhythm");
+  assert.equal(changed, 8);
+  const before = notesOf(project, "melody");
+  const after = notesOf(out, "melody");
+  assert.deepEqual(after.map((n) => n.id).sort(), before.map((n) => n.id).sort());
+  const pitchOf = (list) => Object.fromEntries(list.map((n) => [n.id, n.pitch]));
+  assert.deepEqual(pitchOf(after), pitchOf(before), "pitches unchanged");
+  const moved = after.find((n) => n.id === `m${verse.start}b`);
+  assert.equal(moved.startTick, verse.start * BAR + STEP * 10);
+  assert.ok(moved.durationTick <= STEP * 4);
+  assert.equal(after.find((n) => n.id === `m${verse.start}a`).startTick, verse.start * BAR, "first note stays");
+  const sorted = [...after].sort((a, b) => a.startTick - b.startTick);
+  for (let i = 1; i < sorted.length; i += 1) assert.ok(sorted[i - 1].startTick + sorted[i - 1].durationTick <= sorted[i].startTick, "no overlap");
+  const again = applySectionVariation(out, verse.index, "melody-rhythm");
+  assert.equal(again.changed, 0);
+  // 次の音に近すぎる（後ろに1stepも残らない）ときは動かさない
+  const tight = JSON.parse(JSON.stringify(project));
+  const tm = tight.tracks.find((t) => t.role === "melody").notes;
+  tm.push({ id: "tight", pitch: 70, startTick: verse.start * BAR + STEP * 9, durationTick: STEP, velocity: 90 });
+  const t2 = applySectionVariation(tight, verse.index, "melody-rhythm");
+  assert.equal(t2.project.tracks.find((t) => t.role === "melody").notes.find((n) => n.id === `m${verse.start}b`).startTick, verse.start * BAR + STEP * 8);
+}
+
 // --- 空のSectionや入力が無いパートでは changed=0
 {
   const empty = createProjectStore(createDefaultProject());
   empty.applySectionTemplate("one-chorus");
   const e = empty.getSnapshot();
-  ["drums", "bass", "melody"].forEach((id) => assert.equal(applySectionVariation(e, 1, id).changed, 0, id));
+  ["drums", "bass", "melody", "melody-pitch", "melody-rhythm"].forEach((id) => assert.equal(applySectionVariation(e, 1, id).changed, 0, id));
 }
 assert.throws(() => applySectionVariation(project, 99, "drums"), /Section/);
 assert.throws(() => applySectionVariation(project, 1, "nope"), /バリエーション/);

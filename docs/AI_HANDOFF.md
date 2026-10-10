@@ -30,7 +30,7 @@ v0.2-dev
 - Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drumsの軽量再生、Mute / Solo、Sound / Backing反映
 - Chord 好きな進行ライブラリ（度数で保存、端末のlocalStorageのみ。`src/chord/progression-library.js`）
 - Arrange ループから曲にする案内（`src/core/loop-guide.js`、Core `appendSectionCopy`。#60の上に積んでいる）
-- Section Variation（`少し違う版にする`: ドラム / ベース / メロディの3候補。`src/core/section-variation.js`）
+- Section Variation（`少し違う版にする`: ドラム / ベース / メロディ3種（終わり・音程だけ・リズムだけ）の5候補。`src/core/section-variation.js`）
 - Section Energy（Low/Mid/High）/ Transition（Keep/Fill/Stop/Build/Drop）: `structure.sections[]` の任意項目（schemaVersion 2のまま追記）。`src/core/section-ops.js`
 - Chord メロディからコード候補3つ（`src/chord/chord-for-melody.js`、小節ごと・まとめ付け）
 - Hub 出発点（ジャンル×ムード→3候補、`src/hub/starting-point.js`、Store `applyStartingPoint`）

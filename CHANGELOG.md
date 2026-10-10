@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- Section Variation にメロディの候補を2つ追加（`少し違う版にする` の中）: `メロディの音程だけ少し変える`（リズムはそのまま。各小節の2つ目・4つ目の音を、Keyの音階で偶数小節は1つ上・奇数小節は1つ下へ。1つ目の音は残してモチーフを保つ。音階外の音は触らない）、`メロディのリズムだけ変える`（音程と順番はそのまま。各小節の2つ目・4つ目の音が拍の頭なら8分後ろへ。次の音に届かないときは動かさず、2回当てても動かない）。既存の `メロディの終わりを変える` と合わせてメロディ3候補。Schema変更なし
+- Section Variation Smoke Testに音程だけ / リズムだけを追加
+- 追加前の復元ブランチ `restore/v0.2-before-melody-variation`
 - Melody Analyzer: `Sectionごとの比べ`。構成（Section）ごとに音域 / 音数 / リズム密度（1小節あたり）を並べ、サビと直前のAメロ / Bメロの差（最高音・平均の高さ・音域のひろさ・密度）を表示。差が小さいと「差が小さめ」と気づかせる一言を出す（評価ではなく気づき）。`src/core/section-compare.js`
 - Section Compare Smoke Test（`npm run test:section-compare`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-section-compare`（Schema変更なし）
