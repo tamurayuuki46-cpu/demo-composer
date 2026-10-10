@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: JavaScript syntax check
+        run: npm run test:syntax
+
       - name: MIDI smoke test
         run: npm run test:midi
 
@@ -29,3 +32,6 @@ jobs:
 
       - name: Chord types smoke test
         run: npm run test:chord
+
+      - name: Static build
+        run: npm run build
