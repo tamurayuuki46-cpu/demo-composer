@@ -66,6 +66,9 @@ jobs:
       - name: Next chord / bass candidates smoke test
         run: npm run test:candidates
 
+      - name: Display settings smoke test
+        run: npm run test:display
+
       - name: project.json import smoke test
         run: npm run test:import
 

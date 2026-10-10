@@ -103,6 +103,14 @@ Playerの `パート` ボタンで、Player下部に聴き分けパネルを開�
 - 移調結果がMIDI Note 0〜127を外れる場合はKey変更全体を中止し、元Projectを維持する
 - Scale変更は音の意味が変わるため、Chord / Melody / Bassがある場合は引き続き拒否する
 
+### 文字の大きさ
+
+- Hubの下部に `標準 / 大 / 特大` の3ボタン（倍率 1.0 / 1.15 / 1.3）。選んだ段階は反転表示
+- 拡大するのは画面本体（`#screen`）だけ。上部バー・Demo Player・下部ナビは常に同じ大きさ
+- 端末ごとの表示設定として、この端末のlocalStorageにだけ保存する。project.json・Export・Undoの対象外
+- 特大では横幅が実質狭くなるため、Melodyのマスは小さくなる（360pxで約30px幅）。入力しにくいときは「大」を使う
+- 属性名の注意: `document.querySelectorAll` は `<html>` 自身にも一致するため、ボタンの属性は `data-text-size-option` とし、`<html data-text-size>` と分けている
+
 ### AI相談
 
 `AI相談` ボタンで開閉する。APIは使わず、ChatGPT / Claudeへ貼り付ける相談用テキストをコピーするだけ（送信はしない）。
