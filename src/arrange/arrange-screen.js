@@ -1,5 +1,6 @@
 import { SECTION_VARIATIONS } from "../core/section-variation.js";
 import { loopGuide, suggestedCopyKind } from "../core/loop-guide.js";
+import { curveFromSections, MAX_CURVE_COLUMNS, MIN_CURVE_COLUMNS, sectionsFromCurve } from "../core/energy-curve.js";
 import {
   ENERGY_LEVELS,
   TRANSITIONS,
@@ -61,6 +62,9 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   // ループ案内の開閉と、複製するSectionの種類（画面の状態のみ）
   let guideOpen = false;
   let guideKind = null;
+  // 感情曲線の開閉と編集中の曲線（画面の状態のみ。nullなら開いたとき現在の構成から作る）
+  let curveOpen = false;
+  let curveLevels = null;
 
   function run(action, successMessage) {
     try {
@@ -216,6 +220,38 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
       </div>`;
   }
 
+  // 感情曲線: 山と谷を高さで選ぶと、Sectionの並び・小節数・盛り上がりの叩き台を作る。
+  function curvePanelHtml(project) {
+    const toggle = `<button id="arrange-curve-toggle" class="arrange-guide-toggle" aria-expanded="${curveOpen}">📈 感情曲線から構成を作る${curveOpen ? " ▲" : " ▼"}</button>`;
+    if (!curveOpen) return toggle;
+
+    const levels = curveLevels ?? curveFromSections(getSections(project));
+    const preview = sectionsFromCurve(levels);
+    const total = preview.reduce((sum, section) => sum + section.bars, 0);
+    const rows = [["high", "High"], ["mid", "Mid"], ["low", "Low"]];
+    return `
+      ${toggle}
+      <div class="arrange-guide arrange-curve">
+        <p>曲の流れを左から右へ。各列で盛り上がりの高さを選ぶと、その形に合う構成を作ります。</p>
+        <div class="curve-grid" style="grid-template-columns: repeat(${levels.length}, minmax(0, 1fr))">
+          ${levels.map((level, col) => `
+            <div class="curve-col">
+              ${rows.map(([id, label]) => `<button class="curve-cell lvl-${id}${level === id ? " active" : ""}" data-arrange-curve="${col}:${id}" aria-pressed="${level === id}" aria-label="${col + 1}列目 ${label}">${level === id ? "●" : ""}</button>`).join("")}
+              <small>${escapeHtml(shortName(preview[col]))}</small>
+              <small class="curve-bars">${preview[col].bars}</small>
+            </div>
+          `).join("")}
+        </div>
+        <div class="arrange-bars" role="group" aria-label="列の数">
+          <button id="arrange-curve-less" aria-label="列を減らす"${levels.length <= MIN_CURVE_COLUMNS ? " disabled" : ""}>−</button>
+          <strong>${levels.length}列（全${total}小節）</strong>
+          <button id="arrange-curve-more" aria-label="列を増やす"${levels.length >= MAX_CURVE_COLUMNS ? " disabled" : ""}>＋</button>
+        </div>
+        <button class="primary" id="arrange-curve-apply">この曲線で構成を作る</button>
+        <p class="hint">下の数字は小節数です。音符は消えません。作ったあとで、小節数・種類・盛り上がりを自由に直せます（↶で戻せます）。</p>
+      </div>`;
+  }
+
   function render() {
     const project = projectStore.getSnapshot();
     const sections = getSections(project);
@@ -272,6 +308,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           ${sections.length > 0 ? `<button id="arrange-play-all" class="small-action">▶ 全体</button>` : ""}
         </div>
         ${loopGuideHtml(project)}
+        ${curvePanelHtml(project)}
         ${body}
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
       </section>
@@ -281,6 +318,38 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   function bind() {
     const query = (selector) => document.querySelectorAll(selector);
     const indexOf = (button, key) => Number(button.dataset[key]);
+
+    const currentCurve = () => curveLevels ?? curveFromSections(getSections(projectStore.getSnapshot()));
+    document.querySelector("#arrange-curve-toggle")?.addEventListener("click", () => {
+      curveOpen = !curveOpen;
+      if (curveOpen) curveLevels = null;
+      rerender("arrange");
+    });
+    query("[data-arrange-curve]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const [col, level] = button.dataset.arrangeCurve.split(":");
+        const next = [...currentCurve()];
+        next[Number(col)] = level;
+        curveLevels = next;
+        rerender("arrange");
+      });
+    });
+    document.querySelector("#arrange-curve-more")?.addEventListener("click", () => {
+      const levels = currentCurve();
+      curveLevels = [...levels, levels[levels.length - 1] === "low" ? "mid" : "low"];
+      rerender("arrange");
+    });
+    document.querySelector("#arrange-curve-less")?.addEventListener("click", () => {
+      curveLevels = currentCurve().slice(0, -1);
+      rerender("arrange");
+    });
+    document.querySelector("#arrange-curve-apply")?.addEventListener("click", () => {
+      const project = projectStore.getSnapshot();
+      if (getSections(project).length > 0 && !globalThis.confirm("いまの構成を、この曲線から作った構成に置き換えますか？音符は消えませんが、Sectionの区切りが変わります。（↶で戻せます）")) return;
+      const sections = sectionsFromCurve(currentCurve());
+      curveLevels = null;
+      run(() => projectStore.setSections(sections), `曲線から${sections.length}個のSectionを作りました。Sectionごとに小節数や盛り上がりを直せます。`);
+    });
 
     document.querySelector("#arrange-guide-toggle")?.addEventListener("click", () => {
       guideOpen = !guideOpen;
