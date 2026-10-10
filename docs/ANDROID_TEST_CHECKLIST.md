@@ -19,7 +19,8 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - 初期音量は小さかったためAndroid向けに音量・音域を調整
 - 単純な最終出力2倍ではクリップして音割れしたため不採用
 - loudness gain + compressor + limiter方式へ変更し、ユーザー実機で「このくらい」で採用判断
-- Chord以外のMelody / Bass / Drums、Stop / Loop / Position等は引き続き未確認
+- Demo Player Loopの固定4小節待ちを修正し、最後に使用しているBar終端で反復する方式を実機で採用判断
+- Chord以外のMelody / Bass / Drums、Stop / Position等は引き続き確認する
 
 ---
 
@@ -79,10 +80,15 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 
 - [ ] Bass / Kick / Snare / HHが同一画面に表示される
 - [ ] Beat 1〜4を切り替えられる
+- [ ] Beat切替時にGrid見出しが `1 e & a`〜`4 e & a` へ追従する
 - [ ] BassとKickを同時に確認しやすい
 - [ ] Bass Tapで現在Chord Rootが入力される
 - [ ] Chord未設定BarではKey Rootが入力される
 - [ ] Kick / Snare / HHを同じstepに重ねられる
+- [ ] `Copy → Bar N` で現在BarのBass / Drumsが次Barへコピーされる
+- [ ] コピー後に自動でコピー先Barへ移動する
+- [ ] 異なるChordのBarへコピーしたBassがコピー先Chord Rootへ追従する
+- [ ] コピー先に既存Rhythmがある場合は上書き確認が表示される
 - [ ] Clear Barが動く
 - [ ] Clear Bassが動く
 - [ ] 4 step表示でタップ領域が十分ある
