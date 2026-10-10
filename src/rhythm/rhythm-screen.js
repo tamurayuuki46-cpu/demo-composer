@@ -1,7 +1,16 @@
 import { chordSymbol } from "../chord/chord-theory.js";
-import { bassPitchForBar, clearRhythmBar, DRUM_PITCH, getTrackNotes, pitchName, toggleBassStep, toggleDrumStep } from "./rhythm-grid.js";
+import {
+  bassPitchForBar,
+  clearRhythmBar,
+  copyRhythmBar,
+  DRUM_PITCH,
+  getTrackNotes,
+  pitchName,
+  toggleBassStep,
+  toggleDrumStep
+} from "./rhythm-grid.js";
 
-const STEP_LABELS = ["1", "e", "&", "a"];
+const STEP_SUBDIVISION_LABELS = ["e", "&", "a"];
 
 function escapeHtml(value) {
   return String(value)
@@ -10,6 +19,11 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function hasNotesInBar(notes, barStartTick, barDurationTick) {
+  const barEndTick = barStartTick + barDurationTick;
+  return notes.some((note) => note.startTick >= barStartTick && note.startTick < barEndTick);
 }
 
 export function createRhythmController({ projectStore, rerender }) {
@@ -41,8 +55,11 @@ export function createRhythmController({ projectStore, rerender }) {
     const bassPitch = bassPitchForBar(project, barIndex);
     const bassNotes = getTrackNotes(project, "bass");
     const drumNotes = getTrackNotes(project, "drums");
+    const hasRhythm = hasNotesInBar(bassNotes, barStartTick, barTicks)
+      || hasNotesInBar(drumNotes, barStartTick, barTicks);
     const chord = project.chords[barIndex];
     const chordLabel = chord ? `${chordSymbol(chord.root, chord.quality)} (${chord.degree})` : `${project.basic.key} Root`;
+    const stepLabels = [String(beatIndex + 1), ...STEP_SUBDIVISION_LABELS];
 
     const rows = [
       { role: "bass", label: `Bass ${pitchName(bassPitch)}`, pitch: bassPitch, notes: bassNotes },
@@ -74,7 +91,7 @@ export function createRhythmController({ projectStore, rerender }) {
         <div class="rhythm-grid">
           <div class="rhythm-row rhythm-header">
             <span class="rhythm-label"></span>
-            ${STEP_LABELS.map((label) => `<span>${label}</span>`).join("")}
+            ${stepLabels.map((label) => `<span>${label}</span>`).join("")}
           </div>
           ${rows.map((row) => `
             <div class="rhythm-row">
@@ -91,11 +108,12 @@ export function createRhythmController({ projectStore, rerender }) {
         </div>
 
         <div class="rhythm-secondary-actions">
+          <button id="copy-rhythm-next-bar"${hasRhythm ? "" : " disabled"}>Copy → Bar ${barIndex + 2}</button>
           <button id="clear-all-bass"${bassNotes.length ? "" : " disabled"}>Clear Bass</button>
         </div>
 
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
-        <p class="hint">Bassは現在ChordのRootを使います。Chord未設定時はKey Root。Chordを変更したい場合は先にClear Bassしてください。</p>
+        <p class="hint">Copyは現在BarのBass / Drumsを次Barへ複製します。Bassはコピー先のChord Root（Chord未設定時はKey Root）へ自動追従します。</p>
       </section>
     `;
   }
@@ -134,6 +152,38 @@ export function createRhythmController({ projectStore, rerender }) {
       const nextDrums = clearRhythmBar(getTrackNotes(latest, "drums"), { barStartTick, barDurationTick: barTicks });
       projectStore.updateRhythmNotes({ bassNotes: nextBass, drumNotes: nextDrums });
       message = `Bar ${barIndex + 1} のRhythmをクリアしました。`;
+      rerender("rhythm");
+    });
+
+    document.querySelector("#copy-rhythm-next-bar")?.addEventListener("click", () => {
+      const latest = projectStore.getSnapshot();
+      const sourceBarIndex = barIndex;
+      const targetBarIndex = sourceBarIndex + 1;
+      const targetBarStartTick = targetBarIndex * barTicks;
+      const bassNotes = getTrackNotes(latest, "bass");
+      const drumNotes = getTrackNotes(latest, "drums");
+      const targetHasRhythm = hasNotesInBar(bassNotes, targetBarStartTick, barTicks)
+        || hasNotesInBar(drumNotes, targetBarStartTick, barTicks);
+
+      if (targetHasRhythm && !globalThis.confirm(`Bar ${targetBarIndex + 1} のRhythmを上書きしますか？`)) {
+        return;
+      }
+
+      const nextBass = copyRhythmBar(bassNotes, {
+        sourceBarStartTick: barStartTick,
+        targetBarStartTick,
+        barDurationTick: barTicks,
+        pitch: bassPitchForBar(latest, targetBarIndex)
+      });
+      const nextDrums = copyRhythmBar(drumNotes, {
+        sourceBarStartTick: barStartTick,
+        targetBarStartTick,
+        barDurationTick: barTicks
+      });
+
+      projectStore.updateRhythmNotes({ bassNotes: nextBass, drumNotes: nextDrums });
+      message = `Bar ${sourceBarIndex + 1} → Bar ${targetBarIndex + 1} にRhythmをコピーしました。`;
+      barIndex = targetBarIndex;
       rerender("rhythm");
     });
 
