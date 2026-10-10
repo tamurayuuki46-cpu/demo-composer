@@ -205,7 +205,8 @@ Hub Exportから`project.json`を手動Backupとしてダウンロードでき�
 - Chord: chords + `instruments[part=chord-backing]`
 - Melody: melody notes（候補生成の適用結果も通常Melody Note）
 - Rhythm: bass / drums
-- Arrange: structure / counterMelody
+- Arrange: structure / counterMelody（`tracks[role=counter]`。生成は `src/core/counter-melody.js`、適用はStore `applyCounterMelody`）
+- Hub: 骨子完成チェック（`src/core/skeleton-check.js` は読むだけの純粋関数。UIは `src/hub/skeleton-check-ui.js`）
 - Sound: `instruments[part=chord|melody|bass]`
 
 同じentryを複数Moduleが直接書き換えない。`instruments[]` は共通Containerだが `part` 単位で責任を分離する。

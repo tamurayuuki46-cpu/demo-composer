@@ -6,7 +6,7 @@ function midiToFrequency(pitch) {
   return 440 * Math.pow(2, (pitch - 69) / 12);
 }
 
-export const PART_ROLES = Object.freeze(["chord", "melody", "bass", "drums"]);
+export const PART_ROLES = Object.freeze(["chord", "melody", "bass", "drums", "counter"]);
 
 function projectEndTick(project) {
   const barTicks = project.basic.ppq * 4;
@@ -163,6 +163,21 @@ function scheduleProject(context, buses, activeSources, project, startTime) {
         return;
       }
 
+      if (track.role === "counter") {
+        // 裏メロ: Melodyと同じ音色の方向性で、少し控えめに鳴らす
+        scheduleTone(context, buses.counter, activeSources, {
+          pitch: note.pitch,
+          startTime: noteStart,
+          duration,
+          type: melodySound.waveform,
+          gain: melodySound.gain * 0.7,
+          filter: melodySound.filter,
+          attack: melodySound.attack,
+          release: melodySound.release
+        });
+        return;
+      }
+
       if (track.role === "bass") {
         scheduleTone(context, buses.bass, activeSources, {
           pitch: note.pitch,
@@ -203,7 +218,7 @@ export function createDemoPlayer({ onStateChange } = {}) {
   let masterGain = null;
   let buses = null;
   // パートごとのミュート状態（再生の聴き分け用。プロジェクトには保存しない）
-  const mutedParts = { chord: false, melody: false, bass: false, drums: false };
+  const mutedParts = { chord: false, melody: false, bass: false, drums: false, counter: false };
   let activeSources = new Set();
   let playing = false;
   let loop = false;

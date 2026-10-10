@@ -88,7 +88,7 @@ export const SECTION_TEMPLATES = Object.freeze([
   }
 ]);
 
-const TRACK_ROLES = ["melody", "bass", "drums"];
+const TRACK_ROLES = ["melody", "bass", "drums", "counter"];
 
 function clone(value) {
   return typeof structuredClone === "function"

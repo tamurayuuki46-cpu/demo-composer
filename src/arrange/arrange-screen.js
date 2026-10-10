@@ -1,4 +1,5 @@
 import { SECTION_VARIATIONS } from "../core/section-variation.js";
+import { counterBarCount, counterCandidates } from "../core/counter-melody.js";
 import { loopGuide, suggestedCopyKind } from "../core/loop-guide.js";
 import { addEntry, loadLibrary, removeEntry, saveLibrary, sectionsFromStructure, STRUCTURE_SAMPLES, structureText } from "./structure-library.js";
 import { curveFromSections, MAX_CURVE_COLUMNS, MIN_CURVE_COLUMNS, sectionsFromCurve } from "../core/energy-curve.js";
@@ -54,12 +55,14 @@ function escapeHtml(value) {
 }
 
 // Arrange: 曲の構成（Section）を並べる画面。データ操作はCoreのGlobal Operationを呼ぶだけ。
-export function createArrangeController({ projectStore, rerender, onPlaySection }) {
+export function createArrangeController({ projectStore, rerender, onPlaySection, onPreviewCounter }) {
   let message = "曲の構成を決めると、Melody / Rhythmで「いまサビの3小節目」が分かります。";
   let copyFromIndex = null;
   let addKind = "verse";
   // 「少し違う版」の候補を開いているSection（画面の状態のみ）
   let variationOpenIndex = null;
+  // 裏メロの候補を開いているSection（画面の状態のみ）
+  let counterOpenIndex = null;
   // ループ案内の開閉と、複製するSectionの種類（画面の状態のみ）
   let guideOpen = false;
   let guideKind = null;
@@ -146,6 +149,8 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           </div>
         ` : ""}
 
+        ${counterPanelHtml(project, range, hasContent)}
+
         <div class="arrange-actions">
           ${copyTargetMode
             ? `<button class="primary" data-arrange-paste="${index}">ここへコピー</button>`
@@ -154,6 +159,41 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
         </div>
       </article>
     `;
+  }
+
+  // 裏メロ: メインMelodyの隙間や下側に寄り添う旋律を、3つの候補から選んで当てる（Sectionごと）
+  function counterPanelHtml(project, range, hasContent) {
+    const { section, index, startBar, endBar } = range;
+    const filled = counterBarCount(project, startBar, endBar);
+    const open = counterOpenIndex === index;
+    const toggle = `<button class="arrange-variation-toggle" data-arrange-counter-toggle="${index}" aria-expanded="${open}"${hasContent ? "" : " disabled"}>🎶 裏メロ${filled > 0 ? `（${filled}小節に入っています）` : ""}${open ? " ▲" : " ▼"}</button>`;
+    if (!open) return toggle;
+
+    let candidates = [];
+    let problem = "";
+    try {
+      candidates = counterCandidates(project, { startBar, endBar });
+    } catch (error) {
+      problem = error instanceof Error ? error.message : "候補を作れませんでした。";
+    }
+
+    return `
+      ${toggle}
+      <div class="arrange-variation arrange-counter">
+        ${problem ? `<small>${escapeHtml(problem)}</small>` : candidates.map((candidate) => `
+          <div class="counter-candidate">
+            <strong>${escapeHtml(candidate.label)}</strong>
+            <small>${escapeHtml(candidate.description)}</small>
+            <small>${candidate.notes.length > 0 ? `${candidate.notes.length}音` : "このSectionには入る場所がありません"}</small>
+            <div class="counter-actions">
+              <button data-arrange-counter-play="${index}:${candidate.id}"${candidate.notes.length > 0 ? "" : " disabled"}>▶ 聴く</button>
+              <button class="primary" data-arrange-counter-apply="${index}:${candidate.id}"${candidate.notes.length > 0 ? "" : " disabled"}>これにする</button>
+            </div>
+          </div>
+        `).join("")}
+        ${filled > 0 ? `<button class="danger" data-arrange-counter-clear="${index}">${escapeHtml(section.name)}の裏メロを消す</button>` : ""}
+        <small>押したSectionの裏メロだけが入れ替わります。合わなければ別の候補にするか、消せます（↶でも戻せます）。細かい直しはCubasis / Cubaseで。</small>
+      </div>`;
   }
 
   // 8小節ループ → Section の流れの案内。いまの段階を判定して、次にやることを1つだけ出す。
@@ -488,6 +528,62 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           message = changed > 0
             ? `${name}に「${item.label}」を当てました（${changed}か所）。再生して確認してください。↶ で戻せます。`
             : `${name}には変えられる場所がありませんでした（${variationId === "drums" ? "ドラム" : variationId === "bass" ? "ベース" : variationId === "melody" ? "メロディとコード" : "メロディ（各小節に2音以上）"}が入っているか確認してください）。`;
+        } catch (error) {
+          message = error instanceof Error ? error.message : "操作できませんでした。";
+        }
+        rerender("arrange");
+      });
+    });
+
+    query("[data-arrange-counter-toggle]").forEach((button) => {
+      const index = indexOf(button, "arrangeCounterToggle");
+      button.addEventListener("click", () => {
+        counterOpenIndex = counterOpenIndex === index ? null : index;
+        rerender("arrange");
+      });
+    });
+    const counterCandidateFor = (value) => {
+      const [indexText, styleId] = value.split(":");
+      const index = Number(indexText);
+      const project = projectStore.getSnapshot();
+      const range = sectionRanges(getSections(project))[index];
+      const candidate = range
+        ? counterCandidates(project, { startBar: range.startBar, endBar: range.endBar }).find((item) => item.id === styleId)
+        : null;
+      return { index, range, candidate };
+    };
+    query("[data-arrange-counter-play]").forEach((button) => {
+      button.addEventListener("click", () => {
+        try {
+          const { index, candidate } = counterCandidateFor(button.dataset.arrangeCounterPlay);
+          if (candidate) onPreviewCounter(index, candidate.notes);
+        } catch (error) {
+          message = error instanceof Error ? error.message : "聴けませんでした。";
+          rerender("arrange");
+        }
+      });
+    });
+    query("[data-arrange-counter-apply]").forEach((button) => {
+      button.addEventListener("click", () => {
+        try {
+          const { range, candidate } = counterCandidateFor(button.dataset.arrangeCounterApply);
+          if (!range || !candidate) return;
+          projectStore.applyCounterMelody({ startBar: range.startBar, endBar: range.endBar, notes: candidate.notes });
+          message = `${range.section.name}に裏メロ「${candidate.label}」を入れました。再生して確認してください。↶ で戻せます。`;
+        } catch (error) {
+          message = error instanceof Error ? error.message : "操作できませんでした。";
+        }
+        rerender("arrange");
+      });
+    });
+    query("[data-arrange-counter-clear]").forEach((button) => {
+      button.addEventListener("click", () => {
+        try {
+          const project = projectStore.getSnapshot();
+          const range = sectionRanges(getSections(project))[indexOf(button, "arrangeCounterClear")];
+          if (!range) return;
+          projectStore.applyCounterMelody({ startBar: range.startBar, endBar: range.endBar, notes: [] });
+          message = `${range.section.name}の裏メロを消しました。`;
         } catch (error) {
           message = error instanceof Error ? error.message : "操作できませんでした。";
         }

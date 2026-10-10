@@ -21,6 +21,9 @@ import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
 import { songCardHtml } from "./hub/song-card.js";
+import { skeletonCheckHtml, skeletonCheckSummary } from "./hub/skeleton-check-ui.js";
+import { guideHtml, guideSummary, refreshGuideDom } from "./hub/guide-ui.js";
+import { loadGuideProgress, saveGuideProgress, toggleGuideStep } from "./hub/guide.js";
 import { bindStartingPoint, startingPointHtml } from "./hub/starting-point-ui.js";
 import { previewProject } from "./hub/starting-point.js";
 import { bindConsultPanel, consultPanelHtml } from "./hub/consult-ui.js";
@@ -29,6 +32,7 @@ import { bindEditHistory } from "./core/edit-history-ui.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createArrangeController } from "./arrange/arrange-screen.js";
 import { getSections, sectionRanges, sliceProject } from "./core/section-ops.js";
+import { withCounterNotes } from "./core/counter-melody.js";
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
 import { MAX_IMPORT_BYTES, parseProjectJson } from "./storage/project-import.js";
@@ -56,6 +60,13 @@ let libraryName = "";
 let melodyChordOpen = false;
 let melodyChordBar = 0;
 let songCardOpen = false;
+let skeletonOpen = false;
+let guideOpen = false;
+let guideDone = null; // 手引きの✓（この端末のlocalStorageだけ。初めて開くときに読む）
+function getGuideDone() {
+  if (!guideDone) guideDone = loadGuideProgress();
+  return guideDone;
+}
 let textSize = loadTextSize();
 applyTextSize(textSize);
 let chordPresetSelection = CHORD_PRESETS[0].id;
@@ -115,6 +126,12 @@ function hubScreen() {
         <button id="toggle-export" class="primary-action" aria-expanded="false">Export</button>
         <button id="toggle-consult" class="primary-action" aria-expanded="false">AI相談</button>
       </div>
+
+      <button id="toggle-skeleton" class="song-card-toggle" aria-expanded="${skeletonOpen}">✅ ${escapeHtml(skeletonCheckSummary(project))}${skeletonOpen ? " ▲" : " ▼"}</button>
+      ${skeletonOpen ? skeletonCheckHtml(project) : ""}
+
+      <button id="toggle-guide" class="song-card-toggle" aria-expanded="${guideOpen}">📖 ${escapeHtml(guideSummary(getGuideDone()))}${guideOpen ? " ▲" : " ▼"}</button>
+      ${guideOpen ? guideHtml(getGuideDone()) : ""}
 
       <button id="toggle-song-card" class="song-card-toggle" aria-expanded="${songCardOpen}">曲の特徴カード${songCardOpen ? " ▲" : " ▼"}</button>
       ${songCardOpen ? songCardHtml(project) : ""}
@@ -472,6 +489,39 @@ function bindHubControls() {
     }
   });
 
+  document.querySelector("#toggle-skeleton")?.addEventListener("click", () => {
+    skeletonOpen = !skeletonOpen;
+    render("hub");
+  });
+
+  document.querySelectorAll("[data-skeleton-go]").forEach((button) => {
+    button.addEventListener("click", () => render(button.dataset.skeletonGo));
+  });
+
+  document.querySelector("#toggle-guide")?.addEventListener("click", () => {
+    guideOpen = !guideOpen;
+    render("hub");
+  });
+
+  document.querySelectorAll("[data-guide-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      guideDone = toggleGuideStep(getGuideDone(), button.dataset.guideToggle);
+      saveGuideProgress(guideDone);
+      refreshGuideDom(guideDone);
+    });
+  });
+
+  document.querySelectorAll("[data-guide-go]").forEach((button) => {
+    button.addEventListener("click", () => render(button.dataset.guideGo));
+  });
+
+  document.querySelector("#guide-reset")?.addEventListener("click", () => {
+    if (!globalThis.confirm("手引きの✓をすべて外しますか？（曲のデータは変わりません）")) return;
+    guideDone = new Set();
+    saveGuideProgress(guideDone);
+    render("hub");
+  });
+
   document.querySelector("#toggle-song-card")?.addEventListener("click", () => {
     songCardOpen = !songCardOpen;
     render("hub");
@@ -788,6 +838,24 @@ function buildPlayback(index) {
   };
 }
 
+// 裏メロの候補を、そのSectionの範囲だけ仮に当てて聴く（Projectは変更しない）
+async function previewCounter(index, notes) {
+  try {
+    const project = projectStore.getSnapshot();
+    const range = sectionRanges(getSections(project))[index];
+    if (!range) throw new Error("Sectionが見つかりません。");
+    const barTicks = project.basic.ppq * 4;
+    const preview = withCounterNotes(project, range.startBar, range.endBar, notes);
+    await demoPlayer.play(
+      sliceProject(preview, range.startBar * barTicks, range.endBar * barTicks),
+      { lengthTick: range.section.bars * barTicks }
+    );
+  } catch (error) {
+    demoPlayer.stop();
+    if (playerTime) playerTime.textContent = error instanceof Error ? error.message : "再生できません。";
+  }
+}
+
 async function playBuilt(index) {
   const built = buildPlayback(index);
   if (!built) throw new Error("Sectionが見つかりません。");
@@ -881,7 +949,8 @@ async function boot() {
   arrangeController = createArrangeController({
     projectStore,
     rerender: render,
-    onPlaySection: (index) => playSection(index)
+    onPlaySection: (index) => playSection(index),
+    onPreviewCounter: (index, notes) => previewCounter(index, notes)
   });
   autosave = createAutosave({
     projectStore,

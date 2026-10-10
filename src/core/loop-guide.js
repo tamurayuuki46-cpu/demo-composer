@@ -20,7 +20,7 @@ function signature(project, range) {
     .map((item) => `${item.startTick - start}:${map(item)}`)
     .join(",");
   const parts = [part(project.chords, (chord) => `${chord.root}${chord.quality}`)];
-  ["melody", "bass", "drums"].forEach((role) => {
+  ["melody", "bass", "drums", "counter"].forEach((role) => {
     const notes = project.tracks.find((track) => track.role === role)?.notes ?? [];
     parts.push(part([...notes].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch), (note) => `${note.pitch}/${note.durationTick}`));
   });

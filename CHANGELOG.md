@@ -4,6 +4,15 @@
 更新日: 2026-10-11
 
 ### 追加
+- Hub `📖 作編曲の手引き`: 出発点 → 作曲 → 編曲 → 確認・受け渡し の16手順を、スマホで読めるリストにした。各手順は説明とコツを開閉でき、左の丸で「済み」にできる。ChordやArrangeなど、該当画面への移動ボタン付き。✓はこの端末のlocalStorageにだけ保存し、曲のデータには入れない（`src/hub/guide.js` / `guide-ui.js`、Schema変更なし）
+- 手引きのSmoke Test（`npm run test:guide`、CI対象）
+- `docs/REAL_SONG_TEST.md`: Android実機で1曲を通して作り、MIDIをCubasis / Cubaseへ渡すまでのテスト手順・判定・記録シート
+- Counter Melody（裏メロ）: Arrangeの各Sectionに `🎶 裏メロ` を追加。ロングトーン / レスポンス（メロディの隙間だけ）/ 寄り添い（音階で3度下）の3候補を聴いて、選んだSectionだけに当てる。消す・別の候補に替える・↶で戻すができる。候補生成は `src/core/counter-melody.js`、Store `applyCounterMelody`（1回の編集）
+- 裏メロは `tracks[]` の `role: "counter"`（MIDI Ch.4）に保存。Demo Playerは控えめな音量で再生し、パートパネルに `裏メロ` のミュートを追加。MIDIは裏メロがあるときだけ `CounterMelody.mid` を出力し、Song.midにもトラックを追加（無いProjectの出力は従来と同じ）。Section切り出し / コピー / 小節増減 / Key変更にも追従する
+- Hub `✅ 骨子チェック`: Chord / Melody / Bass / Drums / Structure / Energy / Sound Direction を ✓ / △ / － で表示し、「次に決めること」と、その画面へのボタンを出す。裏メロは任意項目。読むだけで、曲の良し悪しは採点しない（`src/core/skeleton-check.js`、Schema変更なし）
+- Counter Melody / 骨子チェックのSmoke Test（`npm run test:counter-melody` / `npm run test:skeleton-check`、CI対象）
+- Cubase用メモ: 裏メロがあるときは `CounterMelody.mid` も取り込み対象に載せる
+- Counter Melody追加前復元点: `restore/v0.2-before-counter-melody`
 - Chord Presetを6種類から100種類に拡張。王道・明るい / J-POP・切ない / ロック・力強い / バラード・やさしい / ダンス・ループ / ジャズ・おしゃれ / マイナー・暗めの7カテゴリで、selectをカテゴリ別（optgroup）にした。4小節と8小節があり、説明に「最後のコードの働き」を添えた。既存6種のidと順序は変更なし。Presetは度数配列のみで、適用結果は通常の `project.chords[]` に展開する（Schema変更なし）
 - Chord Preset Smoke Testを拡張（100件 / id・進行の重複なし / 4または8小節 / 度数範囲 / カテゴリ所属 / C Major・A Minor・F# Majorで全Preset展開）
 - Melody: `↻ 候補を更新`。同じKey / Chord / Barでも、安定 / キャッチー / 浮遊感の方向性を保った4つのVariation Setを順番に切り替えられる。Variation番号はUI状態のみでProject Dataには保存しない（Schema変更なし）
@@ -125,6 +134,8 @@
 - ダイアトニック扇形UI変更前復元点: `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
+- Demo Playerのパートパネルを6ボタン（Chord / Melody / Bass / Drums / 裏メロ / Solo）にした
+- Section操作（コピー / 同じ中身の判定）の対象トラックに `counter` を追加した
 - Melody候補の適用結果を専用形式ではなく通常の `tracks[role=melody].notes[]` として保存し、既存のAutoSave / Undo / Demo Player / MIDI Exportをそのまま利用する方式にした
 - Backing Pattern選択を `project.instruments[]` の `part: chord-backing` entryとして保存し、AutoSave / Undo / Redo対象にした。未設定ProjectはBlockへFallbackする
 - Demo PlayerのChord発音と `Chord.mid / Song.mid` のChord Track Note配置へBacking Patternを反映。Chord Dataそのものは変更しない
