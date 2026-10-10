@@ -1,4 +1,10 @@
 import { createDemoPlayer } from "./audio/demo-player.js";
+import {
+  buildChordPreset,
+  CHORD_PRESETS,
+  chordPresetPreview,
+  getChordPreset
+} from "./chord/chord-presets.js";
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
@@ -19,6 +25,7 @@ let currentScreen = "hub";
 let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存されます。";
 let chordMessage = "下の候補をタップしてコードを追加します。";
 let chordRootSelection = null;
+let chordPresetSelection = CHORD_PRESETS[0].id;
 
 const KEY_OPTIONS = [...NOTE_NAMES];
 
@@ -98,6 +105,11 @@ function chordScreen() {
     ? chordRootSelection
     : rootToPitchClass(project.basic.key);
   const variants = getChordVariants(selectedRoot, project.basic.key);
+  const selectedPreset = getChordPreset(chordPresetSelection);
+  const presetPreview = chordPresetPreview(chordPresetSelection, {
+    key: project.basic.key,
+    scale: project.basic.scale
+  }).join(" → ");
   const progression = project.chords.length
     ? project.chords.map((chord, index) => `
         <div class="chord-card progression-card">
@@ -117,6 +129,18 @@ function chordScreen() {
           <p>${escapeHtml(project.basic.key)} ${project.basic.scale === "major" ? "Major" : "Minor"} のコード選択</p>
         </div>
         <button id="clear-chords" class="small-action"${project.chords.length ? "" : " disabled"}>Clear</button>
+      </div>
+
+      <div class="chord-preset-panel">
+        <label for="chord-preset-select">Chord Preset</label>
+        <div class="chord-preset-controls">
+          <select id="chord-preset-select" aria-label="Chord Preset">
+            ${CHORD_PRESETS.map((preset) => `<option value="${preset.id}"${preset.id === chordPresetSelection ? " selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}
+          </select>
+          <button id="apply-chord-preset">適用</button>
+        </div>
+        <small>${escapeHtml(selectedPreset.description)}</small>
+        <p class="chord-preset-preview">${escapeHtml(presetPreview)}</p>
       </div>
 
       <h3>進行</h3>
@@ -152,7 +176,7 @@ function chordScreen() {
         `).join("")}
       </div>
 
-      <p class="hint">Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / augに対応。1回タップすると1小節分追加し、AutoSaveされます。</p>
+      <p class="hint">Presetは現在のKey / Scaleに合わせて通常のChordデータへ展開します。適用後は個別に追加・削除できます。Bassがある場合は先にRhythmでClear Bassしてください。</p>
     </section>
   `;
 }
@@ -358,6 +382,31 @@ function bindChordControls() {
 
     commitChordUpdate(next, `${candidate.symbol} (${candidate.degree}) を追加しました。`);
   }
+
+  document.querySelector("#chord-preset-select")?.addEventListener("change", (event) => {
+    chordPresetSelection = event.target.value;
+    render("chord");
+  });
+
+  document.querySelector("#apply-chord-preset")?.addEventListener("click", () => {
+    const latest = projectStore.getSnapshot();
+    const preset = getChordPreset(chordPresetSelection);
+
+    if (
+      latest.chords.length > 0
+      && !globalThis.confirm(`現在のコード進行を「${preset.label}」で置き換えますか？`)
+    ) {
+      return;
+    }
+
+    const next = buildChordPreset(chordPresetSelection, {
+      key: latest.basic.key,
+      scale: latest.basic.scale,
+      barTicks
+    });
+
+    commitChordUpdate(next, `「${preset.label}」を適用しました。個別に修正できます。`);
+  });
 
   document.querySelectorAll("[data-add-chord]").forEach((button) => {
     button.addEventListener("click", () => {
