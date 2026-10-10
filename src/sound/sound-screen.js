@@ -1,10 +1,4 @@
 import {
-  BACKING_PATTERNS,
-  getBackingPattern,
-  getBackingPatternSelection,
-  upsertBackingPattern
-} from "../core/backing-patterns.js";
-import {
   getSoundPart,
   getSoundSelection,
   SOUND_PARTS,
@@ -22,8 +16,6 @@ function escapeHtml(value) {
 }
 
 export function createSoundController({ projectStore, rerender } = {}) {
-  let chordBackingObserver = null;
-
   function renderPart(part, project) {
     const selection = getSoundSelection(project.instruments, part.id);
     return `
@@ -92,64 +84,6 @@ export function createSoundController({ projectStore, rerender } = {}) {
     rerender("sound");
   }
 
-  function backingPanelMarkup(project) {
-    const selectedId = getBackingPatternSelection(project.instruments);
-    const selected = getBackingPattern(selectedId);
-    return `
-      <section class="backing-pattern-panel" data-backing-pattern-panel>
-        <label class="field" for="backing-pattern-select">
-          <span>Backing Pattern</span>
-          <select id="backing-pattern-select" aria-label="Chord Backing Pattern">
-            ${BACKING_PATTERNS.map((pattern) => `<option value="${pattern.id}"${pattern.id === selectedId ? " selected" : ""}>${escapeHtml(pattern.label)}</option>`).join("")}
-          </select>
-        </label>
-        <small data-backing-pattern-description>${escapeHtml(selected.description)}</small>
-        <p class="backing-pattern-hint">コード進行は変えず、鳴らし方だけを変更します。Demo PlayerとChord.mid / Song.midに反映されます。</p>
-      </section>
-    `;
-  }
-
-  function injectChordBackingPanel() {
-    const chordPresetSelect = document.querySelector("#chord-preset-select");
-    if (!chordPresetSelect || document.querySelector("[data-backing-pattern-panel]")) return;
-
-    const chordPresetPanel = chordPresetSelect.closest(".chord-preset-panel");
-    if (!chordPresetPanel) return;
-
-    const holder = document.createElement("div");
-    holder.innerHTML = backingPanelMarkup(projectStore.getSnapshot()).trim();
-    const panel = holder.firstElementChild;
-    if (!panel) return;
-
-    chordPresetPanel.insertAdjacentElement("afterend", panel);
-    const select = panel.querySelector("#backing-pattern-select");
-    const description = panel.querySelector("[data-backing-pattern-description]");
-
-    select?.addEventListener("change", (event) => {
-      const patternId = event.target.value;
-      const project = projectStore.getSnapshot();
-      projectStore.updateInstruments(upsertBackingPattern(project.instruments, patternId));
-      const pattern = getBackingPattern(patternId);
-      if (description) description.textContent = pattern.description;
-
-      const chordMessage = document.querySelector("#chord-message");
-      if (chordMessage) {
-        chordMessage.textContent = `Backing Patternを「${pattern.label}」に変更しました。Demo Playerで確認できます。`;
-      }
-    });
-  }
-
-  function installChordBackingObserver() {
-    const target = document.querySelector("#screen");
-    if (!target || chordBackingObserver) return;
-
-    chordBackingObserver = new MutationObserver(() => {
-      queueMicrotask(injectChordBackingPanel);
-    });
-    chordBackingObserver.observe(target, { childList: true, subtree: true });
-    queueMicrotask(injectChordBackingPanel);
-  }
-
   function bind() {
     document.querySelectorAll("[data-sound-preset]").forEach((select) => {
       select.addEventListener("change", (event) => {
@@ -163,8 +97,6 @@ export function createSoundController({ projectStore, rerender } = {}) {
       });
     });
   }
-
-  installChordBackingObserver();
 
   return { render, bind };
 }
