@@ -27,9 +27,11 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 初期Repository / 共同開発基盤を作成済み。
 
-現在は、Hub / Chord / Melody / Rhythm の画面骨格に加えて、schemaVersion 1準拠の共通Project Stateを実装しています。
+現在は、Hub / Chord / Melody / Rhythm の画面骨格、schemaVersion 1準拠の共通Project State、IndexedDBによる端末保存を実装しています。
 
-Hubでは現在、Project名 / BPM / Key / Scaleを編集でき、変更は共通Stateへ反映されます。保存はまだメモリ上のみで、IndexedDB永続化は次工程です。
+HubではProject名 / BPM / Key / Scaleを編集でき、Saveで現在のProjectを端末に保存できます。次回起動時は保存済みProjectを自動で読み込みます。
+
+現段階では手動Saveのみです。Autosave / project.json手動Backup / Migrationは後続実装です。
 
 ## AI共同開発
 
