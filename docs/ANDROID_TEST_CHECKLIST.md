@@ -66,6 +66,11 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 
 ## 5. Melody
 
+- [ ] 左端に縦ピアノKeyboardが表示される
+- [ ] 白鍵 / 黒鍵が見分けやすい
+- [ ] 縦ピアノのNote名が現在Octaveと一致する
+- [ ] 縦ピアノを追加しても横スクロールが発生しない
+- [ ] 4 stepのNote cellが小さすぎず押しやすい
 - [ ] Bar移動ができる
 - [ ] Beat 1–2 / Beat 3–4を切り替えられる
 - [ ] Octaveを上下できる
@@ -74,7 +79,6 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] 同じstepの別PitchをTapすると置き換わる
 - [ ] 現在BarのChord名 + Degreeが表示される
 - [ ] Clear Barが動く
-- [ ] 4 step表示でセルが小さすぎない
 
 ## 6. Rhythm
 
