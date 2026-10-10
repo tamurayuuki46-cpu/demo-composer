@@ -42,18 +42,33 @@ GitHub Pagesが有効な場合の標準URL:
 
 このRepositoryはPrivate。
 
-GitHub PagesのPrivate Repository対応はGitHubの契約プラン条件に依存する。Workflow側では `actions/configure-pages` の `enablement: true` を使い自動有効化を試みるが、プランが対応していない場合はDeployが失敗する。
+GitHub PagesのPrivate Repository対応はGitHubの契約プラン条件に依存する。プランが対応していない場合はPagesを有効化できない。
 
 その場合はアプリ側の問題ではないため、Vercelを継続利用するか、Netlify等の別Fallbackへ切り替える。
 
-## 手動設定が必要な場合
+## 初回だけ必要なGitHub設定
 
-自動有効化に失敗し、GitHubプランはPagesに対応している場合:
+GitHub Actionsからの初回自動有効化は `Resource not accessible by integration` で失敗したため、Repository側でPagesを一度だけ有効化する。
 
-1. Repositoryの `Settings`
-2. `Pages`
-3. Sourceを `GitHub Actions`
-4. Workflowを再実行
+1. GitHubで `tamurayuuki46-cpu/demo-composer` を開く
+2. `Settings`
+3. 左メニューの `Pages`
+4. `Build and deployment` のSourceを `GitHub Actions` にする
+5. 保存後、`develop`へのPush / MergeでWorkflowを再実行する
+
+この初回設定後は、通常はGitHub Actionsが自動Deployする。
+
+## 動作確認結果
+
+GitHub Actions run `38046796252` で以下を確認済み。
+
+- Checkout: 成功
+- Node.js 22 setup: 成功
+- `npm run build`: 成功
+- `dist/index.html` 検証: 成功
+- Pages初回作成: GitHub App権限制約により失敗
+
+つまり、静的Build自体は正常で、残りはGitHub Pagesの初回有効化だけ。
 
 ## 触らない部分
 
