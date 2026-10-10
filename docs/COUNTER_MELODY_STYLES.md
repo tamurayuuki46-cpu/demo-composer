@@ -23,9 +23,14 @@ Arrange の裏メロ候補を、役割が分かりやすい3系統へ整理す�
 
 - 8分音符中心
 - メインMelodyより下側を基本にする
-- Chord Toneを軸にScale Toneも使う
-- コード感と推進力を足す
-- ※イメージ: YOASOBI系。特定曲のコピーや旋律再現ではなく「動いて推進力を出す役割」の参考分類
+- 土台のコード進行自体は変えない
+- 1小節の中で、次の3つの色を順番に混ぜる
+  1. コードトーン型: 強拍を中心に現在コードの構成音で安定させる
+  2. テンション型: 現在Key内のコード外音を使い、9th / 11th / 13th系の色を足す
+  3. 薄い別コード感型: 現在コードの3度上のScale Degreeから作る3音を薄く重ね、第二のハーモニーの輪郭を作る
+- 例: C Major上のCコードなら、薄い別コード感型では E-G-B の輪郭を使える。土台はCのままなので、Emへ転調・コード変更するわけではない
+- 主旋律と同じ音をなぞるのではなく、主旋律とは違うDegreeを選んでコードの色と推進力を足す
+- ※イメージ: YOASOBI / Ayase系。特定曲のコピーや旋律再現ではなく「動きながら第二のハーモニーを薄く作る役割」の参考分類
 
 ### Hook（フック型）
 
@@ -52,13 +57,18 @@ Arrange の裏メロ候補を、役割が分かりやすい3系統へ整理す�
 - Key変更時の移調
 - Scale変更時の安全制約
 - Cubasis / Cubaseへ渡すMIDI形式
+- Sparse / Active / Hook の3系統そのもの
 
 ## Backup
 
-変更前復元点:
+3系統整理前の復元点:
 
 `restore/v0.2-before-counter-style-3ways`
 
-作業Branch:
+Activeハーモニー強化前の復元点:
 
-`chatgpt/v0.2-counter-style-3ways`
+`restore/v0.2-before-active-harmony`
+
+今回の作業Branch:
+
+`chatgpt/v0.2-counter-active-harmony`
