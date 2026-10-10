@@ -1,5 +1,11 @@
 import { chordSymbol } from "../chord/chord-theory.js";
 import {
+  applyDrumPreset,
+  DRUM_PRESETS,
+  getDrumPreset,
+  hasEditableDrumsInBar
+} from "./drum-presets.js";
+import {
   bassPitchForBar,
   clearRhythmBar,
   copyRhythmBar,
@@ -35,6 +41,7 @@ function hasNotesInRange(notes, startTick, durationTick) {
 export function createRhythmController({ projectStore, rerender }) {
   let barIndex = 0;
   let beatIndex = 0;
+  let selectedPresetId = DRUM_PRESETS[0].id;
   let message = "Bass / Kick / Snare / HHを16分音符16マスで入力します。";
 
   function metrics(project) {
@@ -71,6 +78,7 @@ export function createRhythmController({ projectStore, rerender }) {
     const beatCopyLabel = beatIndex < 3
       ? `Copy Beat → Beat ${beatIndex + 2}`
       : `Copy Beat → Bar ${barIndex + 2} Beat 1`;
+    const selectedPreset = getDrumPreset(selectedPresetId);
 
     const rows = [
       { role: "bass", label: `Bass ${pitchName(bassPitch)}`, pitch: bassPitch, notes: bassNotes },
@@ -93,6 +101,17 @@ export function createRhythmController({ projectStore, rerender }) {
           <button id="rhythm-prev-bar"${barIndex === 0 ? " disabled" : ""}>← Bar</button>
           <span>Bar ${barIndex + 1}</span>
           <button id="rhythm-next-bar"${barIndex >= barCount - 1 ? " disabled" : ""}>Bar →</button>
+        </div>
+
+        <div class="rhythm-preset-panel">
+          <label for="drum-preset-select">Drum Preset</label>
+          <div class="rhythm-preset-controls">
+            <select id="drum-preset-select" aria-label="Drum Preset">
+              ${DRUM_PRESETS.map((preset) => `<option value="${preset.id}"${preset.id === selectedPresetId ? " selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}
+            </select>
+            <button id="apply-drum-preset">適用</button>
+          </div>
+          <small>${escapeHtml(selectedPreset.description)}</small>
         </div>
 
         <div class="rhythm-beat-switch" role="group" aria-label="Copy元Beat選択">
@@ -127,7 +146,7 @@ export function createRhythmController({ projectStore, rerender }) {
         </div>
 
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
-        <p class="hint">1小節を 1 e & a / 2 e & a / 3 e & a / 4 e & a の16マスで同時表示します。BeatボタンはCopy Beatのコピー元を選びます。セルをタップしたBeatもコピー元として選択されます。</p>
+        <p class="hint">Presetは現在BarのKick / Snare / HHだけを置き換えます。適用後は16マスをタップして自由に修正できます。Bassは変更しません。</p>
       </section>
     `;
   }
@@ -137,6 +156,35 @@ export function createRhythmController({ projectStore, rerender }) {
     const { barTicks, stepTicks, beatTicks, barCount } = metrics(project);
     const barStartTick = barIndex * barTicks;
     const beatStartTick = barStartTick + beatIndex * beatTicks;
+
+    document.querySelector("#drum-preset-select")?.addEventListener("change", (event) => {
+      selectedPresetId = event.target.value;
+      rerender("rhythm");
+    });
+
+    document.querySelector("#apply-drum-preset")?.addEventListener("click", () => {
+      const latest = projectStore.getSnapshot();
+      const bassNotes = getTrackNotes(latest, "bass");
+      const drumNotes = getTrackNotes(latest, "drums");
+
+      if (
+        hasEditableDrumsInBar(drumNotes, { barStartTick, barDurationTick: barTicks })
+        && !globalThis.confirm(`Bar ${barIndex + 1} のKick / Snare / HHをプリセットで置き換えますか？`)
+      ) {
+        return;
+      }
+
+      const nextDrums = applyDrumPreset(drumNotes, {
+        presetId: selectedPresetId,
+        barStartTick,
+        stepTicks
+      });
+      const preset = getDrumPreset(selectedPresetId);
+
+      projectStore.updateRhythmNotes({ bassNotes, drumNotes: nextDrums });
+      message = `Bar ${barIndex + 1} に「${preset.label}」を適用しました。16マスで修正できます。`;
+      rerender("rhythm");
+    });
 
     document.querySelectorAll("[data-rhythm-role]").forEach((button) => {
       button.addEventListener("click", () => {

@@ -14,7 +14,7 @@ Android Chrome / Android smartphone.
 - 重要操作を画面下部へ寄せる
 - PC DAWを縮小したUIにしない
 
-## v0.1 Navigation
+## Navigation
 
 Bottom Navigation:
 
@@ -72,20 +72,24 @@ Androidブラウザが複数ダウンロードを制限した場合を想定し�
 
 ## Chord
 
-v0.1の基本入力:
+v0.2の基本入力:
 
 - Hubで設定したKey / Scaleを参照
-- そのKey / Scaleのダイアトニックコード7つを候補表示
+- そのKey / Scaleのダイアトニックコード7つを従来どおり候補表示
 - コード名 + Degreeを併記
+- 「基準音」SelectでC〜Bの12音を選べる
+- 選択した基準音に対して Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug の9種類を表示
 - 候補を1回タップすると1小節追加
 - 追加済みコードをカード表示
 - 各カードの×で削除
 - Clearで進行全削除
 - 削除後はstartTickを1小節単位で詰め直す
 
+ダイアトニック候補は初心者向けの基本導線として残し、基準音からの9種類は「少し色を変えたい」「7th / susを試したい」ときの追加導線にする。候補を大量に一画面へ並べず、基準音を1つ選んでからQualityを選ぶことでスマホ画面を複雑化しない。
+
 Bass Noteが存在する間はChord変更を拒否し、Root不整合を防止する。Chordを変更するときはRhythmでClear Bassを行う。
 
-v0.1では並べ替え・コード長変更・借用和音・高度なコード編集は後回し。
+v0.2でも並べ替え・コード長変更は後回し。
 
 ## Melody
 
@@ -96,7 +100,7 @@ v0.1では並べ替え・コード長変更・借用和音・高度なコード�
 - 1 Barを8分音符8 stepとして扱う
 - `8分音符` / `16分音符` ボタンで入力単位を切替（初期値は8分）
 - 8分: Beat 1〜4を分割せず、`1 & 2 & 3 & 4 &` の8マスを同時表示
-- 16分: タップ幅を確保するため半小節ずつ表示し、`前半 1–2拍`（`1 e & a 2 e & a`）/ `後半 3–4拍`（`3 e & a 4 e & a`）ボタンで切替
+- 16分: タップ幅を確保するため半小節ずつ表示し、`前半 1–2拍` / `後半 3–4拍` ボタンで切替
 - 8分表示のマス下部の太線は、そのマスの後半に同じ高さの16分音符があることを示す
 - 8分と16分は同じ小節内で混在できる
 - Pitchは1 octaveずつ表示
@@ -108,11 +112,10 @@ v0.1では並べ替え・コード長変更・借用和音・高度なコード�
 - `Clear Bar` で現在小節のMelodyを削除
 - 1拍目 / 2拍目 / 3拍目 / 4拍目の先頭を視覚的に区切る
 
-8マス同時表示を優先しつつ、Android狭幅では鍵盤幅・余白・Gapを縮めて横スクロールを避ける。セル幅が小さくなりすぎないか実機確認する。
+8マス同時表示を優先しつつ、Android狭幅では鍵盤幅・余白・Gapを縮めて横スクロールを避ける。
 
 後続:
 
-- 16分音符
 - Note Length / Velocity
 - Scale表示
 - Chord Tone強調
@@ -124,25 +127,35 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
 
 - 1 Bar = 16 step（16分音符）
 - 1 Barの16 stepを `1 e & a / 2 e & a / 3 e & a / 4 e & a` として1画面に同時表示
-- Beat 1 / 2 / 3 / 4の先頭を視覚的に区切る
-- Beat 1〜4ボタンは表示切替ではなく、`Copy Beat` のコピー元Beatを選ぶ
+- Beat 1〜4ボタンは `Copy Beat` のコピー元Beatを選ぶ
 - セルをTapすると、そのセルが属するBeatもコピー元として選択される
-- 選択中のBeatは背景色で示す
 - `← Bar` / `Bar →` で小節移動
-- Bassは現在BarのChord Rootを使用
-- Chord未設定BarではKey Rootを使用
+- Bassは現在BarのChord Rootを使用し、Chord未設定BarではKey Rootを使用
 - Bass / Kickを同時に確認可能
 - Kick / Snare / HHはGM準拠Noteを使用
 - Tapでstep ON/OFF
 - `Clear Bar` で現在BarのBass + Drumsを削除
-- `Clear Bass` でBass全体を削除し、Chord変更可能な状態へ戻す
-- `Copy Beat → Beat N` で現在BeatのBass + Drumsパターンを次Beatへコピーし、そのBeatへ移動する
-- Beat 4からのBeat Copyは次BarのBeat 1へコピーし、次Barへ移動する
-- `Copy Bar → Bar N` で現在BarのBass + Drumsパターンを次Barへコピーし、そのBarへ移動する
-- Beat / Barのコピー先にRhythmがある場合は上書き確認を表示する
-- Bassはリズム位置だけをコピーし、Barをまたぐ場合はPitchをコピー先のChord Root（Chord未設定時はKey Root）へ追従させる
+- `Clear Bass` でBass全体を削除
+- `Copy Beat` / `Copy Bar` でパターンを次位置へコピー
+- コピー先にRhythmがある場合は上書き確認
+- BarをまたぐBass Copyはコピー先のChord Root / Key Rootへ追従
 
-1小節全体のリズム形状を一目で確認できることを優先し、16 stepを同時表示する。Android狭幅ではラベル幅・余白・Gapを縮めて横スクロールを避ける。セル幅が狭くなるため、誤タップが起きないか実機で確認する。
+### v0.2 Drum Preset
+
+Presetは完成パターンを自動で作るためではなく、初心者が16 step編集を始めるための叩き台とする。
+
+- 画面に多数のPreset Buttonを並べず、`Drum Preset` select + `適用` の2操作にする
+- 初期Presetは `8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH`
+- 選択中Presetの短い説明を表示する
+- `適用` は現在BarのKick / Snare / Closed HHだけを置き換える
+- Bassは変更しない
+- 他BarのDrumは変更しない
+- 現在Barに対象Drumがある場合は上書き確認を表示する
+- 適用後は通常の16 stepセルをTapして自由に修正できる
+- Preset選択状態自体はProject Dataへ保存しない
+- Preset結果は通常のDrum Note Dataとして保存し、Drums.mid / Song.midへそのままExportする
+
+1小節全体のリズム形状を一目で確認できることを優先し、16 stepを同時表示する。Android狭幅では誤タップが起きないか実機で確認する。
 
 後続:
 

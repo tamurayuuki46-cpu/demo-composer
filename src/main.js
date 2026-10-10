@@ -1,11 +1,13 @@
 import { createDemoPlayer } from "./audio/demo-player.js";
-import { chordSymbol, getDiatonicChords } from "./chord/chord-theory.js";
+import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
+import { migrateProject } from "./core/project-migration.js";
+import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
 import { createAutosave } from "./storage/autosave.js";
-import { loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
+import { backupProjectForMigration, loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
 let projectStore;
 let melodyController;
@@ -16,8 +18,9 @@ let playerState = { playing: false, loop: false, position: 0, duration: 0 };
 let currentScreen = "hub";
 let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存されます。";
 let chordMessage = "下の候補をタップしてコードを追加します。";
+let chordRootSelection = null;
 
-const KEY_OPTIONS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const KEY_OPTIONS = [...NOTE_NAMES];
 
 function hubScreen() {
   const project = projectStore.getSnapshot();
@@ -91,6 +94,10 @@ function hubScreen() {
 function chordScreen() {
   const project = projectStore.getSnapshot();
   const candidates = getDiatonicChords(project.basic.key, project.basic.scale);
+  const selectedRoot = Number.isInteger(chordRootSelection)
+    ? chordRootSelection
+    : rootToPitchClass(project.basic.key);
+  const variants = getChordVariants(selectedRoot, project.basic.key);
   const progression = project.chords.length
     ? project.chords.map((chord, index) => `
         <div class="chord-card progression-card">
@@ -107,7 +114,7 @@ function chordScreen() {
       <div class="section-heading">
         <div>
           <h2>Chord</h2>
-          <p>${escapeHtml(project.basic.key)} ${project.basic.scale === "major" ? "Major" : "Minor"} のダイアトニックコード</p>
+          <p>${escapeHtml(project.basic.key)} ${project.basic.scale === "major" ? "Major" : "Minor"} のコード選択</p>
         </div>
         <button id="clear-chords" class="small-action"${project.chords.length ? "" : " disabled"}>Clear</button>
       </div>
@@ -117,7 +124,7 @@ function chordScreen() {
 
       <p id="chord-message" class="status-message" aria-live="polite">${escapeHtml(chordMessage)}</p>
 
-      <h3>追加候補</h3>
+      <h3>ダイアトニック候補</h3>
       <div class="chord-candidates">
         ${candidates.map((candidate, index) => `
           <button class="candidate-chord" data-add-chord="${index}">
@@ -127,7 +134,25 @@ function chordScreen() {
         `).join("")}
       </div>
 
-      <p class="hint">1回タップすると1小節分追加します。変更はAutoSaveされます。</p>
+      <h3>基準音からコード種類を選ぶ</h3>
+      <div class="form-stack">
+        <label class="field">
+          <span>基準音</span>
+          <select id="chord-root-select">
+            ${NOTE_NAMES.map((name, root) => `<option value="${root}"${root === selectedRoot ? " selected" : ""}>${name}</option>`).join("")}
+          </select>
+        </label>
+      </div>
+      <div class="chord-candidates">
+        ${variants.map((candidate, index) => `
+          <button class="candidate-chord" data-add-variant="${index}">
+            <strong>${escapeHtml(candidate.symbol)}</strong>
+            <span>${escapeHtml(candidate.label)} · ${escapeHtml(candidate.degree)}</span>
+          </button>
+        `).join("")}
+      </div>
+
+      <p class="hint">Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / augに対応。1回タップすると1小節分追加し、AutoSaveされます。</p>
     </section>
   `;
 }
@@ -253,6 +278,7 @@ function bindHubControls() {
   });
 
   key?.addEventListener("change", (event) => {
+    chordRootSelection = null;
     commitHubChange({ basic: { key: event.target.value } });
   });
 
@@ -309,26 +335,44 @@ function commitChordUpdate(chords, successMessage) {
 function bindChordControls() {
   const project = projectStore.getSnapshot();
   const candidates = getDiatonicChords(project.basic.key, project.basic.scale);
+  const selectedRoot = Number.isInteger(chordRootSelection)
+    ? chordRootSelection
+    : rootToPitchClass(project.basic.key);
+  const variants = getChordVariants(selectedRoot, project.basic.key);
   const barTicks = project.basic.ppq * 4;
+
+  function appendCandidate(candidate) {
+    if (!candidate) return;
+
+    const latest = projectStore.getSnapshot();
+    const next = [
+      ...latest.chords,
+      {
+        startTick: latest.chords.length * barTicks,
+        durationTick: barTicks,
+        root: candidate.root,
+        quality: candidate.quality,
+        degree: candidate.degree
+      }
+    ];
+
+    commitChordUpdate(next, `${candidate.symbol} (${candidate.degree}) を追加しました。`);
+  }
 
   document.querySelectorAll("[data-add-chord]").forEach((button) => {
     button.addEventListener("click", () => {
-      const candidate = candidates[Number(button.dataset.addChord)];
-      if (!candidate) return;
+      appendCandidate(candidates[Number(button.dataset.addChord)]);
+    });
+  });
 
-      const latest = projectStore.getSnapshot();
-      const next = [
-        ...latest.chords,
-        {
-          startTick: latest.chords.length * barTicks,
-          durationTick: barTicks,
-          root: candidate.root,
-          quality: candidate.quality,
-          degree: candidate.degree
-        }
-      ];
+  document.querySelector("#chord-root-select")?.addEventListener("change", (event) => {
+    chordRootSelection = Number(event.target.value);
+    render("chord");
+  });
 
-      commitChordUpdate(next, `${candidate.symbol} (${candidate.degree}) を追加しました。`);
+  document.querySelectorAll("[data-add-variant]").forEach((button) => {
+    button.addEventListener("click", () => {
+      appendCandidate(variants[Number(button.dataset.addVariant)]);
     });
   });
 
@@ -390,9 +434,22 @@ async function boot() {
 
   try {
     initialProject = await loadActiveProject();
-    startupMessage = initialProject
-      ? "保存済みProjectを端末から読み込みました。AutoSaveは有効です。"
-      : "新しいProjectです。変更はAutoSaveされます。";
+
+    if (initialProject) {
+      const previousSchemaVersion = initialProject.schemaVersion;
+
+      if (previousSchemaVersion !== SCHEMA_VERSION) {
+        await backupProjectForMigration(initialProject);
+        initialProject = migrateProject(initialProject);
+        await saveProject(initialProject);
+        startupMessage = `保存済みProjectをSchema v${previousSchemaVersion}からv${SCHEMA_VERSION}へ移行しました。移行前データも端末内に退避しています。`;
+      } else {
+        initialProject = migrateProject(initialProject);
+        startupMessage = "保存済みProjectを端末から読み込みました。AutoSaveは有効です。";
+      }
+    } else {
+      startupMessage = "新しいProjectです。変更はAutoSaveされます。";
+    }
   } catch {
     initialProject = null;
     startupMessage = "保存データを読み込めなかったため、新しいProjectで開始しました。";

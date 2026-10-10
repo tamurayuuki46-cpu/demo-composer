@@ -1,5 +1,41 @@
 # CHANGELOG
 
+## v0.2-dev
+更新日: 2026-10-10
+
+### 追加
+- Chordの基準音Select（C〜B）
+- 基準音ごとの9種類のChord Quality: Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
+- 共通Chord Quality定義 `src/core/chord-qualities.js`
+- schemaVersion 2
+- schemaVersion 1 → 2 Migration
+- Migration前ProjectをIndexedDB `meta` storeへ退避する処理
+- Chord Quality Smoke Test（`npm run test:chord`、CI対象）
+- Rhythm Drum Preset 6種類（8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH）
+- Rhythm Preset Smoke Test（`npm run test:rhythm-presets`、CI対象）
+- v0.2統合前の復元ブランチ `restore/v0.1-before-v0.2-integration`
+
+### 変更
+- Chord画面はダイアトニック7候補を残しつつ、任意の基準音から9種類のQualityを追加できる構成へ変更
+- Chord QualityをDemo Player / Chord.mid / Song.midへ共通の構成音定義で反映
+- Rhythmに `Drum Preset` select + `適用` を追加し、現在BarのKick / Snare / Closed HHだけを置換する方式にした
+- Preset適用後も通常の16 stepをTapして自由に修正できるようにした
+- `VERSION` / 画面内Version / package versionをv0.2-devへ更新
+- DATA_SCHEMAをschemaVersion 2へ更新
+- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Static Buildを確認する構成へ更新
+
+### 修正
+- 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
+- PR #23 / #24がGitHub Pages統合後のdevelopと競合するため、現在developから統合branchを作って安全に再統合した
+
+### 未対応
+- Chord並べ替え / 長さ変更
+- 借用和音を目的別に整理した候補
+- Chord Tone強調
+- Melody Analyzer
+- Snapshot履歴 / project.json Import
+- Arrange / Song Structure
+
 ## v0.1-dev
 更新日: 2026-10-10
 
@@ -105,7 +141,6 @@
 ### 未対応
 - Snapshot履歴
 - project.json Import
-- Migration
 - Chord並べ替え / 長さ変更 / 7th / 借用和音
 - Melody 16分音符 / Note Length / Velocity編集
 - Scale表示 / Chord Tone強調 / Melody Analyzer

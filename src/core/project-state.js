@@ -1,9 +1,8 @@
-const APP_VERSION = "v0.1-dev";
-const SCHEMA_VERSION = 1;
+import { isChordQuality } from "./chord-qualities.js";
+import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
 
 const VALID_KEYS = new Set(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
 const VALID_SCALES = new Set(["major", "minor"]);
-const VALID_CHORD_QUALITIES = new Set(["major", "minor", "diminished"]);
 
 function clone(value) {
   return typeof structuredClone === "function"
@@ -81,11 +80,11 @@ function validateBasic(basic) {
   }
 
   if (basic.timeSignature !== "4/4") {
-    throw new Error("v0.1では拍子は4/4固定です。");
+    throw new Error("v0.2では拍子は4/4固定です。");
   }
 
   if (basic.ppq !== 480) {
-    throw new Error("v0.1ではPPQは480固定です。");
+    throw new Error("v0.2ではPPQは480固定です。");
   }
 }
 
@@ -103,7 +102,7 @@ function validateChords(chords) {
       throw new Error(`Chord ${index + 1} root is invalid.`);
     }
 
-    if (!VALID_CHORD_QUALITIES.has(chord.quality)) {
+    if (!isChordQuality(chord.quality)) {
       throw new Error(`Chord ${index + 1} quality is invalid.`);
     }
 
