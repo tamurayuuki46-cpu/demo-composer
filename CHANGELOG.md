@@ -1,9 +1,12 @@
 # CHANGELOG
 
 ## v0.2-dev
-更新日: 2026-10-10
+更新日: 2026-10-11
 
 ### 追加
+- Melody: `↻ 候補を更新`。同じKey / Chord / Barでも、安定 / キャッチー / 浮遊感の方向性を保った4つのVariation Setを順番に切り替えられる。Variation番号はUI状態のみでProject Dataには保存しない（Schema変更なし）
+- Melody Candidate Smoke Testを拡張し、4 Setが実際に異なること、全NoteがMIDI範囲内であること、全Setの安定案がChord Tone中心であることを確認
+- Melody候補Refresh前の復元ブランチ `restore/v0.2-before-melody-candidate-refresh`
 - Section Variation にメロディの候補を2つ追加（`少し違う版にする` の中）: `メロディの音程だけ少し変える`（リズムはそのまま。各小節の2つ目・4つ目の音を、Keyの音階で偶数小節は1つ上・奇数小節は1つ下へ。1つ目の音は残してモチーフを保つ。音階外の音は触らない）、`メロディのリズムだけ変える`（音程と順番はそのまま。各小節の2つ目・4つ目の音が拍の頭なら8分後ろへ。次の音に届かないときは動かさず、2回当てても動かない）。既存の `メロディの終わりを変える` と合わせてメロディ3候補。Schema変更なし
 - Section Variation Smoke Testに音程だけ / リズムだけを追加
 - 追加前の復元ブランチ `restore/v0.2-before-melody-variation`
@@ -115,9 +118,9 @@
 - Hub Key変更の回帰テスト（`npm run test:key-change`、CI対象）
 - Diatonic Fan配置Smoke Test（`npm run test:diatonic-fan`、CI対象）
 - v0.2統合前の復元ブランチ `restore/v0.1-before-v0.2-integration`
-- Chord Preset追加前の復元ブランチ `restore/v0.2-before-chord-presets`
-- Key変更修正前の復元ブランチ `restore/v0.2-before-key-change-fix`
-- ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
+- Chord Preset追加前復元点: `restore/v0.2-before-chord-presets`
+- Key変更修正前復元点: `restore/v0.2-before-key-change-fix`
+- ダイアトニック扇形UI変更前復元点: `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
 - Melody候補の適用結果を専用形式ではなく通常の `tracks[role=melody].notes[]` として保存し、既存のAutoSave / Undo / Demo Player / MIDI Exportをそのまま利用する方式にした
@@ -148,6 +151,7 @@
 - CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Backing Pattern / Hub Key Change / Diatonic Fan / Undo / Arrange / Sound Sketch / Part Switch / AI Consult / Import / Static Buildを確認する構成へ更新
 
 ### 修正
+- Melody候補が同じKey / Chord / Barでは毎回同じ3案に固定されていた問題を修正。無制限ランダムではなく、ルールを維持した4 Variation Setの循環にした
 - Demo Player: Loop中（または再生中）にコード・メロディなどを編集しても、Stop→Playし直すまで古い音が鳴り続けていた問題を修正。Loopの次の周に入るたびに最新の曲（Section再生なら最新のSection範囲）を読み直して鳴らす。再生中の1周の途中には反映されず、次の周から変わる。Schema変更なし
 - `src/chord/chord-presets.css` の閉じ括弧 `}` が1つ抜けていて、そのあとに書いた「次のコード候補」「ひとスパイス」「コードの役割」の見た目が効かなくなっていた。原因: Backing Pattern統合時のrebaseで両側を残した際の取り違え。再発防止としてCSS括弧のテストをCIに追加
 - `package.json` に重複していた `test:syntax` 定義を1つへ統合し、ドラムフィルを含む最新Syntax CheckとMelody候補ファイルをまとめて検査するようにした
