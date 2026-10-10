@@ -1,0 +1,29 @@
+name: Drive Backup Archive
+
+on:
+  push:
+    branches:
+      - chatgpt/drive-backup-v0.1-feature-complete
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create exact milestone source archive
+        run: |
+          git archive --format=zip --prefix=demo-composer/ 655fc1419340c313ed2f6f727c057db35b8ae6f5 -o demo_composer_v0.1-feature-complete.zip
+
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-composer-v0.1-feature-complete-source
+          path: demo_composer_v0.1-feature-complete.zip
+          retention-days: 1
