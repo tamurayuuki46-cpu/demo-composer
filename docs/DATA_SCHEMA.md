@@ -134,11 +134,11 @@ Rhythm UIでは16分音符Gridを使用するため、1 step = 120 tick。
 
 MelodyとBassはUI上同一stepに1音だけ入力するMonophonic方式。Drumsは同一stepにKick / Snare / HHなど複数Noteを保持できる。
 
-## Instrument / Sound Sketch Data
+## Instrument / Sound / Performance Sketch Data
 
-Sound Sketch Liteは既存の `instruments[]` を利用する。schemaVersionは2のまま維持する。
+Sound Sketch LiteとChord Backing Patternは、v2で既に確保している `instruments[]` を軽量なSketch設定Registryとして利用する。schemaVersionは2のまま維持する。
 
-1 Partにつき最大1件:
+Sound entryは1 Partにつき最大1件:
 
 ```json
 {
@@ -148,7 +148,7 @@ Sound Sketch Liteは既存の `instruments[]` を利用する。schemaVersionは
 }
 ```
 
-対応Part:
+Sound対応Part:
 
 - `chord`
 - `melody`
@@ -170,14 +170,34 @@ Tone:
 - `airy`
 - `aggressive`
 
+Chord Backing Patternは別entryとして保存する:
+
+```json
+{
+  "part": "chord-backing",
+  "preset": "eighth",
+  "tone": "natural"
+}
+```
+
+`chord-backing.preset`:
+
+- `block`
+- `eighth`
+- `arpeggio`
+- `syncopation`
+
+`tone` は既存Instrument entry形式との互換性を保つため `natural` 固定とし、Backing Patternの音色方向はChord Sound entry（`part: chord`）側で管理する。
+
 互換性ルール:
 
-- `instruments: []` は有効で、各Partは既定Preset + `natural` へFallbackする
-- Sound未設定の旧ProjectもMigration不要
-- Sound変更はProject全体Undo / RedoとAutoSaveの対象
-- Section再生はProjectをsliceしても `instruments` を保持するため同じSound設定で鳴る
+- `instruments: []` は有効で、Sound各Partは既定Preset + `natural`、Backing Patternは `block` へFallbackする
+- Sound / Backing未設定の旧ProjectもMigration不要
+- Sound変更・Backing Pattern変更はProject全体Undo / RedoとAutoSaveの対象
+- Section再生はProjectをsliceしても `instruments` を保持するため同じSound / Backing設定で鳴る
 - Sound選択はDemo Playerの仮音色だけへ反映する
-- Chord / Melody / BassのNote Data、Chord Data、Rhythm Dataは変更しない
+- Backing PatternはDemo PlayerのChord鳴らし方と `Chord.mid / Song.mid` のChord Note配置へ反映する
+- Backing Patternは `project.chords[]` 自体を書き換えない
 - MIDI Program Change / CCは現時点では出力しない
 
 ## Ownership
@@ -187,7 +207,10 @@ Tone:
 - melody track → Melody
 - bass/drums → Rhythm
 - structure/counterMelody → Arrange
-- instruments → Sound
+- instruments entry `part: chord / melody / bass` → Sound
+- instruments entry `part: chord-backing` → Chord
+
+`instruments[]` はRegistryとして共通Containerを使うが、各 `part` entryの責任Moduleは1つに固定する。
 
 ## Schema v1 → v2 Migration
 
@@ -203,7 +226,7 @@ v2ではProjectの基本構造は変更せず、`chords[].quality` の許可値�
 
 v1で使用していた `major / minor / diminished` はv2でも有効なため、Chordデータ自体の変換は不要。
 
-ArrangeのSectionとSound Sketch Liteはいずれもv2に既に存在する `structure.sections` / `instruments` を利用するため、追加のschemaVersion変更は行わない。
+Arrange Section / Sound Sketch Lite / Chord Backing Patternはいずれもv2に既に存在する `structure.sections` / `instruments` を利用するため、追加のschemaVersion変更は行わない。
 
 ## Migration Rule
 
