@@ -31,17 +31,26 @@ Bottom Navigation:
 - BPM
 - Key
 - Scale
-- 進捗
 - Save
 - Export
 - AI相談
 
+現在のSaveは手動。IndexedDBへActive Projectを保存する。
+
 ## Chord
 
-- コードカード
-- Degree併記
-- 候補3つ
-- 追加 / 並べ替え / 削除
+v0.1の基本入力:
+
+- Hubで設定したKey / Scaleを参照
+- そのKey / Scaleのダイアトニックコード7つを候補表示
+- コード名 + Degreeを併記
+- 候補を1回タップすると1小節追加
+- 追加済みコードをカード表示
+- 各カードの×で削除
+- Clearで進行全削除
+- 削除後はstartTickを1小節単位で詰め直す
+
+v0.1では並べ替え・コード長変更・借用和音・高度なコード編集は後回し。
 
 ## Melody
 
