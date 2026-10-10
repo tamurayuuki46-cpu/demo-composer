@@ -160,6 +160,42 @@ function scaleLabel(scale) {
   return scale || "Scale";
 }
 
+// 既存の分析値を「どこを見るか」という3方向にまとめる。似ている度の採点はしない。
+function melodyPerspectiveRows(analysis) {
+  const { leaps, chordDegree, scaleFit, density, motif } = analysis;
+  const floatingRate = chordDegree.counted
+    ? (chordDegree.counts[2] + chordDegree.counts[9]) / chordDegree.counted
+    : null;
+  const scaleOutside = scaleFit.rate === null ? null : scaleFit.counted - scaleFit.hits;
+
+  return [
+    {
+      id: "perspective-note",
+      label: "旋律の3つの見方",
+      value: "参考モデル",
+      comment: "特定曲のコピーや本人らしさの採点ではなく、今の分析値をどこから見るかを3方向に整理したものです。"
+    },
+    {
+      id: "perspective-kusano",
+      label: "🌿 歌心・浮遊型（草野マサムネ参考）",
+      value: `跳躍 ${percent(leaps.ratio)}・2(9th)/6th ${floatingRate === null ? "—" : percent(floatingRate)}`,
+      comment: "順次進行のなめらかさと、コードに対する2(9th)・6thの混ざり方を見る。"
+    },
+    {
+      id: "perspective-yonezu",
+      label: "⚡ 輪郭・違和感型（米津玄師参考）",
+      value: `最大跳躍 ${leaps.max}半音・Scale外 ${scaleOutside === null ? "—" : `${scaleOutside}音`}`,
+      comment: "大きな跳躍やScale外音を良し悪しではなく、旋律の輪郭や引っ掛かりとして見る。"
+    },
+    {
+      id: "perspective-ayase",
+      label: "🚀 推進・高密度型（Ayase / YOASOBI参考）",
+      value: `${density.perBar.toFixed(1)}音/小節・同型反復 ${motif.repeatedBars}/${motif.barsWithNotes}小節`,
+      comment: "音数の密度と短い反復が、前へ進む感覚を作っているかを見る。"
+    }
+  ];
+}
+
 // 画面表示用の「項目・数字・一言」。評価ではなく特徴の説明。
 export function describeMelody(analysis) {
   if (!analysis) return [];
@@ -204,6 +240,7 @@ export function describeMelody(analysis) {
     { id: "tone", label: "コードトーン率", value: chordTone.rate === null ? "—" : percent(chordTone.rate), comment: toneComment },
     { id: "density", label: "リズム密度", value: `1小節あたり ${density.perBar.toFixed(1)}音`, comment: densityComment },
     { id: "same", label: "同音連打", value: `${repeats.sameCount}回・最長${repeats.maxRun}音`, comment: repeatComment },
-    { id: "motif", label: "モチーフ反復", value: `${motif.repeatedBars} / ${motif.barsWithNotes}小節が同じパターン`, comment: motifComment }
+    { id: "motif", label: "モチーフ反復", value: `${motif.repeatedBars} / ${motif.barsWithNotes}小節が同じパターン`, comment: motifComment },
+    ...melodyPerspectiveRows(analysis)
   ];
 }
