@@ -54,10 +54,28 @@ v0.1では並べ替え・コード長変更・借用和音・高度なコード�
 
 ## Melody
 
-- スマホ向け簡易Piano Roll
+スマホ向け簡易Piano Roll。
+
+- 1 Barを8分音符8 stepとして扱う
+- 横方向は4 stepずつ表示
+- `Beat 1–2` / `Beat 3–4` で表示範囲切替
+- Pitchは1 octaveずつ表示
+- `Oct −` / `Oct +` でoctave切替
+- `← Bar` / `Bar →` で小節移動
+- Chordが存在するBarではChord名 + Degree表示
+- Note cell Tapで入力 / 同じcell Tapで削除
+- 同じstepの別PitchをTapすると置換
+- `Clear Bar` で現在小節のMelodyを削除
+
+タップ領域確保を優先し、PC DAWの16〜32列Piano Rollをそのまま縮小しない。
+
+後続:
+
+- 16分音符
+- Note Length / Velocity
 - Scale表示
 - Chord Tone強調
-- Analyzerは同画面パネル
+- Melody Analyzer
 
 ## Rhythm
 

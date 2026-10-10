@@ -1,8 +1,10 @@
 import { chordSymbol, getDiatonicChords } from "./chord/chord-theory.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
+import { createMelodyController } from "./melody/melody-screen.js";
 import { loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
 let projectStore;
+let melodyController;
 let currentScreen = "hub";
 let startupMessage = "Projectを編集できます。変更後はSaveで端末に保存してください。";
 let chordMessage = "下の候補をタップしてコードを追加します。";
@@ -110,14 +112,7 @@ function chordScreen() {
 const screens = {
   hub: hubScreen,
   chord: chordScreen,
-  melody: () => `
-    <section class="card">
-      <h2>Melody</h2>
-      <p>スマホ向け簡易Piano Rollをここに実装します。</p>
-      <div class="placeholder">Piano Roll v0.1</div>
-      <p class="hint">コードトーン表示とAnalyzerは後続実装です。</p>
-    </section>
-  `,
+  melody: () => melodyController.render(),
   rhythm: () => `
     <section class="card">
       <h2>Rhythm</h2>
@@ -277,6 +272,7 @@ function render(name) {
 
   if (name === "hub") bindHubControls();
   if (name === "chord") bindChordControls();
+  if (name === "melody") melodyController.bind();
 }
 
 async function boot() {
@@ -298,6 +294,8 @@ async function boot() {
     projectStore = createProjectStore(createDefaultProject());
     startupMessage = "保存データが現在のSchemaで不正なため、新しいProjectで開始しました。";
   }
+
+  melodyController = createMelodyController({ projectStore, rerender: render });
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => render(button.dataset.screen));

@@ -121,6 +121,60 @@ function validateChords(chords) {
   });
 }
 
+function validateNotes(notes, label = "Track") {
+  if (!Array.isArray(notes)) {
+    throw new Error(`${label} notes are invalid.`);
+  }
+
+  notes.forEach((note, index) => {
+    if (!note || typeof note !== "object") {
+      throw new Error(`${label} note ${index + 1} is invalid.`);
+    }
+
+    if (typeof note.id !== "string" || !note.id) {
+      throw new Error(`${label} note ${index + 1} id is invalid.`);
+    }
+
+    if (!Number.isInteger(note.pitch) || note.pitch < 0 || note.pitch > 127) {
+      throw new Error(`${label} note ${index + 1} pitch is invalid.`);
+    }
+
+    if (!Number.isInteger(note.startTick) || note.startTick < 0) {
+      throw new Error(`${label} note ${index + 1} startTick is invalid.`);
+    }
+
+    if (!Number.isInteger(note.durationTick) || note.durationTick <= 0) {
+      throw new Error(`${label} note ${index + 1} durationTick is invalid.`);
+    }
+
+    if (!Number.isInteger(note.velocity) || note.velocity < 1 || note.velocity > 127) {
+      throw new Error(`${label} note ${index + 1} velocity is invalid.`);
+    }
+  });
+}
+
+function validateTracks(tracks) {
+  if (!Array.isArray(tracks)) {
+    throw new Error("Track data is invalid.");
+  }
+
+  tracks.forEach((track, index) => {
+    if (!track || typeof track !== "object" || typeof track.role !== "string" || !track.role) {
+      throw new Error(`Track ${index + 1} is invalid.`);
+    }
+
+    validateNotes(track.notes ?? [], `Track ${index + 1}`);
+  });
+}
+
+function getMelodyNotes(project) {
+  return project.tracks.find((track) => track.role === "melody")?.notes ?? [];
+}
+
+function hasHarmonyDependentContent(project) {
+  return project.chords.length > 0 || getMelodyNotes(project).length > 0;
+}
+
 export function validateProject(project) {
   if (!project || typeof project !== "object") {
     throw new Error("Project data is invalid.");
@@ -133,6 +187,7 @@ export function validateProject(project) {
   validateMetadata(project.metadata);
   validateBasic(project.basic);
   validateChords(project.chords);
+  validateTracks(project.tracks);
 
   if (!Number.isInteger(project.revision) || project.revision < 1) {
     throw new Error("Project revision is invalid.");
@@ -171,8 +226,8 @@ export function createProjectStore(initialProject = createDefaultProject()) {
         (Object.hasOwn(basic, "key") && basic.key !== state.basic.key) ||
         (Object.hasOwn(basic, "scale") && basic.scale !== state.basic.scale);
 
-      if (harmonyChanged && state.chords.length > 0) {
-        throw new Error("コード進行がある間はKey/Scaleを変更できません。ChordでClearしてから変更してください。");
+      if (harmonyChanged && hasHarmonyDependentContent(state)) {
+        throw new Error("コードまたはメロディがある間はKey/Scaleを変更できません。関連データをクリアしてから変更してください。");
       }
 
       const next = clone(state);
@@ -201,6 +256,41 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       const next = clone(state);
       next.chords = clone(chords);
       validateChords(next.chords);
+
+      next.revision = state.revision + 1;
+      state = next;
+      emit();
+
+      return clone(state);
+    },
+
+    updateMelodyNotes(notes) {
+      const next = clone(state);
+      const nextNotes = clone(notes);
+      validateNotes(nextNotes, "Melody");
+
+      const trackIndex = next.tracks.findIndex((track) => track.role === "melody");
+
+      if (trackIndex === -1) {
+        next.tracks.push({
+          role: "melody",
+          name: "Melody",
+          midiChannel: 2,
+          instrumentId: null,
+          mute: false,
+          solo: false,
+          volume: 1,
+          pan: 0,
+          notes: nextNotes
+        });
+      } else {
+        next.tracks[trackIndex] = {
+          ...next.tracks[trackIndex],
+          notes: nextNotes
+        };
+      }
+
+      validateTracks(next.tracks);
 
       next.revision = state.revision + 1;
       state = next;
