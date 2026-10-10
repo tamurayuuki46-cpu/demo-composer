@@ -1,3 +1,4 @@
+import { buildBackingEvents, getBackingPatternSelection } from "../core/backing-patterns.js";
 import { chordIntervals } from "../core/chord-qualities.js";
 import { getSections, sectionRanges } from "../core/section-ops.js";
 import {
@@ -59,16 +60,30 @@ function conductorEvents(project) {
 
 function chordTrackEvents(project) {
   const events = [trackNameEvent("Chord")];
+  const backingPattern = getBackingPatternSelection(project.instruments);
 
   project.chords.forEach((chord) => {
-    chordIntervals(chord.quality).forEach((interval) => {
-      events.push(...noteEvents({
-        channel: 0,
-        pitch: 60 + chord.root + interval,
-        velocity: 72,
-        startTick: chord.startTick,
-        durationTick: chord.durationTick
-      }));
+    const intervals = chordIntervals(chord.quality);
+    const chordEndTick = chord.startTick + chord.durationTick;
+
+    buildBackingEvents(backingPattern, intervals).forEach((backingEvent) => {
+      const startTick = chord.startTick + Math.round(chord.durationTick * backingEvent.offset);
+      const remainingTick = Math.max(1, chordEndTick - startTick);
+      const durationTick = Math.max(
+        1,
+        Math.min(remainingTick, Math.round(chord.durationTick * backingEvent.duration))
+      );
+      const velocity = Math.min(127, Math.max(1, Math.round(72 * backingEvent.accent)));
+
+      backingEvent.intervals.forEach((interval) => {
+        events.push(...noteEvents({
+          channel: 0,
+          pitch: 60 + chord.root + interval,
+          velocity,
+          startTick,
+          durationTick
+        }));
+      });
     });
   });
 
