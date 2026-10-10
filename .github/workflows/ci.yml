@@ -26,3 +26,6 @@ jobs:
 
       - name: Melody grid smoke test
         run: npm run test:melody
+
+      - name: Chord types smoke test
+        run: npm run test:chord
