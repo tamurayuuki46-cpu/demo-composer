@@ -4,7 +4,7 @@
 v0.1-dev
 
 最新安定版:
-なし（初期開発段階）
+なし（実機確認前）
 
 現在実装済み:
 - Repository初期構成
@@ -37,14 +37,21 @@ v0.1-dev
 - SMF Type 1 / Conductor Track / Tempo / 4/4 / Key Signature
 - project.json手動Backup Export
 - MIDI Smoke Test / Pull Request CI
+- Android v0.1実機テストチェックリスト
 
 開発中:
-- v0.1仕上げ / 実機確認準備
+- v0.1実機確認準備
 
-次に実装:
-- Android実機テスト用チェックリスト
-- project.json Importは安全な復元設計を固めてから判断
-- PWA Service Workerは開発中のstale cache対策を決めてから判断
+次に実施:
+- `docs/ANDROID_TEST_CHECKLIST.md`に沿ったAndroid実機テスト
+- Cubasis / CubaseへのMIDI Import確認
+- 実機テストで見つかった重大バグの最小修正
+- Stable条件を満たしたらv0.1-stable候補作成
+
+Stable化前には実装しない / 慎重に判断:
+- project.json Importは安全な復元設計を固めてから
+- PWA Service Workerは開発中のstale cache対策を決めてから
+- 新規の大型機能追加
 
 既知の問題:
 - Chordは現在1コード=1小節固定
@@ -69,6 +76,7 @@ v0.1-dev
 - PPQ=480の方針
 - Module責務の分離
 - 「DAWを再現しない」というプロダクト境界
+- 実機確認前の`main`
 
 最近の重要な設計判断:
 - Android Chromeを主対象
@@ -82,38 +90,28 @@ v0.1-dev
 - AutoSaveは1.5秒Debounce + visibilitychange(hidden)即時保存
 - AutoSave自体はProject Stateやrevisionを変更しない
 - 手動SaveはSave Nowとして残し、Persistent Storage要求にも利用する
-- 保存方式変更前の復元ポイントとして `restore/v0.1-before-indexeddb` / `restore/v0.1-before-autosave` を作成
-- Chord候補計算はsrc/chord/chord-theory.jsへ分離
 - Chord Moduleはproject.chords[]だけを書き換える
 - v0.1のChordは4/4・PPQ480で1コード=1小節（1920 tick）
-- Melody Grid処理はsrc/melody/melody-grid.js、画面制御はsrc/melody/melody-screen.jsへ分離
 - v0.1 Melodyは1 Bar=8 step、1 step=240 tick、Default velocity=96
 - スマホのTap領域確保のためMelodyは4 stepずつ表示する
-- Melody UI変更前の復元ポイントとして `restore/v0.1-before-melody-roll` を作成
-- Rhythm処理はsrc/rhythm/rhythm-grid.js、画面制御はsrc/rhythm/rhythm-screen.jsへ分離
 - v0.1 Rhythmは1 Bar=16 step、1 step=120 tick
 - スマホのTap領域確保のためRhythmは1 Beat=4 stepずつ表示する
 - BassはChord Root優先、Chord未設定時はKey Rootを使う
 - DrumsはGM準拠のKick36 / Snare38 / ClosedHH42、MIDI Channel 10
-- Rhythm UI変更前の復元ポイントとして `restore/v0.1-before-rhythm-sequencer` を作成
-- Demo Playerはsrc/audio/demo-player.jsへ分離しProject Stateを読み取り専用で使用
-- Demo Playerは画面下部、Module Navigationの上に常設
 - Demo Playerは作曲確認用の仮音のみ。高度な音作りはCubasis / Cubaseへ任せる
-- Demo Player実装前の復元ポイントとして `restore/v0.1-before-demo-player` を作成
-- MIDI writerはsrc/midi/midi-writer.js、Project変換/Downloadはsrc/midi/midi-export.jsへ分離
 - Song.midはConductor + Chord + Melody + Bass + DrumsのSMF Type 1
 - Part MIDIもConductor + 対象PartのType 1
 - MIDI ChannelsはChord1 / Melody2 / Bass3 / Drums10
 - Program Change / CCはv0.1では出力しない
-- MIDI構造変更前の復元ポイントとして `restore/v0.1-before-midi-export` を作成
 - Hub Exportからproject.jsonを手動Backupできる
 - AIは完全自動作曲ではなく候補提示・先生役
 - 将来のBass / Melody等の生成は「3候補 → 選択 → 修正」を基本とする
 - 初期生成エンジンはAPI不要のルールベース方式を優先
-- 重要仕様はCLAUDE.md / AGENTS.mdではなくdocsへ保存
+- v0.1 Core完了時点の復元ポイントとして `milestone/v0.1-core-complete` を作成
+- v0.1 Stableは`docs/ANDROID_TEST_CHECKLIST.md`の必須項目を通すまでmainへ入れない
 
 現在のデータSchema:
-schemaVersion 1 / PPQ 480 / 4/4固定。AutoSave追加によるschemaVersion変更なし。
+schemaVersion 1 / PPQ 480 / 4/4固定。schemaVersion変更なし。
 
 最終更新:
 2026-10-10
