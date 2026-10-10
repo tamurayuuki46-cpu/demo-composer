@@ -57,6 +57,7 @@ v0.2-dev
 - PR #66 Melody候補最終統合: merged
 - PR #73 Melody候補Refresh: merged
 - PR #71 Melody Variation（音程だけ / リズムだけ）: merged。PR #73の後にdevelopへ統合され、Refreshを含む親commitを保持
+- PR #91 Melody Analyzer 旋律の3つの見方: merged / CI success
 - Melody候補統合merge commit: `6a7f1ce482af9a21eaa30fd6e3b91fd896b4f821`
 - Melody候補Refresh merge commit: `9891c2208287289e13feed4a71b1f8d6aa36bb74`
 - Melody候補Refresh PR CI: success
@@ -73,7 +74,6 @@ v0.2-dev
 
 開発中:
 - Melody候補の4 Variation Set / Refreshはdevelop統合済み
-- Melody Analyzer `旋律の3つの見方` は `chatgpt/v0.2-melody-perspectives` で実装・テスト更新中。develop統合前
 - Android実機で `↻ 候補を更新` と3候補の差・試聴・編集を確認する段階
 - v0.2は機能が増えてきたため、追加機能より実制作での使いやすさ確認を優先する
 
