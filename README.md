@@ -25,7 +25,7 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 ## Status
 
-現在は、Hub / Chord / Melody / Rhythm の実データ入力、曲の構成（Arrange）、Undo / Redo、schemaVersion 2準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
+現在は、Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite、Undo / Redo、schemaVersion 2準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
 
 HubではProject名 / BPM / Key / Scaleを編集できます。Key変更時はChord / Melody / Bassを同じ最短半音幅で自動移調し、Drumsは変更しません。Scale変更はChord / Melody / Bassがある場合は安全のため拒否します。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。
 
@@ -35,13 +35,17 @@ Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています
 
 Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを `1 e & a / 2 e & a / 3 e & a / 4 e & a` として1画面に同時表示し、Bassは現在ChordのRootを使用します。現在Beatを次Beatへ、現在Barを次BarへコピーするRhythm Copyにも対応しています。さらに `8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH` の6種類のDrum Presetを現在Barへ適用し、適用後に16 stepを手動修正できます。PresetはBassや他Barを変更しません。
 
-Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量な仮音でPlay / Stop / Loop再生できます。Loopは最後に使用しているBarの終端で反復します。
+Arrangeでは、イントロ / Aメロ / Bメロ / サビ / 間奏 / Cメロ / アウトロをSectionとして並べ、構成Template、小節増減、Sectionコピー / 削除、Section単体再生に対応しています。Section操作はChord / Melody / Bass / DrumsをCoreのGlobal Operationでまとめて扱い、Undo / Redoできます。Song.midのConductor TrackにはSection Markerを書き出します。
 
-Exportでは `Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `project.json` をダウンロードできます。Song / Part MIDIはSMF Type 1、PPQ 480です。
+Sound Sketch Liteでは、Chord / Melody / Bassの仮音色方向をスマホで決められます。Chordは `Keys / Pad / Piano`、Melodyは `Lead / Keys / Pluck`、Bassは `Soft Bass / Synth Bass / Deep Bass` から選択でき、さらに `Natural / Bright / Soft / Warm / Dark / Airy / Aggressive` のToneタグを組み合わせられます。選択は `project.instruments[]` に保存され、AutoSaveとUndo / Redoの対象です。Demo PlayerのWeb Audio仮音色へ反映しますが、MIDI Note / Chord Data / Rhythm Dataは変更しません。最終音色はCubasis / Cubase / Plugin側で差し替えます。
 
-schemaVersion 1の保存Projectは、v0.2起動時に移行前データをIndexedDB内へ退避した上でschemaVersion 2へ自動Migrationします。
+Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量な仮音でPlay / Stop / Loop再生できます。Loopは最後に使用しているBarの終端で反復します。ArrangeからSectionだけを再生する場合もSound Sketch Liteの選択を維持します。
 
-未実装の主要項目は、project.json Import、Snapshot履歴、PWA Service Worker、Chord Tone表示、Arrange / Song Structureです。
+Exportでは `Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `project.json` をダウンロードできます。Song / Part MIDIはSMF Type 1、PPQ 480です。Sound Sketch LiteはMIDI Program Change / CCを出力しません。
+
+schemaVersion 1の保存Projectは、v0.2起動時に移行前データをIndexedDB内へ退避した上でschemaVersion 2へ自動Migrationします。ArrangeとSound Sketch Liteは既存の `structure.sections` / `instruments` を利用するため追加Migrationはありません。
+
+未実装の主要項目は、project.json Import、Snapshot履歴、PWA Service Worker、Chord Tone表示、Melody Analyzer、Counter Melody、Drums音色変更、本格Sound Sketch整理です。
 
 ## AI共同開発
 
