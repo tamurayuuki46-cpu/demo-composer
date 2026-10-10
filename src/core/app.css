@@ -8,7 +8,9 @@ body {
   margin: 0;
   background: #0d0d0f;
 }
-button {
+button,
+input,
+select {
   font: inherit;
 }
 #app {
@@ -73,6 +75,62 @@ h1 {
   display: block;
   margin-top: 4px;
   font-size: 18px;
+}
+.form-stack {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field span {
+  font-size: 12px;
+  opacity: .72;
+}
+.field input,
+.field select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  outline: none;
+  background: #222228;
+  color: #f5f5f5;
+}
+.field input:focus,
+.field select:focus {
+  border-color: #8f8fa2;
+}
+.project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+.project-meta span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #24242a;
+  font-size: 12px;
+  opacity: .82;
+}
+.status-message {
+  min-height: 20px;
+  margin: 10px 0 16px;
+  font-size: 13px;
+  opacity: .72;
+}
+.status-message.error {
+  opacity: 1;
+  font-weight: 700;
 }
 .actions {
   display: grid;
@@ -145,6 +203,11 @@ h1 {
   background: #f1f1f1;
   color: #111;
   font-weight: 700;
+}
+@media (max-width: 420px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
 }
 @media (min-width: 700px) {
   #app { max-width: 720px; margin: 0 auto; }
