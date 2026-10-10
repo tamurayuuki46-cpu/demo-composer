@@ -11,6 +11,7 @@ import {
   chordPresetPreview,
   getChordPreset
 } from "./chord/chord-presets.js";
+import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
@@ -40,6 +41,7 @@ let currentScreen = "hub";
 let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存されます。";
 let chordMessage = "下の候補をタップしてコードを追加します。";
 let chordRootSelection = null;
+let spiceOpen = false;
 let chordPresetSelection = CHORD_PRESETS[0].id;
 
 const KEY_OPTIONS = [...NOTE_NAMES];
@@ -133,6 +135,8 @@ function chordScreen() {
   }).join(" → ");
   const backingPatternId = getBackingPatternSelection(project.instruments);
   const backingPattern = getBackingPattern(backingPatternId);
+  const nextChords = suggestNextChords(project.chords, { key: project.basic.key, scale: project.basic.scale });
+  const spiceChords = suggestSpiceChords({ key: project.basic.key, scale: project.basic.scale });
   const progression = project.chords.length
     ? project.chords.map((chord, index) => `
         <div class="chord-card progression-card">
@@ -181,6 +185,32 @@ function chordScreen() {
       <div class="progression">${progression}</div>
 
       <p id="chord-message" class="status-message" aria-live="polite">${escapeHtml(chordMessage)}</p>
+
+      <h3>${project.chords.length ? "次のコード候補（3つ）" : "最初のコード候補（3つ）"}</h3>
+      <div class="chord-next">
+        ${nextChords.map((candidate, index) => `
+          <button class="candidate-chord chord-next-item" data-next-chord="${index}">
+            <strong>${escapeHtml(candidate.symbol)}</strong>
+            <span>${escapeHtml(candidate.degree)}</span>
+            <small>${escapeHtml(candidate.reason)}</small>
+          </button>
+        `).join("")}
+      </div>
+      <p class="hint">直前のコードから、次に来やすい3つです。選んだあとも、削除や別のコードへの変更ができます。</p>
+
+      <button id="toggle-spice" class="spice-toggle" aria-expanded="${spiceOpen}">✨ ひとスパイス（借用和音）${spiceOpen ? " ▲" : " ▼"}</button>
+      ${spiceOpen ? `
+        <div class="chord-next">
+          ${spiceChords.map((candidate, index) => `
+            <button class="candidate-chord chord-next-item spice-item" data-spice-chord="${index}">
+              <strong>${escapeHtml(candidate.symbol)}</strong>
+              <span>${escapeHtml(candidate.degree)}</span>
+              <small>${escapeHtml(candidate.reason)}</small>
+            </button>
+          `).join("")}
+        </div>
+        <p class="hint">同じ主音の${project.basic.scale === "major" ? "Minor" : "Major"}から和音を1つ借りる候補です。入れすぎず、1つだけ混ぜると雰囲気が変わります。</p>
+      ` : ""}
 
       <h3>ダイアトニック候補</h3>
       <div class="chord-candidates">
@@ -443,6 +473,24 @@ function bindChordControls() {
 
     commitChordUpdate(next, `${candidate.symbol} (${candidate.degree}) を追加しました。`);
   }
+
+  const nextChords = suggestNextChords(project.chords, { key: project.basic.key, scale: project.basic.scale });
+  document.querySelectorAll("[data-next-chord]").forEach((button) => {
+    button.addEventListener("click", () => {
+      appendCandidate(nextChords[Number(button.dataset.nextChord)]);
+    });
+  });
+
+  const spiceChords = suggestSpiceChords({ key: project.basic.key, scale: project.basic.scale });
+  document.querySelector("#toggle-spice")?.addEventListener("click", () => {
+    spiceOpen = !spiceOpen;
+    render("chord");
+  });
+  document.querySelectorAll("[data-spice-chord]").forEach((button) => {
+    button.addEventListener("click", () => {
+      appendCandidate(spiceChords[Number(button.dataset.spiceChord)]);
+    });
+  });
 
   document.querySelector("#chord-preset-select")?.addEventListener("change", (event) => {
     chordPresetSelection = event.target.value;
