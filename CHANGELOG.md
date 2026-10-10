@@ -4,6 +4,7 @@
 更新日: 2026-10-10
 
 ### 追加
+- Hub 出発点: 候補カードにコード名の進行（例: Dm → A# → F → C）と `▶ 試聴` を追加。試聴は保存せず仮のProjectを鳴らすだけ（曲のデータは変わらない。Bassは外して鳴らす）
 - Hub: `🧭 出発点を選ぶ（ジャンル × ムード）`。ジャンル（ポップ / バラード / ロック / ダンス / ボカロ風）とムード（切ない / 明るい / 夜 / 力強い / やさしい）を選ぶと、Key / BPM / コード進行 / ドラム / 伴奏 / 音色の方向性をまとめた出発点を3つ出す（14種のレシピ、どちらか片方の選択でも可）。選ぶと1回の編集（Undo1回）で反映。コード・ドラム（出発点の小節数分）・Key/BPM/音色/伴奏を置き換え、メロディは残す。Bassがある間は不可。`src/hub/starting-point.js` / `starting-point-ui.js`、Storeに `applyStartingPoint`
 - Starting Point Smoke Test（`npm run test:starting-point`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-starting-point`（Schema変更なし。`metadata.genre` / `metadata.mood` を既存フィールドとして使用）

@@ -1,4 +1,4 @@
-import { getDiatonicChords } from "../chord/chord-theory.js";
+import { chordSymbol, getDiatonicChords } from "../chord/chord-theory.js";
 import { applyDrumPresetToBars, getDrumPreset } from "../rhythm/drum-presets.js";
 import { getBackingPattern, upsertBackingPattern } from "../core/backing-patterns.js";
 import { getSoundPart, getSoundTone, upsertSoundSelection } from "../core/sound-presets.js";
@@ -93,9 +93,9 @@ export const STARTING_POINTS = Object.freeze([
   },
   {
     id: "dance-night", label: "夜の4つ打ち", genre: "dance", moods: ["night", "sad"],
-    key: "A", scale: "minor", bpm: 122, degrees: [0, 5, 2, 6], drum: "four-floor", backing: "syncopation",
+    key: "A", scale: "minor", bpm: 122, degrees: [0, 2, 5, 6], drum: "four-floor", backing: "syncopation",
     tones: { chord: ["pad", "airy"], melody: ["lead", "airy"], bass: ["deep-bass", "dark"] },
-    note: "i–VI–III–VII。広がりのある夜のダンス"
+    note: "i–III–VI–VII。広がりのある夜のダンス"
   },
   {
     id: "vocaloid-fast", label: "疾走する切なさ", genre: "vocaloid", moods: ["sad", "strong"],
@@ -173,6 +173,28 @@ export function buildStartingPointPatch(project, point, { mood = "" } = {}) {
     drumNotes,
     instruments
   };
+}
+
+// 試聴用: いまのProjectに出発点を当てた「仮のProject」を返す（保存も履歴もしない）。
+// Bassは出発点のコードと合わないことがあるので、試聴では外す。
+export function previewProject(project, point, options = {}) {
+  const patch = buildStartingPointPatch(project, point, options);
+  const preview = JSON.parse(JSON.stringify(project));
+  preview.metadata = { ...preview.metadata, ...patch.metadata };
+  preview.basic = { ...preview.basic, ...patch.basic };
+  preview.chords = patch.chords;
+  preview.instruments = patch.instruments;
+  const drums = preview.tracks.find((track) => track.role === "drums");
+  if (drums) drums.notes = patch.drumNotes;
+  else preview.tracks.push({ role: "drums", name: "Drums", midiChannel: 10, instrumentId: null, mute: false, solo: false, volume: 1, pan: 0, drumMap: { kick: 36, snare: 38, closedHH: 42 }, notes: patch.drumNotes });
+  preview.tracks = preview.tracks.filter((track) => track.role !== "bass");
+  return preview;
+}
+
+// 進行をコード名で（例: Dm → A# → F → C）
+export function progressionNames(point) {
+  const diatonic = getDiatonicChords(point.key, point.scale);
+  return point.degrees.map((index) => chordSymbol(diatonic[index].root, diatonic[index].quality)).join(" → ");
 }
 
 export function describeStartingPoint(point) {

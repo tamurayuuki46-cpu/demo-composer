@@ -4,6 +4,8 @@ import {
   applyStartingPointConfirmText,
   buildStartingPointPatch,
   GENRES,
+  previewProject,
+  progressionNames,
   MOODS,
   STARTING_POINTS,
   suggestStartingPoints
@@ -70,5 +72,14 @@ const withBass = createProjectStore(createDefaultProject());
 withBass.updateChords([{ startTick: 0, durationTick: 1920, root: 0, quality: "major", degree: "I" }]);
 withBass.updateRhythmNotes({ bassNotes: [{ id: "b", pitch: 36, startTick: 0, durationTick: 480, velocity: 90 }], drumNotes: [] });
 assert.throws(() => withBass.applyStartingPoint(buildStartingPointPatch(withBass.getSnapshot(), point)), /Bass/);
+
+// 試聴用の仮Project: 元は変わらず、コードとドラムが入り、Bassは外れる
+const base = createDefaultProject();
+const pv = previewProject(base, point);
+assert.equal(base.chords.length, 0);
+assert.equal(pv.chords.length, 4);
+assert.equal(pv.basic.bpm, 68);
+assert.ok(pv.tracks.find((t) => t.role === "drums").notes.length > 0);
+assert.equal(progressionNames(point), "Dm → A# → F → C");
 
 console.log("starting-point smoke test passed");
