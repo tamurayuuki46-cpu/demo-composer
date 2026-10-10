@@ -49,6 +49,23 @@ Demo Composer
 
 Sound選択はDemo Playerの軽量Web Audio仮音へ反映し、MIDI Note / Chord Data / Rhythm Dataは変更しない。最終音色はCubasis / Cubase / 各種Plugin側で作り込む。
 
+## v0.2 Chord Backing Pattern
+
+コード進行を決めた後に「どう鳴らすか」までスマホで判断できるよう、Chord画面内へBacking Patternを置く。
+
+初期Pattern:
+
+- Block
+- 8分刻み
+- Arpeggio
+- Syncopation
+
+Backing Patternはコード進行そのものを作り直す機能ではない。既存Chordを使い、伴奏のリズム / 構成音の鳴らし方だけを切り替える。
+
+選択はProjectへ保存し、AutoSave / Undo / Redo対象とする。Demo Playerだけでなく `Chord.mid / Song.mid` のChord Track Note配置へ反映し、Cubasis / Cubaseへ伴奏判断を持ち出せるようにする。
+
+Patternは初期4種類に絞り、本格的な伴奏生成・ギター奏法Editor・細かいボイシングEditorへ拡張しすぎない。
+
 ## Non-goals
 
 Demo Composerでは以下を本格実装しない。
@@ -61,6 +78,7 @@ Demo Composerでは以下を本格実装しない。
 - 本格Synth設計
 - PC DAWの完全再現
 - Sound Sketch内の詳細Synth Parameter / FX Rack / Track Mixer
+- 本格的な伴奏生成DAW / Strumming Editor
 
 ## AI Philosophy
 
