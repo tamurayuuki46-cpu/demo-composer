@@ -4,6 +4,8 @@
 更新日: 2026-10-11
 
 ### 追加
+- Melody Analyzer: `旋律の3つの見方` を追加。既存の分析値を `歌心・浮遊型（草野マサムネ参考） / 輪郭・違和感型（米津玄師参考） / 推進・高密度型（Ayase / YOASOBI参考）` の3方向で読みやすく表示する。アーティスト類似度の採点や特定曲のコピーではなく、作曲時にどの数値を見るかの学習補助（Schema変更なし）
+- 3参考モデルは既存の跳躍率 / 最大跳躍 / Chordからの2(9th)・6th / Scale外音 / リズム密度 / モチーフ反復を再利用し、候補生成やProject Dataは変更しない。Melody Analysis Smoke Testを拡張し、Chord未設定時の表示も確認。追加前復元点: `restore/v0.2-before-melody-perspectives`
 - Hub: `＋ 新規Project` を追加。現在のProjectを `Save Now` で確定してからDemo Playerを停止し、空の新しいProjectへ切り替える。旧ProjectはIndexedDBの `projects` storeから削除せず、新しいProjectだけを `activeProjectId` にする（Schema変更なし）
 - 新規Project切替は `src/hub/app-entry.js` / `new-project.js` / `new-project-ui.js` で実装。reload直前の `visibilitychange` AutoSaveが旧Projectを再びActiveにする競合を避けるため、次回bootで `main.js` を読み込む前に新ProjectのActive保存を確定する
 - New Project Smoke Testを `test:history` に追加。追加前の復元ブランチ `restore/v0.2-before-new-project-final`
