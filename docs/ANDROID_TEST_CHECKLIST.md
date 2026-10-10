@@ -23,13 +23,14 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - Melodyを縦ピアノ + 1小節8 step同時表示へ変更。Androidでセル幅・横スクロールを追加確認する
 - Rhythmを1小節16 step同時表示へ変更。Androidでセル幅・誤タップ・横スクロールを追加確認する
 - Chord以外のMelody / Bass / Drums、Stop / Position等は引き続き確認する
+- 回帰チェック1回目: Hub → Chord → Melody → Rhythm切替、Melody 8分/16分切替、16分の前半/後半切替、Rhythm 16 stepのタップ性、Demo PlayerのPlay → Stop → Loopはユーザー実機でOK
 
 ---
 
 ## 1. 起動
 
 - [x] 初回起動でエラーなくHubが表示される
-- [ ] Hub / Chord / Melody / RhythmをBottom Navigationから切り替えられる
+- [x] Hub / Chord / Melody / RhythmをBottom Navigationから切り替えられる
 - [ ] 画面下部のDemo PlayerとNavigationが重ならない
 - [ ] 縦画面で横スクロールを強制されない
 - [ ] 主要ボタンを指で押しやすい
@@ -75,9 +76,9 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] Beat 1 / 2 / 3 / 4の頭が視覚的に区切られている
 - [ ] 8 step表示でも横スクロールが発生しない
 - [ ] 8 stepのNote cellを実用上タップできる
-- [ ] `8分音符` / `16分音符` ボタンで入力単位を切り替えられる
+- [x] `8分音符` / `16分音符` ボタンで入力単位を切り替えられる
 - [ ] 16分音符で `1 e & a 2 e & a` が8マス表示され、横スクロールしない
-- [ ] `前半 1–2拍` / `後半 3–4拍` を切り替えられ、`3 e & a 4 e & a` が表示される
+- [x] `前半 1–2拍` / `後半 3–4拍` を切り替えられ、`3 e & a 4 e & a` が表示される
 - [ ] 16分音符のセルを実用上タップできる
 - [ ] 8分と16分を混在して入力でき、音が重ならず再生される
 - [ ] 8分表示に戻したとき、16分音符があるマスに太線が出る
@@ -112,14 +113,14 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] Beat / Barのコピー先に既存Rhythmがある場合は上書き確認が表示される
 - [ ] Clear Barが動く
 - [ ] Clear Bassが動く
-- [ ] 16 step表示でも隣のセルを誤タップしにくい（狭幅端末で特に確認）
+- [x] 16 step表示でも隣のセルを誤タップしにくい（狭幅端末で特に確認）
 
 ## 7. Demo Player
 
 - [x] 初回Play Tapで音が有効になる
 - [ ] PlayでChord / Melody / Bass / Drumsが再生される
-- [ ] Stopで停止する
-- [ ] Loop ON/OFFが動く
+- [x] Stopで停止する
+- [x] Loop ON/OFFが動く
 - [ ] Positionが再生に合わせて進む
 - [ ] BPM変更後の再生速度が変わる
 - [ ] 再生中に画面を切り替えてもPlayerが残る
