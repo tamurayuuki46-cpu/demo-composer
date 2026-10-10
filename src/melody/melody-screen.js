@@ -96,7 +96,7 @@ export function createMelodyController({ projectStore, rerender }) {
         </div>
 
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
-        <p class="hint">1小節を `1 & 2 & 3 & 4 &` の8マスで表示します。左の縦ピアノを音程の目印にして入力し、同じステップでは1音だけ入力します。</p>
+        <p class="hint">1小節を 1 &amp; 2 &amp; 3 &amp; 4 &amp; の8マスで表示します。左の縦ピアノを音程の目印にして入力し、同じステップでは1音だけ入力します。</p>
       </section>
     `;
   }
