@@ -94,3 +94,15 @@ Vercel配布時のみ `npm run build` を実行し、`dist/` を静的公開し�
 - 静的コピー処理: `scripts/build-static.mjs`
 
 アプリ本体の構成は変更せず、`index.html` / `src/` / `public/` をそのまま `dist/` へコピーします。
+
+## GitHub Pages Fallback
+
+VercelのDeployment上限・障害時の第二公開先としてGitHub Pagesを利用できます。
+
+- Workflow: `.github/workflows/pages.yml`
+- 公開元: `develop`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- 詳細: `docs/GITHUB_PAGES.md`
+
+`main` はstable専用のため、このFallback導入では変更しません。GitHub Pagesの初回有効化はRepositoryの `Settings → Pages → Source: GitHub Actions` で一度だけ行います。
