@@ -18,11 +18,11 @@ Android Chrome / Android smartphone.
 
 画面上部のバー右側に `↶`（元に戻す）/ `↷`（やり直す）を常設する。どの画面でも使える。
 
-- 対象はHub / Chord / Melody / Rhythmの編集すべて（Project全体で1本の履歴）
+- 対象はHub / Chord / Melody / Rhythm / Arrange / Soundの編集（Project全体で1本の履歴）
 - 戻せる操作がないときはボタンを無効表示にする
 - 最大50操作まで。アプリを開き直すと履歴は空になる（データ自体は保存されている）
 - Key変更は1回で元のKey・コード・メロディ・ベースへ戻る
-- Clear / Preset適用 / Copyなど、まとめて変わる操作も1回で戻る
+- Clear / Preset適用 / Copy / Sound変更など、まとめて変わる操作も1回で戻る
 
 ## Navigation
 
@@ -33,6 +33,9 @@ Bottom Navigation:
 - Melody
 - Rhythm
 - Arrange
+- Sound
+
+6 Moduleは1行を維持し、横スクロールを使わない。短いLabelと小さめのGapを使うが、Button自体の縦Tap領域は維持する。
 
 ## Demo Player
 
@@ -59,7 +62,7 @@ Module Navigationの上に常設。
 - 下部の `末尾に追加` で種類を選んでSectionを足す。`構成をやり直す` は区切りだけ消し、音符・コードは残す
 - `▶ 全体` は曲全体、`▶ 再生` はそのSectionだけを再生する。Loopを押すと同じ範囲を繰り返す
 - Melody / Rhythmの見出しに「サビ 3/8小節」を表示する
-- 下部ナビは5ボタン（Hub / Chord / Melody / Rhythm / Arrange）
+- 下部ナビは6ボタン（Hub / Chord / Melody / Rhythm / Arrange / Sound）
 
 ## Hub
 
@@ -246,3 +249,44 @@ Presetは完成パターンを自動で作るためではなく、初心者が16
 - Root / 5th / Approach候補
 - Velocity
 - Open HH / Percussion / Tom
+
+## Sound Sketch Lite
+
+本来v0.4予定のSound Moduleから、スマホで「音色の方向性」を決める最小機能だけをv0.2-devへ先行実装する。
+
+対象Part:
+
+- Chord: Keys / Pad / Piano
+- Melody: Lead / Keys / Pluck
+- Bass: Soft Bass / Synth Bass / Deep Bass
+
+Tone方向タグ:
+
+- Natural
+- Bright
+- Soft
+- Warm
+- Dark
+- Airy
+- Aggressive
+
+UIルール:
+
+- Bottom Navigationに `Sound` を追加し、Arrangeを含む6 Moduleを1行表示する
+- PartごとにPreset Selectを1つ置く
+- Toneは44px以上のButtonで選ぶ
+- 選択中Toneを明確にActive表示する
+- 変更後は常設Demo PlayerのPlayで確認する
+- Sound画面にSynth Parameter / Mixer / FX Rackは追加しない
+- Drums音色変更はLiteでは対象外
+
+動作ルール:
+
+- Sound選択はAutoSave対象
+- Sound選択はProject全体のUndo / Redo対象
+- Sound選択は `project.instruments[]` に保存する
+- Chord / Melody / BassのMIDI Note、Chord Data、Rhythm Dataは変更しない
+- Demo PlayerのWeb Audio仮音色だけを変更する
+- Section単体再生でも同じSound設定を使う
+- MIDI Program Change / CCは出力しない
+- 最終音色の作り込みはCubasis / Cubase / Plugin側へ任せる
