@@ -4,6 +4,8 @@
 更新日: 2026-10-10
 
 ### 追加
+- Rhythm: Bassの半音ずらし（±6）と、主役（ルート系・5度）/ 飾り（3度・7度・ずらした音）の色分け表示（見た目のみ、Schema変更なし）
+- Bass半音ずらし前の復元ブランチ `restore/v0.2-before-bass-shift`
 - Rhythm: Bassの音程選択（ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下）。16マスはそのまま、ルート以外のベースラインを入力できる（Schema変更なし）
 - Bass Pitch Smoke Test（`npm run test:rhythm` に含む、CI対象）
 - Bass音程選択前の復元ブランチ `restore/v0.2-before-bass-pitch`

@@ -21,7 +21,7 @@ v0.2-dev
 - ダイアトニック7候補は五度圏の扇形UI。Major: 左 IV / ii、中央 I / vi、右 V / iii、下 vii°。Minor: 左 VI / iv、中央 III / i、右 VII / v、下 ii°
 - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
 - Melody: 8分 / 16分切替、Monophonic、Bar / Octave切替、Clear Bar、縦ピアノKeyboard
-- Rhythm: Bass（音程選択: ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下）/ Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy（Bassは音程関係を保ってコピー先ルートへ追従）
+- Rhythm: Bass（音程選択: ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下）/ Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy（Bassは音程関係を保ってコピー先ルートへ追従。半音ずらし±6、主役 / 飾りを色で区別）
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
 - Arrange: Section Template / 小節増減 / 追加削除 / Sectionコピー / Section再生 / Melody・Rhythm見出し表示 / MIDI Marker
 - Sound Sketch Lite: Chord / Melody / Bassの仮音色Preset + Toneタグ
