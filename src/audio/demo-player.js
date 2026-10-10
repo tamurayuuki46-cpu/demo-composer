@@ -1,4 +1,5 @@
 import { chordIntervals } from "../core/chord-qualities.js";
+import { resolveSoundProfile } from "../core/sound-presets.js";
 
 function midiToFrequency(pitch) {
   return 440 * Math.pow(2, (pitch - 69) / 12);
@@ -35,21 +36,33 @@ function scheduleTone(context, destination, activeSources, {
   startTime,
   duration,
   type = "sine",
-  gain = 0.08
+  gain = 0.08,
+  filter = 12000,
+  attack = 0.004,
+  release = 0.03
 }) {
   const oscillator = context.createOscillator();
-  const voiceGain = createGain(context, destination, gain);
+  const voiceGain = context.createGain();
+  const toneFilter = context.createBiquadFilter();
   oscillator.type = type;
   oscillator.frequency.value = midiToFrequency(pitch);
-  oscillator.connect(voiceGain);
+  toneFilter.type = "lowpass";
+  toneFilter.frequency.value = filter;
+  toneFilter.Q.value = 0.45;
+  oscillator.connect(toneFilter);
+  toneFilter.connect(voiceGain);
+  voiceGain.connect(destination);
 
-  const releaseStart = Math.max(startTime, startTime + duration - 0.03);
-  voiceGain.gain.setValueAtTime(gain, startTime);
+  const safeDuration = Math.max(0.03, duration);
+  const attackEnd = Math.min(startTime + safeDuration * 0.45, startTime + attack);
+  const releaseStart = Math.max(attackEnd, startTime + safeDuration - Math.min(release, safeDuration * 0.55));
+  voiceGain.gain.setValueAtTime(0.0001, startTime);
+  voiceGain.gain.linearRampToValueAtTime(gain, attackEnd);
   voiceGain.gain.setValueAtTime(gain, releaseStart);
-  voiceGain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
+  voiceGain.gain.linearRampToValueAtTime(0.0001, startTime + safeDuration);
 
   oscillator.start(startTime);
-  oscillator.stop(startTime + duration + 0.02);
+  oscillator.stop(startTime + safeDuration + 0.02);
   activeSources.add(oscillator);
 }
 
@@ -95,6 +108,10 @@ function scheduleNoiseHit(context, destination, activeSources, startTime, {
 }
 
 function scheduleProject(context, masterGain, activeSources, project, startTime) {
+  const chordSound = resolveSoundProfile(project.instruments, "chord");
+  const melodySound = resolveSoundProfile(project.instruments, "melody");
+  const bassSound = resolveSoundProfile(project.instruments, "bass");
+
   project.chords.forEach((chord) => {
     const chordStart = startTime + tickToSeconds(project, chord.startTick);
     const duration = Math.max(0.08, tickToSeconds(project, chord.durationTick) * 0.92);
@@ -105,8 +122,11 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
         pitch: 60 + chord.root + interval,
         startTime: chordStart,
         duration,
-        type: "triangle",
-        gain: 0.13
+        type: chordSound.waveform,
+        gain: chordSound.gain,
+        filter: chordSound.filter,
+        attack: chordSound.attack,
+        release: chordSound.release
       });
     });
   });
@@ -121,8 +141,11 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           pitch: note.pitch,
           startTime: noteStart,
           duration,
-          type: "triangle",
-          gain: 0.18
+          type: melodySound.waveform,
+          gain: melodySound.gain,
+          filter: melodySound.filter,
+          attack: melodySound.attack,
+          release: melodySound.release
         });
         return;
       }
@@ -132,10 +155,11 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           pitch: note.pitch,
           startTime: noteStart,
           duration,
-          // Triangle keeps the actual bass pitch while adding harmonics that
-          // small phone speakers reproduce more clearly than a pure sine.
-          type: "triangle",
-          gain: 0.25
+          type: bassSound.waveform,
+          gain: bassSound.gain,
+          filter: bassSound.filter,
+          attack: bassSound.attack,
+          release: bassSound.release
         });
         return;
       }
