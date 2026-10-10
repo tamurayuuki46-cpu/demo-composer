@@ -84,6 +84,9 @@ jobs:
       - name: Structure library smoke test
         run: npm run test:structure-library
 
+      - name: Peak guide smoke test
+        run: npm run test:peak-guide
+
       - name: Loop guide smoke test
         run: npm run test:loop-guide
 
