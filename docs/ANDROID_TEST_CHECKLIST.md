@@ -10,11 +10,22 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 
 結果は `OK / NG / 未確認` で記録する。
 
+## 実機確認メモ
+
+2026-10-10:
+
+- Vercel PreviewをAndroid Chromeで開き、Hub表示を確認
+- ChordへC（I）を追加してDemo Playerから実音が鳴ることを確認
+- 初期音量は小さかったためAndroid向けに音量・音域を調整
+- 単純な最終出力2倍ではクリップして音割れしたため不採用
+- loudness gain + compressor + limiter方式へ変更し、ユーザー実機で「このくらい」で採用判断
+- Chord以外のMelody / Bass / Drums、Stop / Loop / Position等は引き続き未確認
+
 ---
 
 ## 1. 起動
 
-- [ ] 初回起動でエラーなくHubが表示される
+- [x] 初回起動でエラーなくHubが表示される
 - [ ] Hub / Chord / Melody / RhythmをBottom Navigationから切り替えられる
 - [ ] 画面下部のDemo PlayerとNavigationが重ならない
 - [ ] 縦画面で横スクロールを強制されない
@@ -44,7 +55,7 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] C Majorで7つのダイアトニックコードが表示される
 - [ ] Minor Keyでも候補が切り替わる
 - [ ] コード名とDegreeが表示される
-- [ ] 候補Tapで1小節追加される
+- [x] 候補Tapで1小節追加される
 - [ ] 複数コードを連続追加できる
 - [ ] ×で1コード削除できる
 - [ ] 削除後の小節番号 / startTickが詰め直される
@@ -78,14 +89,14 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 
 ## 7. Demo Player
 
-- [ ] 初回Play Tapで音が有効になる
+- [x] 初回Play Tapで音が有効になる
 - [ ] PlayでChord / Melody / Bass / Drumsが再生される
 - [ ] Stopで停止する
 - [ ] Loop ON/OFFが動く
 - [ ] Positionが再生に合わせて進む
 - [ ] BPM変更後の再生速度が変わる
 - [ ] 再生中に画面を切り替えてもPlayerが残る
-- [ ] 音割れが目立たない
+- [x] 音割れが目立たない
 - [ ] タップから音までの遅れが作曲確認を妨げるほど大きくない
 
 ## 8. MIDI Export
