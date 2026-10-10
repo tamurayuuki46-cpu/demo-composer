@@ -3,6 +3,7 @@
 // Projectを読むだけの純粋関数。MelodyパネルとHubの「曲の特徴カード」の両方から使う。
 
 import { chordIntervals } from "./chord-qualities.js";
+import { analyzeMelodicFunctions, melodicFunctionRows } from "./melodic-functions.js";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const LEAP_SEMITONES = 5; // 4度以上（5半音〜）を「跳躍」と数える
@@ -117,6 +118,8 @@ export function analyzeMelody(project) {
     seen.add(signature);
   });
 
+  const melodicFunctions = analyzeMelodicFunctions(project, notes, barTicks);
+
   return {
     noteCount: notes.length,
     barsWithNotes: bars.size,
@@ -128,7 +131,8 @@ export function analyzeMelody(project) {
     chordTone: { counted, hits, rate: counted > 0 ? hits / counted : null },
     density: { perBar: notes.length / bars.size },
     repeats: { sameCount, maxRun, motions },
-    motif: { repeatedBars, barsWithNotes: bars.size, ratio: repeatedBars / bars.size }
+    motif: { repeatedBars, barsWithNotes: bars.size, ratio: repeatedBars / bars.size },
+    melodicFunctions
   };
 }
 
@@ -199,7 +203,7 @@ function melodyPerspectiveRows(analysis) {
 // 画面表示用の「項目・数字・一言」。評価ではなく特徴の説明。
 export function describeMelody(analysis) {
   if (!analysis) return [];
-  const { range, leaps, keyDegree, chordDegree, scaleFit, chordTone, density, repeats, motif } = analysis;
+  const { range, leaps, keyDegree, chordDegree, scaleFit, chordTone, density, repeats, motif, melodicFunctions } = analysis;
 
   const rangeComment = range.span <= 7 ? "せまめ。歌いやすい音域"
     : range.span <= 12 ? "ふつう。1オクターブ以内"
@@ -241,6 +245,7 @@ export function describeMelody(analysis) {
     { id: "density", label: "リズム密度", value: `1小節あたり ${density.perBar.toFixed(1)}音`, comment: densityComment },
     { id: "same", label: "同音連打", value: `${repeats.sameCount}回・最長${repeats.maxRun}音`, comment: repeatComment },
     { id: "motif", label: "モチーフ反復", value: `${motif.repeatedBars} / ${motif.barsWithNotes}小節が同じパターン`, comment: motifComment },
+    ...melodicFunctionRows(melodicFunctions),
     ...melodyPerspectiveRows(analysis)
   ];
 }
