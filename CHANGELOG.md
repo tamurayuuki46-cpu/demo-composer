@@ -4,6 +4,10 @@
 更新日: 2026-10-10
 
 ### 追加
+- Melody / Bassの音の長さ指定（16分〜2分・付点。長い音は途中のマスも表示。小節の終わり・次の音を超えない）。`durationTick` を使うためSchema変更なし
+- 共通の `src/core/note-placement.js`（Melody / Rhythmから使う純粋関数）
+- Note Length Smoke Test（`npm run test:melody` に含む、CI対象）
+- 音の長さ追加前の復元ブランチ `restore/v0.2-before-note-length`
 - Rhythm: Bassの半音ずらし（±6）と、主役（ルート系・5度）/ 飾り（3度・7度・ずらした音）の色分け表示（見た目のみ、Schema変更なし）
 - Bass半音ずらし前の復元ブランチ `restore/v0.2-before-bass-shift`
 - Rhythm: Bassの音程選択（ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下）。16マスはそのまま、ルート以外のベースラインを入力できる（Schema変更なし）
@@ -42,6 +46,7 @@
 - ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
+- Rhythm Copy: 長いBassがコピー先の範囲からはみ出さないよう収め、コピー先に食い込む前の音を短くする
 - BarをまたぐBass Copyを、全ノートをルートへそろえる動作から、音程関係を保ってコピー先のルートへ移す動作へ変更
 - Bottom Navigationを Hub / Chord / Melody / Rhythm / Arrange / Sound の6 Module構成へ拡張
 - Sound選択を既存 `project.instruments[]` に保存し、AutoSaveとProject全体Undo / Redoの対象にした

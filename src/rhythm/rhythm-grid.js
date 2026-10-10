@@ -1,4 +1,5 @@
 import { chordIntervals } from "../core/chord-qualities.js";
+import { placeMonophonicNote } from "../core/note-placement.js";
 
 const KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -76,17 +77,9 @@ export function bassRoleForPitch(project, barIndex, pitch) {
   return semitones === 0 || semitones === fifth ? "main" : "ornament";
 }
 
-export function toggleBassStep(notes, { pitch, startTick, durationTick, velocity = 96 }) {
-  const existing = notes.find((note) => note.startTick === startTick);
-
-  if (existing?.pitch === pitch) {
-    return notes.filter((note) => note.startTick !== startTick);
-  }
-
-  return [
-    ...notes.filter((note) => note.startTick !== startTick),
-    { id: createNoteId(), pitch, startTick, durationTick, velocity }
-  ].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+// Bassは1音ずつ。長さ(durationTick)は小節の終わり(limitTick)と次の音の手前までに収める。
+export function toggleBassStep(notes, options) {
+  return placeMonophonicNote(notes, options);
 }
 
 export function toggleDrumStep(notes, { pitch, startTick, durationTick, velocity = 100 }) {
@@ -107,6 +100,15 @@ export function clearRhythmBar(notes, { barStartTick, barDurationTick }) {
   return notes.filter((note) => note.startTick < barStartTick || note.startTick >= barEndTick);
 }
 
+// 長いBassがコピー先の範囲に食い込んでいたら、範囲の手前までに短くする
+function trimCrossing(notes, rangeStartTick) {
+  return notes.map((note) => (
+    note.startTick < rangeStartTick && note.startTick + note.durationTick > rangeStartTick
+      ? { ...note, durationTick: rangeStartTick - note.startTick }
+      : note
+  ));
+}
+
 export function copyRhythmBeat(notes, {
   sourceBeatStartTick,
   targetBeatStartTick,
@@ -118,16 +120,17 @@ export function copyRhythmBeat(notes, {
   const targetBeatEndTick = targetBeatStartTick + beatDurationTick;
   const tickOffset = targetBeatStartTick - sourceBeatStartTick;
 
-  const retained = notes.filter(
+  const retained = trimCrossing(notes.filter(
     (note) => note.startTick < targetBeatStartTick || note.startTick >= targetBeatEndTick
-  );
+  ), targetBeatStartTick);
   const copied = notes
     .filter((note) => note.startTick >= sourceBeatStartTick && note.startTick < sourceBeatEndTick)
     .map((note) => ({
       ...note,
       id: createNoteId(),
       pitch: pitch ?? note.pitch + pitchShift,
-      startTick: note.startTick + tickOffset
+      startTick: note.startTick + tickOffset,
+      durationTick: Math.min(note.durationTick, targetBeatEndTick - (note.startTick + tickOffset))
     }));
 
   return [...retained, ...copied].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
@@ -144,16 +147,17 @@ export function copyRhythmBar(notes, {
   const targetBarEndTick = targetBarStartTick + barDurationTick;
   const tickOffset = targetBarStartTick - sourceBarStartTick;
 
-  const retained = notes.filter(
+  const retained = trimCrossing(notes.filter(
     (note) => note.startTick < targetBarStartTick || note.startTick >= targetBarEndTick
-  );
+  ), targetBarStartTick);
   const copied = notes
     .filter((note) => note.startTick >= sourceBarStartTick && note.startTick < sourceBarEndTick)
     .map((note) => ({
       ...note,
       id: createNoteId(),
       pitch: pitch ?? note.pitch + pitchShift,
-      startTick: note.startTick + tickOffset
+      startTick: note.startTick + tickOffset,
+      durationTick: Math.min(note.durationTick, targetBarEndTick - (note.startTick + tickOffset))
     }));
 
   return [...retained, ...copied].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);

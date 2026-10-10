@@ -639,3 +639,46 @@ h1 {
   background: #fbbf24;
   border-color: #fbbf24;
 }
+
+.note-length {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 8px;
+}
+.note-length > span {
+  font-size: 13px;
+  color: #b9b9c2;
+}
+/* 6つを1段に並べて、鍵盤グリッドが画面の下へ押し下げられないようにする */
+.note-length-buttons {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+.note-length-buttons button {
+  min-height: 44px;
+  padding: 0 1px;
+  border: 0;
+  border-radius: 10px;
+  background: #28282f;
+  color: #f5f5f5;
+  font-size: 12px;
+  white-space: nowrap;
+}
+@media (max-width: 340px) {
+  .note-length-buttons button { font-size: 11px; letter-spacing: -0.04em; }
+}
+.note-length-buttons button.active {
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+/* 長い音の途中のマス: 開始マスより薄く、音がつながって見えるようにする */
+.rhythm-cell[data-bass-held] {
+  background: #6a6a74;
+  border-color: #6a6a74;
+}
+.rhythm-cell[data-bass-held][data-bass-role="ornament"] {
+  background: #8a6a12;
+  border-color: #8a6a12;
+}

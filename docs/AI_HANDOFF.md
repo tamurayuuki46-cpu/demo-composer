@@ -20,7 +20,7 @@ v0.2-dev
 - Chord: ダイアトニック7候補 + 基準音C〜B + Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
 - ダイアトニック7候補は五度圏の扇形UI。Major: 左 IV / ii、中央 I / vi、右 V / iii、下 vii°。Minor: 左 VI / iv、中央 III / i、右 VII / v、下 ii°
 - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
-- Melody: 8分 / 16分切替、Monophonic、Bar / Octave切替、Clear Bar、縦ピアノKeyboard
+- Melody: 8分 / 16分切替、音の長さ指定（Bassも同様。`src/core/note-placement.js`）、Monophonic、Bar / Octave切替、Clear Bar、縦ピアノKeyboard
 - Rhythm: Bass（音程選択: ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下）/ Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy（Bassは音程関係を保ってコピー先ルートへ追従。半音ずらし±6、主役 / 飾りを色で区別）
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
 - Arrange: Section Template / 小節増減 / 追加削除 / Sectionコピー / Section再生 / Melody・Rhythm見出し表示 / MIDI Marker
@@ -119,7 +119,7 @@ v0.2 CI確認済み:
 - Scale変更時の既存Chord / Melody / Bass自動変換は未対応。Harmony依存データがある場合は変更を拒否
 - Key移調でMIDI Note範囲外になる場合はKey変更を拒否
 - Bass Noteがある間はChord変更を拒否
-- Melody Note Length / Velocity編集は未対応
+- Melody Velocity編集は未対応。音の長さは指定できるが、長さを後から端をドラッグして変える操作は未対応
 - Melody入力単位はUI状態のみで保存されない
 - Melody Scale表示 / Chord Tone強調 / Melody Analyzerは未対応
 - Rhythm 16 stepは狭い端末でセル幅が小さい

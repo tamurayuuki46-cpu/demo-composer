@@ -1,5 +1,6 @@
 import { getSections, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol } from "../chord/chord-theory.js";
+import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import { clearBar, getMelodyNotes, getOctavePitches, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 
 const EIGHTH_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
@@ -25,6 +26,8 @@ export function createMelodyController({ projectStore, rerender }) {
   // 入力単位はUI状態のみ。project.jsonには保存しない（Noteはtickで保持するためSchema変更なし）
   let resolution = 8;
   let half = 0;
+  // 次に置く音の長さ（マス数）。UI状態のみで、project.jsonには保存しない
+  let lengthSteps = 1;
   let message = "セルをタップして8分音符を入力します。";
 
   function stepTickSize(barTicks) {
@@ -83,9 +86,11 @@ export function createMelodyController({ projectStore, rerender }) {
             const startTick = barStartTick + step * stepTicks;
             const active = notes.some((note) => note.startTick === startTick && note.pitch === pitch);
             // 8分表示のとき、このマスの後半(16分位置)にも同じ高さの音があれば印を付ける
+            // 長い音の途中のマス（前のマスから伸びている部分）
+            const held = !active && notes.some((note) => note.pitch === pitch && note.startTick < startTick && note.startTick + note.durationTick > startTick);
             const hasSub = resolution === 8 && notes.some((note) => note.startTick === startTick + stepTicks / 2 && note.pitch === pitch);
             const beatStartClass = isBeatStart(step) ? " beat-start" : "";
-            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}${hasSub ? " has-sub" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${stepLabel(step)}"></button>`;
+            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}${held ? " held" : ""}${hasSub ? " has-sub" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${stepLabel(step)}"></button>`;
           }).join("")}
         </div>
       `;
@@ -118,6 +123,13 @@ export function createMelodyController({ projectStore, rerender }) {
           <button data-melody-resolution="16" class="${resolution === 16 ? "active" : ""}">16分音符</button>
         </div>
 
+        <div class="note-length" role="group" aria-label="入れる音の長さ">
+          <span>音の長さ</span>
+          <div class="note-length-buttons">
+            ${LENGTH_STEPS.map((steps) => `<button data-melody-length="${steps}" class="${steps === lengthSteps ? "active" : ""}">${noteValueLabel(steps * stepTicks, project.basic.ppq)}</button>`).join("")}
+          </div>
+        </div>
+
         ${resolution === 16 ? `
         <div class="melody-mode-switch" role="group" aria-label="小節の前半 / 後半">
           <button data-melody-half="0" class="${half === 0 ? "active" : ""}">前半 1–2拍</button>
@@ -135,7 +147,7 @@ export function createMelodyController({ projectStore, rerender }) {
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
         <p class="hint">${resolution === 8
           ? "1小節を 1 &amp; 2 &amp; 3 &amp; 4 &amp; の8マスで表示します。"
-          : "16分音符は半小節ずつ（1 e &amp; a 2 e &amp; a）表示します。前半 / 後半ボタンで切り替えます。"}左の縦ピアノを音程の目印にして入力し、同じ位置では1音だけ入力します。8分表示で下に太線があるマスは、その後半に16分音符があります。</p>
+          : "16分音符は半小節ずつ（1 e &amp; a 2 e &amp; a）表示します。前半 / 後半ボタンで切り替えます。"}左の縦ピアノを音程の目印にして入力し、同じ位置では1音だけ入力します。長い音は「音の長さ」を選んでからタップします（小節の終わりと次の音の手前までに収まります）。長さを変えるときは、別の長さを選んで同じマスをタップします。同じ長さでタップすると削除です。8分表示で下に太線があるマスは、その後半に16分音符があります。</p>
       </section>
     `;
   }
@@ -155,11 +167,20 @@ export function createMelodyController({ projectStore, rerender }) {
         const nextNotes = toggleMonophonicStep(notes, {
           pitch,
           startTick,
-          durationTick: stepTicks
+          durationTick: lengthSteps * stepTicks,
+          limitTick: barStartTick + barTicks,
+          resize: lengthSteps > 1
         });
 
         projectStore.updateMelodyNotes(nextNotes);
-        message = `${pitchName(pitch)} / ${stepLabel(step)} を更新しました。`;
+        message = `${pitchName(pitch)} / ${stepLabel(step)} を更新しました。（長さ: ${noteValueLabel(lengthSteps * stepTicks, latest.basic.ppq)}）`;
+        rerender("melody");
+      });
+    });
+
+    document.querySelectorAll("[data-melody-length]").forEach((button) => {
+      button.addEventListener("click", () => {
+        lengthSteps = Number(button.dataset.melodyLength);
         rerender("melody");
       });
     });
