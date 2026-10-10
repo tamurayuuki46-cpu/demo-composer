@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: 22
 
+      - name: Rhythm preset syntax check
+        run: |
+          node --check src/rhythm/drum-presets.js
+          node --check src/rhythm/rhythm-screen.js
+
       - name: MIDI smoke test
         run: npm run test:midi
 
