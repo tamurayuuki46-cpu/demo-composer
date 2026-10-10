@@ -459,6 +459,16 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       return applySectionOp(copySection(state, fromIndex, toIndex));
     },
 
+    // project.jsonの読み込み。現在のProjectのidは維持し、中身だけを置き換える（Undoで戻せる）。
+    replaceProject(project) {
+      const next = clone(project);
+      next.id = state.id;
+      next.revision = state.revision + 1;
+      validateProject(next);
+      commit(next);
+      return clone(state);
+    },
+
     undo() {
       if (undoStack.length === 0) return null;
       redoStack.push(state);

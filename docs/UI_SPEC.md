@@ -105,7 +105,17 @@ Exportボタンで開閉する。
 
 Androidブラウザが複数ダウンロードを制限した場合を想定し、All MIDIだけでなく個別ファイルボタンも常に用意する。
 
-`project.json`は手動Backup用。Importは後続。
+`project.json`は手動Backup用。
+
+### project.json 読み込み
+
+Export Panel内の `project.jsonを読み込む` から、書き出したファイルを選んで曲を戻す。
+
+- 読み込み前にファイルを検証する（JSONとして読めるか / Demo Composerのファイルか / 現行Schemaで正しいか）。不正なら理由を表示し、いまの曲は変えない
+- 古いschemaVersion 1は現行へ移行して読み込む
+- 読み込み前に確認を出し、いまの曲を置き換える。画面上部の `↶` で元に戻せる
+- 読み込んでもProject IDは変えない（AutoSave先が変わらない）
+- 5MBを超えるファイルは拒否する
 
 ## Chord
 

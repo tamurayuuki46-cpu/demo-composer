@@ -39,3 +39,16 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+.import-heading {
+  margin: 16px 0 8px;
+}
+
+.import-button {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-radius: 12px;
+  background: #2a2a31;
+  color: #f5f5f5;
+}

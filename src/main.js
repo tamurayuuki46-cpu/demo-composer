@@ -14,6 +14,7 @@ import { createArrangeController } from "./arrange/arrange-screen.js";
 import { getSections, sectionRanges, sliceProject } from "./core/section-ops.js";
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
+import { MAX_IMPORT_BYTES, parseProjectJson } from "./storage/project-import.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
 import { createSoundController } from "./sound/sound-screen.js";
 import { createAutosave } from "./storage/autosave.js";
@@ -98,6 +99,10 @@ function hubScreen() {
           <button data-midi-file="Drums.mid">Drums.mid</button>
           <button id="export-project-json">project.json</button>
         </div>
+        <h3 class="import-heading">読み込み</h3>
+        <button id="import-project-json" class="import-button">project.jsonを読み込む</button>
+        <input id="import-project-file" type="file" accept=".json,application/json" hidden />
+        <p class="hint">書き出したproject.jsonから曲を戻します。いまの曲は置き換わります（画面上部の ↶ で元に戻せます）。</p>
         <p class="hint">All MIDIはSong.midとパート別MIDIをまとめてダウンロードします。Androidで複数ダウンロードが止められた場合は個別ボタンを使ってください。</p>
       </section>
     </section>
@@ -339,10 +344,34 @@ function bindHubControls() {
     button.addEventListener("click", () => exportMidiFile(button.dataset.midiFile));
   });
 
+  const importFile = document.querySelector("#import-project-file");
+  document.querySelector("#import-project-json")?.addEventListener("click", () => importFile?.click());
+  importFile?.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) await importProjectFile(file);
+  });
+
   document.querySelector("#export-project-json")?.addEventListener("click", () => {
     downloadProjectJson(projectStore.getSnapshot());
     setHubMessage("project.jsonを書き出しました。バックアップとして保管できます。");
   });
+}
+
+async function importProjectFile(file) {
+  try {
+    if (file.size > MAX_IMPORT_BYTES) throw new Error("ファイルが大きすぎます。");
+    const imported = parseProjectJson(await file.text());
+    const title = imported.metadata.title || "Untitled Project";
+    if (!globalThis.confirm(`「${title}」を読み込みます。いまの曲は置き換わります（↶ で戻せます）。よろしいですか？`)) return;
+    demoPlayer.stop();
+    chordRootSelection = null;
+    projectStore.replaceProject(imported);
+    render(currentScreen);
+    setHubMessage(`「${title}」を読み込みました。`);
+  } catch (error) {
+    setHubMessage(error instanceof Error ? error.message : "読み込みに失敗しました。", true);
+  }
 }
 
 function reflowChords(chords, barTicks) {

@@ -69,6 +69,14 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] Section操作は `↶` で1回で戻せる
 - [ ] Song.midをCubasis / Cubaseに入れるとSection名のMarkerが見える
 
+## 2.7 project.json 読み込み
+
+- [ ] Hub > Export > `project.json` で書き出せる
+- [ ] 曲を少し変えてから `project.jsonを読み込む` で書き出したファイルを選ぶと、確認後に元の曲へ戻る
+- [ ] 読み込み後に `↶` を押すと、読み込む前の曲に戻る
+- [ ] 関係ないファイルを選ぶと、理由が表示され、いまの曲は変わらない
+- [ ] 読み込んだ曲がAutoSaveされ、Chromeを開き直しても残っている
+
 ## 3. AutoSave / Restore
 
 - [ ] 編集後約1.5秒でAutoSaveされる

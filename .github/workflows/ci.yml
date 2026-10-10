@@ -54,5 +54,8 @@ jobs:
       - name: Sound Sketch smoke test
         run: npm run test:sound
 
+      - name: project.json import smoke test
+        run: npm run test:import
+
       - name: Static build
         run: npm run build
