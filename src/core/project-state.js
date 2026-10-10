@@ -205,6 +205,36 @@ function validateNotes(notes, label = "Track") {
   });
 }
 
+function validateInstruments(instruments) {
+  if (!Array.isArray(instruments)) {
+    throw new Error("Instrument data is invalid.");
+  }
+
+  const seenParts = new Set();
+  instruments.forEach((instrument, index) => {
+    if (!instrument || typeof instrument !== "object") {
+      throw new Error(`Instrument ${index + 1} is invalid.`);
+    }
+
+    if (typeof instrument.part !== "string" || !instrument.part) {
+      throw new Error(`Instrument ${index + 1} part is invalid.`);
+    }
+
+    if (seenParts.has(instrument.part)) {
+      throw new Error(`Instrument part ${instrument.part} is duplicated.`);
+    }
+    seenParts.add(instrument.part);
+
+    if (typeof instrument.preset !== "string" || !instrument.preset) {
+      throw new Error(`Instrument ${index + 1} preset is invalid.`);
+    }
+
+    if (typeof instrument.tone !== "string" || !instrument.tone) {
+      throw new Error(`Instrument ${index + 1} tone is invalid.`);
+    }
+  });
+}
+
 function validateTracks(tracks) {
   if (!Array.isArray(tracks)) {
     throw new Error("Track data is invalid.");
@@ -283,6 +313,7 @@ export function validateProject(project) {
   validateBasic(project.basic);
   validateChords(project.chords);
   validateTracks(project.tracks);
+  validateInstruments(project.instruments ?? []);
 
   if (!Number.isInteger(project.revision) || project.revision < 1) {
     throw new Error("Project revision is invalid.");
@@ -387,6 +418,18 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       upsertTrackNotes(next, "bass", nextBass);
       upsertTrackNotes(next, "drums", nextDrums);
       validateTracks(next.tracks);
+
+      next.revision = state.revision + 1;
+      state = next;
+      emit();
+
+      return clone(state);
+    },
+
+    updateInstruments(instruments) {
+      const next = clone(state);
+      next.instruments = clone(instruments);
+      validateInstruments(next.instruments);
 
       next.revision = state.revision + 1;
       state = next;
