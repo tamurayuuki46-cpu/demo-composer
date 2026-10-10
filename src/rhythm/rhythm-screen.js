@@ -11,7 +11,12 @@ import {
   toggleDrumStep
 } from "./rhythm-grid.js";
 
-const STEP_SUBDIVISION_LABELS = ["e", "&", "a"];
+const STEP_LABELS = [
+  "1", "e", "&", "a",
+  "2", "e", "&", "a",
+  "3", "e", "&", "a",
+  "4", "e", "&", "a"
+];
 
 function escapeHtml(value) {
   return String(value)
@@ -30,7 +35,7 @@ function hasNotesInRange(notes, startTick, durationTick) {
 export function createRhythmController({ projectStore, rerender }) {
   let barIndex = 0;
   let beatIndex = 0;
-  let message = "Bass / Kick / Snare / HHを同じ画面で入力します。";
+  let message = "Bass / Kick / Snare / HHを16分音符16マスで入力します。";
 
   function metrics(project) {
     const barTicks = project.basic.ppq * 4;
@@ -53,8 +58,7 @@ export function createRhythmController({ projectStore, rerender }) {
 
     const barStartTick = barIndex * barTicks;
     const beatStartTick = barStartTick + beatIndex * beatTicks;
-    const firstStep = beatIndex * 4;
-    const visibleSteps = [firstStep, firstStep + 1, firstStep + 2, firstStep + 3];
+    const visibleSteps = Array.from({ length: 16 }, (_, step) => step);
     const bassPitch = bassPitchForBar(project, barIndex);
     const bassNotes = getTrackNotes(project, "bass");
     const drumNotes = getTrackNotes(project, "drums");
@@ -64,7 +68,6 @@ export function createRhythmController({ projectStore, rerender }) {
       || hasNotesInRange(drumNotes, beatStartTick, beatTicks);
     const chord = project.chords[barIndex];
     const chordLabel = chord ? `${chordSymbol(chord.root, chord.quality)} (${chord.degree})` : `${project.basic.key} Root`;
-    const stepLabels = [String(beatIndex + 1), ...STEP_SUBDIVISION_LABELS];
     const beatCopyLabel = beatIndex < 3
       ? `Copy Beat → Beat ${beatIndex + 2}`
       : `Copy Beat → Bar ${barIndex + 2} Beat 1`;
@@ -77,7 +80,7 @@ export function createRhythmController({ projectStore, rerender }) {
     ];
 
     return `
-      <section class="card">
+      <section class="card rhythm-card">
         <div class="section-heading">
           <div>
             <h2>Rhythm</h2>
@@ -92,14 +95,14 @@ export function createRhythmController({ projectStore, rerender }) {
           <button id="rhythm-next-bar"${barIndex >= barCount - 1 ? " disabled" : ""}>Bar →</button>
         </div>
 
-        <div class="rhythm-beat-switch" role="group" aria-label="Beat選択">
+        <div class="rhythm-beat-switch" role="group" aria-label="Copy元Beat選択">
           ${[0, 1, 2, 3].map((beat) => `<button data-rhythm-beat="${beat}" class="${beatIndex === beat ? "active" : ""}">Beat ${beat + 1}</button>`).join("")}
         </div>
 
-        <div class="rhythm-grid">
+        <div class="rhythm-grid" aria-label="16分音符16ステップRhythm Grid">
           <div class="rhythm-row rhythm-header">
             <span class="rhythm-label"></span>
-            ${stepLabels.map((label) => `<span>${label}</span>`).join("")}
+            ${visibleSteps.map((step) => `<span class="${step % 4 === 0 ? "beat-start" : ""}">${STEP_LABELS[step]}</span>`).join("")}
           </div>
           ${rows.map((row) => `
             <div class="rhythm-row">
@@ -109,7 +112,9 @@ export function createRhythmController({ projectStore, rerender }) {
                 const active = row.role === "bass"
                   ? row.notes.some((note) => note.startTick === startTick)
                   : row.notes.some((note) => note.startTick === startTick && note.pitch === row.pitch);
-                return `<button class="rhythm-cell${active ? " active" : ""}" data-rhythm-role="${row.role}" data-rhythm-pitch="${row.pitch}" data-rhythm-step="${step}" aria-label="${escapeHtml(row.label)} step ${step + 1}"></button>`;
+                const beatStartClass = step % 4 === 0 ? " beat-start" : "";
+                const selectedBeatClass = Math.floor(step / 4) === beatIndex ? " selected-beat" : "";
+                return `<button class="rhythm-cell${beatStartClass}${selectedBeatClass}${active ? " active" : ""}" data-rhythm-role="${row.role}" data-rhythm-pitch="${row.pitch}" data-rhythm-step="${step}" aria-label="${escapeHtml(row.label)} ${STEP_LABELS[step]}"></button>`;
               }).join("")}
             </div>
           `).join("")}
@@ -122,7 +127,7 @@ export function createRhythmController({ projectStore, rerender }) {
         </div>
 
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
-        <p class="hint">Copy Beatは現在BeatのBass / Drumsを次Beatへ、Copy Barは現在Bar全体を次Barへ複製します。BarをまたぐBassはコピー先のChord Root（Chord未設定時はKey Root）へ自動追従します。</p>
+        <p class="hint">1小節を 1 e & a / 2 e & a / 3 e & a / 4 e & a の16マスで同時表示します。BeatボタンはCopy Beatのコピー元を選びます。セルをタップしたBeatもコピー元として選択されます。</p>
       </section>
     `;
   }
@@ -151,6 +156,7 @@ export function createRhythmController({ projectStore, rerender }) {
           : drumNotes;
 
         projectStore.updateRhythmNotes({ bassNotes: nextBass, drumNotes: nextDrums });
+        beatIndex = Math.floor(step / 4);
         message = `${role === "bass" ? pitchName(pitch) : "Drum"} step ${step + 1} を更新しました。`;
         rerender("rhythm");
       });
@@ -169,6 +175,7 @@ export function createRhythmController({ projectStore, rerender }) {
       const latest = projectStore.getSnapshot();
       const sourceBarIndex = barIndex;
       const sourceBeatIndex = beatIndex;
+      const sourceBeatStartTick = sourceBarIndex * barTicks + sourceBeatIndex * beatTicks;
       const targetBeatIndex = sourceBeatIndex < 3 ? sourceBeatIndex + 1 : 0;
       const targetBarIndex = sourceBeatIndex < 3 ? sourceBarIndex : sourceBarIndex + 1;
       const targetBeatStartTick = targetBarIndex * barTicks + targetBeatIndex * beatTicks;
@@ -185,13 +192,13 @@ export function createRhythmController({ projectStore, rerender }) {
       }
 
       const nextBass = copyRhythmBeat(bassNotes, {
-        sourceBeatStartTick: beatStartTick,
+        sourceBeatStartTick,
         targetBeatStartTick,
         beatDurationTick: beatTicks,
         pitch: bassPitchForBar(latest, targetBarIndex)
       });
       const nextDrums = copyRhythmBeat(drumNotes, {
-        sourceBeatStartTick: beatStartTick,
+        sourceBeatStartTick,
         targetBeatStartTick,
         beatDurationTick: beatTicks
       });
