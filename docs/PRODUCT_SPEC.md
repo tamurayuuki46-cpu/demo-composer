@@ -34,6 +34,21 @@ Demo Composer
 
 初期UIシェルではHub / Chord / Melody / Rhythmのみ可視化。
 
+## v0.2 Early Sound Sketch Lite
+
+本来v0.4で予定しているSound Sketchのうち、スマホで「音色の方向性」を決める最小機能だけをv0.2-devへ先行導入する。
+
+対象:
+
+- Chord: Keys / Pad / Piano
+- Melody: Lead / Keys / Pluck
+- Bass: Soft Bass / Synth Bass / Deep Bass
+- Tone: Natural / Bright / Soft / Warm / Dark / Airy / Aggressive
+
+目的は最終音色を作ることではなく、「この曲は柔らかいPad系」「MelodyはBrightなLead系」などの方向をDemo段階で決めること。
+
+Sound選択はDemo Playerの軽量Web Audio仮音へ反映し、MIDI Note / Chord Data / Rhythm Dataは変更しない。最終音色はCubasis / Cubase / 各種Plugin側で作り込む。
+
 ## Non-goals
 
 Demo Composerでは以下を本格実装しない。
@@ -45,6 +60,7 @@ Demo Composerでは以下を本格実装しない。
 - Plugin Hosting
 - 本格Synth設計
 - PC DAWの完全再現
+- Sound Sketch内の詳細Synth Parameter / FX Rack / Track Mixer
 
 ## AI Philosophy
 
