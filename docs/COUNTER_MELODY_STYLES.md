@@ -1,15 +1,15 @@
-# Counter Melody 3 Styles
+# Counter Melody 4 Styles
 
 更新日: 2026-10-11
 対象Version: v0.2-dev
 
 ## 目的
 
-Arrange の裏メロ候補を、役割が分かりやすい3系統へ整理する。
+Arrange の裏メロ候補を、役割が分かりやすい4系統へ整理する。
 
-完成フレーズを自動作曲する機能ではなく、Sectionごとに3つを聴き比べて選び、必要なら別候補へ替えるための叩き台とする。
+完成フレーズを自動作曲する機能ではなく、Sectionごとに4つを聴き比べて選び、必要なら別候補へ替えるための叩き台とする。
 
-## 3系統
+## 4系統
 
 ### Sparse（隙間型）
 
@@ -40,6 +40,24 @@ Arrange の裏メロ候補を、役割が分かりやすい3系統へ整理す�
 - もう1つの歌えるフックとして使う
 - ※イメージ: Oasis系。特定曲のコピーや旋律再現ではなく「反復フックの役割」の参考分類
 
+### Answer（応答型）
+
+- メインMelodyの語尾や小節後半の空きを優先する
+- Sparseより音価を長めにし、短い装飾より「歌への返答」を感じる形にする
+- ルートより3度・7度など、コードの明暗や色が出やすい音を優先する
+- 4つ空きstepがある場合は2音を2stepずつ置き、少し上がる / 下がる流れで感情を補強する
+- 主旋律が詰まっている小節では無理に入れない
+- ※イメージ: Mr.Children系。特定曲のコピーや旋律再現ではなく「歌の語尾に応答して感情を補強する役割」の参考分類
+
+## 使い分けの目安
+
+- Sparse = 隙間を短く埋める
+- Active = 主旋律の下で動き続ける
+- Hook = 反復するもう1つのフックを作る
+- Answer = 主旋律が言い切った後に、少し長めに返す
+
+Sparse と Answer はどちらも休符を使うが、Sparse は短い装飾、Answer は語尾への応答という役割で分ける。
+
 ## Data / Compatibility
 
 - 保存先は従来どおり `tracks[role=counter].notes[]`
@@ -57,7 +75,7 @@ Arrange の裏メロ候補を、役割が分かりやすい3系統へ整理す�
 - Key変更時の移調
 - Scale変更時の安全制約
 - Cubasis / Cubaseへ渡すMIDI形式
-- Sparse / Active / Hook の3系統そのもの
+- Sparse / Active / Hook の既存3系統の役割
 
 ## Backup
 
@@ -69,6 +87,10 @@ Activeハーモニー強化前の復元点:
 
 `restore/v0.2-before-active-harmony`
 
+Answer（応答型）追加前の復元点:
+
+`restore/v0.2-before-counter-answer-style`
+
 今回の作業Branch:
 
-`chatgpt/v0.2-counter-active-harmony`
+`chatgpt/v0.2-counter-answer-style`

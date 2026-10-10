@@ -1,4 +1,4 @@
-// Counter Melody（裏メロ）: メインMelodyを邪魔しない範囲で、役割の違う3系統の候補を作る。
+// Counter Melody（裏メロ）: メインMelodyを邪魔しない範囲で、役割の違う4系統の候補を作る。
 // 完全自動ではなく「候補を聴く → 選ぶ → 必要なら別候補にする / 消す」。選んだSectionだけに当てる。
 // 保存先は tracks[] の role:"counter"（Schema追記のみ。無い古いProjectはそのまま有効）。
 // ProjectをUIにもAudioにも依存せずに読む純粋関数。元のProjectは変更しない。
@@ -27,6 +27,11 @@ export const COUNTER_STYLES = Object.freeze([
     id: "hook",
     label: "Hook（フック型）",
     description: "少ない音の覚えやすい型を繰り返し、もう1つの歌えるフックを作る。※イメージ：Oasis系（特定曲のコピーではありません）"
+  },
+  {
+    id: "answer",
+    label: "Answer（応答型）",
+    description: "主旋律の語尾や小節後半に、3度・7度などコードの色が出る音で少し長めの返しを置く。※イメージ：Mr.Children系（特定曲のコピーではありません）"
   }
 ]);
 
@@ -75,6 +80,16 @@ function chordPitchClasses(project, bar) {
   const tonic = keyPitchClass(project);
   const third = project.basic.scale === "minor" ? 3 : 4;
   return [tonic, (tonic + third) % 12, (tonic + 7) % 12];
+}
+
+// ルート以外のコード構成音。3度・7度など、コードの明暗や色が出やすい音を優先する。
+function chordColorPitchClasses(project, bar) {
+  const chord = project.chords[bar];
+  const pcs = chordPitchClasses(project, bar);
+  if (!chord) return pcs.slice(1).length > 0 ? pcs.slice(1) : pcs;
+  const root = chord.root % 12;
+  const colors = pcs.filter((pc) => pc !== root);
+  return colors.length > 0 ? colors : pcs;
 }
 
 // コード構成音以外のKey内音。9th / 11th / 13thなどの「色」に使う。
@@ -296,7 +311,65 @@ function buildHook(project, melody, startBar, endBar) {
   return notes;
 }
 
-// Sectionの範囲（startBar〜endBar）に当てる候補を3つ作る。土台（コードかメロディ）が無いときは例外
+// Answer: 主旋律が言い切った後の隙間を優先し、コードの色が出る音で少し長めに返す。
+// Sparseより音価を長くし、短い装飾ではなく「歌に答えるもう1フレーズ」の感覚を作る。
+function buildAnswer(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const target = averageMelodyPitch(melody) - 7;
+  const notes = [];
+  let previous = null;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const occupied = inBar.length === 0
+      ? [true, true, true, true, false, false, false, false]
+      : occupiedSteps(inBar, barStart, barTicks);
+    const runs = freeRuns(occupied).filter((run) => run.length >= 2);
+    if (runs.length === 0) continue;
+
+    // 「語尾への返答」に寄せるため、最も後ろまで伸びる隙間を優先する。
+    const run = runs.reduce((best, item) => {
+      const bestEnd = best.start + best.length;
+      const itemEnd = item.start + item.length;
+      if (itemEnd !== bestEnd) return itemEnd > bestEnd ? item : best;
+      return item.length > best.length ? item : best;
+    });
+    const runStart = barStart + run.start * STEP;
+    const usableSteps = Math.min(run.length, 4);
+    const colorPcs = chordColorPitchClasses(project, bar);
+    const first = pickPitch({
+      pcs: colorPcs,
+      target,
+      overlapping: overlappingNotes(inBar, runStart, runStart + usableSteps * STEP),
+      previous
+    });
+    if (first === null) continue;
+
+    if (usableSteps >= 4) {
+      const directionTarget = bar % 2 === 0 ? scaleStepUp(first, 1, scale) : scaleStepDown(first, 1, scale);
+      const second = pickPitch({
+        pcs: chordPitchClasses(project, bar),
+        target: directionTarget,
+        overlapping: overlappingNotes(inBar, runStart + STEP * 2, runStart + STEP * 4),
+        previous: first
+      });
+      if (second === null) continue;
+      notes.push(
+        makeNote(first, runStart, STEP * 2, 62),
+        makeNote(second, runStart + STEP * 2, STEP * 2, 58)
+      );
+      previous = second;
+    } else {
+      notes.push(makeNote(first, runStart, usableSteps * STEP, 61));
+      previous = first;
+    }
+  }
+  return notes;
+}
+
+// Sectionの範囲（startBar〜endBar）に当てる候補を4つ作る。土台（コードかメロディ）が無いときは例外
 export function counterCandidates(project, { startBar, endBar }) {
   const barTicks = barTicksOf(project);
   const melody = (project.tracks.find((track) => track.role === "melody")?.notes ?? [])
@@ -309,7 +382,7 @@ export function counterCandidates(project, { startBar, endBar }) {
     throw new Error("このSectionにはコードもメロディもありません。先にどちらかを入れると、裏メロの候補を作れます。");
   }
 
-  const builders = { sparse: buildSparse, active: buildActive, hook: buildHook };
+  const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer };
   return COUNTER_STYLES.map((style) => {
     const notes = builders[style.id](project, melody, startBar, endBar)
       .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
