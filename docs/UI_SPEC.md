@@ -95,12 +95,15 @@ Playerの `パート` ボタンで、Player下部に聴き分けパネルを開�
 - Scale
 - AutoSave状態
 - Save Now
+- ＋ 新規Project
 - Export
 - AI相談（相談用テキストのコピー）
 
 通常のProject変更は1.5秒無操作後にIndexedDBへAutoSaveする。アプリがhiddenになる時も即時保存する。
 
 `Save Now`は即時保存とPersistent Storage要求のために残す。
+
+`＋ 新規Project` は確認後にDemo Playerを停止し、現在のProjectを保存してから別IDの空Projectへ切り替える。旧Projectは削除しない。保存に失敗した場合は切り替えず、現在Projectを維持する。初期版では保存済みProject一覧 / 過去Projectを選んで開くUIは未実装。
 
 ### Key / Scale Change
 
