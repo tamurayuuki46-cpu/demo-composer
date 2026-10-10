@@ -642,24 +642,31 @@ h1 {
 
 .note-length {
   display: grid;
-  gap: 6px;
-  margin: 10px 0 12px;
+  gap: 4px;
+  margin: 8px 0 8px;
 }
 .note-length > span {
   font-size: 13px;
   color: #b9b9c2;
 }
+/* 6つを1段に並べて、鍵盤グリッドが画面の下へ押し下げられないようにする */
 .note-length-buttons {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
 }
 .note-length-buttons button {
   min-height: 44px;
+  padding: 0 1px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #28282f;
   color: #f5f5f5;
+  font-size: 12px;
+  white-space: nowrap;
+}
+@media (max-width: 340px) {
+  .note-length-buttons button { font-size: 11px; letter-spacing: -0.04em; }
 }
 .note-length-buttons button.active {
   background: #f1f1f1;
