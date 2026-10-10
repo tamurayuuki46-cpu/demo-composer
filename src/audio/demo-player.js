@@ -11,8 +11,10 @@ function projectEndTick(project) {
   const noteEnd = project.tracks
     .flatMap((track) => track.notes ?? [])
     .reduce((max, note) => Math.max(max, note.startTick + note.durationTick), 0);
+  const contentEnd = Math.max(chordEnd, noteEnd);
+  const usedBars = Math.max(1, Math.ceil(contentEnd / barTicks));
 
-  return Math.max(chordEnd, noteEnd, barTicks * 4);
+  return usedBars * barTicks;
 }
 
 function tickToSeconds(project, tick) {
