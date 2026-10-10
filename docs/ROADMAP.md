@@ -29,10 +29,14 @@ Current focus:
   - Chord QualityのDemo Player / MIDI対応
   - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
   - Presetを現在Key / Scaleへ自動変換し、適用後に手動修正
-- Rhythm Drum Preset
-  - 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
+  - Backing Pattern: Block / 8分刻み / Arpeggio / Syncopation
+  - Backing PatternをDemo PlayerとChord.mid / Song.midへ反映
+- Rhythm
+  - Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
   - Preset適用後に16 stepを手動修正
+  - Bass音程選択 / 半音ずらし
 - Undo / Redo
+- project.json Import
 - Arrange Section（v0.3予定から基本構成だけ先行）
   - 構成Template / 小節増減 / Sectionコピー / Section再生 / MIDI Marker
 - Sound Sketch Lite（v0.4予定から最小機能だけ先行）
@@ -43,7 +47,7 @@ Current focus:
 - Melody Analyzer
 - Bass候補生成の設計 / 試作
 
-Chord Tone表示は、Chord / Rhythm / Arrange / Sound Sketch LiteのAndroid実機回帰確認後に仕様案を1枚作り、Melody Gridのどの音をどう強調するかを確認してから実装する。
+Backing Patternは初期4種類を実制作で確認し、十分であれば増やしすぎない。Chord Tone表示は、Chord / Rhythm / Arrange / Sound / BackingのAndroid実機回帰確認後に仕様案を1枚作り、Melody Gridのどの音をどう強調するかを確認してから実装する。
 
 ## v0.3
 
