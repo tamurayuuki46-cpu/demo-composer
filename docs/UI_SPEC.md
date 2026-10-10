@@ -128,9 +128,11 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
 - Tapでstep ON/OFF
 - `Clear Bar` で現在BarのBass + Drumsを削除
 - `Clear Bass` でBass全体を削除し、Chord変更可能な状態へ戻す
-- `Copy → Bar N` で現在BarのBass + Drumsパターンを次Barへコピーし、そのBarへ移動する
-- コピー先にRhythmがある場合は上書き確認を表示する
-- Bassはリズム位置だけをコピーし、Pitchはコピー先のChord Root（Chord未設定時はKey Root）へ追従する
+- `Copy Beat → Beat N` で現在BeatのBass + Drumsパターンを次Beatへコピーし、そのBeatへ移動する
+- Beat 4からのBeat Copyは次BarのBeat 1へコピーし、次Barへ移動する
+- `Copy Bar → Bar N` で現在BarのBass + Drumsパターンを次Barへコピーし、そのBarへ移動する
+- Beat / Barのコピー先にRhythmがある場合は上書き確認を表示する
+- Bassはリズム位置だけをコピーし、Barをまたぐ場合はPitchをコピー先のChord Root（Chord未設定時はKey Root）へ追従させる
 
 16列を横一列に縮小せず、4列ずつ見せることでタップ領域を確保する。
 
