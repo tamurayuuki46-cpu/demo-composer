@@ -229,7 +229,8 @@ export function createDemoPlayer({ onStateChange } = {}) {
       compressor.release.value = 0.18;
 
       const outputGain = context.createGain();
-      outputGain.gain.value = 1.75;
+      // Android実機テスト用。直前の1.75から最終出力を2倍にする。
+      outputGain.gain.value = 3.5;
 
       masterGain.connect(compressor);
       compressor.connect(outputGain);
