@@ -1,1 +1,43 @@
-Audio: Demo Player / 将来のWAV出力など共通Audio処理を置く。
+# Audio Module
+
+Audio Moduleは作曲確認用のDemo Playerを担当する。
+
+## v0.1-dev implemented
+
+`demo-player.js`
+
+- Web Audio APIを使用
+- Play
+- Stop
+- Loop
+- Position表示
+- 画面下部に常設
+- Play時点のProject Snapshotを再生
+
+## Preview Sound
+
+最終音色を作る目的ではなく、作曲判断の確認用。
+
+- Chord: 簡易Triad / Triangle
+- Melody: Triangle
+- Bass: Sine
+- Kick: Sine pitch envelope
+- Snare: Noise
+- Closed HH: High-pass Noise
+
+音作り / Mixing / Mastering / Plugin HostingはDemo Composerの責務にしない。
+
+## Timing
+
+ProjectのBPM / PPQを使ってtickを秒へ変換する。
+
+再生長はChord / Noteの最終tickを基準にし、最低4小節とする。
+
+## Later
+
+- より軽いPreset選択
+- Count-in
+- Section再生
+- WAV Demo Export
+
+高度なSynthやMix機能は追加しない。
