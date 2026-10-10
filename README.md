@@ -17,21 +17,21 @@ Demo Composerは「スマホ版DAW」を目指しません。
 - 音色の方向性
 - Demo v1
 
-本制作は `Demo Composer → Cubasis → Cubase → 各種プラグイン` へ引き継ぎます。
+本制作は `Demo Composer → Cubasis / BandLab → Cubase → 各種プラグイン` へ引き継ぎます。
 
 ## Current Version
 
-`v0.1-dev`
+`v0.2-dev`
 
 ## Status
 
-現在は、Hub / Chord / Melody / Rhythm の実データ入力、schemaVersion 1準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
+現在は、Hub / Chord / Melody / Rhythm の実データ入力、schemaVersion 2準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
 
 HubではProject名 / BPM / Key / Scaleを編集できます。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。
 
-Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを候補表示し、タップで1小節ずつ進行へ追加できます。追加済みコードの削除 / Clearにも対応しています。
+Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを従来どおり候補表示します。さらに基準音をC〜Bから選び、`Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug` の9種類を1小節ずつ進行へ追加できます。追加済みコードの削除 / Clearにも対応しています。新しいQualityはDemo PlayerとMIDI Exportにも反映されます。
 
-Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。左端に白鍵 / 黒鍵が分かる縦ピアノKeyboardを表示し、1小節を `1 & 2 & 3 & 4 &` の8分音符8 stepとして1画面に同時表示してタップ入力できます。Bar / Octave切替とClear Barに対応しています。
+Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。左端に白鍵 / 黒鍵が分かる縦ピアノKeyboardを表示し、8分音符 / 16分音符を切り替えてタップ入力できます。16分音符はタップ幅を保つため半小節ずつ表示します。Bar / Octave切替とClear Barに対応しています。
 
 Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを `1 e & a / 2 e & a / 3 e & a / 4 e & a` として1画面に同時表示し、Bassは現在ChordのRootを使用します。現在Beatを次Beatへ、現在Barを次BarへコピーするRhythm Copyにも対応しています。Beat 4のコピーは次BarのBeat 1へ進みます。
 
@@ -39,7 +39,9 @@ Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量�
 
 Exportでは `Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `project.json` をダウンロードできます。Song / Part MIDIはSMF Type 1、PPQ 480です。
 
-未実装の主要項目は、project.json Import、Migration、PWA Service Worker、Android/Cubasis/Cubase実機確認です。
+schemaVersion 1の保存Projectは、v0.2起動時に移行前データをIndexedDB内へ退避した上でschemaVersion 2へ自動Migrationします。
+
+未実装の主要項目は、project.json Import、Snapshot履歴、PWA Service Worker、Chord Tone表示、Arrange / Song Structureです。
 
 ## AI共同開発
 
@@ -89,7 +91,7 @@ python -m http.server 8080
 Vercel配布時のみ `npm run build` を実行し、`dist/` を静的公開します。
 
 - Build Command: `npm run build`
-- Output Directory: `dist`
+- Output Directory: `dist/`
 - 設定ファイル: `vercel.json`
 - 静的コピー処理: `scripts/build-static.mjs`
 
