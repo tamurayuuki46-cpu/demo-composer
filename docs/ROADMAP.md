@@ -27,6 +27,8 @@ Current focus:
   - 基準音ごとのQuality拡張: Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
   - Schema v1 → v2 Migration
   - Chord QualityのDemo Player / MIDI対応
+  - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
+  - Presetを現在Key / Scaleへ自動変換し、適用後に手動修正
 - Rhythm Drum Preset
   - 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
   - Preset適用後に16 stepを手動修正
@@ -34,7 +36,7 @@ Current focus:
 - Melody Analyzer
 - Bass候補生成の設計 / 試作
 
-Chord Tone表示は、Chord Quality拡張とRhythm PresetのAndroid実機確認後に仕様案を1枚作り、Melody Gridのどの音をどう強調するかを確認してから実装する。
+Chord Tone表示は、Chord Quality拡張・Chord Preset・Rhythm PresetのAndroid実機確認後に仕様案を1枚作り、Melody Gridのどの音をどう強調するかを確認してから実装する。
 
 ## v0.3
 
