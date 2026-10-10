@@ -24,11 +24,11 @@ function sampleProject() {
   const roots = [0, 9, 5, 7, 0, 9, 5, 7];
   const qualities = ["major", "minor", "major", "major", "major", "minor", "major", "major"];
   project.chords = roots.map((root, index) => ({ root, quality: qualities[index], degree: "I", startTick: index * BAR, durationTick: BAR }));
-  // メロディ: 各小節の前半だけ鳴らし、後半は休む（Sparse用の隙間）。サビ最後は詰める。
+
+  // 各小節の前半だけメロディ、後半は休符。最後の小節だけ8分で埋める。
   const notes = [];
   for (let bar = 0; bar < 8; bar += 1) {
-    const pitches = [72, 74, 76, 72];
-    pitches.slice(0, 2).forEach((pitch, step) => {
+    [72, 74].forEach((pitch, step) => {
       notes.push({ id: `m-${bar}-${step}`, pitch, startTick: bar * BAR + step * 480, durationTick: 480, velocity: 90 });
     });
   }
@@ -42,19 +42,21 @@ function sampleProject() {
 const project = sampleProject();
 assert.equal(hasCounter(project), false);
 assert.equal(COUNTER_ROLE, "counter");
-assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook"]);
+assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer"]);
 assert.match(COUNTER_STYLES[0].description, /米津/);
 assert.match(COUNTER_STYLES[1].description, /YOASOBI \/ Ayase/);
 assert.match(COUNTER_STYLES[1].description, /コードトーン型/);
 assert.match(COUNTER_STYLES[1].description, /テンション型/);
 assert.match(COUNTER_STYLES[1].description, /別コード感型/);
 assert.match(COUNTER_STYLES[2].description, /Oasis/);
+assert.match(COUNTER_STYLES[3].description, /Mr\.Children/);
+assert.match(COUNTER_STYLES[3].description, /3度・7度/);
 assert.ok(COUNTER_STYLES.every((item) => item.description.includes("特定曲のコピーではありません")));
 
-// --- 候補は3つで、どれも範囲内・MIDI範囲内
+// --- 候補は4つで、どれも範囲内・MIDI範囲内
 const candidates = counterCandidates(project, { startBar: 0, endBar: 4 });
 assert.deepEqual(candidates.map((item) => item.id), COUNTER_STYLES.map((style) => style.id));
-assert.equal(candidates.length, 3);
+assert.equal(candidates.length, 4);
 candidates.forEach((candidate) => {
   assert.ok(candidate.notes.length > 0, `${candidate.id} has notes`);
   assert.ok(candidate.notes.every((note) => note.startTick >= 0 && note.startTick < 4 * BAR), `${candidate.id} stays in range`);
@@ -63,34 +65,26 @@ candidates.forEach((candidate) => {
   assert.equal(new Set(candidate.notes.map((note) => note.id)).size, candidate.notes.length, "unique ids");
 });
 
-// Sparse: 前半のメロディとは重ならず、後半の隙間にだけ短く返す
 const sparse = candidates.find((item) => item.id === "sparse");
-sparse.notes.forEach((note) => {
-  const inBar = note.startTick % BAR;
-  assert.ok(inBar >= 960, `sparse note starts in the gap (${inBar})`);
-});
+sparse.notes.forEach((note) => assert.ok(note.startTick % BAR >= 960, "sparse starts in the gap"));
 
-// Active: 8分中心で、Sparseより明確に音数が多い
 const active = candidates.find((item) => item.id === "active");
 assert.ok(active.notes.length > sparse.notes.length, "active is denser than sparse");
 assert.ok(active.notes.every((note) => note.durationTick === STEP), "active uses eighth-note motion");
 
-// ActiveのC Major / Cコードでは、1小節内で
-// ①コードトーン → ②テンション → ③E-G-Bの薄い別コード感 を順番に混ぜる。
 const activeBar0 = active.notes.filter((note) => Math.floor(note.startTick / BAR) === 0);
 assert.deepEqual(activeBar0.map((note) => note.startTick % BAR), [0, 240, 480, 960, 1200, 1440]);
 const chordPcs = [0, 4, 7];
 const scalePcs = [0, 2, 4, 5, 7, 9, 11];
 const upperStructurePcs = [4, 7, 11];
-[0, 3].forEach((index) => assert.ok(chordPcs.includes(activeBar0[index].pitch % 12), `active chord tone ${index}`));
+[0, 3].forEach((index) => assert.ok(chordPcs.includes(activeBar0[index].pitch % 12)));
 [1, 4].forEach((index) => {
   const pc = activeBar0[index].pitch % 12;
-  assert.ok(scalePcs.includes(pc), `active tension stays in scale ${index}`);
-  assert.ok(!chordPcs.includes(pc), `active tension is outside chord ${index}`);
+  assert.ok(scalePcs.includes(pc));
+  assert.ok(!chordPcs.includes(pc));
 });
-[2, 5].forEach((index) => assert.ok(upperStructurePcs.includes(activeBar0[index].pitch % 12), `active upper structure ${index}`));
+[2, 5].forEach((index) => assert.ok(upperStructurePcs.includes(activeBar0[index].pitch % 12)));
 
-// Hook: 各小節で同じ 1拍目→2拍目→3拍目 の3音輪郭を繰り返す
 const hook = candidates.find((item) => item.id === "hook");
 for (let bar = 0; bar < 4; bar += 1) {
   const inBar = hook.notes.filter((note) => Math.floor(note.startTick / BAR) === bar);
@@ -98,18 +92,29 @@ for (let bar = 0; bar < 4; bar += 1) {
   assert.deepEqual(inBar.map((note) => note.durationTick), [480, 480, 960]);
 }
 
-// 詰まった小節(サビ最後)ではSparseは休む
-const chorusSparse = counterCandidates(project, { startBar: 4, endBar: 8 }).find((item) => item.id === "sparse");
-assert.ok(chorusSparse.notes.every((note) => Math.floor(note.startTick / BAR) !== 7), "dense bar is left empty by sparse");
+// Answer: 語尾側（後半）を優先し、Sparseより長い2拍単位の返しを作る。
+const answer = candidates.find((item) => item.id === "answer");
+for (let bar = 0; bar < 4; bar += 1) {
+  const inBar = answer.notes.filter((note) => Math.floor(note.startTick / BAR) === bar);
+  assert.deepEqual(inBar.map((note) => note.startTick % BAR), [960, 1440]);
+  assert.deepEqual(inBar.map((note) => note.durationTick), [480, 480]);
+  assert.ok(inBar.every((note) => note.startTick % BAR >= 960), "answer stays after the main phrase");
+}
+const answerBar0 = answer.notes.filter((note) => Math.floor(note.startTick / BAR) === 0);
+assert.ok([4, 7].includes(answerBar0[0].pitch % 12), "answer begins on a non-root chord color tone");
 
-// 土台が無いSectionは例外
+// 詰まった小節では隙間系は休む
+const chorus = counterCandidates(project, { startBar: 4, endBar: 8 });
+assert.ok(chorus.find((item) => item.id === "sparse").notes.every((note) => Math.floor(note.startTick / BAR) !== 7));
+assert.ok(chorus.find((item) => item.id === "answer").notes.every((note) => Math.floor(note.startTick / BAR) !== 7));
+
 const empty = createDefaultProject();
 assert.throws(() => counterCandidates(empty, { startBar: 0, endBar: 4 }), /コードもメロディもありません/);
 
 // --- 適用 / 消去 / 範囲外は触らない / Undo
 const store = createProjectStore(project);
 const revisionBefore = store.getSnapshot().revision;
-store.applyCounterMelody({ startBar: 0, endBar: 4, notes: hook.notes });
+store.applyCounterMelody({ startBar: 0, endBar: 4, notes: answer.notes });
 assert.equal(store.getSnapshot().revision, revisionBefore + 1);
 let snapshot = store.getSnapshot();
 assert.equal(snapshot.tracks.find((track) => track.role === "counter").midiChannel, 4);
@@ -119,46 +124,41 @@ validateProject(snapshot);
 
 store.applyCounterMelody({ startBar: 4, endBar: 8, notes: counterCandidates(snapshot, { startBar: 4, endBar: 8 }).find((item) => item.id === "hook").notes });
 snapshot = store.getSnapshot();
-assert.equal(counterBarCount(snapshot, 0, 4), 4, "first section untouched");
+assert.equal(counterBarCount(snapshot, 0, 4), 4);
 assert.equal(counterBarCount(snapshot, 4, 8), 4);
 
 store.applyCounterMelody({ startBar: 0, endBar: 4, notes: [] });
 snapshot = store.getSnapshot();
-assert.equal(counterBarCount(snapshot, 0, 4), 0, "cleared");
-assert.equal(counterBarCount(snapshot, 4, 8), 4, "other section kept");
-
+assert.equal(counterBarCount(snapshot, 0, 4), 0);
+assert.equal(counterBarCount(snapshot, 4, 8), 4);
 store.undo();
-assert.equal(counterBarCount(store.getSnapshot(), 0, 4), 4, "undo restores the cleared section");
+assert.equal(counterBarCount(store.getSnapshot(), 0, 4), 4);
 
-// 元のProjectは変えない
 assert.equal(counterNotes(project).length, 0);
-const preview = withCounterNotes(project, 0, 4, hook.notes);
+const preview = withCounterNotes(project, 0, 4, answer.notes);
 assert.equal(counterNotes(project).length, 0);
 assert.ok(counterNotes(preview).length > 0);
 
-// --- 他の操作と一緒に動く: Section切り出し / Section追加コピー / Key変更
+// --- Section操作 / Key変更 / MIDI Exportとの互換
 snapshot = store.getSnapshot();
 const sliced = sliceProject(snapshot, 0, 4 * BAR);
 assert.ok(counterNotes(sliced).every((note) => note.startTick < 4 * BAR));
 const copied = appendSectionCopy(snapshot, 0, "verse");
 assert.equal(getSections(copied).length, 3);
-assert.equal(counterBarCount(copied, 8, 12), counterBarCount(snapshot, 0, 4), "counter copies with the section");
+assert.equal(counterBarCount(copied, 8, 12), counterBarCount(snapshot, 0, 4));
 
 const beforeKey = counterNotes(store.getSnapshot()).map((note) => note.pitch);
 store.updateHub({ basic: { key: "D" } });
 const afterKey = counterNotes(store.getSnapshot()).map((note) => note.pitch);
-assert.deepEqual(afterKey, beforeKey.map((pitch) => pitch + 2), "counter melody transposes with the key");
-assert.throws(() => store.updateHub({ basic: { scale: "minor" } }), /Scale/, "scale change is blocked while counter melody exists");
+assert.deepEqual(afterKey, beforeKey.map((pitch) => pitch + 2));
+assert.throws(() => store.updateHub({ basic: { scale: "minor" } }), /Scale/);
 
-// --- MIDI: 無いときは今まで通り / あるときだけ追加
 const plain = buildMidiExports(sampleProject());
 assert.deepEqual(Object.keys(plain), ["Song.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid"]);
 const withCounter = buildMidiExports(store.getSnapshot());
 assert.ok(Object.keys(withCounter).includes("CounterMelody.mid"));
 assert.ok(withCounter["CounterMelody.mid"].length > 30);
-assert.ok(withCounter["Song.mid"].length > plain["Song.mid"].length, "Song.mid carries the counter track");
+assert.ok(withCounter["Song.mid"].length > plain["Song.mid"].length);
 
-// --- 古いProject（counterトラック無し）はそのまま有効
 validateProject(sampleProject());
-
 console.log("Counter melody smoke test passed.");
