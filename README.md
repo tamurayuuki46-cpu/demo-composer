@@ -29,7 +29,7 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 HubではProject名 / BPM / Key / Scaleを編集できます。Key変更時はChord / Melody / Bassを同じ最短半音幅で自動移調し、Drumsは変更しません。Scale変更はChord / Melody / Bassがある場合は安全のため拒否します。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。
 
-Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを従来どおり候補表示します。さらに基準音をC〜Bから選び、`Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug` の9種類を1小節ずつ進行へ追加できます。加えて `Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行` の6種類のChord Presetを現在のKey / Scaleへ自動変換して適用できます。Preset適用後も個別追加・削除で修正できます。追加済みコードの削除 / Clearにも対応し、新しいQualityはDemo PlayerとMIDI Exportにも反映されます。
+Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを五度圏の関係が見やすい扇形ビューで表示します。Majorは `IV / ii ← I / vi → V / iii` と `vii°`、Minorは `VI / iv ← III / i → VII / v` と `ii°` の配置で、各コードをタップすると従来どおり1小節ずつ進行へ追加できます。さらに基準音をC〜Bから選び、`Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug` の9種類を1小節ずつ進行へ追加できます。加えて `Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行` の6種類のChord Presetを現在のKey / Scaleへ自動変換して適用できます。Preset適用後も個別追加・削除で修正できます。追加済みコードの削除 / Clearにも対応し、新しいQualityはDemo PlayerとMIDI Exportにも反映されます。
 
 Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。左端に白鍵 / 黒鍵が分かる縦ピアノKeyboardを表示し、8分音符 / 16分音符を切り替えてタップ入力できます。16分音符はタップ幅を保つため半小節ずつ表示します。Bar / Octave切替とClear Barに対応しています。
 

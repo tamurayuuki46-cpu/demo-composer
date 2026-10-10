@@ -42,5 +42,8 @@ jobs:
       - name: Hub key-change smoke test
         run: npm run test:key-change
 
+      - name: Diatonic fan smoke test
+        run: npm run test:diatonic-fan
+
       - name: Static build
         run: npm run build

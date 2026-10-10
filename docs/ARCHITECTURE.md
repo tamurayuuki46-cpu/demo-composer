@@ -71,8 +71,12 @@ Chord Module内の補助ロジックは `src/chord/` に置く。
 
 - `chord-theory.js`: Scale / Degree / Chord Symbol / Quality候補
 - `chord-presets.js`: Degree配列で定義したChord Presetを現在Key / Scaleの通常Chord Dataへ展開
+- `diatonic-fan.js`: 既存のダイアトニック7候補ButtonをDegreeごとの五度圏スロットへ割り当てるUI enhancer
+- `diatonic-fan.css`: Androidスマホ向け扇形レイアウト / タップ領域 / 色分け
 
 Chord PresetはProject Schemaへ専用データを追加しない。Preset選択状態も保存せず、適用結果だけ `project.chords[]` として保持する。これによりAutoSave / Demo Player / MIDI Exportは既存Chord処理をそのまま利用する。
+
+Diatonic FanもProject DataやChord追加ロジックを変更しない。`data-add-chord` を持つ既存7候補へ表示用classだけを付与し、Chord画面が再Renderされた場合は `MutationObserver` で再適用する。Major / MinorのDegree文字列からスロットを判定し、候補Button自体のclick処理は従来の `main.js` に残す。
 
 ## Storage
 

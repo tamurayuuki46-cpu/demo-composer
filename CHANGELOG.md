@@ -16,12 +16,17 @@
 - Rhythm Drum Preset 6種類（8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH）
 - Rhythm Preset Smoke Test（`npm run test:rhythm-presets`、CI対象）
 - Hub Key変更の回帰テスト（`npm run test:key-change`、CI対象）
+- Diatonic Fan配置Smoke Test（`npm run test:diatonic-fan`、CI対象）
 - v0.2統合前の復元ブランチ `restore/v0.1-before-v0.2-integration`
 - Chord Preset追加前の復元ブランチ `restore/v0.2-before-chord-presets`
 - Key変更修正前の復元ブランチ `restore/v0.2-before-key-change-fix`
+- ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
 - Chord画面はダイアトニック7候補を残しつつ、任意の基準音から9種類のQualityを追加できる構成へ変更
+- Chord画面のダイアトニック7候補を2列Gridから五度圏の扇形ビューへ変更
+- Majorは `IV / ii ← I / vi → V / iii` + `vii°`、Minorは `VI / iv ← III / i → VII / v` + `ii°` として配置
+- 扇形UIは既存 `data-add-chord` Buttonへ表示classだけを付与し、Chord追加ロジック / Project Data / MIDIは変更しない
 - Chord画面に `Chord Preset` select + `適用` を追加し、現在Key / Scaleへ自動変換した進行を通常Chord Dataとして展開する方式にした
 - Chord Preset適用後も個別コード追加 / 削除 / Clearで自由に修正できるようにした
 - Chord QualityをDemo Player / Chord.mid / Song.midへ共通の構成音定義で反映
@@ -31,7 +36,7 @@
 - Scale変更はChord / Melody / Bassが存在する場合は引き続き拒否し、意図しないMajor/Minor変換を行わない
 - `VERSION` / 画面内Version / package versionをv0.2-devへ更新
 - DATA_SCHEMAをschemaVersion 2へ更新
-- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Static Buildを確認する構成へ更新
+- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Diatonic Fan / Static Buildを確認する構成へ更新
 
 ### 修正
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
