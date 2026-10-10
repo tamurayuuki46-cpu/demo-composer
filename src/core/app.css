@@ -292,24 +292,54 @@ h1 {
 }
 .melody-grid {
   display: grid;
-  gap: 5px;
+  gap: 2px;
+  padding: 4px 0;
 }
 .melody-row {
   display: grid;
-  grid-template-columns: 48px repeat(4, minmax(0, 1fr));
+  grid-template-columns: 68px repeat(4, minmax(0, 1fr));
   gap: 5px;
-  align-items: center;
+  align-items: stretch;
 }
-.melody-header span:not(.pitch-label) {
+.melody-header {
+  align-items: end;
+  margin-bottom: 4px;
+}
+.melody-header span:not(.piano-key-spacer) {
   text-align: center;
   font-size: 11px;
   opacity: .6;
 }
-.pitch-label {
-  text-align: right;
-  padding-right: 5px;
-  font-size: 12px;
-  opacity: .75;
+.piano-key-spacer {
+  min-height: 18px;
+}
+.piano-key {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+.piano-key.white {
+  width: 100%;
+  border: 1px solid #c9c9cf;
+  border-radius: 4px 8px 8px 4px;
+  background: #f1f1f1;
+  color: #111;
+}
+.piano-key.black {
+  width: 68%;
+  justify-self: end;
+  border: 1px solid #4a4a54;
+  border-radius: 4px 8px 8px 4px;
+  background: #101014;
+  color: #f5f5f5;
+  box-shadow: 0 1px 3px rgba(0,0,0,.45);
+  z-index: 1;
 }
 .note-cell {
   min-width: 0;
@@ -317,6 +347,7 @@ h1 {
   border: 1px solid #34343d;
   border-radius: 10px;
   background: #202026;
+  touch-action: manipulation;
 }
 .note-cell.active {
   background: #f1f1f1;
@@ -461,6 +492,13 @@ h1 {
 @media (max-width: 420px) {
   .settings-grid {
     grid-template-columns: 1fr;
+  }
+  .melody-row {
+    grid-template-columns: 58px repeat(4, minmax(0, 1fr));
+  }
+  .piano-key {
+    padding: 0 6px;
+    font-size: 10px;
   }
   .demo-player {
     grid-template-columns: 44px 44px 54px minmax(0, 1fr);
