@@ -23,6 +23,7 @@ v0.1-dev
 - Chord候補タップによる1小節追加
 - Chord削除 / Clear / startTick再配置
 - スマホ向け簡易Melody Piano Roll
+- Melody左端の縦ピアノKeyboard（白鍵 / 黒鍵 + Note名表示）
 - Melody Bar / Octave / Beat範囲切替
 - Melody 8分音符Tap入力 / Monophonic置換 / Clear Bar
 - スマホ向けRhythm 16 Step Sequencer
@@ -53,9 +54,11 @@ v0.1-dev
 開発中:
 - v0.1 Android実機確認
 - Rhythm Beat / Bar CopyのAndroid実機確認
+- Melody縦ピアノUIのAndroid実機確認
 
 次に実施:
 - `docs/ANDROID_TEST_CHECKLIST.md`の未確認項目を継続テスト
+- Melody縦ピアノの白鍵 / 黒鍵表示、Note名、4 step入力領域がAndroid縦画面で見やすいことを確認
 - Melody / Bass / Drumsを含むDemo Player再生、Stop / Loop / Position確認
 - Rhythm Beat CopyでBass / Drumsの4 stepパターンが次Beatへ正しくコピーされることを確認
 - Beat 4 Copyが次Bar Beat 1へ移り、Bassがコピー先Rootへ追従することを確認
@@ -77,6 +80,7 @@ Stable化前には実装しない / 慎重に判断:
 - Key/Scale変更時の既存Chord/Melody/Bass自動移調は未対応。v0.1では関連データをClearしてから変更する
 - Bass Noteがある間はChord変更を拒否する。RhythmのClear Bassで解除する
 - Melodyは8分音符固定。16分音符 / Note Length / Velocity編集は未対応
+- Melody縦ピアノはv0.1では表示専用で、鍵盤Tap試聴は未対応
 - Melody Scale表示 / Chord Tone強調 / Analyzerは未対応
 - Bass Pitch手動編集 / Velocityは未対応
 - DrumsはKick / Snare / Closed HHのみ
@@ -113,6 +117,9 @@ Stable化前には実装しない / 慎重に判断:
 - v0.1のChordは4/4・PPQ480で1コード=1小節（1920 tick）
 - v0.1 Melodyは1 Bar=8 step、1 step=240 tick、Default velocity=96
 - スマホのTap領域確保のためMelodyは4 stepずつ表示する
+- MelodyのPitch目印は文字列だけの列ではなく、白鍵 / 黒鍵を区別した縦ピアノ表示を採用する
+- Melody縦ピアノ追加はUIのみでProject Data / MIDI / schemaVersionを変更しない
+- Melody縦ピアノUI変更前の復元ポイントは `restore/v0.1-before-melody-vertical-piano`
 - v0.1 Rhythmは1 Bar=16 step、1 step=120 tick
 - スマホのTap領域確保のためRhythmは1 Beat=4 stepずつ表示する
 - Rhythm Beat Copyは現在BeatのBass / Drumsを次Beatへコピーし、コピー後は次Beatへ移動する
