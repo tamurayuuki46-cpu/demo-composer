@@ -72,6 +72,9 @@ jobs:
       - name: Melody analysis smoke test
         run: npm run test:analysis
 
+      - name: Melody to chord candidates smoke test
+        run: npm run test:melody-chords
+
       - name: Display settings smoke test
         run: npm run test:display
 
