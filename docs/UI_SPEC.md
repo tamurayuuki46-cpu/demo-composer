@@ -22,7 +22,7 @@ Android Chrome / Android smartphone.
 - 戻せる操作がないときはボタンを無効表示にする
 - 最大50操作まで。アプリを開き直すと履歴は空になる（データ自体は保存されている）
 - Key変更は1回で元のKey・コード・メロディ・ベースへ戻る
-- Clear / Preset適用 / Copy / Sound変更など、まとめて変わる操作も1回で戻る
+- Clear / Preset適用 / Copy / Sound変更 / Backing Pattern変更など、まとめて変わる操作も1回で戻る
 
 ## Navigation
 
@@ -185,6 +185,29 @@ Presetは完成曲を自動生成する機能ではなく、コード進行の�
 
 Bass Noteが存在する間はChord変更を拒否し、Root不整合を防止する。Chordを変更するときはRhythmでClear Bassを行う。
 
+### v0.2 Backing Pattern
+
+コード進行を決めた後の「鳴らし方」を選ぶため、Chord Presetの直下に `Backing Pattern` Selectを置く。
+
+初期Pattern:
+
+- `Block`: 1小節を伸ばして鳴らす
+- `8分刻み`: 8分音符8回でChordを刻む
+- `Arpeggio`: Chord構成音を8分音符で順番に鳴らす
+- `Syncopation`: 1拍目と裏拍中心の軽い食い込みPattern
+
+UI / 動作ルール:
+
+- 画面をButtonだらけにせずSelect 1つで選ぶ
+- 選択中Patternの短い説明を表示する
+- Pattern変更はChord root / quality / degree / timingを変更しない
+- Pattern変更はAutoSave / Undo / Redo対象
+- 未設定Projectは `Block` として表示・再生する
+- Demo Playerへ即反映する
+- `Chord.mid / Song.mid` のChord Track Note配置へ反映する
+- Sound SketchのChord Preset / Toneとは独立して保持し、音色と鳴らし方を別判断にする
+- 本格Strumming Editorや細かい奏法編集は追加しない
+
 v0.2でも並べ替え・コード長変更は後回し。
 
 ## Melody
@@ -231,6 +254,8 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
   - 基準は現在BarのChord Root（Chord未設定BarではKey Root）。選んだ音程がそのBarのコードから見てどの音かをセルに `R` `3` `5` `7` `8` `R↓` で表示する
   - 同じマスで別の音程を選んでタップすると置き換わり、同じ音程をもう一度タップすると消える
   - 初期値は「ルート」。従来のルートだけのBassデータはそのまま使える
+  - `半音ずらし` の − / ＋ で、選んだ音程を半音単位（±6）でずらせる。ルートの半音下のようなつなぎ音を入れられる。音程ボタンを押し直すと「なし」に戻る
+  - セルは「主役」（ルート系とコードの5度）を白、「飾り」（3度・7度・ずらした音など）を黄色で表示する。色だけに頼らず、`R` `5` `-1` などの文字も出す。見た目だけの区別で、データには保存しない
 - Bass / Kickを同時に確認可能
 - Kick / Snare / HHはGM準拠Noteを使用
 - Tapでstep ON/OFF
@@ -259,8 +284,6 @@ Presetは完成パターンを自動で作るためではなく、初心者が16
 
 後続:
 
-- Bass Pitch手動編集
-- Root / 5th / Approach候補
 - Velocity
 - Open HH / Percussion / Tom
 
