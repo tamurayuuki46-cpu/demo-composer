@@ -1,3 +1,4 @@
+import { buildBackingEvents, getBackingPatternSelection } from "../core/backing-patterns.js";
 import { chordIntervals } from "../core/chord-qualities.js";
 import { resolveSoundProfile } from "../core/sound-presets.js";
 
@@ -111,22 +112,31 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
   const chordSound = resolveSoundProfile(project.instruments, "chord");
   const melodySound = resolveSoundProfile(project.instruments, "melody");
   const bassSound = resolveSoundProfile(project.instruments, "bass");
+  const backingPattern = getBackingPatternSelection(project.instruments);
 
   project.chords.forEach((chord) => {
     const chordStart = startTime + tickToSeconds(project, chord.startTick);
-    const duration = Math.max(0.08, tickToSeconds(project, chord.durationTick) * 0.92);
-    chordIntervals(chord.quality).forEach((interval) => {
-      scheduleTone(context, masterGain, activeSources, {
-        // Demo Player only: use a phone-speaker-friendly voicing one octave above
-        // the original preview. Project/MIDI pitch data is not changed.
-        pitch: 60 + chord.root + interval,
-        startTime: chordStart,
-        duration,
-        type: chordSound.waveform,
-        gain: chordSound.gain,
-        filter: chordSound.filter,
-        attack: chordSound.attack,
-        release: chordSound.release
+    const chordDuration = tickToSeconds(project, chord.durationTick);
+    const intervals = chordIntervals(chord.quality);
+    const backingEvents = buildBackingEvents(backingPattern, intervals);
+
+    backingEvents.forEach((event) => {
+      const eventStart = chordStart + chordDuration * event.offset;
+      const eventDuration = Math.max(0.04, chordDuration * event.duration * 0.92);
+
+      event.intervals.forEach((interval) => {
+        scheduleTone(context, masterGain, activeSources, {
+          // Demo Player only: use a phone-speaker-friendly voicing one octave above
+          // the original preview. Project/MIDI pitch data is not changed.
+          pitch: 60 + chord.root + interval,
+          startTime: eventStart,
+          duration: eventDuration,
+          type: chordSound.waveform,
+          gain: Math.min(0.35, chordSound.gain * event.accent),
+          filter: chordSound.filter,
+          attack: chordSound.attack,
+          release: chordSound.release
+        });
       });
     });
   });
