@@ -5,9 +5,24 @@ import {
   MAX_SECTION_BARS,
   SECTION_KINDS,
   SECTION_TEMPLATES,
+  sectionProgress,
   sectionRanges,
   totalSectionBars
 } from "../core/section-ops.js";
+
+const PROGRESS_PARTS = [
+  ["chord", "コード"],
+  ["melody", "メロ"],
+  ["bass", "ベース"],
+  ["drums", "ドラム"]
+];
+
+// 入力の進み具合の1項目（✓ 全部 / △ 一部 / － 空）。色だけに頼らず記号も出す
+function progressChip(label, { filled, total }) {
+  const state = filled === 0 ? "none" : (filled >= total ? "done" : "part");
+  const mark = state === "done" ? "✓" : (state === "part" ? "△" : "－");
+  return `<span class="progress-chip ${state}">${mark} ${label} ${filled}/${total}</span>`;
+}
 
 function escapeHtml(value) {
   return String(value)
@@ -47,6 +62,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   function sectionCard(project, range) {
     const { section, index, startBar, endBar } = range;
     const hasContent = barsHaveContent(project, startBar, endBar);
+    const progress = sectionProgress(project, startBar, endBar);
     const isCopySource = copyFromIndex === index;
     const copyTargetMode = copyFromIndex !== null && !isCopySource;
 
@@ -58,6 +74,10 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
             <p>Bar ${startBar + 1}–${endBar}${hasContent ? " ・ 入力あり" : " ・ 空"}</p>
           </div>
           <button class="small-action" data-arrange-play="${index}" aria-label="${escapeHtml(section.name)}を再生">▶ 再生</button>
+        </div>
+
+        <div class="arrange-progress" aria-label="${escapeHtml(section.name)}の入力の進み具合">
+          ${PROGRESS_PARTS.map(([part, label]) => progressChip(label, progress[part])).join("")}
         </div>
 
         <div class="arrange-bars" role="group" aria-label="${escapeHtml(section.name)}の小節数">
@@ -88,6 +108,10 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
         <div class="arrange-templates">${templateCards()}</div>
       `
       : `
+        <div class="arrange-summary" aria-label="曲全体の入力の進み具合">
+          <strong>骨子の進み具合（全${total}小節）</strong>
+          <div class="arrange-progress">${PROGRESS_PARTS.map(([part, label]) => progressChip(label, sectionProgress(project, 0, total)[part])).join("")}</div>
+        </div>
         <p class="hint">${copyFromIndex !== null
           ? "コピー先のSectionを選んでください。コピー先の中身は上書きされます。"
           : `全${total}小節。Sectionの中身（コード・メロディ・ベース・ドラム）は小節数を変えると一緒に動きます。`}</p>

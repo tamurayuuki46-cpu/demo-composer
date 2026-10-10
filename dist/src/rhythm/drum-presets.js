@@ -121,3 +121,16 @@ export function hasEditableDrumsInBar(notes, { barStartTick, barDurationTick }) 
       && PRESET_PITCHES.has(note.pitch)
   );
 }
+
+// 小節の範囲（startBar〜endBar、endBarは含まない）すべてへ、同じDrum Presetを適用する
+export function applyDrumPresetToBars(notes, { presetId, startBar, endBar, barTicks, stepTicks }) {
+  let next = notes;
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    next = applyDrumPreset(next, { presetId, barStartTick: bar * barTicks, stepTicks });
+  }
+  return next;
+}
+
+export function hasEditableDrumsInBars(notes, { startBar, endBar, barTicks }) {
+  return hasEditableDrumsInBar(notes, { barStartTick: startBar * barTicks, barDurationTick: (endBar - startBar) * barTicks });
+}
