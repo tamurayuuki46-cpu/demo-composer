@@ -36,5 +36,8 @@ jobs:
       - name: Chord types smoke test
         run: npm run test:chord
 
+      - name: Chord preset smoke test
+        run: npm run test:chord-presets
+
       - name: Static build
         run: npm run build
