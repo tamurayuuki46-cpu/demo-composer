@@ -85,10 +85,14 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] Bass Tapで現在Chord Rootが入力される
 - [ ] Chord未設定BarではKey Rootが入力される
 - [ ] Kick / Snare / HHを同じstepに重ねられる
-- [ ] `Copy → Bar N` で現在BarのBass / Drumsが次Barへコピーされる
-- [ ] コピー後に自動でコピー先Barへ移動する
+- [ ] `Copy Beat → Beat N` で現在BeatのBass / Drumsが次Beatへコピーされる
+- [ ] Beat Copy後に自動でコピー先Beatへ移動する
+- [ ] Beat 4のCopyが次Bar Beat 1へコピーされる
+- [ ] Beat 4から次BarへコピーしたBassがコピー先Chord Rootへ追従する
+- [ ] `Copy Bar → Bar N` で現在BarのBass / Drumsが次Barへコピーされる
+- [ ] Bar Copy後に自動でコピー先Barへ移動する
 - [ ] 異なるChordのBarへコピーしたBassがコピー先Chord Rootへ追従する
-- [ ] コピー先に既存Rhythmがある場合は上書き確認が表示される
+- [ ] Beat / Barのコピー先に既存Rhythmがある場合は上書き確認が表示される
 - [ ] Clear Barが動く
 - [ ] Clear Bassが動く
 - [ ] 4 step表示でタップ領域が十分ある
