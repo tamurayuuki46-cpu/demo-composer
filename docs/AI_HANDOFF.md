@@ -32,13 +32,18 @@ v0.1-dev
 - 常設Demo Player
 - Play / Stop / Loop / Position
 - Chord / Melody / Bass / DrumsのWeb Audio軽量プレビュー
+- Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid Export
+- SMF Type 1 / Conductor Track / Tempo / 4/4 / Key Signature
+- project.json手動Backup Export
 
 開発中:
-- v0.1基本機能
+- v0.1仕上げ / 実機確認準備
 
 次に実装:
-- MIDI Export
-- Autosave / project.json Backup
+- Autosave
+- project.json Import
+- PWA Service Worker
+- Android実機テスト用チェックリスト
 
 既知の問題:
 - Chordは現在1コード=1小節固定
@@ -51,8 +56,10 @@ v0.1-dev
 - DrumsはKick / Snare / Closed HHのみ
 - Demo Playerは仮音確認専用で、本格Synth / Mix / FXは未対応かつ原則追加しない
 - Demo PlayerはPlay時点のProject Snapshotを再生し、再生中の編集は次回Playから反映
+- All MIDIはブラウザの複数Download制限を受ける場合がある。その場合は個別Downloadを使う
+- MIDIのCubasis / Cubase / BandLab実Import確認はAndroid/PC実機テストが必要
 - Saveは手動のみでAutosave未実装
-- project.json手動Export/Backup未実装
+- project.json Import未実装
 - Migration未実装
 - Service Worker未実装のため完全なPWAオフライン対応ではない
 
@@ -88,13 +95,20 @@ v0.1-dev
 - Demo Playerは画面下部、Module Navigationの上に常設
 - Demo Playerは作曲確認用の仮音のみ。高度な音作りはCubasis / Cubaseへ任せる
 - Demo Player実装前の復元ポイントとして `restore/v0.1-before-demo-player` を作成
+- MIDI writerはsrc/midi/midi-writer.js、Project変換/Downloadはsrc/midi/midi-export.jsへ分離
+- Song.midはConductor + Chord + Melody + Bass + DrumsのSMF Type 1
+- Part MIDIもConductor + 対象PartのType 1
+- MIDI ChannelsはChord1 / Melody2 / Bass3 / Drums10
+- Program Change / CCはv0.1では出力しない
+- MIDI構造変更前の復元ポイントとして `restore/v0.1-before-midi-export` を作成
+- Hub Exportからproject.jsonを手動Backupできる
 - AIは完全自動作曲ではなく候補提示・先生役
 - 将来のBass / Melody等の生成は「3候補 → 選択 → 修正」を基本とする
 - 初期生成エンジンはAPI不要のルールベース方式を優先
 - 重要仕様はCLAUDE.md / AGENTS.mdではなくdocsへ保存
 
 現在のデータSchema:
-schemaVersion 1 / PPQ 480 / 4/4固定。Chord / Melody / Bass / Drumsは既存Schema内で具体化。schemaVersion変更なし。
+schemaVersion 1 / PPQ 480 / 4/4固定。Chord / Melody / Bass / Drumsは既存Schema内で具体化。MIDI Export追加によるschemaVersion変更なし。
 
 最終更新:
 2026-10-10
