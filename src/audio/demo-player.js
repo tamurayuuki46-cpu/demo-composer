@@ -57,11 +57,11 @@ function scheduleTone(context, destination, activeSources, {
 
 function scheduleKick(context, destination, activeSources, startTime) {
   const oscillator = context.createOscillator();
-  const gain = createGain(context, destination, 0.24);
+  const gain = createGain(context, destination, 0.3);
   oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(120, startTime);
-  oscillator.frequency.exponentialRampToValueAtTime(45, startTime + 0.12);
-  gain.gain.setValueAtTime(0.24, startTime);
+  oscillator.frequency.setValueAtTime(150, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(55, startTime + 0.12);
+  gain.gain.setValueAtTime(0.3, startTime);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.14);
   oscillator.connect(gain);
   oscillator.start(startTime);
@@ -102,11 +102,13 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
     const duration = Math.max(0.08, tickToSeconds(project, chord.durationTick) * 0.92);
     chordIntervals(chord.quality).forEach((interval) => {
       scheduleTone(context, masterGain, activeSources, {
-        pitch: 48 + chord.root + interval,
+        // Demo Player only: use a phone-speaker-friendly voicing one octave above
+        // the original preview. Project/MIDI pitch data is not changed.
+        pitch: 60 + chord.root + interval,
         startTime: chordStart,
         duration,
         type: "triangle",
-        gain: 0.07
+        gain: 0.11
       });
     });
   });
@@ -122,7 +124,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           startTime: noteStart,
           duration,
           type: "triangle",
-          gain: 0.12
+          gain: 0.16
         });
         return;
       }
@@ -132,8 +134,10 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           pitch: note.pitch,
           startTime: noteStart,
           duration,
-          type: "sine",
-          gain: 0.16
+          // Triangle keeps the actual bass pitch while adding harmonics that
+          // small phone speakers reproduce more clearly than a pure sine.
+          type: "triangle",
+          gain: 0.22
         });
         return;
       }
@@ -144,13 +148,13 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
         } else if (note.pitch === 38) {
           scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
             duration: 0.12,
-            gainAmount: 0.12,
+            gainAmount: 0.16,
             highpass: 900
           });
         } else if (note.pitch === 42) {
           scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
             duration: 0.045,
-            gainAmount: 0.07,
+            gainAmount: 0.09,
             highpass: 5000
           });
         }
@@ -215,17 +219,21 @@ export function createDemoPlayer({ onStateChange } = {}) {
 
       context = new AudioContextClass({ latencyHint: "interactive" });
       masterGain = context.createGain();
-      masterGain.gain.value = 0.95;
+      masterGain.gain.value = 1;
 
       const compressor = context.createDynamicsCompressor();
-      compressor.threshold.value = -12;
-      compressor.knee.value = 18;
-      compressor.ratio.value = 4;
+      compressor.threshold.value = -8;
+      compressor.knee.value = 12;
+      compressor.ratio.value = 6;
       compressor.attack.value = 0.003;
-      compressor.release.value = 0.2;
+      compressor.release.value = 0.18;
+
+      const outputGain = context.createGain();
+      outputGain.gain.value = 1.45;
 
       masterGain.connect(compressor);
-      compressor.connect(context.destination);
+      compressor.connect(outputGain);
+      outputGain.connect(context.destination);
     }
 
     if (context.state !== "running") {
