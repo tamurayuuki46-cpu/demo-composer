@@ -36,8 +36,8 @@ v0.2-dev
 - MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid
 - Sound Sketch LiteはMIDI Program Change / CCを出力しない
 - project.json手動Backup Export / 読み込み（検証・Migration・確認・Undo可。`src/storage/project-import.js`）
-- Vercel静的Build
-- GitHub Pages Fallback（developから公開）
+- 静的Build（`npm run build`。Vercel設定は残すが自動配信は停止）
+- GitHub Pages公開（developから公開。現在の公開確認先）
 - Cloudflare Pages Fallback導入手順を `docs/CLOUDFLARE_PAGES.md` に追加済み。Dashboard接続は別途必要
 
 Repository統合状況:
@@ -157,7 +157,7 @@ v0.2 CI確認済み:
 - SoundはDemo Playerのwaveform / filter / envelope / gainだけを軽量変更し、MIDI Note / Chord / Rhythm Dataを変更しない
 - MIDI Program Change / CCは現時点では出力しない。最終音源はCubasis / Cubase / Plugin側で差し替える
 - Drums音色変更、本格Synth Parameter、FX Rack、MixerはSound Sketch Liteに入れない
-- Vercelを残し、GitHub Pagesを公開Fallbackとして運用する。Cloudflare Pagesは追加Fallback候補として手順のみ用意
+- Vercelの自動配信は停止（`vercel.json` の `git.deploymentEnabled: false`。設定ファイルと手順は残す）。公開確認はGitHub Pagesを使う。PRに出るVercelのチェックは出さない。Cloudflare Pagesは追加Fallback候補として手順のみ用意
 
 現在のデータSchema:
 schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented。Arrangeは既存 `structure.sections[]`、Sound Sketch Liteは既存 `instruments[]` を利用する。Sound entryは `{ part, preset, tone }`。Chord Preset / Drum Preset / Key移調 / Diatonic Fan / Undo履歴は専用Schemaを追加しない。

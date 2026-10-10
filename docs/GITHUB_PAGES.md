@@ -89,8 +89,8 @@ GitHub Pages導入前:
 
 ## Vercelとの使い分け
 
-- Vercel: 通常のPreview / 開発確認
-- GitHub Pages: Vercel制限時のFallback / Android確認
+- Vercel: 自動配信は停止中（`vercel.json` の `git.deploymentEnabled: false`）。設定は残してあり、必要なら再開できる
+- GitHub Pages: 現在の公開確認先（Android確認）
 - GitHub Repository: コードと履歴の正本
 
 どちらのHostingを使ってもアプリ本体の仕様は同一とする。

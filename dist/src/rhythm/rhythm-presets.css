@@ -1,0 +1,49 @@
+.rhythm-preset-panel {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.rhythm-preset-panel > label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rhythm-preset-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px;
+  gap: 8px;
+}
+
+.rhythm-preset-controls select,
+.rhythm-preset-controls button {
+  min-width: 0;
+  min-height: 46px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+}
+
+.rhythm-preset-controls select {
+  width: 100%;
+  padding: 0 10px;
+}
+
+.rhythm-preset-controls button {
+  border: 0;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+.rhythm-preset-panel small {
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: .68;
+}
