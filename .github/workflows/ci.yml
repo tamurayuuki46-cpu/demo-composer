@@ -24,5 +24,8 @@ jobs:
       - name: Rhythm copy smoke test
         run: npm run test:rhythm
 
+      - name: Rhythm preset smoke test
+        run: npm run test:rhythm-presets
+
       - name: Melody grid smoke test
         run: npm run test:melody
