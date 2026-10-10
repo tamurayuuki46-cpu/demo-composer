@@ -57,11 +57,11 @@ function scheduleTone(context, destination, activeSources, {
 
 function scheduleKick(context, destination, activeSources, startTime) {
   const oscillator = context.createOscillator();
-  const gain = createGain(context, destination, 0.18);
+  const gain = createGain(context, destination, 0.34);
   oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(120, startTime);
-  oscillator.frequency.exponentialRampToValueAtTime(45, startTime + 0.12);
-  gain.gain.setValueAtTime(0.18, startTime);
+  oscillator.frequency.setValueAtTime(150, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(55, startTime + 0.12);
+  gain.gain.setValueAtTime(0.34, startTime);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.14);
   oscillator.connect(gain);
   oscillator.start(startTime);
@@ -102,11 +102,13 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
     const duration = Math.max(0.08, tickToSeconds(project, chord.durationTick) * 0.92);
     chordIntervals(chord.quality).forEach((interval) => {
       scheduleTone(context, masterGain, activeSources, {
-        pitch: 48 + chord.root + interval,
+        // Demo Player only: use a phone-speaker-friendly voicing one octave above
+        // the original preview. Project/MIDI pitch data is not changed.
+        pitch: 60 + chord.root + interval,
         startTime: chordStart,
         duration,
         type: "triangle",
-        gain: 0.022
+        gain: 0.13
       });
     });
   });
@@ -122,7 +124,7 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           startTime: noteStart,
           duration,
           type: "triangle",
-          gain: 0.075
+          gain: 0.18
         });
         return;
       }
@@ -132,8 +134,10 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
           pitch: note.pitch,
           startTime: noteStart,
           duration,
-          type: "sine",
-          gain: 0.11
+          // Triangle keeps the actual bass pitch while adding harmonics that
+          // small phone speakers reproduce more clearly than a pure sine.
+          type: "triangle",
+          gain: 0.25
         });
         return;
       }
@@ -144,13 +148,13 @@ function scheduleProject(context, masterGain, activeSources, project, startTime)
         } else if (note.pitch === 38) {
           scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
             duration: 0.12,
-            gainAmount: 0.08,
+            gainAmount: 0.18,
             highpass: 900
           });
         } else if (note.pitch === 42) {
           scheduleNoiseHit(context, masterGain, activeSources, noteStart, {
             duration: 0.045,
-            gainAmount: 0.04,
+            gainAmount: 0.11,
             highpass: 5000
           });
         }
@@ -213,14 +217,56 @@ export function createDemoPlayer({ onStateChange } = {}) {
         throw new Error("このブラウザではWeb Audioを利用できません。");
       }
 
-      context = new AudioContextClass();
+      context = new AudioContextClass({ latencyHint: "interactive" });
       masterGain = context.createGain();
-      masterGain.gain.value = 0.75;
-      masterGain.connect(context.destination);
+      masterGain.gain.value = 1;
+
+      // Raise the average level before dynamics processing instead of applying
+      // a large gain after it. This keeps Android phone-speaker playback louder
+      // without the hard clipping heard in the raw 2x-output test.
+      const loudnessGain = context.createGain();
+      loudnessGain.gain.value = 2.4;
+
+      const compressor = context.createDynamicsCompressor();
+      compressor.threshold.value = -12;
+      compressor.knee.value = 6;
+      compressor.ratio.value = 5;
+      compressor.attack.value = 0.003;
+      compressor.release.value = 0.16;
+
+      // A second, fast stage behaves like a simple limiter for transient peaks.
+      const limiter = context.createDynamicsCompressor();
+      limiter.threshold.value = -3;
+      limiter.knee.value = 0;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.001;
+      limiter.release.value = 0.1;
+
+      const outputGain = context.createGain();
+      outputGain.gain.value = 0.92;
+
+      masterGain.connect(loudnessGain);
+      loudnessGain.connect(compressor);
+      compressor.connect(limiter);
+      limiter.connect(outputGain);
+      outputGain.connect(context.destination);
     }
 
-    if (context.state === "suspended") {
+    if (context.state !== "running") {
       await context.resume();
+    }
+
+    if (context.state !== "running") {
+      const silentBuffer = context.createBuffer(1, 1, context.sampleRate);
+      const source = context.createBufferSource();
+      source.buffer = silentBuffer;
+      source.connect(masterGain);
+      source.start(0);
+      await context.resume();
+    }
+
+    if (context.state !== "running") {
+      throw new Error("音声エンジンを開始できません。メディア音量とChromeの音声設定を確認してください。");
     }
   }
 
