@@ -20,6 +20,7 @@ v0.2-dev
 - Chord 次のコード候補3つ / ひとスパイス（借用和音3候補）
 - Chord Backing Pattern: Block / 8分刻み / Arpeggio / Syncopation。Demo PlayerとChord.mid / Song.midへ反映
 - Melody: 縦ピアノKeyboard、8分 / 16分切替、音の長さ指定、Bar / Octave切替、Chord Tone強調、度数表示、Copy Bar / Copy 2小節、Melody Analyzer
+- Melody Analyzer音程分析: `Keyからの度数` / `Chordからの度数` / `Scale内率` を表示。既存のコードトーン率と併用し、Projectを読むだけの派生分析として実装（Schema変更なし）
 - Melody候補3つ: 安定 / キャッチー / 浮遊感。`src/melody/melody-candidates.js` で現在のKey / Scale / Chord / Bar / 表示Octaveからルールベース生成。外部AI / APIなし
 - Melody候補は `↻ 候補を更新` で4つのVariation Setを循環。安定案はChord Tone中心、キャッチー / 浮遊感もKey / Scale内のルールを維持
 - Melody候補のVariation番号はUI状態のみでProject Dataへ保存しない。Bar移動時は初期Setへ戻る
@@ -60,6 +61,7 @@ v0.2-dev
 - Melody候補Refresh PR CI: success
 - Melody候補追加前復元点: `restore/v0.2-before-melody-candidates-final`
 - Melody候補Refresh前復元点: `restore/v0.2-before-melody-candidate-refresh`
+- Melody度数分析追加前復元点: `restore/v0.2-before-melody-degree-analysis`
 - Backing Pattern追加前復元点: `restore/v0.2-before-backing-pattern-final`
 - Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`
 - 新規Project追加前復元点: `restore/v0.2-before-new-project-final`
@@ -122,6 +124,7 @@ v0.2-dev
 最近の重要な設計判断:
 - `＋ 新規Project` は現在Projectの中身をClearするのではなく、新しいProject IDを作る。旧Projectを上書き・削除しない
 - reload時のvisibility AutoSaveとの競合を避けるため、新規Project要求はsessionStorageでreload境界へ渡し、`app-entry.js` が `main.js` のboot前にActive Projectを確定する。schemaVersionは変更しない
+- Melody AnalyzerのKey度数 / Chord度数 / Scale内率は保存データを増やさず、現在のProjectから毎回計算する読み取り専用分析とする。コードトーン率は別指標として残す
 - Melody自動生成は「完成させる」機能ではなく、1小節につき3候補 → ユーザーが選ぶ → Piano Rollで修正する方式にする
 - Melody候補は外部AI / APIを使わず、説明可能なルールベースから開始する
 - `安定` はChord Tone中心、`キャッチー` は8分中心 + 短い反復、`浮遊感` は2度 / 6度等のScale Tone + 長めの音を使う
@@ -138,7 +141,7 @@ v0.2-dev
 - GitHub Pagesを現在の公開確認先とし、Vercel自動配信は停止状態を維持する
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。今回の裏メロ3系統整理も専用Schema追加なし。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。Melody AnalyzerのKey度数 / Chord度数 / Scale内率も保存せずProjectから派生計算するため、schemaVersion 2のまま。
 
 最終更新:
 2026-10-11
