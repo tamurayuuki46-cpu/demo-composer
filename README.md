@@ -72,7 +72,7 @@ Exportでは `Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `pro
 
 ## 起動
 
-現段階はビルド不要です。
+ローカル開発ではビルド不要です。
 
 `index.html` をローカルサーバーで配信してください。
 
@@ -83,3 +83,14 @@ python -m http.server 8080
 ```
 
 その後 `http://localhost:8080/` を開きます。
+
+## Vercel Preview
+
+Vercel配布時のみ `npm run build` を実行し、`dist/` を静的公開します。
+
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- 設定ファイル: `vercel.json`
+- 静的コピー処理: `scripts/build-static.mjs`
+
+アプリ本体の構成は変更せず、`index.html` / `src/` / `public/` をそのまま `dist/` へコピーします。
