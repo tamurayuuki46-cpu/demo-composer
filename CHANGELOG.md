@@ -33,6 +33,10 @@
 - BassをChord RootまたはKey Rootから入力する方式
 - GM準拠Kick 36 / Snare 38 / Closed HH 42
 - Rhythm UI変更前の復元ブランチ `restore/v0.1-before-rhythm-sequencer`
+- Web Audio APIベースの常設Demo Player
+- Demo Player Play / Stop / Loop / Position表示
+- Chord / Melody / Bass / Drumsの軽量プレビュー音
+- Demo Player実装前の復元ブランチ `restore/v0.1-before-demo-player`
 
 ### 変更
 - Hub表示を固定値からProject State参照へ変更
@@ -45,6 +49,7 @@
 - Melody Noteが存在する間もKey / Scale変更を拒否して整合性を保護
 - Rhythm画面をPlaceholderからBass / Drums同時入力UIへ変更
 - Bass Noteが存在する間はChord変更を拒否してRoot不整合を防止
+- 画面下部にDemo Playerを常設し、その下にModule Navigationを維持
 
 ### 修正
 - Chord作成後のKey / Scale変更で表示とDegreeが不整合になる問題を予防
@@ -55,11 +60,11 @@
 - Autosave / Snapshot履歴
 - project.json Backup / Import
 - Migration
-- Demo Player実装
 - MIDI Export
 - Chord並べ替え / 長さ変更 / 7th / 借用和音
 - Melody 16分音符 / Note Length / Velocity編集
 - Scale表示 / Chord Tone強調 / Melody Analyzer
 - Bass Pitch手動編集 / Velocity / Pattern Copy
 - Open HH / Percussion / Tom
+- WAV Export
 - PWA Service Worker
