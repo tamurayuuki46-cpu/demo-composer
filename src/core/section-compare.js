@@ -1,0 +1,68 @@
+import { getSections, sectionRanges } from "./section-ops.js";
+import { pitchLabel } from "./melody-analysis.js";
+
+// Sectionごとのメロディの特徴を並べて、「AメロとサビのSectionの差が足りているか」に気づくための数字。
+// 良い / 悪いの評価ではなく、差を見る道具。Projectを読むだけの純粋関数（Melody Analyzerの一部）。
+
+// 各Sectionの音域 / 音数 / リズム密度（1小節あたりの音数）/ 平均の高さ。メロが無いSectionは noteCount 0。
+export function compareSections(project) {
+  const sections = getSections(project);
+  if (sections.length === 0) return [];
+
+  const barTicks = project.basic.ppq * 4;
+  const melody = project.tracks.find((track) => track.role === "melody")?.notes ?? [];
+
+  return sectionRanges(sections).map(({ section, index, startBar, endBar }) => {
+    const notes = melody.filter((note) => note.startTick >= startBar * barTicks && note.startTick < endBar * barTicks);
+    const base = { index, kind: section.kind, name: section.name, startBar, endBar, bars: section.bars, noteCount: notes.length };
+    if (notes.length === 0) return { ...base, range: null, avgPitch: null, density: 0, barsWithNotes: 0 };
+
+    const pitches = notes.map((note) => note.pitch);
+    const low = Math.min(...pitches);
+    const high = Math.max(...pitches);
+    const barsWithNotes = new Set(notes.map((note) => Math.floor(note.startTick / barTicks))).size;
+    return {
+      ...base,
+      range: { low, high, span: high - low },
+      avgPitch: pitches.reduce((sum, pitch) => sum + pitch, 0) / pitches.length,
+      density: notes.length / section.bars,
+      barsWithNotes
+    };
+  });
+}
+
+const signed = (value, unit) => `${value > 0 ? "+" : value < 0 ? "−" : "±"}${Math.abs(value)}${unit}`;
+
+// サビを、その直前にあるメロ入りのAメロ / Bメロと比べる（サビが無ければ空）。
+// lacking: 差が小さく、盛り上がりの差が足りないかもしれないとき true。
+export function contrastHints(rows) {
+  const chorusAt = rows.findIndex((row) => row.kind === "chorus" && row.noteCount > 0);
+  if (chorusAt === -1) return null;
+  const chorus = rows[chorusAt];
+
+  let ref = null;
+  for (let i = chorusAt - 1; i >= 0; i -= 1) {
+    if ((rows[i].kind === "verse" || rows[i].kind === "prechorus") && rows[i].noteCount > 0) {
+      ref = rows[i];
+      break;
+    }
+  }
+  if (!ref) return null;
+
+  const highDiff = chorus.range.high - ref.range.high;
+  const avgDiff = Math.round(chorus.avgPitch - ref.avgPitch);
+  const spanDiff = chorus.range.span - ref.range.span;
+  const densityDiff = Math.round((chorus.density - ref.density) * 10) / 10;
+
+  const lacking = Math.abs(highDiff) < 3 && Math.abs(avgDiff) < 2 && Math.abs(densityDiff) < 1;
+  const lines = [
+    `最高音: ${pitchLabel(chorus.range.high)}（${ref.name}より ${signed(highDiff, "半音")}）`,
+    `平均の高さ: ${signed(avgDiff, "半音")}`,
+    `音域のひろさ: ${signed(spanDiff, "半音")}`,
+    `リズム密度: 1小節あたり ${signed(densityDiff, "音")}`
+  ];
+  const advice = lacking
+    ? `${chorus.name}と${ref.name}の差が小さめです。サビの音域をひろげる・高めに置く・音の数を変えると、盛り上がりの差が出ます。`
+    : `${chorus.name}と${ref.name}に差があります。意図した盛り上がり方か、聴いて確かめてみましょう。`;
+  return { target: chorus.name, ref: ref.name, lines, lacking, advice };
+}

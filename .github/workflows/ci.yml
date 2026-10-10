@@ -87,6 +87,8 @@ jobs:
         run: npm run test:melody-chords
       - name: Starting point smoke test
         run: npm run test:starting-point
+      - name: Section compare smoke test
+        run: npm run test:section-compare
 
       - name: Display settings smoke test
         run: npm run test:display

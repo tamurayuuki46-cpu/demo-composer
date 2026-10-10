@@ -34,6 +34,7 @@ v0.2-dev
 - Section Energy（Low/Mid/High）/ Transition（Keep/Fill/Stop/Build/Drop）: `structure.sections[]` の任意項目（schemaVersion 2のまま追記）。`src/core/section-ops.js`
 - Chord メロディからコード候補3つ（`src/chord/chord-for-melody.js`、小節ごと・まとめ付け）
 - Hub 出発点（ジャンル×ムード→3候補、`src/hub/starting-point.js`、Store `applyStartingPoint`）
+- Melody Analyzer Sectionごとの比べ（`src/core/section-compare.js`、サビと前Sectionの差）
 - Hub Cubaseでやることメモ（`src/hub/cubase-memo.js`）/ AI相談テンプレート
 - Melody Analyzer（Melody内パネル、`src/core/melody-analysis.js`）/ Hub曲の特徴カード（`src/hub/song-card.js`）
 - Chord役割ラベル（`chord-role.js`）/ Melody度数表示（画面のみ）
