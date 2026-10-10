@@ -11,18 +11,23 @@
 - schemaVersion 1 → 2 Migration
 - Migration前ProjectをIndexedDB `meta` storeへ退避する処理
 - Chord Quality Smoke Test（`npm run test:chord`、CI対象）
+- Chord Preset 6種類（Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行）
+- Chord Preset Smoke Test（`npm run test:chord-presets`、CI対象）
 - Rhythm Drum Preset 6種類（8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH）
 - Rhythm Preset Smoke Test（`npm run test:rhythm-presets`、CI対象）
 - v0.2統合前の復元ブランチ `restore/v0.1-before-v0.2-integration`
+- Chord Preset追加前の復元ブランチ `restore/v0.2-before-chord-presets`
 
 ### 変更
 - Chord画面はダイアトニック7候補を残しつつ、任意の基準音から9種類のQualityを追加できる構成へ変更
+- Chord画面に `Chord Preset` select + `適用` を追加し、現在Key / Scaleへ自動変換した進行を通常Chord Dataとして展開する方式にした
+- Chord Preset適用後も個別コード追加 / 削除 / Clearで自由に修正できるようにした
 - Chord QualityをDemo Player / Chord.mid / Song.midへ共通の構成音定義で反映
 - Rhythmに `Drum Preset` select + `適用` を追加し、現在BarのKick / Snare / Closed HHだけを置換する方式にした
 - Preset適用後も通常の16 stepをTapして自由に修正できるようにした
 - `VERSION` / 画面内Version / package versionをv0.2-devへ更新
 - DATA_SCHEMAをschemaVersion 2へ更新
-- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Static Buildを確認する構成へ更新
+- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Static Buildを確認する構成へ更新
 
 ### 修正
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
@@ -31,6 +36,7 @@
 ### 未対応
 - Chord並べ替え / 長さ変更
 - 借用和音を目的別に整理した候補
+- Chord Preset Libraryの追加分類（Scaler / Melody Sauce / Cubase / 書籍等）
 - Chord Tone強調
 - Melody Analyzer
 - Snapshot履歴 / project.json Import
@@ -141,8 +147,8 @@
 ### 未対応
 - Snapshot履歴
 - project.json Import
-- Chord並べ替え / 長さ変更 / 7th / 借用和音
-- Melody 16分音符 / Note Length / Velocity編集
+- Chord並べ替え / 長さ変更 / 借用和音
+- Melody Note Length / Velocity編集
 - Scale表示 / Chord Tone強調 / Melody Analyzer
 - Bass Pitch手動編集 / Velocity
 - Open HH / Percussion / Tom
@@ -150,4 +156,3 @@
 - PWA Service Worker
 - Android実機テストの残り項目
 - Cubasis / CubaseでのMIDI Import実機確認
-- GitHub Pagesの初回有効化（Repository `Settings → Pages → GitHub Actions`）
