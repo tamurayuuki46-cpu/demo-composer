@@ -74,7 +74,7 @@ Melody候補も曲全体を自動完成させず、現在Barの3候補 → 選�
 
 ## v0.5
 
-- Counter Melody
+- Counter Melody（v0.2-devで基本版を実装済み。候補3種 / Sectionごと）
 
 ## v0.6
 

@@ -1,6 +1,7 @@
 import { isChordQuality } from "./chord-qualities.js";
 import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
 import { applySectionVariation } from "./section-variation.js";
+import { COUNTER_ROLE, withCounterNotes } from "./counter-melody.js";
 import { validateStructure, resizeSection, removeSection, copySection, appendSectionCopy, buildTemplateSections } from "./section-ops.js";
 
 const KEY_NAMES = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
@@ -59,7 +60,7 @@ function transposeHarmonyForKey(project, toKey) {
   }));
 
   next.tracks = next.tracks.map((track) => {
-    if (track.role !== "melody" && track.role !== "bass") {
+    if (track.role !== "melody" && track.role !== "bass" && track.role !== COUNTER_ROLE) {
       return track;
     }
 
@@ -260,7 +261,8 @@ function getTrackNotes(project, role) {
 function hasHarmonyDependentContent(project) {
   return project.chords.length > 0 ||
     getTrackNotes(project, "melody").length > 0 ||
-    getTrackNotes(project, "bass").length > 0;
+    getTrackNotes(project, "bass").length > 0 ||
+    getTrackNotes(project, COUNTER_ROLE).length > 0;
 }
 
 function trackDefaults(role) {
@@ -270,6 +272,10 @@ function trackDefaults(role) {
 
   if (role === "bass") {
     return { role, name: "Bass", midiChannel: 3, instrumentId: null, mute: false, solo: false, volume: 1, pan: 0, notes: [] };
+  }
+
+  if (role === COUNTER_ROLE) {
+    return { role, name: "Counter Melody", midiChannel: 4, instrumentId: null, mute: false, solo: false, volume: 1, pan: 0, notes: [] };
   }
 
   if (role === "drums") {
@@ -432,6 +438,13 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       commit(next);
 
       return clone(state);
+    },
+
+    // Counter Melody（裏メロ）: 範囲（startBar〜endBar）の裏メロだけを置き換える。空の配列なら、その範囲を消す。
+    applyCounterMelody({ startBar, endBar, notes }) {
+      const next = withCounterNotes(state, startBar, endBar, clone(notes));
+      validateTracks(next.tracks);
+      return applySectionOp(next);
     },
 
     // Section（曲の構成）。Chord/Melody/Bass/Drumsを一緒にずらすためCoreのGlobal Operationとして扱う。

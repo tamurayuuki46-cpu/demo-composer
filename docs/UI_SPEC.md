@@ -498,3 +498,23 @@ UIルール:
 - Section単体再生でも同じSound設定を使う
 - MIDI Program Change / CCは出力しない
 - 最終音色の作り込みはCubasis / Cubase / Plugin側へ任せる
+
+### v0.2 Counter Melody（裏メロ）
+
+主役はメインMelodyで、裏メロは「そっと寄り添う」控えめな候補にする。完全自動ではなく、候補 → 選ぶ → 直す（別の候補 / 消す）。
+
+- Arrangeの各Sectionカードに `🎶 裏メロ` を置く（Section内に中身がないときは押せない）。開くと3候補（ロングトーン / レスポンス / 寄り添い（3度下））を縦に並べる
+- 各候補に `▶ 聴く`（そのSectionだけを、候補を仮に当てて再生。Projectは変えない）と `これにする`（押したSectionの裏メロだけを置き換える）を横2分割で置く
+- 裏メロが入っているSectionは、トグルに `（n小節に入っています）` を出し、`〜の裏メロを消す` を出す
+- 候補が作れないときは理由を表示する（コードもメロディも無い / 隙間が無い）
+- `↶` で戻せる。細かい直しはCubasis / Cubaseで行う前提で、Piano Rollでの裏メロ編集は作らない
+- Demo Playerのパートパネルに `裏メロ` を追加（ミュート / ソロ対象）
+
+### v0.2 骨子完成チェック（Hub）
+
+「あと何を決めればPCに移れるか」を見る。曲の良し悪しは採点しない。
+
+- Hubの `✅ 骨子チェック n/7` を開くと、Chord / Melody / Bass / Drums / Structure / Energy / Sound Direction を `✓`（そろっている）/ `△`（一部）/ `－`（まだ）で表示する。色だけに頼らず記号を出す
+- 上に「次に決めるのは〇〇です」と1行で出し、未完了の項目には、その画面へ移る `〇〇へ` ボタンを置く
+- 裏メロは任意項目として分け、完成数（n/7）には入れない
+- 判定: Chordは全小節 / Melody・Bass・Drumsは8割以上の小節 / Structureは2Section以上 / EnergyはSection間で差がある / Sound DirectionはChord・Melody・Bassすべてで方向性を選択

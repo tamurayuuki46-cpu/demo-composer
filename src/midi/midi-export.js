@@ -108,13 +108,19 @@ function projectTrackEvents(project, role, fallbackName, fallbackChannel) {
   return events;
 }
 
+function hasCounterMelody(project) {
+  return (project.tracks.find((track) => track.role === "counter")?.notes ?? []).length > 0;
+}
+
 function songTracks(project) {
   return [
     conductorEvents(project),
     chordTrackEvents(project),
     projectTrackEvents(project, "melody", "Melody", 2),
     projectTrackEvents(project, "bass", "Bass", 3),
-    projectTrackEvents(project, "drums", "Drums", 10)
+    projectTrackEvents(project, "drums", "Drums", 10),
+    // 裏メロがあるときだけ追加（無いProjectのMIDIは今までと同じ）
+    ...(hasCounterMelody(project) ? [projectTrackEvents(project, "counter", "Counter Melody", 4)] : [])
   ];
 }
 
@@ -127,7 +133,7 @@ function partFile(project, events) {
 }
 
 export function buildMidiExports(project) {
-  return {
+  const files = {
     "Song.mid": createMidiFile({
       format: 1,
       division: project.basic.ppq,
@@ -138,6 +144,12 @@ export function buildMidiExports(project) {
     "Bass.mid": partFile(project, projectTrackEvents(project, "bass", "Bass", 3)),
     "Drums.mid": partFile(project, projectTrackEvents(project, "drums", "Drums", 10))
   };
+
+  if (hasCounterMelody(project)) {
+    files["CounterMelody.mid"] = partFile(project, projectTrackEvents(project, "counter", "Counter Melody", 4));
+  }
+
+  return files;
 }
 
 export function downloadBytes(bytes, filename, mimeType = "audio/midi") {

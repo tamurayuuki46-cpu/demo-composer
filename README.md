@@ -49,7 +49,7 @@ HubのAI相談は、現在のProject情報を相談用テキストへまとめ�
 
 schemaVersion 1の保存Projectは、v0.2起動時に移行前データをIndexedDB内へ退避した上でschemaVersion 2へ自動Migrationします。Arrange / Sound Sketch Lite / Backing Pattern / Melody候補は既存Data領域を利用するため追加Migrationはありません。
 
-未実装の主要項目は、Snapshot履歴、PWA Service Worker、Section Energy、Counter Melody、Drums音色変更、本格Sound Sketch整理です。
+未実装の主要項目は、Snapshot履歴、PWA Service Worker、Drums音色変更、本格Sound Sketch整理です。
 
 ## AI共同開発
 

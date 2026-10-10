@@ -87,6 +87,12 @@ jobs:
       - name: Peak guide smoke test
         run: npm run test:peak-guide
 
+      - name: Counter melody smoke test
+        run: npm run test:counter-melody
+
+      - name: Skeleton check smoke test
+        run: npm run test:skeleton-check
+
       - name: Loop guide smoke test
         run: npm run test:loop-guide
 

@@ -5,7 +5,8 @@ export const PART_LABELS = Object.freeze({
   chord: "Chord",
   melody: "Melody",
   bass: "Bass",
-  drums: "Drums"
+  drums: "Drums",
+  counter: "裏メロ"
 });
 
 // state: { muted: Set<role>, solo: role | null }

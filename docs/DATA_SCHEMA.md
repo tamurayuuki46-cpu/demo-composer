@@ -121,6 +121,15 @@ Drums Track:
 - midiChannel: 10
 - drumMap: `kick:36`, `snare:38`, `closedHH:42`
 
+Counter Melody Track（任意。裏メロを入れたときだけ追加される）:
+
+- role: `counter`
+- name: `Counter Melody`
+- midiChannel: 4
+- 他の項目はMelody Trackと同じ
+
+Counter Melody Trackが無いProject（旧Project）は、そのまま有効。schemaVersionは2のまま（追記のみ）。裏メロの候補（ロングトーン / レスポンス / 寄り添い）はUIで毎回計算し、Project Dataへ保存しない。選んで当てた結果だけが通常のNoteとして `tracks[role=counter].notes[]` に入る。Section切り出し / コピー / 小節増減 / Key変更では、Melody / Bassと同じようにtickや音高が追従する。Scale変更は、コード・メロディ・ベースと同じく、裏メロがある間は拒否する。
+
 ## Note Data
 
 `tracks[].notes[]`:
@@ -227,7 +236,8 @@ Backing Patternも既存の `instruments[]` 内に専用entryを1件だけ持つ
 - chords → Chord
 - melody track → Melody
 - bass/drums → Rhythm
-- structure/counterMelody → Arrange
+- structure → Arrange
+- `tracks[role=counter]`（裏メロ） → Arrange（候補の生成と適用はCoreのGlobal Operation）
 - `instruments[]` の `chord / melody / bass` entry → Sound
 - `instruments[]` の `chord-backing` entry → Chord
 

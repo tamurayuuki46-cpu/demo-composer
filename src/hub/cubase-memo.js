@@ -67,6 +67,7 @@ export function buildCubaseMemo(project) {
   lines.push("", "■ 2. 取り込むMIDI");
   const files = [["Chord.mid", chords.length > 0], ["Melody.mid", melody.length > 0], ["Bass.mid", bass.length > 0], ["Drums.mid", drums.length > 0]];
   files.forEach(([name, filled]) => lines.push(`- ${name}${filled ? "" : "（まだ中身がありません）"}`));
+  if (notesOf(project, "counter").length > 0) lines.push("- CounterMelody.mid（裏メロ。Song.midにも入っています）");
 
   lines.push("", "■ 3. 使ったコード");
   if (chords.length === 0) lines.push("- まだありません");

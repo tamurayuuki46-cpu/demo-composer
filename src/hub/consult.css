@@ -111,3 +111,18 @@
   font: inherit;
   font-size: 13px;
 }
+
+/* 骨子完成チェック */
+.skeleton-check { display: grid; gap: 8px; margin: 8px 0 14px; padding: 12px; border: 1px solid #303038; border-radius: 14px; background: #1d1d22; }
+.skeleton-lead { margin: 0; font-size: 14px; line-height: 1.5; }
+.skeleton-check h4 { margin: 4px 0 0; font-size: 13px; }
+.skeleton-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.skeleton-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px; border-radius: 10px; background: #26262d; }
+.skeleton-row.mark-done { opacity: .8; }
+.skeleton-mark { font-size: 18px; font-weight: 700; text-align: center; }
+.skeleton-row.mark-done .skeleton-mark { color: #7bd88f; }
+.skeleton-row.mark-part .skeleton-mark { color: #f2c46d; }
+.skeleton-row.mark-none .skeleton-mark { color: #9a9aa6; }
+.skeleton-body { display: grid; gap: 2px; min-width: 0; }
+.skeleton-body small { font-size: 12px; opacity: .8; overflow-wrap: anywhere; }
+.skeleton-go { min-height: 44px; padding: 0 10px; border: 1px solid #383842; border-radius: 10px; background: #30303a; color: #f5f5f5; font: inherit; font-size: 12px; }
