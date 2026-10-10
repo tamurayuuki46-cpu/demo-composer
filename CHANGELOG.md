@@ -5,6 +5,7 @@
 
 ### 追加
 - Chord: 次のコード候補（3つ）。直前のコードに応じて、次に来やすいダイアトニックコードを理由つきで3つ表示。空のときは「最初のコード候補」。タップで追加（`src/chord/chord-next.js`）
+- Chord: ひとスパイス（借用和音）。同主調から和音を借りる3候補（Majorなら Fm系 / ♭VII / ♭VI、Minorなら IV / V / I）を、ボタンで開いてタップ追加（`suggestSpiceChords`、Schema変更なし）
 - Rhythm: Bass候補（3つ）。現在の小節のBassを、Kickに合わせる（Kickがある場合）/ どっしり / ルート+5度 / はずむ（オクターブ）の3案から選んで置き換え。16マスで1音ずつ直せる（`src/rhythm/bass-candidates.js`）
 - Candidates Smoke Test（`npm run test:candidates`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-candidates`（Schema変更なし）
