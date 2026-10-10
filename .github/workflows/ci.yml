@@ -51,5 +51,8 @@ jobs:
       - name: Section (Arrange) smoke test
         run: npm run test:section
 
+      - name: Sound Sketch smoke test
+        run: npm run test:sound
+
       - name: Static build
         run: npm run build
