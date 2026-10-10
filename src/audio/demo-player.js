@@ -1,3 +1,5 @@
+import { chordIntervals } from "../core/chord-qualities.js";
+
 function midiToFrequency(pitch) {
   return 440 * Math.pow(2, (pitch - 69) / 12);
 }
@@ -19,12 +21,6 @@ function projectEndTick(project) {
 
 function tickToSeconds(project, tick) {
   return tick * (60 / project.basic.bpm) / project.basic.ppq;
-}
-
-function chordIntervals(quality) {
-  if (quality === "minor") return [0, 3, 7];
-  if (quality === "diminished") return [0, 3, 6];
-  return [0, 4, 7];
 }
 
 function createGain(context, destination, amount) {
