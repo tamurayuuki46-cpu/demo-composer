@@ -60,6 +60,9 @@
 - Vercel Preview用の静的build処理 `scripts/build-static.mjs`
 - Vercel設定 `vercel.json`（`npm run build` → `dist/`）
 - Vercel設定変更前の復元ブランチ `restore/v0.1-before-vercel-build-config`
+- GitHub Pages Fallback用Workflow `.github/workflows/pages.yml`（`develop` → `npm run build` → `dist/`）
+- GitHub Pages運用資料 `docs/GITHUB_PAGES.md`
+- GitHub Pages導入前の復元ブランチ `restore/v0.1-before-github-pages`
 
 ### 変更
 - Hub表示を固定値からProject State参照へ変更
@@ -85,6 +88,7 @@
 - Vercel配布時のみ静的buildを行い、ローカル開発は引き続きビルド不要とした
 - Android実機向けにDemo PlayerのChord previewを1オクターブ上の仮voicingへ変更し、Bass previewをtriangle波へ変更
 - Demo Playerの出力をloudness gain + compressor + limiter方式へ変更し、スマホ本体スピーカーでの聞き取りやすさを優先
+- Vercelを削除せず、GitHub Pagesを第二公開先として追加する方針にした
 
 ### 修正
 - Chord作成後のKey / Scale変更で表示とDegreeが不整合になる問題を予防
@@ -111,3 +115,4 @@
 - PWA Service Worker
 - Android実機テストの残り項目
 - Cubasis / CubaseでのMIDI Import実機確認
+- GitHub Pagesの初回有効化（Repository `Settings → Pages → GitHub Actions`）
