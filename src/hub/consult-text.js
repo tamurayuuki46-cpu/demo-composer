@@ -3,7 +3,7 @@
 
 import { chordQualityDefinition } from "../core/chord-qualities.js";
 import { noteValueLabel } from "../core/note-placement.js";
-import { getSections, sectionRanges, totalSectionBars } from "../core/section-ops.js";
+import { TRANSITIONS, energyLabel, getSections, sectionEnergy, sectionRanges, sectionTransition, totalSectionBars } from "../core/section-ops.js";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -164,7 +164,11 @@ export function buildConsultText(project, question = "") {
   lines.push("", `■ 曲の構成${barCount > 0 ? `（全${barCount}小節）` : ""}`);
   if (sections.length === 0) lines.push("（構成はまだ決めていません）");
   sections.forEach((range) => {
-    lines.push(`${range.section.name}: Bar ${range.startBar + 1}–${range.endBar}（${range.section.bars}小節）`);
+    const transition = sectionTransition(range.section);
+    const next = range.index < sections.length - 1 && transition !== "keep"
+      ? ` / 次へのつなぎ: ${TRANSITIONS.find((item) => item.id === transition).label}`
+      : "";
+    lines.push(`${range.section.name}: Bar ${range.startBar + 1}–${range.endBar}（${range.section.bars}小節）/ 盛り上がり: ${energyLabel(sectionEnergy(range.section))}${next}`);
   });
 
   lines.push("", "■ コード進行（コード名(ディグリー)）", ...chordSection(project, barCount));
