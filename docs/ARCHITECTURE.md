@@ -111,7 +111,7 @@ Arrange Section / Sound Sketch Lite / Backing Pattern / Melody Candidateは既�
 Chord Module内の補助ロジックは `src/chord/` と共通純粋定義 `src/core/backing-patterns.js` を利用する。
 
 - `chord-theory.js`: Scale / Degree / Chord Symbol / Quality候補
-- `chord-presets.js`: Degree配列で定義したChord Presetを現在Key / Scaleの通常Chord Dataへ展開
+- `chord-presets.js`: Degree配列で定義した100種類（7カテゴリ）のChord Presetを現在Key / Scaleの通常Chord Dataへ展開
 - `diatonic-fan.js`: 既存のダイアトニック7候補ButtonをDegreeごとの五度圏スロットへ割り当てるUI enhancer
 - `diatonic-fan.css`: Androidスマホ向け扇形レイアウト / タップ領域 / 色分け
 - `chord-presets.css`: Chord Preset / Backing Patternのスマホ向けPanel表示

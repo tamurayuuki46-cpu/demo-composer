@@ -96,6 +96,8 @@ Demo Composer v0.1-devのAndroid実機確認用チェックリスト。
 - [ ] ×で1コード削除できる
 - [ ] 削除後の小節番号 / startTickが詰め直される
 - [ ] Clearで全コードを削除できる
+- [ ] Chord Presetのselectが7グループ・100種類で、スマホのピッカーから選びやすい
+- [ ] 「マイナー・暗め」をマイナーKeyで適用すると自然な響きになる
 - [ ] Bassがある時のChord変更が拒否される
 - [ ] RhythmでClear Bass後はChord変更できる
 

@@ -27,7 +27,7 @@ Current focus:
   - 基準音ごとのQuality拡張: Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
   - Schema v1 → v2 Migration
   - Chord QualityのDemo Player / MIDI対応
-  - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
+  - Chord Preset: 100種類（7カテゴリ。既存6種 Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行を含む）
   - Presetを現在Key / Scaleへ自動変換し、適用後に手動修正
   - Backing Pattern: Block / 8分刻み / Arpeggio / Syncopation
   - Backing PatternをDemo PlayerとChord.mid / Song.midへ反映
