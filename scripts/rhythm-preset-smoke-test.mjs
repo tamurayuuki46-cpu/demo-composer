@@ -7,6 +7,7 @@ import {
   applyDrumPresetToBars,
   hasEditableDrumsInBars
 } from "../src/rhythm/drum-presets.js";
+import { DRUM_FILLS, applyDrumFill, applyDrumFillToSectionEnds } from "../src/rhythm/drum-fills.js";
 import { DRUM_PITCH } from "../src/rhythm/rhythm-grid.js";
 
 const stepTicks = 120;
@@ -74,5 +75,31 @@ assert.equal(multi.length, perBar * 3, "3 bars filled");
 assert.ok(multi.every((n) => n.startTick >= barTicks && n.startTick < barTicks * 4));
 assert.equal(hasEditableDrumsInBars(multi, { startBar: 1, endBar: 4, barTicks }), true);
 assert.equal(hasEditableDrumsInBars(multi, { startBar: 0, endBar: 1, barTicks }), false);
+
+// --- ドラムフィル
+const base = applyDrumPreset([], { presetId: "basic-8", barStartTick: 0, stepTicks });
+const firstHalf = (list) => list.filter((n) => n.startTick < stepTicks * 8).map((n) => [n.pitch, n.startTick]);
+for (const fill of DRUM_FILLS) {
+  const out = applyDrumFill(base, { fillId: fill.id, barStartTick: 0, stepTicks });
+  assert.deepEqual(firstHalf(out), firstHalf(base), `${fill.id}: first half untouched`);
+  const second = out.filter((n) => n.startTick >= stepTicks * 8);
+  assert.ok(second.length > 0 && second.every((n) => n.startTick < barTicks), `${fill.id}: second half only inside the bar`);
+  assert.ok(!second.some((n) => n.pitch === DRUM_PITCH.hh), `${fill.id}: no hi-hat in the fill`);
+  assert.equal(new Set(out.map((n) => n.id)).size, out.length, "ids unique");
+}
+assert.equal(base.length, 12, "input not mutated");
+// 他の小節は変えない
+const twoBars = applyDrumPresetToBars([], { presetId: "basic-8", startBar: 0, endBar: 2, barTicks, stepTicks });
+const filledBar2 = applyDrumFill(twoBars, { fillId: "break", barStartTick: barTicks, stepTicks });
+assert.deepEqual(filledBar2.filter((n) => n.startTick < barTicks).map((n) => n.id), twoBars.filter((n) => n.startTick < barTicks).map((n) => n.id), "bar 1 identical");
+// 空の小節には前半（Kick / Snare / HH）も足す
+const onEmpty = applyDrumFill([], { fillId: "snare-8th", barStartTick: 0, stepTicks });
+assert.ok(onEmpty.some((n) => n.pitch === DRUM_PITCH.kick && n.startTick === 0));
+assert.ok(onEmpty.some((n) => n.pitch === DRUM_PITCH.snare && n.startTick === stepTicks * 4));
+// 各Sectionの最後（最後のSectionを除く）
+const ranges = [{ startBar: 0, endBar: 2 }, { startBar: 2, endBar: 4 }, { startBar: 4, endBar: 6 }];
+const ends = applyDrumFillToSectionEnds([], { fillId: "snare-8th", ranges, barTicks, stepTicks });
+const barsWithFill = [...new Set(ends.map((n) => Math.floor(n.startTick / barTicks)))];
+assert.deepEqual(barsWithFill, [1, 3], "bars 2 and 4 only; last section left alone");
 
 console.log("Rhythm preset smoke test passed.");
