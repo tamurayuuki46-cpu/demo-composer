@@ -39,6 +39,9 @@ jobs:
       - name: Chord preset smoke test
         run: npm run test:chord-presets
 
+      - name: Backing pattern smoke test
+        run: npm run test:backing
+
       - name: Hub key-change smoke test
         run: npm run test:key-change
 
