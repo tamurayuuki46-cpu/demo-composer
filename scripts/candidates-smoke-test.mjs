@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { suggestNextChords } from "../src/chord/chord-next.js";
+import { suggestNextChords, suggestSpiceChords } from "../src/chord/chord-next.js";
 import { getDiatonicChords } from "../src/chord/chord-theory.js";
 import { applyBassCandidate, bassCandidatesForBar, bassPatternDots } from "../src/rhythm/bass-candidates.js";
 
@@ -26,6 +26,19 @@ assert.deepEqual(suggestNextChords([{ root: 0, quality: "major" }], { key: "C", 
 assert.deepEqual(suggestNextChords([], { key: "C", scale: "major" }).map((c) => c.symbol), ["C", "Am", "F"]);
 // ダイアトニック外のコードの直後は、始まりの候補
 assert.equal(suggestNextChords([{ root: 1, quality: "major" }], { key: "C", scale: "major" })[0].symbol, "C");
+
+// --- ひとスパイス: Cmajor = Fm / B♭ / A♭、Aminor = D / E / A（Major側から借用）
+assert.deepEqual(suggestSpiceChords({ key: "C", scale: "major" }).map((c) => [c.symbol, c.degree]), [["Fm", "iv"], ["A#", "♭VII"], ["G#", "♭VI"]]);
+assert.deepEqual(suggestSpiceChords({ key: "A", scale: "minor" }).map((c) => [c.symbol, c.degree]), [["D", "IV"], ["E", "V"], ["A", "I"]]);
+// 借用和音は、どのKey / Scaleでもダイアトニック外（＝借用になっている）で、常に3つ
+for (const scale of ["major", "minor"]) {
+  for (const key of KEYS) {
+    const diatonic = new Set(getDiatonicChords(key, scale).map((c) => `${c.root}:${c.quality}`));
+    const spice = suggestSpiceChords({ key, scale });
+    assert.equal(spice.length, 3);
+    assert.ok(spice.every((c) => !diatonic.has(`${c.root}:${c.quality}`)), `${key} ${scale} spice is borrowed`);
+  }
+}
 
 // --- Bass候補
 const project = (drumNotes = [], chord = { root: 0, quality: "major" }) => ({
