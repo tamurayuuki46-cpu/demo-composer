@@ -1,4 +1,4 @@
-import { applyStartingPointConfirmText, buildStartingPointPatch, describeStartingPoint, GENRES, MOODS, suggestStartingPoints } from "./starting-point.js";
+import { applyStartingPointConfirmText, buildStartingPointPatch, describeStartingPoint, GENRES, MOODS, progressionNames, suggestStartingPoints } from "./starting-point.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -42,10 +42,14 @@ export function startingPointHtml() {
                 <strong>${escapeHtml(point.label)}</strong>
                 <span class="sp-reason">${escapeHtml(point.reason)}</span>
                 <p>${escapeHtml(d.basics)}</p>
+                <p class="sp-names">${escapeHtml(progressionNames(point))}</p>
                 <p>${escapeHtml(point.note)}</p>
                 <p>${escapeHtml(d.parts)}</p>
                 <p>音色: ${escapeHtml(d.tones)}</p>
-                <button class="export-primary consult-copy" data-sp-apply="${index}">この出発点にする</button>
+                <div class="sp-buttons">
+                  <button data-sp-preview="${index}">▶ 試聴</button>
+                  <button class="export-primary" data-sp-apply="${index}">この出発点にする</button>
+                </div>
               </article>
             `;
           }).join("")}
@@ -56,7 +60,7 @@ export function startingPointHtml() {
   `;
 }
 
-export function bindStartingPoint({ projectStore, setMessage, rerender }) {
+export function bindStartingPoint({ projectStore, setMessage, rerender, onPreview }) {
   document.querySelector("#toggle-starting-point")?.addEventListener("click", () => {
     open = !open;
     rerender();
@@ -73,6 +77,13 @@ export function bindStartingPoint({ projectStore, setMessage, rerender }) {
     button.addEventListener("click", () => {
       mood = mood === button.dataset.spMood ? "" : button.dataset.spMood;
       rerender();
+    });
+  });
+
+  document.querySelectorAll("[data-sp-preview]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const point = suggestStartingPoints({ genre, mood })[Number(button.dataset.spPreview)];
+      if (point) onPreview?.(point, { mood });
     });
   });
 
