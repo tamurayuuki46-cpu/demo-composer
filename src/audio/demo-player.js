@@ -221,19 +221,34 @@ export function createDemoPlayer({ onStateChange } = {}) {
       masterGain = context.createGain();
       masterGain.gain.value = 1;
 
+      // Raise the average level before dynamics processing instead of applying
+      // a large gain after it. This keeps Android phone-speaker playback louder
+      // without the hard clipping heard in the raw 2x-output test.
+      const loudnessGain = context.createGain();
+      loudnessGain.gain.value = 2.4;
+
       const compressor = context.createDynamicsCompressor();
-      compressor.threshold.value = -8;
-      compressor.knee.value = 12;
-      compressor.ratio.value = 6;
+      compressor.threshold.value = -12;
+      compressor.knee.value = 6;
+      compressor.ratio.value = 5;
       compressor.attack.value = 0.003;
-      compressor.release.value = 0.18;
+      compressor.release.value = 0.16;
+
+      // A second, fast stage behaves like a simple limiter for transient peaks.
+      const limiter = context.createDynamicsCompressor();
+      limiter.threshold.value = -3;
+      limiter.knee.value = 0;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.001;
+      limiter.release.value = 0.1;
 
       const outputGain = context.createGain();
-      // Android実機テスト用。直前の1.75から最終出力を2倍にする。
-      outputGain.gain.value = 3.5;
+      outputGain.gain.value = 0.92;
 
-      masterGain.connect(compressor);
-      compressor.connect(outputGain);
+      masterGain.connect(loudnessGain);
+      loudnessGain.connect(compressor);
+      compressor.connect(limiter);
+      limiter.connect(outputGain);
       outputGain.connect(context.destination);
     }
 
