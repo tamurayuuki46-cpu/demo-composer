@@ -51,6 +51,22 @@ Chord Module内に、コード進行自体は変えず伴奏の鳴らし方を�
 
 Patternは完成伴奏を自動作曲する機能ではなく、曲の骨子を判断するための少数Presetとする。詳細な伴奏編集やDAW級のArpeggiatorは追加しない。
 
+## v0.2 Melody Candidates
+
+Melody Module内に、現在の1小節へ適用するルールベースのMelody候補を3つ表示する。
+
+初期候補:
+
+- 安定: Chord Tone中心、4分音符主体
+- キャッチー: 8分音符中心、短い反復を含む
+- 浮遊感: 2度 / 6度などScale Toneも混ぜ、長めの音を含む
+
+生成は外部AI / APIを使わず、現在の Key / Scale / Chord / 表示Octave / Bar位置から説明可能なルールで行う。Chord未設定BarではKey / Scaleを基準にする。
+
+候補をタップすると現在BarのMelodyだけを置き換え、他Barは保持する。適用結果は通常の `tracks[role=melody].notes[]` として保存し、AutoSave / Undo / Redo / Demo Player / Melody.mid / Song.midへ既存処理のまま利用する。適用後はPiano Rollで1音ずつ修正できる。
+
+目的は「完成メロディの自動作曲」ではなく、初心者が3つの方向性を聴き比べ、選び、直しながらメロディを作ること。初期版では1小節単位に限定し、曲全体の一括自動生成や大量の再生成機能は持たせない。
+
 ## v0.2 Early Sound Sketch Lite
 
 本来v0.4で予定しているSound Sketchのうち、スマホで「音色の方向性」を決める最小機能だけをv0.2-devへ先行導入する。
@@ -79,6 +95,7 @@ Demo Composerでは以下を本格実装しない。
 - PC DAWの完全再現
 - Sound Sketch内の詳細Synth Parameter / FX Rack / Track Mixer
 - DAW級のPattern Sequencer / Arpeggiator
+- Melodyの曲全体一括自動完成
 
 ## AI Philosophy
 
@@ -112,7 +129,7 @@ AIは完全自動作曲家ではなく、候補提示・学習支援・分析・
 
 例:
 
-- Melody: 安定 / キャッチー / 意外性
+- Melody: 安定 / キャッチー / 浮遊感
 - Bass: Root中心 / Kick連動 / 動き多め
 
 生成結果は必ず通常のNoteデータとして編集可能にする。

@@ -104,7 +104,7 @@ Sound UIとDemo Playerは同じ `core/sound-presets.js` を参照する。Sound 
 
 schemaVersion 1 → 2ではProject構造自体は維持し、Chord Qualityの許可値を拡張する。旧major / minor / diminishedはそのまま有効。
 
-Arrange Section / Sound Sketch Lite / Backing Patternは既存の `structure.sections` / `instruments` を利用するためschemaVersion 2を維持し、追加Migrationは行わない。
+Arrange Section / Sound Sketch Lite / Backing Pattern / Melody Candidateは既存Data領域を利用するためschemaVersion 2を維持し、追加Migrationは行わない。
 
 ## Chord Assistance
 
@@ -135,6 +135,21 @@ Backing PatternはChordの責任機能とする。
 - Demo PlayerとMIDI ExportはProject SnapshotからBacking設定を読み取る
 
 これは「完成伴奏の自動生成」ではなく、コード進行のリズム方向を判断するための少数Presetである。DAW級のPattern Sequencer / Arpeggiatorは実装しない。
+
+## Melody Assistance
+
+Melody Moduleの候補生成ロジックは `src/melody/melody-candidates.js` に置き、UIは `melody-screen.js` が担当する。
+
+- `melodyCandidatesForBar()`: 現在の Key / Scale / Chord / Bar / Octave から、安定 / キャッチー / 浮遊感の3候補を純粋計算する
+- `melodyCandidateDots()`: Androidの候補Cardへ8分8マスの発音位置Previewを返す
+- `applyMelodyCandidate()`: 現在BarのMelody Noteだけを候補Noteへ置き換え、他Barを保持する
+- Chordがある場合、安定案はChord Toneを中心にする
+- Chord未設定BarではKey / Scaleを基準に生成する
+- 生成結果は通常の `tracks[role=melody].notes[]` として `updateMelodyNotes()` へ渡す
+- 候補自体はProject Dataへ保存しない。適用結果だけを保存する
+- 既存のUndo / AutoSave / Demo Player / MIDI Exportを再利用し、専用保存形式・専用MIDI形式は追加しない
+
+候補生成は外部AI / APIを使わないルールベースとし、「曲全体を完成させる」機能にはしない。1小節の3候補 → 選択 → Piano Rollで修正、という人間主導の流れを維持する。
 
 ## Sound Sketch Lite
 
@@ -188,7 +203,7 @@ Hub Exportから`project.json`を手動Backupとしてダウンロードでき�
 
 - Hub: metadata / basic
 - Chord: chords + `instruments[part=chord-backing]`
-- Melody: melody notes
+- Melody: melody notes（候補生成の適用結果も通常Melody Note）
 - Rhythm: bass / drums
 - Arrange: structure / counterMelody
 - Sound: `instruments[part=chord|melody|bass]`
@@ -214,6 +229,8 @@ Chordは`src/core/chord-qualities.js`の構成音を使うため、Major / Minor
 Chord / Melody / Bassは `src/core/sound-presets.js` のSound Profileを使い、Sound Sketch Liteの選択を再生時だけ反映する。
 
 Chordはさらに `src/core/backing-patterns.js` のEvent定義を使い、選択中のBacking Patternに応じて同じChord構成音をBlock / 刻み / Arpeggio / Syncopationで発音する。ProjectのChord Data自体は変更しない。
+
+Melody候補の適用結果は通常Melody Noteなので、Demo Playerに専用分岐を追加せずそのまま再生する。
 
 Android Chromeでは、ユーザー操作後に`AudioContext.resume()`を行い、必要時はsilent bufferを経由してAudioContextをrunningへ復帰させる。
 
@@ -253,5 +270,7 @@ Export:
 MIDIはSMF Type 1 / PPQ 480。Song.midはConductor + Chord + Melody + Bass + Drums、Part MIDIはConductor + 対象Partで生成する。
 
 Chord MIDIは`chord-qualities.js`の共通構成音定義と `backing-patterns.js` の発音Event定義を利用する。Backing PatternはChord TrackのNote startTick / durationTick / velocity /発音数へ反映し、Chord Data自体は変更しない。Song.midのConductor TrackにはArrange SectionのMarkerを入れる。
+
+Melody候補の適用結果は通常Melody Track Noteとして、既存のMelody.mid / Song.midへそのまま出力する。
 
 Sound Sketch Liteの選択はDemo Player用であり、Program ChangeとCCは現時点では出力しない。最終音源はBandLab / Cubasis / Cubase側で差し替える。
