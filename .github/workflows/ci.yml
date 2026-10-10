@@ -83,6 +83,8 @@ jobs:
 
       - name: Section variation smoke test
         run: npm run test:variation
+      - name: Melody to chord candidates smoke test
+        run: npm run test:melody-chords
 
       - name: Display settings smoke test
         run: npm run test:display
