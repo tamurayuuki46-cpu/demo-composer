@@ -487,7 +487,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           const name = getSections(projectStore.getSnapshot())[index]?.name ?? "Section";
           message = changed > 0
             ? `${name}に「${item.label}」を当てました（${changed}か所）。再生して確認してください。↶ で戻せます。`
-            : `${name}には変えられる場所がありませんでした（${variationId === "drums" ? "ドラム" : variationId === "bass" ? "ベース" : "メロディとコード"}が入っているか確認してください）。`;
+            : `${name}には変えられる場所がありませんでした（${variationId === "drums" ? "ドラム" : variationId === "bass" ? "ベース" : variationId === "melody" ? "メロディとコード" : "メロディ（各小節に2音以上）"}が入っているか確認してください）。`;
         } catch (error) {
           message = error instanceof Error ? error.message : "操作できませんでした。";
         }
