@@ -20,6 +20,8 @@ v0.2-dev
 - Chord Backing Pattern: Block / 8分刻み / Arpeggio / Syncopation。Demo PlayerとChord.mid / Song.midへ反映
 - Melody: 縦ピアノKeyboard、8分 / 16分切替、音の長さ指定、Bar / Octave切替、Chord Tone強調、度数表示、Copy Bar / Copy 2小節、Melody Analyzer
 - Melody候補3つ: 安定 / キャッチー / 浮遊感。`src/melody/melody-candidates.js` で現在のKey / Scale / Chord / Bar / 表示Octaveからルールベース生成。外部AI / APIなし
+- Melody候補は `↻ 候補を更新` で4つのVariation Setを循環。安定案はChord Tone中心、キャッチー / 浮遊感もKey / Scale内のルールを維持
+- Melody候補のVariation番号はUI状態のみでProject Dataへ保存しない。Bar移動時は初期Setへ戻る
 - Melody候補は現在Barだけを置き換え、他Barを保持。適用結果は通常のMelody Noteになり、Piano Rollで修正可能
 - Melody候補適用後は既存のAutoSave / Undo / Redo / Demo Player / Melody.mid / Song.midをそのまま利用
 - Rhythm: Bass音程（Root / 3rd / 5th / 7th / Octave等）/ 半音ずらし±6 / 長さ指定 / Kick / Snare / Closed HH、16 step、Beat Copy / Bar Copy
@@ -46,33 +48,38 @@ v0.2-dev
 - PR #57 ドラムフィル: merged
 - PR #61 Melody候補初期実装: develop先行更新と競合したため未mergeでclose
 - PR #66 Melody候補最終統合: merged
+- PR #73 Melody候補Refresh: merged
+- PR #71 Melody Variation（音程だけ / リズムだけ）: merged。PR #73の後にdevelopへ統合され、Refreshを含む親commitを保持
 - Melody候補統合merge commit: `6a7f1ce482af9a21eaa30fd6e3b91fd896b4f821`
-- Melody候補版 GitHub Pages Build / Deploy: success
+- Melody候補Refresh merge commit: `9891c2208287289e13feed4a71b1f8d6aa36bb74`
+- Melody候補Refresh PR CI: success
 - Melody候補追加前復元点: `restore/v0.2-before-melody-candidates-final`
+- Melody候補Refresh前復元点: `restore/v0.2-before-melody-candidate-refresh`
 - Backing Pattern追加前復元点: `restore/v0.2-before-backing-pattern-final`
 - Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`
 - `main` はstable専用で変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
 
 開発中:
-- Melody候補のdevelop統合とGitHub Pages公開は完了
-- Android実機でMelody候補3種の表示・試聴・編集・Undo / Restoreを確認する段階
+- Melody候補の4 Variation Set / Refreshはdevelop統合済み
+- Android実機で `↻ 候補を更新` と3候補の差・試聴・編集を確認する段階
 - v0.2は機能が増えてきたため、追加機能より実制作での使いやすさ確認を優先する
 
 次に実装:
-1. Android公開版で Melody → 安定 / キャッチー / 浮遊感 の3候補が表示されることを確認
-2. C MajorなどでChordを入力し、安定案がChord Tone中心に生成されることを確認
-3. 3候補を切り替えてDemo Playerで違いを聴き比べる
-4. 候補適用後、Piano Rollで1音ずつ修正できることを確認
-5. 既存MelodyがあるBarで上書き確認が出て、`↶ / ↷` で戻る / 進むことを確認
-6. 再読み込み後にAutoSave / Restoreされることを確認
-7. Melody.mid / Song.midをExportして通常Noteとして出力されることを確認
-8. ドラムフィル / Backing / Bass候補 / Chord候補 / Arrange / Sound / Import等のAndroid回帰確認
-9. 問題なければSection Energy（Low / Mid / High）の仕様を検討
-10. その後Counter Melodyを検討
+1. Android公開版で Melody → 安定 / キャッチー / 浮遊感 の3候補と `↻ 候補を更新` が表示されることを確認
+2. `候補を更新` を押すたびに 1/4 → 2/4 → 3/4 → 4/4 → 1/4 と切り替わり、3候補の音型が変わることを確認
+3. C MajorなどでChordを入力し、どのSetでも安定案がChord Tone中心であることを確認
+4. 3候補を切り替えてDemo Playerで違いを聴き比べる
+5. 候補適用後、Piano Rollで1音ずつ修正できることを確認
+6. 既存MelodyがあるBarで上書き確認が出て、`↶ / ↷` で戻る / 進むことを確認
+7. 再読み込み後に適用結果がAutoSave / Restoreされることを確認（候補Set番号自体は保存しない）
+8. Melody.mid / Song.midをExportして通常Noteとして出力されることを確認
+9. Melody Variation（終わり / 音程だけ / リズムだけ）・ドラムフィル / Backing / Bass候補 / Chord候補 / Arrange / Sound / Import等のAndroid回帰確認
+10. その後はCounter Melody等を追加する前に実制作テストを優先
 
 既知の問題:
-- Melody候補は初期版では1小節単位。Section単位 / 複数小節一括生成は未対応
+- Melody候補は1小節単位。Section単位 / 複数小節一括生成は未対応
+- Melody候補の別案は有限4Set。無制限ランダム生成はしない
 - Melody候補はルールベースの叩き台で、歌詞のアクセント / フレーズ文脈 / 前後小節の自然な接続まではまだ評価しない
 - Melody Velocity編集 / Scale表示は未対応
 - Chordは1コード=1小節固定。並べ替え / 長さ変更は未対応
@@ -103,6 +110,8 @@ v0.2-dev
 - Melody自動生成は「完成させる」機能ではなく、1小節につき3候補 → ユーザーが選ぶ → Piano Rollで修正する方式にする
 - Melody候補は外部AI / APIを使わず、説明可能なルールベースから開始する
 - `安定` はChord Tone中心、`キャッチー` は8分中心 + 短い反復、`浮遊感` は2度 / 6度等のScale Tone + 長めの音を使う
+- 同じ条件で候補が固定される問題への対応は、完全ランダムではなく4つの有限Variation Setを循環する方式にする
+- Melody候補のVariation番号はUI状態だけに持ち、Project Data / MIDI / Schemaへ追加しない
 - Melody候補自体はProject Dataへ保存せず、適用結果だけ通常の `tracks[role=melody].notes[]` へ保存する
 - Melody候補専用Schema / MIDI形式を作らず、既存のNote処理・Undo・AutoSave・Player・MIDI Exportを再利用する
 - Melody候補の実装中にPR #57のDrum Fillがdevelopへ先行統合されたため、旧PR #61を無理にマージせず、最新developからPR #66を作り直して統合した
@@ -112,7 +121,7 @@ v0.2-dev
 - GitHub Pagesを現在の公開確認先とし、Vercel自動配信は停止状態を維持する
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものは保存せず、適用結果を通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。今回のMelody候補 / Drum Fillとも専用Schema追加なし。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。今回のMelody候補Refreshも専用Schema追加なし。
 
 最終更新:
-2026-10-10
+2026-10-11
