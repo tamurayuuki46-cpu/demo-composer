@@ -18,11 +18,23 @@ jobs:
         with:
           node-version: 22
 
+      - name: JavaScript syntax check
+        run: npm run test:syntax
+
       - name: MIDI smoke test
         run: npm run test:midi
 
       - name: Rhythm copy smoke test
         run: npm run test:rhythm
 
+      - name: Rhythm preset smoke test
+        run: npm run test:rhythm-presets
+
       - name: Melody grid smoke test
         run: npm run test:melody
+
+      - name: Chord types smoke test
+        run: npm run test:chord
+
+      - name: Static build
+        run: npm run build

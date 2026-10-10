@@ -1,3 +1,4 @@
+import { chordIntervals } from "../core/chord-qualities.js";
 import {
   createMidiFile,
   keySignatureEvent,
@@ -48,12 +49,6 @@ function conductorEvents(project) {
     timeSignatureEvent(),
     keySignatureEvent(signatureMap[project.basic.key] ?? 0, project.basic.scale === "minor")
   ];
-}
-
-function chordIntervals(quality) {
-  if (quality === "minor") return [0, 3, 7];
-  if (quality === "diminished") return [0, 3, 6];
-  return [0, 4, 7];
 }
 
 function chordTrackEvents(project) {

@@ -61,6 +61,23 @@ export async function saveProject(project) {
   }
 }
 
+export async function backupProjectForMigration(project) {
+  const database = await openDatabase();
+
+  try {
+    const transaction = database.transaction(META_STORE, "readwrite");
+    const backupKey = `migrationBackup:${project.id}:schema${project.schemaVersion}`;
+    transaction.objectStore(META_STORE).put({
+      key: backupKey,
+      value: project
+    });
+    await transactionToPromise(transaction);
+    return backupKey;
+  } finally {
+    database.close();
+  }
+}
+
 export async function loadActiveProject() {
   const database = await openDatabase();
 
