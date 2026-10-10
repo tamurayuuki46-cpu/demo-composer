@@ -492,6 +492,26 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       };
     },
 
+    // Hubの「出発点」: 基本設定・コード・ドラム・音色/伴奏をまとめて1回の編集（Undo1回分）で反映する。
+    // 値の組み立ては呼び出し側（src/hub/starting-point.js）。ここでは検証して確定するだけ。
+    applyStartingPoint({ metadata = {}, basic = {}, chords, drumNotes, instruments } = {}) {
+      if (getTrackNotes(state, "bass").length > 0) {
+        throw new Error("Bassがある間は出発点を入れられません。RhythmでBassをClearしてから実行してください。");
+      }
+
+      const next = clone(state);
+      next.metadata = { ...next.metadata, ...metadata };
+      next.basic = { ...next.basic, ...basic };
+      if (chords) next.chords = clone(chords);
+      if (drumNotes) {
+        validateNotes(drumNotes, "Drums");
+        upsertTrackNotes(next, "drums", drumNotes);
+      }
+      if (instruments) next.instruments = clone(instruments);
+
+      return applySectionOp(next);
+    },
+
     updateInstruments(instruments) {
       const next = clone(state);
       next.instruments = clone(instruments);

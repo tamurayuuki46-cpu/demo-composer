@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- Hub: `🧭 出発点を選ぶ（ジャンル × ムード）`。ジャンル（ポップ / バラード / ロック / ダンス / ボカロ風）とムード（切ない / 明るい / 夜 / 力強い / やさしい）を選ぶと、Key / BPM / コード進行 / ドラム / 伴奏 / 音色の方向性をまとめた出発点を3つ出す（14種のレシピ、どちらか片方の選択でも可）。選ぶと1回の編集（Undo1回）で反映。コード・ドラム（出発点の小節数分）・Key/BPM/音色/伴奏を置き換え、メロディは残す。Bassがある間は不可。`src/hub/starting-point.js` / `starting-point-ui.js`、Storeに `applyStartingPoint`
+- Starting Point Smoke Test（`npm run test:starting-point`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-starting-point`（Schema変更なし。`metadata.genre` / `metadata.mood` を既存フィールドとして使用）
 - Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
 - Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
 - コピー処理を `src/hub/clipboard.js` に共通化

@@ -18,6 +18,7 @@ import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
 import { songCardHtml } from "./hub/song-card.js";
+import { bindStartingPoint, startingPointHtml } from "./hub/starting-point-ui.js";
 import { bindConsultPanel, consultPanelHtml } from "./hub/consult-ui.js";
 import { bindPartSwitch } from "./audio/part-switch-ui.js";
 import { bindEditHistory } from "./core/edit-history-ui.js";
@@ -60,6 +61,8 @@ function hubScreen() {
     <section class="card">
       <h2>Hub</h2>
       <p>曲全体の基本情報と進捗を管理します。</p>
+
+      ${startingPointHtml()}
 
       <div class="form-stack">
         <label class="field">
@@ -381,6 +384,7 @@ function bindHubControls() {
   const exportPanel = document.querySelector("#export-panel");
   bindConsultPanel({ projectStore, setMessage: setHubMessage });
   bindCubaseMemo({ projectStore, setMessage: setHubMessage, rerender: () => render("hub") });
+  bindStartingPoint({ projectStore, setMessage: setHubMessage, rerender: () => render("hub") });
 
   document.querySelector("#toggle-song-card")?.addEventListener("click", () => {
     songCardOpen = !songCardOpen;
