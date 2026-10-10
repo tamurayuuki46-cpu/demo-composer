@@ -317,15 +317,16 @@ export function createProjectStore(initialProject = createDefaultProject()) {
     },
 
     updateHub({ metadata = {}, basic = {} } = {}) {
-      const harmonyChanged =
-        (Object.hasOwn(basic, "key") && basic.key !== state.basic.key) ||
-        (Object.hasOwn(basic, "scale") && basic.scale !== state.basic.scale);
+      const keyChanged = Object.hasOwn(basic, "key") && basic.key !== state.basic.key;
+      const scaleChanged = Object.hasOwn(basic, "scale") && basic.scale !== state.basic.scale;
 
-      if (harmonyChanged && hasHarmonyDependentContent(state)) {
-        throw new Error("コード・メロディ・ベースがある間はKey/Scaleを変更できません。関連データをクリアしてから変更してください。");
+      if (scaleChanged && hasHarmonyDependentContent(state)) {
+        throw new Error("コード・メロディ・ベースがある間はScaleを変更できません。関連データをクリアしてから変更してください。");
       }
 
-      const next = clone(state);
+      const next = keyChanged
+        ? transposeHarmonyForKey(state, basic.key)
+        : clone(state);
 
       next.metadata = {
         ...next.metadata,
@@ -337,31 +338,12 @@ export function createProjectStore(initialProject = createDefaultProject()) {
         ...basic
       };
 
-      validateMetadata(next.metadata);
-      validateBasic(next.basic);
-
-      next.revision = state.revision + 1;
-      state = next;
-      emit();
-
-      return clone(state);
-    },
-
-    transposeKey(key) {
-      if (!VALID_KEYS.has(key)) {
-        throw new Error("Keyが不正です。");
-      }
-
-      if (key === state.basic.key) {
-        return clone(state);
-      }
-
-      const next = transposeHarmonyForKey(state, key);
       next.revision = state.revision + 1;
       validateProject(next);
 
       state = next;
       emit();
+
       return clone(state);
     },
 
