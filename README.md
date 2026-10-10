@@ -33,9 +33,9 @@ Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを候
 
 Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。1小節を8分音符8 stepとして扱い、4 stepずつ表示してタップ入力できます。Bar / Octave切替とClear Barに対応しています。
 
-Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを1 Beat=4 stepずつ表示し、Bassは現在ChordのRootを使用します。
+Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを1 Beat=4 stepずつ表示し、Bassは現在ChordのRootを使用します。現在BarのBass / Drumsを次BarへコピーするRhythm Bar Copyにも対応しています。
 
-Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量な仮音でPlay / Stop / Loop再生できます。
+Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量な仮音でPlay / Stop / Loop再生できます。Loopは最後に使用しているBarの終端で反復します。
 
 Exportでは `Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `project.json` をダウンロードできます。Song / Part MIDIはSMF Type 1、PPQ 480です。
 
