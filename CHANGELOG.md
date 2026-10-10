@@ -4,6 +4,9 @@
 更新日: 2026-10-11
 
 ### 追加
+- Hub `📖 作編曲の手引き`: 出発点 → 作曲 → 編曲 → 確認・受け渡し の16手順を、スマホで読めるリストにした。各手順は説明とコツを開閉でき、左の丸で「済み」にできる。ChordやArrangeなど、該当画面への移動ボタン付き。✓はこの端末のlocalStorageにだけ保存し、曲のデータには入れない（`src/hub/guide.js` / `guide-ui.js`、Schema変更なし）
+- 手引きのSmoke Test（`npm run test:guide`、CI対象）
+- `docs/REAL_SONG_TEST.md`: Android実機で1曲を通して作り、MIDIをCubasis / Cubaseへ渡すまでのテスト手順・判定・記録シート
 - Counter Melody（裏メロ）: Arrangeの各Sectionに `🎶 裏メロ` を追加。ロングトーン / レスポンス（メロディの隙間だけ）/ 寄り添い（音階で3度下）の3候補を聴いて、選んだSectionだけに当てる。消す・別の候補に替える・↶で戻すができる。候補生成は `src/core/counter-melody.js`、Store `applyCounterMelody`（1回の編集）
 - 裏メロは `tracks[]` の `role: "counter"`（MIDI Ch.4）に保存。Demo Playerは控えめな音量で再生し、パートパネルに `裏メロ` のミュートを追加。MIDIは裏メロがあるときだけ `CounterMelody.mid` を出力し、Song.midにもトラックを追加（無いProjectの出力は従来と同じ）。Section切り出し / コピー / 小節増減 / Key変更にも追従する
 - Hub `✅ 骨子チェック`: Chord / Melody / Bass / Drums / Structure / Energy / Sound Direction を ✓ / △ / － で表示し、「次に決めること」と、その画面へのボタンを出す。裏メロは任意項目。読むだけで、曲の良し悪しは採点しない（`src/core/skeleton-check.js`、Schema変更なし）

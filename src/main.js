@@ -22,6 +22,8 @@ import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
 import { songCardHtml } from "./hub/song-card.js";
 import { skeletonCheckHtml, skeletonCheckSummary } from "./hub/skeleton-check-ui.js";
+import { guideHtml, guideSummary, refreshGuideDom } from "./hub/guide-ui.js";
+import { loadGuideProgress, saveGuideProgress, toggleGuideStep } from "./hub/guide.js";
 import { bindStartingPoint, startingPointHtml } from "./hub/starting-point-ui.js";
 import { previewProject } from "./hub/starting-point.js";
 import { bindConsultPanel, consultPanelHtml } from "./hub/consult-ui.js";
@@ -59,6 +61,12 @@ let melodyChordOpen = false;
 let melodyChordBar = 0;
 let songCardOpen = false;
 let skeletonOpen = false;
+let guideOpen = false;
+let guideDone = null; // 手引きの✓（この端末のlocalStorageだけ。初めて開くときに読む）
+function getGuideDone() {
+  if (!guideDone) guideDone = loadGuideProgress();
+  return guideDone;
+}
 let textSize = loadTextSize();
 applyTextSize(textSize);
 let chordPresetSelection = CHORD_PRESETS[0].id;
@@ -121,6 +129,9 @@ function hubScreen() {
 
       <button id="toggle-skeleton" class="song-card-toggle" aria-expanded="${skeletonOpen}">✅ ${escapeHtml(skeletonCheckSummary(project))}${skeletonOpen ? " ▲" : " ▼"}</button>
       ${skeletonOpen ? skeletonCheckHtml(project) : ""}
+
+      <button id="toggle-guide" class="song-card-toggle" aria-expanded="${guideOpen}">📖 ${escapeHtml(guideSummary(getGuideDone()))}${guideOpen ? " ▲" : " ▼"}</button>
+      ${guideOpen ? guideHtml(getGuideDone()) : ""}
 
       <button id="toggle-song-card" class="song-card-toggle" aria-expanded="${songCardOpen}">曲の特徴カード${songCardOpen ? " ▲" : " ▼"}</button>
       ${songCardOpen ? songCardHtml(project) : ""}
@@ -485,6 +496,30 @@ function bindHubControls() {
 
   document.querySelectorAll("[data-skeleton-go]").forEach((button) => {
     button.addEventListener("click", () => render(button.dataset.skeletonGo));
+  });
+
+  document.querySelector("#toggle-guide")?.addEventListener("click", () => {
+    guideOpen = !guideOpen;
+    render("hub");
+  });
+
+  document.querySelectorAll("[data-guide-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      guideDone = toggleGuideStep(getGuideDone(), button.dataset.guideToggle);
+      saveGuideProgress(guideDone);
+      refreshGuideDom(guideDone);
+    });
+  });
+
+  document.querySelectorAll("[data-guide-go]").forEach((button) => {
+    button.addEventListener("click", () => render(button.dataset.guideGo));
+  });
+
+  document.querySelector("#guide-reset")?.addEventListener("click", () => {
+    if (!globalThis.confirm("手引きの✓をすべて外しますか？（曲のデータは変わりません）")) return;
+    guideDone = new Set();
+    saveGuideProgress(guideDone);
+    render("hub");
   });
 
   document.querySelector("#toggle-song-card")?.addEventListener("click", () => {

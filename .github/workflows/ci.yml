@@ -93,6 +93,9 @@ jobs:
       - name: Skeleton check smoke test
         run: npm run test:skeleton-check
 
+      - name: Guide smoke test
+        run: npm run test:guide
+
       - name: Loop guide smoke test
         run: npm run test:loop-guide
 
