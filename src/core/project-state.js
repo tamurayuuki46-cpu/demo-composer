@@ -167,6 +167,14 @@ export function createProjectStore(initialProject = createDefaultProject()) {
     },
 
     updateHub({ metadata = {}, basic = {} } = {}) {
+      const harmonyChanged =
+        (Object.hasOwn(basic, "key") && basic.key !== state.basic.key) ||
+        (Object.hasOwn(basic, "scale") && basic.scale !== state.basic.scale);
+
+      if (harmonyChanged && state.chords.length > 0) {
+        throw new Error("コード進行がある間はKey/Scaleを変更できません。ChordでClearしてから変更してください。");
+      }
+
       const next = clone(state);
 
       next.metadata = {
