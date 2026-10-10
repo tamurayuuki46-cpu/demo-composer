@@ -10,7 +10,7 @@ Chord Moduleは `project.chords[]` の責任Module。
 - 任意の基準音（C〜B）を選択
 - 基準音ごとに Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug を候補表示
 - 候補タップで1小節追加
-- Chord Preset 100種類（4小節 / 8小節）
+- Chord Preset 126種類（4小節 / 8小節。度数のみ100種 + 7th・借用和音26種）
   - 王道・明るい / J-POP・切ない / ロック・力強い / バラード・やさしい / ダンス・ループ / ジャズ・おしゃれ / マイナー・暗め の7カテゴリ
   - 既存6種（Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行）はid・名前を維持
   - 追加分は `src/chord/chord-presets.js` の度数文字列表（例 `1451`）から生成。idは `<カテゴリ>-<度数>`

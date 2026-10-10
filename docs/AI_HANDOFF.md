@@ -15,7 +15,7 @@ v0.2-dev
 - Project全体Undo / Redo（最大50操作、メモリのみ）
 - Hub: Project名 / BPM / Key / Scale、Key変更時のChord / Melody / Bass Atomic移調、文字サイズ3段階、曲の特徴カード、AI相談テキスト / 相談テンプレート、Cubaseでやることメモ
 - Chord: ダイアトニック7候補の五度圏扇形UI、基準音C〜B、Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug、コード役割ラベル
-- Chord Preset 100種類（7カテゴリ。既存6種: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行）
+- Chord Preset 126種類（9カテゴリ。度数のみ100種 + 7th/借用和音26種。既存6種: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行）
 - Chord 次のコード候補3つ / ひとスパイス（借用和音3候補）
 - Chord Backing Pattern: Block / 8分刻み / Arpeggio / Syncopation。Demo PlayerとChord.mid / Song.midへ反映
 - Melody: 縦ピアノKeyboard、8分 / 16分切替、音の長さ指定、Bar / Octave切替、Chord Tone強調、度数表示、Copy Bar / Copy 2小節、Melody Analyzer
@@ -83,7 +83,7 @@ v0.2-dev
 - Melody候補はルールベースの叩き台で、歌詞のアクセント / フレーズ文脈 / 前後小節の自然な接続まではまだ評価しない
 - Melody Velocity編集 / Scale表示は未対応
 - Chordは1コード=1小節固定。並べ替え / 長さ変更は未対応
-- Chord Presetは度数配列のみの100種類。借用和音 / 7th入りPresetは未対応
+- Chord Presetのうち7th/借用和音カテゴリはメジャーキー前提（マイナーキーでは主音基準）。マイナー専用の7th/借用和音Presetは未対応
 - Backing Patternは曲全体で1種類。Section別 / Bar別指定、詳細Step編集は未対応
 - Backing Patternは4種類の叩き台のみ。DAW級Pattern Sequencer / Arpeggiatorは作らない方針
 - Scale変更時の既存Chord / Melody / Bass自動変換は未対応。Harmony依存データがある場合は変更を拒否

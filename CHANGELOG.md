@@ -4,7 +4,8 @@
 更新日: 2026-10-11
 
 ### 追加
-- Chord Presetを6種類から100種類に拡張。王道・明るい / J-POP・切ない / ロック・力強い / バラード・やさしい / ダンス・ループ / ジャズ・おしゃれ / マイナー・暗めの7カテゴリで、selectをカテゴリ別（optgroup）にした。4小節と8小節があり、説明に「最後のコードの働き」を添えた。既存6種のidと順序は変更なし。Presetは度数配列のみで、適用結果は通常の `project.chords[]` に展開する（Schema変更なし）
+- Chord Presetに「7th・大人っぽい」14種と「借用和音・ドラマチック」12種を追加（合計126種）。7th（maj7 / m7 / 7）、♭VII・♭VI・iv等の借用和音、副次ドミナントを含む。既存の `major7 / minor7 / dominant7 / major / minor` Qualityだけで表現し、Schema変更なし。メジャーキー向けで、マイナーキーでは主音を基準に展開する
+- Chord Presetを6種類から100種類に拡張（度数のみのPresetは100種）。王道・明るい / J-POP・切ない / ロック・力強い / バラード・やさしい / ダンス・ループ / ジャズ・おしゃれ / マイナー・暗めの7カテゴリで、selectをカテゴリ別（optgroup）にした。4小節と8小節があり、説明に「最後のコードの働き」を添えた。既存6種のidと順序は変更なし。Presetは度数配列のみで、適用結果は通常の `project.chords[]` に展開する（Schema変更なし）
 - Chord Preset Smoke Testを拡張（100件 / id・進行の重複なし / 4または8小節 / 度数範囲 / カテゴリ所属 / C Major・A Minor・F# Majorで全Preset展開）
 - Melody: `↻ 候補を更新`。同じKey / Chord / Barでも、安定 / キャッチー / 浮遊感の方向性を保った4つのVariation Setを順番に切り替えられる。Variation番号はUI状態のみでProject Dataには保存しない（Schema変更なし）
 - Melody Candidate Smoke Testを拡張し、4 Setが実際に異なること、全NoteがMIDI範囲内であること、全Setの安定案がChord Tone中心であることを確認

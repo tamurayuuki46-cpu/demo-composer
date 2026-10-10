@@ -29,7 +29,7 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 HubではProject名 / BPM / Key / Scaleを編集できます。Key変更時はChord / Melody / Bassを同じ最短半音幅で自動移調し、Drumsは変更しません。Scale変更はChord / Melody / Bassがある場合は安全のため拒否します。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。
 
-Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを五度圏の関係が見やすい扇形ビューで表示します。Majorは `IV / ii ← I / vi → V / iii` と `vii°`、Minorは `VI / iv ← III / i → VII / v` と `ii°` の配置で、各コードをタップすると従来どおり1小節ずつ進行へ追加できます。さらに基準音をC〜Bから選び、`Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug` の9種類を1小節ずつ進行へ追加できます。加えて100種類のChord Preset（王道・明るい / J-POP・切ない / ロック・力強い / バラード・やさしい / ダンス・ループ / ジャズ・おしゃれ / マイナー・暗めの7カテゴリ）を現在のKey / Scaleへ自動変換して適用できます。Preset適用後も個別追加・削除で修正できます。
+Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを五度圏の関係が見やすい扇形ビューで表示します。Majorは `IV / ii ← I / vi → V / iii` と `vii°`、Minorは `VI / iv ← III / i → VII / v` と `ii°` の配置で、各コードをタップすると従来どおり1小節ずつ進行へ追加できます。さらに基準音をC〜Bから選び、`Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug` の9種類を1小節ずつ進行へ追加できます。加えて126種類のChord Preset（7th・借用和音を含む9カテゴリ。王道・明るい / J-POP・切ない / ロック・力強い / バラード・やさしい / ダンス・ループ / ジャズ・おしゃれ / マイナー・暗めの7カテゴリ）を現在のKey / Scaleへ自動変換して適用できます。Preset適用後も個別追加・削除で修正できます。
 
 Chord画面の `Backing Pattern` では、コード進行自体を変えずに `Block / 8分刻み / Arpeggio / Syncopation` の4種類から伴奏の鳴らし方を選べます。選択はAutoSave / Undo / Redo対象で、Demo Playerと `Chord.mid / Song.mid` のChord Trackへ反映されます。既存ProjectはBacking未設定時にBlockへFallbackします。
 
