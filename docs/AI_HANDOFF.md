@@ -8,61 +8,64 @@ v0.2-dev
 
 現在実装済み:
 - Android Chrome向けDemo Composer
-- Hub / Chord / Melody / Rhythm
+- Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite
 - schemaVersion 2準拠の共通Project State
 - IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now
-- schemaVersion 1 → 2 Migration
-- Migration前ProjectをIndexedDB `meta` storeへ退避
+- schemaVersion 1 → 2 Migration / Migration前Project退避
+- Undo / Redo: Project全体で1本、最大50操作、メモリのみ、画面上部 `↶` / `↷`
 - Hub: Project名 / BPM / Key / Scale
-- Hub Key変更: Chord root / Melody pitch / Bass pitchを元Key→新Keyの最短半音幅でAtomicに自動移調し、Drumsは変更しない
-- Key移調でMIDI Note 0〜127を外れる場合は更新全体を中止して元Projectを維持
+- Hub Key変更: Chord root / Melody pitch / Bass pitchを最短半音幅でAtomicに自動移調、Drumsは変更しない
+- Key移調でMIDI Note 0〜127を外れる場合は更新全体を中止
 - Scale変更はChord / Melody / Bassがある場合は安全のため拒否
 - Chord: ダイアトニック7候補 + 基準音C〜B + Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
-- Chordのダイアトニック7候補を五度圏の扇形UIで表示
-- Major扇形: 左 IV / ii、中央 I / vi、右 V / iii、下 vii°
-- Minor扇形: 左 VI / iv、中央 III / i、右 VII / v、下 ii°
-- 扇形UIは既存 `data-add-chord` Buttonのclick処理を変更せず、表示classだけを付与
+- ダイアトニック7候補は五度圏の扇形UI。Major: 左 IV / ii、中央 I / vi、右 V / iii、下 vii°。Minor: 左 VI / iv、中央 III / i、右 VII / v、下 ii°
 - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
-- Chord Presetは現在Key / Scaleへ自動変換し、通常の `project.chords[]` として適用
-- Chord Preset適用後は個別追加 / 削除 / Clearで修正可能
-- Chord Quality共通定義をChord / Demo Player / MIDI Exportで共有
-- Arrange: 曲の構成Section（叩き台3種 / 小節増減 / 追加削除 / Sectionコピー / Section再生 / MIDI Marker）。Schema変更なし。`structure.sections` を使用。`src/core/section-ops.js` がCore Global Operation
-- Undo / Redo: Project全体で1本の履歴（最大50操作、メモリのみ、画面上部の `↶` `↷`）
 - Melody: 8分 / 16分切替、Monophonic、Bar / Octave切替、Clear Bar、縦ピアノKeyboard
 - Rhythm: Bass / Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
-- Drum Presetは現在BarのKick / Snare / Closed HHだけを置換し、Bass / 他Barは変更しない
+- Arrange: Section Template / 小節増減 / 追加削除 / Sectionコピー / Section再生 / Melody・Rhythm見出し表示 / MIDI Marker
+- Sound Sketch Lite: Chord / Melody / Bassの仮音色Preset + Toneタグ
+- Chord Sound: Keys / Pad / Piano
+- Melody Sound: Lead / Keys / Pluck
+- Bass Sound: Soft Bass / Synth Bass / Deep Bass
+- Sound Tone: Natural / Bright / Soft / Warm / Dark / Airy / Aggressive
+- Sound選択は `project.instruments[]` に保存し、AutoSave / Undo / Redo対象
 - Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drums軽量再生
+- Demo PlayerのChord / Melody / BassはSound Preset / Toneに応じてwaveform / low-pass filter / attack / release / gainを軽量変更
+- ArrangeのSection単体再生でもSound設定を保持
 - MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid
+- Sound Sketch LiteはMIDI Program Change / CCを出力しない
 - project.json手動Backup Export
 - Vercel静的Build
 - GitHub Pages Fallback（developから公開）
-- MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Diatonic Fan Smoke Test、Syntax Check、Static BuildのCI
+- Cloudflare Pages Fallback導入手順を `docs/CLOUDFLARE_PAGES.md` に追加済み。Dashboard接続は別途必要
 
 Repository統合状況:
 - v0.2基礎機能統合commit: `c21bb9b0b343e8dc807c6fd884ceaf670c48cd43`
 - Chord Preset統合commit: `5f0c6cb3d964ccd2d0ba93ed3bb43d81ecef6eb3`
 - Hub Key変更修正統合commit: `5b7f43003a64281bef051d74590e7badb66f5fb7`
 - Diatonic Fan UI統合commit: `77376bf75929618266171ea7da34628828b99ca4`
-- PR #26 GitHub Pages Fallback: merged
-- PR #27 v0.2 Chord Quality + Schema v2 + Rhythm Preset統合: merged
-- PR #30 Chord Preset 6種類: merged
-- PR #32 Hub Key変更時のHarmony自動移調: merged
-- PR #34 Diatonic Fan UI: merged
-- PR #23 Chord Quality + Schema v2: #27で置換済みとしてclose。branchは保持
-- PR #24 Rhythm Preset: #27で置換済みとしてclose。branchは保持
-- GitHub Pages Diatonic Fan版 Deploy: success
+- PR #36 Undo / Redo: merged
+- PR #37 Undo handoff docs: merged
+- PR #38 Arrange / Section: merged
+- PR #25 Cloudflare Pages fallback plan: merged（docs only）
+- PR #39 Sound Sketch Lite旧実装: develop先行更新と競合したためclose。マージしていない。branchは履歴として保持
+- PR #40 Sound Sketch Lite + Arrange / Undo安全統合: merged
+- Sound Sketch Lite統合merge commit: `5f18167d9037f96490a4c929a56a0dbd5271da5d`
+- GitHub Pages Sound Sketch Lite版 Build / Deploy: success
 - GitHub Pages公開URL: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 - v0.2統合前復元点: `restore/v0.1-before-v0.2-integration`
 - Chord Preset追加前復元点: `restore/v0.2-before-chord-presets`
 - Key変更修正前復元点: `restore/v0.2-before-key-change-fix`
 - Diatonic Fan UI変更前復元点: `restore/v0.2-before-diatonic-fan-ui`
-- 作業branchは履歴として保持
+- Undo追加前復元点: `restore/v0.2-before-undo`
+- Arrange Section追加前復元点: `restore/v0.2-before-arrange-sections`
+- Sound Sketch Lite追加前復元点: `restore/v0.2-before-sound-sketch-lite`
 - `main` はstable専用。変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
 
 Android実機で確認済み / ユーザー受入済み:
-- Hub / Chord / Melody / Rhythm Navigation
+- Hub / Chord / Melody / Rhythm Navigation（Sound / Arrange追加前）
 - Melody 8分 / 16分切替
 - Melody 16分の前半 / 後半切替
 - Rhythm 16 stepの基本Tap操作
@@ -74,7 +77,6 @@ Android実機で確認済み / ユーザー受入済み:
 - GitHub Pages公開URLがAndroidで表示できること
 
 v0.2 CI確認済み:
-- History (Undo / Redo) smoke test: success
 - JavaScript syntax check: success
 - MIDI smoke test: success
 - Rhythm copy smoke test: success
@@ -84,43 +86,51 @@ v0.2 CI確認済み:
 - Chord preset smoke test: success
 - Hub key-change smoke test: success
 - Diatonic fan smoke test: success
+- History (Undo / Redo) smoke test: success
+- Section (Arrange) smoke test: success
+- Sound Sketch smoke test（Sound変更Undo / Redo含む）: success
 - Static build: success
-- GitHub Pages Deploy: success
+- GitHub Pages Build / Deploy: success
 
 開発中:
-- Claude: Undo（PR #36）と曲の構成Section（`claude/v0.2-arrange-sections`）は実装済み・PR待ち。`src/core/edit-history*` / `src/core/section-ops.js` / `src/arrange/` / `project-state.js` / `midi-export.js` / `demo-player.js` を触った。ChatGPTは同じファイルを同時に大きく編集しないこと
-- ChatGPT: Chord画面（`main.js` のChord部分）まわりを継続
-- Diatonic Fan UIのdevelop統合 / GitHub Pages公開は完了
-- 次はAndroid実機で扇形UIと既存Chord操作の回帰確認
+- Sound Sketch Liteのdevelop統合 / GitHub Pages公開は完了
+- Arrange / Undo / Soundを含む6 Module構成のAndroid実機回帰確認が次の作業
+- Cloudflare Pagesは導入手順のみRepositoryへ追加済み。Cloudflare Dashboard側のGitHub接続・Pages Project作成は未実施
 
 次に実装 / 確認:
-1. GitHub Pages公開版でChord画面のダイアトニック7候補が扇形表示になることを確認
-2. C Major等で左 IV / ii、中央 I / vi、右 V / iii、下 vii° の配置を確認
-3. Minor Keyで左 VI / iv、中央 III / i、右 VII / v、下 ii° の配置を確認
-4. 各扇形ButtonをTapして従来どおり1小節ずつChord追加できることを確認
-5. 狭いAndroid画面で横スクロール / 文字切れ / 誤タップがないことを確認
-6. Chord Preset 6種類のSelect / Preview / 適用 / 個別修正を確認
-7. Rhythm Drum Preset 6種類のSelect / 適用 / 上書き確認 / 手動修正を確認
-8. Hub Key変更後も扇形のChord名が新Keyへ追従することを確認
-9. 問題なければChord Tone表示の仕様案を作る
-10. その後Melody Analyzerを検討
+1. GitHub Pages公開版で下部ナビが Hub / Chord / Melody / Rhythm / Arrange / Sound の6つ表示され、Androidで横スクロールや文字切れがないことを確認
+2. Sound画面が開き、Chordで Keys / Pad / Piano を切り替えるとDemo Playerの音が変わることを確認
+3. Melodyで Lead / Keys / Pluck の差を確認
+4. Bassで Soft Bass / Synth Bass / Deep Bass の差を確認
+5. Natural / Bright / Soft / Warm / Dark / Airy / Aggressive のTone差を確認
+6. Sound変更後に `↶` / `↷` でPreset / Toneが戻る・進むことを確認
+7. Sound変更後に再読み込みしてAutoSave / Restoreされることを確認
+8. ArrangeからSection単体再生してもSound設定が反映されることを確認
+9. Hub / Chord / Melody / Rhythm / Arrange / Undo / Demo Playerの回帰確認
+10. Song.mid / Part MIDIが従来どおり出力でき、Sound選択でNote内容が変わらないことを確認
+11. 問題なければChord Tone表示の仕様案を作る
+12. その後Melody Analyzerを検討
 
 既知の問題:
 - Chordは1コード=1小節固定
 - Chord並べ替え / 長さ変更は未対応
 - 借用和音を目的別に整理した支援UIは未対応
 - Chord Presetは初期6種類のみ。Scaler / Melody Sauce / Cubase / 書籍等からの分類拡張は未対応
-- Scale変更時の既存Chord / Melody / Bass自動変換は未対応。Harmony依存データがある場合は変更を拒否する
-- Key移調でMIDI Note範囲外になる場合はKey変更を拒否する
-- Bass Noteがある間はChord変更を拒否する
+- Scale変更時の既存Chord / Melody / Bass自動変換は未対応。Harmony依存データがある場合は変更を拒否
+- Key移調でMIDI Note範囲外になる場合はKey変更を拒否
+- Bass Noteがある間はChord変更を拒否
 - Melody Note Length / Velocity編集は未対応
 - Melody入力単位はUI状態のみで保存されない
 - Melody Scale表示 / Chord Tone強調 / Melody Analyzerは未対応
 - Rhythm 16 stepは狭い端末でセル幅が小さい
 - Drum PresetはKick / Snare / Closed HHのみ
-- Demo Playerは仮音確認専用
-- Sectionは名前の変更UIなし。小節を増やすとき後ろにコードがあると拒否（末尾Sectionか、後ろのコードを消してから増やす）
-- Undo履歴は保存されない（再読み込みで空になる）。Snapshot履歴 / project.json Import / Service Workerは未実装
+- Arrange Sectionは名前変更UIなし。後ろにコードがある場合、小節増加を安全のため拒否することがある
+- Undo履歴は保存されない。再読み込みで空になる
+- Sound Sketch LiteはWeb Audio oscillatorベースの方向性確認用。最終音色ではない
+- SoundはChord / Melody / Bassのみ。Drums音色変更は未対応
+- Soundを単独で鳴らす専用Preview Buttonは未実装。曲データをDemo Playerで再生して確認する
+- 6 Module Bottom Navigationの実機可読性・誤タップは要確認
+- Snapshot履歴 / project.json Import / Service Workerは未実装
 - Cubasis実機確認 / PC Cubase Importは未実施
 
 触らない部分:
@@ -130,33 +140,27 @@ v0.2 CI確認済み:
 - Module責務の分離
 - `project.json`をDemo Composer内の正本とする方針
 - 「スマホ版DAWを作らない」というプロダクト境界
-- 高度なMix / Mastering / Audio Editing / Plugin HostingはCubasis / Cubase等へ任せる方針
+- 高度なSynth / Mix / Mastering / Audio Editing / Plugin HostingはCubasis / Cubase等へ任せる方針
 
 最近の重要な設計判断:
 - Android Chromeを主対象とする
-- ダイアトニック7候補は単純Gridより、五度圏の関係が直感的に見える扇形UIを優先する
-- Majorは IV / ii - I / vi - V / iii + vii°、Minorは VI / iv - III / i - VII / v + ii° の対応で配置する
-- Diatonic FanはProject Dataを変更せず、既存Chord ButtonへUI classを付与する表示レイヤーとして実装する
-- Key変更はHubが他Moduleを直接書き換えず、Core Project StateのGlobal OperationとしてChord / Melody / Bassを1回でAtomicに移調する
-- Sectionの増減・コピーはCore Global Operation。Chordが `chords[n]=Bar n+1` の前提のため、コード・音符を一緒にずらし、隙間ができる増加は拒否する
-- Key移調は最短半音幅を使用し、不要な1オクターブ移動を避ける
-- Key移調はChord quality / degree、Note timing / duration / velocityを維持し、Drumsは変更しない
-- Key移調でMIDI範囲外が発生する場合はProjectを部分更新せず全体を元のまま維持する
-- Scale変更はKey移調と分離し、Harmony依存データがある場合は拒否する
-- v0.2 Chord Qualityは「基準音を1つ選ぶ → 9種類から選ぶ」として候補を大量表示しない
-- ダイアトニック7候補は初心者導線として残す
-- Chord Quality定義はcoreへ集約し、Chord / Demo Player / MIDIで共有する
-- schemaVersion 1 → 2はProject構造を変えずChord Quality許可値を拡張する
-- Migration前ProjectはIndexedDBへ退避してから変換する
-- Chord PresetはDegree配列として定義し、現在Key / Scaleの通常Chord Dataへ展開する
-- Chord Preset選択状態は保存せず、適用結果だけ `project.chords[]` として保存するためSchemaは変更しない
-- Chord Presetは完成進行を固定する機能ではなく、適用後に個別修正する叩き台とする
-- Drum Presetは完成形の自動生成ではなく、叩き台を選んで16 stepを手動修正する機能とする
-- Drum Preset選択状態は保存せず、結果だけ通常のDrum Note Dataとして保存する
-- Vercelを残し、GitHub Pagesを第二公開先として運用する
+- ダイアトニック7候補は五度圏の関係が見える扇形UIを優先する
+- Diatonic FanはProject Dataを変更せず表示レイヤーとして実装する
+- Key変更はCore Project StateのGlobal OperationとしてChord / Melody / BassをAtomicに移調する
+- Arrange Sectionの増減 / コピーもCore Global OperationとしてChord / Melody / Bass / Drumsをまとめて扱う
+- Undo / RedoはModule別にせずProject全体で1本にする
+- Sound Sketch Liteは本来v0.4予定のうち「音色の方向性を決める」最小部分だけv0.2へ先行導入する
+- Sound Moduleだけが `project.instruments[]` を更新し、Audio ModuleはSnapshotを読み取る。Module同士は直接依存しない
+- Sound Preset定義は `src/core/sound-presets.js` に集約し、Sound UIとDemo Playerで共有する
+- Sound選択は既存 `instruments[]` を使うためschemaVersion 2を維持し、追加Migrationを行わない
+- Sound変更は通常編集としてUndo / Redo / AutoSave対象にする
+- SoundはDemo Playerのwaveform / filter / envelope / gainだけを軽量変更し、MIDI Note / Chord / Rhythm Dataを変更しない
+- MIDI Program Change / CCは現時点では出力しない。最終音源はCubasis / Cubase / Plugin側で差し替える
+- Drums音色変更、本格Synth Parameter、FX Rack、MixerはSound Sketch Liteに入れない
+- Vercelを残し、GitHub Pagesを公開Fallbackとして運用する。Cloudflare Pagesは追加Fallback候補として手順のみ用意
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented。Chord Preset / Drum Preset / Key移調 / Diatonic Fanは専用Schemaを追加せず、既存Project Dataを利用する。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented。Arrangeは既存 `structure.sections[]`、Sound Sketch Liteは既存 `instruments[]` を利用する。Sound entryは `{ part, preset, tone }`。Chord Preset / Drum Preset / Key移調 / Diatonic Fan / Undo履歴は専用Schemaを追加しない。
 
 最終更新:
 2026-10-10
