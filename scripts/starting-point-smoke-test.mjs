@@ -83,3 +83,17 @@ assert.ok(pv.tracks.find((t) => t.role === "drums").notes.length > 0);
 assert.equal(progressionNames(point), "Dm → A# → F → C");
 
 console.log("starting-point smoke test passed");
+
+// 質問で決める: 常に3つ・重複なし。答えに合うものが先頭
+import { QUESTIONS, suggestByAnswers } from "../src/hub/starting-point.js";
+assert.equal(QUESTIONS.length, 3);
+const wiz = suggestByAnswers({ mood: "sad", tempo: "slow", feel: "sing" });
+assert.equal(wiz.length, 3);
+assert.equal(new Set(wiz.map((p) => p.id)).size, 3);
+assert.equal(wiz[0].id, "ballad-sad");
+assert.equal(wiz[0].reason, "3つの答えにぴったり");
+const fastRun = suggestByAnswers({ mood: "sad", tempo: "fast", feel: "run" });
+assert.equal(fastRun[0].id, "vocaloid-fast");
+assert.equal(suggestByAnswers({}).length, 3);
+assert.equal(suggestByAnswers({ tempo: "fast" })[0].bpm > 130, true);
+console.log("starting-point wizard ok");
