@@ -28,7 +28,8 @@ v0.2-dev
 - Melody候補は現在Barだけを置き換え、他Barを保持。適用結果は通常のMelody Noteになり、Piano Rollで修正可能
 - Melody候補適用後は既存のAutoSave / Undo / Redo / Demo Player / Melody.mid / Song.midをそのまま利用
 - Rhythm: Bass音程（Root / 3rd / 5th / 7th / Octave等）/ 半音ずらし±6 / 長さ指定 / Kick / Snare / Closed HH、16 step、Beat Copy / Bar Copy
-- Rhythm Bass候補3つ / Drum Preset 6種類 / Drum PresetのSection一括適用
+- Rhythm Bass候補5タイプ: `ルート型 / リフ型 / ファンク型 / シンセウェーブ型 / 裏メロ型`。現在Barだけを通常Bass Noteへ置き換え、16 stepで修正可能。ファンク型はKick位置がある場合それをAnchorに短い返しを追加。詳細は `docs/BASS_STYLES.md`（Schema変更なし）
+- Rhythm Drum Preset 6種類 / Drum PresetのSection一括適用
 - Rhythm ドラムフィル: スネア8分 / スネアロール / ブレイク。Section終端の後半を変える。全Section終端への一括適用にも対応
 - Arrange: Section Template / 小節増減 / 追加削除 / Sectionコピー / Section再生 / 骨子の進み具合 / MIDI Marker
 - Sound Sketch Lite: Chord Keys / Pad / Piano、Melody Lead / Keys / Pluck、Bass Soft Bass / Synth Bass / Deep Bass、Tone Natural / Bright / Soft / Warm / Dark / Airy / Aggressive
@@ -58,6 +59,7 @@ v0.2-dev
 - PR #73 Melody候補Refresh: merged
 - PR #71 Melody Variation（音程だけ / リズムだけ）: merged。PR #73の後にdevelopへ統合され、Refreshを含む親commitを保持
 - PR #91 Melody Analyzer 旋律の3つの見方: merged / CI success
+- PR #93 Rhythm Bass候補5タイプ: CI success。`ルート / リフ / ファンク / シンセウェーブ / 裏メロ` を1 Bar候補として提示（Schema変更なし）
 - Melody候補統合merge commit: `6a7f1ce482af9a21eaa30fd6e3b91fd896b4f821`
 - Melody候補Refresh merge commit: `9891c2208287289e13feed4a71b1f8d6aa36bb74`
 - Melody候補Refresh PR CI: success
@@ -69,11 +71,13 @@ v0.2-dev
 - Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`
 - 新規Project追加前復元点: `restore/v0.2-before-new-project-final`
 - Counter Melody 3系統整理前復元点: `restore/v0.2-before-counter-style-3ways`
+- Bass候補5タイプ追加前復元点: `restore/v0.2-before-bass-style-5ways`
 - `main` はstable専用で変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
 
 開発中:
 - Melody候補の4 Variation Set / Refreshはdevelop統合済み
+- Rhythm Bass候補5タイプはPR #93でCI success。Android実機で候補の差・縦スクロール量・Kick有無のファンク型を確認する段階
 - Android実機で `↻ 候補を更新` と3候補の差・試聴・編集を確認する段階
 - v0.2は機能が増えてきたため、追加機能より実制作での使いやすさ確認を優先する
 
@@ -87,13 +91,14 @@ v0.2-dev
 7. 再読み込み後に適用結果がAutoSave / Restoreされることを確認（候補Set番号自体は保存しない）
 8. Melody.mid / Song.midをExportして通常Noteとして出力されることを確認
 9. Melody Variation（終わり / 音程だけ / リズムだけ）・ドラムフィル / Backing / Bass候補 / Chord候補 / Arrange / Sound / Import等のAndroid回帰確認
-10. 裏メロ: Sectionごとに `Sparse / Active / Hook` を試聴 → 適用 → ↶ / 消す。説明の `※` 補足が小さく表示されること、パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
-11. Hubの `骨子チェック` の ✓ / △ / － と、「次に決めること」のボタン遷移を確認
-12. 新機能の追加はいったん止めて、`docs/REAL_SONG_TEST.md` の手順で実制作テスト（1曲を通して作り、MIDIをCubasis / Cubaseへ渡す）を優先
-13. v0.3「骨子作り支援」の計画は `docs/V0_3_SKELETON_PLAN.md`（計画のみ・コード未変更）。ChatGPT案23件 + Claude案のレビュー結果と、骨子レシピ8案、3段階の優先順位、未決事項を記載。実装前にユーザーと未決事項を決める
-13. MIDI読み込み: アプリで書き出したSong.midと、DAWで作ったMIDIを読み込み、役割の提案・BPM・Key・コード判定が妥当か、取り込み後に↶で戻せることを確認
-14. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
-15. Melody Analyzerで3つの参考モデルが表示され、Chord未設定時の2(9th)/6thが `—`、Chord設定時は割合表示になることをAndroid実機で確認
+10. Rhythm Bass候補5タイプを同じChordで順に試聴し、`ルート / リフ / ファンク / シンセウェーブ / 裏メロ` の差が分かること、Kick有無でファンク型が破綻しないこと、適用後に16 step編集・↶が使えることを確認
+11. 裏メロ: Sectionごとに `Sparse / Active / Hook` を試聴 → 適用 → ↶ / 消す。説明の `※` 補足が小さく表示されること、パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
+12. Hubの `骨子チェック` の ✓ / △ / － と、「次に決めること」のボタン遷移を確認
+13. 新機能の追加はいったん止めて、`docs/REAL_SONG_TEST.md` の手順で実制作テスト（1曲を通して作り、MIDIをCubasis / Cubaseへ渡す）を優先
+14. v0.3「骨子作り支援」の計画は `docs/V0_3_SKELETON_PLAN.md`（計画のみ・コード未変更）。ChatGPT案23件 + Claude案のレビュー結果と、骨子レシピ8案、3段階の優先順位、未決事項を記載。実装前にユーザーと未決事項を決める
+15. MIDI読み込み: アプリで書き出したSong.midと、DAWで作ったMIDIを読み込み、役割の提案・BPM・Key・コード判定が妥当か、取り込み後に↶で戻せることを確認
+16. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
+17. Melody Analyzerで3つの参考モデルが表示され、Chord未設定時の2(9th)/6thが `—`、Chord設定時は割合表示になることをAndroid実機で確認
 
 既知の問題:
 - 新規Projectで旧Projectデータは端末内に残るが、保存済みProject一覧 / 過去Projectを選んで再度開くUIは未実装。現時点の復元手段はproject.json Backup / Importを優先する
@@ -108,7 +113,8 @@ v0.2-dev
 - Backing Patternは4種類の叩き台のみ。DAW級Pattern Sequencer / Arpeggiatorは作らない方針
 - Scale変更時の既存Chord / Melody / Bass自動変換は未対応。Harmony依存データがある場合は変更を拒否
 - Bass Noteがある間はChord Data変更を拒否（Backing Pattern変更は可能）
-- Rhythm 16 stepは狭い端末でセル幅が小さい
+- Rhythm Bass候補は1 Bar単位の有限5タイプ。前後小節のVoice Leadingや曲全体のBassモチーフまでは自動評価しない
+- Rhythm 16 stepは狭い端末でセル幅が小さい。Bass候補が5タイプになったため、縦スクロール量はAndroid実機で要確認
 - Drum Preset / Drum FillはKick / Snare / Closed HH中心。Open HH / Percussion / Tomは未対応
 - Arrange Sectionは名前変更UIなし。後ろにコードがある場合、小節増加を安全のため拒否することがある
 - Undo履歴は保存されず、再読み込みで空になる
@@ -141,13 +147,15 @@ v0.2-dev
 - Melody候補の実装中にPR #57のDrum Fillがdevelopへ先行統合されたため、旧PR #61を無理にマージせず、最新developからPR #66を作り直して統合した
 - Backing PatternはChord Module内、Melody候補はMelody Module内に置き、新Moduleを増やさない
 - 生成・候補機能はDemo Composer共通思想の「3候補 → 選択 → 修正」を優先する
+- Rhythm Bass候補は既存の3候補を無制限生成へ広げず、役割が明確な5タイプ `ルート / リフ / ファンク / シンセウェーブ / 裏メロ` に整理する。The Weeknd等は「短い低音リフをフック化する考え方」の参考に留め、特定曲コピーはしない
+- Bass候補名 / 候補IDはProject Dataへ保存せず、適用結果だけ通常の `tracks[role=bass].notes[]` に保存する。既存のUndo / AutoSave / Demo Player / MIDI Exportを再利用し、schemaVersion 2を維持する
 - Counter Melodyも同じ思想で、`Sparse / Active / Hook` の役割が明確に違う3候補へ整理する。アーティスト名は小さな参考イメージに限定し、特定曲の旋律再現・コピーはしない
 - Counter Melody候補名 / 候補IDはProject Dataへ保存しない。適用結果だけ `tracks[role=counter].notes[]` に保存するため、候補方式を変えてもschemaVersion 2を維持できる
 - v0.2のSchemaは2のまま維持し、今回Migrationは追加しない
 - GitHub Pagesを現在の公開確認先とし、Vercel自動配信は停止状態を維持する
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。Melody AnalyzerのKey度数 / Chord度数 / Scale内率と3参考モデルも保存せずProjectから派生計算するため、schemaVersion 2のまま。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Bass候補名 / 候補IDも保存せず、適用結果だけ既存 `tracks[role=bass].notes[]` として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。Melody AnalyzerのKey度数 / Chord度数 / Scale内率と3参考モデルも保存せずProjectから派生計算するため、schemaVersion 2のまま。
 
 最終更新:
 2026-10-11

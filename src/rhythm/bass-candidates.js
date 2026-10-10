@@ -1,23 +1,42 @@
 import { chordIntervals } from "../core/chord-qualities.js";
 import { DRUM_PITCH, bassPitchForBar } from "./rhythm-grid.js";
 
-// Bassの候補を3つ出す。1小節を16 stepで見て、ルート・5度・オクターブだけで作る。
-// 候補は「叩き台」。選んだあとは通常の16 stepで1音ずつ直せる。
+// Bass候補は完成形ではなく、方向性を聴き比べるための叩き台。
+// 5タイプから選んだ後は、通常の16 stepで1音ずつ修正できる。
 
 const STEPS = 16;
 
-// steps: [{ step, semitones, length }]（lengthは16分何個分か）
-function kickSynced(kickSteps) {
-  return kickSteps.map((step, i) => {
-    const next = kickSteps[i + 1] ?? STEPS;
-    return { step, semitones: 0, length: Math.max(1, Math.min(next - step, 4)) };
+function sortedUnique(items) {
+  const byStep = new Map();
+  for (const item of items) {
+    if (item.step < 0 || item.step >= STEPS || byStep.has(item.step)) continue;
+    byStep.set(item.step, item);
+  }
+  return [...byStep.values()].sort((a, b) => a.step - b.step);
+}
+
+function funkSteps(kickSteps, color, fifth) {
+  const anchors = kickSteps.length > 0 ? kickSteps : [0, 6, 8, 14];
+  const notes = [];
+
+  anchors.forEach((step, index) => {
+    notes.push({ step, semitones: index % 3 === 1 ? fifth : 0, length: 1 });
+
+    // Kickの直後に短い返しを置き、休符を残したまま裏拍感を作る。
+    if (index % 2 === 0 && step + 2 < STEPS) {
+      notes.push({ step: step + 2, semitones: index % 4 === 0 ? color : fifth, length: 1 });
+    }
   });
+
+  return sortedUnique(notes);
 }
 
 export function bassCandidatesForBar(project, barIndex, { barTicks, stepTicks }) {
   const barStartTick = barIndex * barTicks;
   const quality = project.chords[barIndex]?.quality ?? "major";
-  const fifth = chordIntervals(quality)[2] ?? 7;
+  const intervals = chordIntervals(quality);
+  const color = intervals[1] ?? 3;
+  const fifth = intervals[2] ?? intervals[1] ?? 7;
 
   const kickSteps = [...new Set(
     (project.tracks.find((track) => track.role === "drums")?.notes ?? [])
@@ -26,29 +45,61 @@ export function bassCandidatesForBar(project, barIndex, { barTicks, stepTicks })
       .map((note) => Math.round((note.startTick - barStartTick) / stepTicks))
   )].filter((step) => step >= 0 && step < STEPS).sort((a, b) => a - b);
 
-  const first = kickSteps.length > 0
-    ? { id: "kick", label: "Kickに合わせる", description: "Kickと同じ位置にルートを置く", steps: kickSynced(kickSteps) }
-    : { id: "root-long", label: "どっしり", description: "ルートを2回、長めに", steps: [
-      { step: 0, semitones: 0, length: 8 },
-      { step: 8, semitones: 0, length: 8 }
-    ] };
-
-  const candidates = [
-    first,
-    { id: "root-fifth", label: "ルート + 5度", description: "ルートの流れに5度を1回はさむ", steps: [
-      { step: 0, semitones: 0, length: 4 },
-      { step: 4, semitones: 0, length: 4 },
-      { step: 8, semitones: fifth, length: 4 },
-      { step: 12, semitones: 0, length: 4 }
-    ] },
-    { id: "octave-bounce", label: "はずむ（オクターブ）", description: "8分でオクターブを行き来", steps: [0, 2, 4, 6, 8, 10, 12, 14].map((step, i) => ({
-      step,
-      semitones: i % 2 === 0 ? 0 : 12,
-      length: 2
-    })) }
+  return [
+    {
+      id: "root-long",
+      label: "ルート型",
+      description: "音数を減らして土台を作る。まず迷ったときの基本形",
+      steps: [
+        { step: 0, semitones: 0, length: 8 },
+        { step: 8, semitones: 0, length: 8 }
+      ]
+    },
+    {
+      id: "hook-riff",
+      label: "リフ型",
+      description: "短い反復と空白で、低音そのものをフックにする",
+      steps: [
+        { step: 0, semitones: 0, length: 2 },
+        { step: 3, semitones: fifth, length: 1 },
+        { step: 6, semitones: 0, length: 2 },
+        { step: 8, semitones: 12, length: 2 },
+        { step: 11, semitones: fifth, length: 1 },
+        { step: 14, semitones: 0, length: 2 }
+      ]
+    },
+    {
+      id: "funk-sync",
+      label: "ファンク型",
+      description: kickSteps.length > 0
+        ? "Kickに噛ませつつ、短い返しを入れてシンコペーションを作る"
+        : "休符と短い返しでシンコペーションを作る。Kick追加後は位置も反映",
+      steps: funkSteps(kickSteps, color, fifth)
+    },
+    {
+      id: "synthwave-eighth",
+      label: "シンセウェーブ型",
+      description: "8分の一定駆動。ルートとオクターブで前へ進める",
+      steps: [0, 2, 4, 6, 8, 10, 12, 14].map((step, index) => ({
+        step,
+        semitones: index % 2 === 0 ? 0 : 12,
+        length: 2
+      }))
+    },
+    {
+      id: "melodic-counter",
+      label: "裏メロ型",
+      description: "コードトーンで小さな旋律を作り、Bassにも流れを持たせる",
+      steps: [
+        { step: 0, semitones: 0, length: 4 },
+        { step: 4, semitones: color, length: 2 },
+        { step: 6, semitones: fifth, length: 2 },
+        { step: 8, semitones: 0, length: 4 },
+        { step: 12, semitones: fifth, length: 2 },
+        { step: 14, semitones: color, length: 2 }
+      ]
+    }
   ];
-
-  return candidates;
 }
 
 // 16文字の見た目（● = 音あり）

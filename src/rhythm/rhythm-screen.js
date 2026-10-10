@@ -147,7 +147,7 @@ export function createRhythmController({ projectStore, rerender }) {
         </div>
 
         <div class="bass-candidate-panel">
-          <h3>Bass候補（3つ）</h3>
+          <h3>Bass候補（5タイプ）</h3>
           ${bassCandidates.map((candidate, index) => `
             <button class="bass-candidate" data-bass-candidate="${index}">
               <strong>${escapeHtml(candidate.label)}</strong>
