@@ -142,6 +142,20 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
 - Beat / Barのコピー先にRhythmがある場合は上書き確認を表示する
 - Bassはリズム位置だけをコピーし、Barをまたぐ場合はPitchをコピー先のChord Root（Chord未設定時はKey Root）へ追従させる
 
+### v0.2 Drum Preset candidate
+
+Presetは「完成パターンを自動で作る」ためではなく、初心者が16 step編集を始めるための叩き台とする。
+
+- 画面に多数のPreset Buttonを並べず、`Drum Preset` select + `適用` の2操作にする
+- 初期Presetは `8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH`
+- 選択中Presetの短い説明を表示する
+- `適用` は現在BarのKick / Snare / Closed HHだけを置き換える
+- Bassは変更しない
+- 他BarのDrumは変更しない
+- 現在Barに対象Drumがある場合は上書き確認を表示する
+- 適用後は通常の16 stepセルをTapして自由に修正できる
+- Preset選択状態自体はProject Dataへ保存しない
+
 1小節全体のリズム形状を一目で確認できることを優先し、16 stepを同時表示する。Android狭幅ではラベル幅・余白・Gapを縮めて横スクロールを避ける。セル幅が狭くなるため、誤タップが起きないか実機で確認する。
 
 後続:
