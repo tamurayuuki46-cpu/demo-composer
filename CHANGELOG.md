@@ -14,6 +14,8 @@
 - Progression Library Smoke Test（`npm run test:library`、CI対象）
 - CSS Brace Balance Test（`npm run test:css`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-progression-library`
+- Section Variation（Arrange: 各Sectionの `少し違う版にする`）: コピーしたSectionなどを「少しだけ違う版」にする候補3つ。ドラムを少し増やす / ベースを少し動かす / メロディの終わりを変える。押したSectionだけが変わり、元のSectionは変わらない。変更が無いときは理由を表示し、履歴も増やさない（`src/core/section-variation.js`、Schema変更なし）
+- Section Variation Smoke Test（`npm run test:variation`、CI対象）
 - Section Energy: 各Sectionに盛り上がり（Low / Mid / High）を設定。Arrangeの上部に「盛り上がり設計」（Sectionの幅 = 小節数、高さ = Energyの棒グラフ + 「イントロ Low → Aメロ Low → Bメロ Mid → サビ High」の流れ）と、気づきのヒント（サビが前より低い、Buildの次が低い、全部同じ）を表示
 - Transition: 各Sectionから次のSectionへのつなぎ（Keep / Fill / Stop / Build / Drop）をタグで設定（最後のSectionには出さない）
 - Section Energy / Transition は `structure.sections[]` の任意項目（追記のみ、schemaVersion変更なし）。無い古いProjectは、Sectionの種類ごとの初期値（イントロ Low / Aメロ Low / Bメロ Mid / サビ High / 間奏 Mid / Cメロ Mid / アウトロ Low、つなぎは Keep）で扱う

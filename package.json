@@ -27,6 +27,7 @@
     "test:display": "node scripts/display-settings-smoke-test.mjs",
     "test:import": "node scripts/project-import-smoke-test.mjs",
     "test:css": "node scripts/css-balance-test.mjs",
-    "test:library": "node scripts/progression-library-smoke-test.mjs"
+    "test:library": "node scripts/progression-library-smoke-test.mjs",
+    "test:variation": "node scripts/section-variation-smoke-test.mjs"
   }
 }

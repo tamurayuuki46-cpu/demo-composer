@@ -1,3 +1,4 @@
+import { SECTION_VARIATIONS } from "../core/section-variation.js";
 import {
   ENERGY_LEVELS,
   TRANSITIONS,
@@ -54,6 +55,8 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   let message = "曲の構成を決めると、Melody / Rhythmで「いまサビの3小節目」が分かります。";
   let copyFromIndex = null;
   let addKind = "verse";
+  // 「少し違う版」の候補を開いているSection（画面の状態のみ）
+  let variationOpenIndex = null;
 
   function run(action, successMessage) {
     try {
@@ -117,6 +120,19 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           <strong>${section.bars}小節</strong>
           <button data-arrange-grow="${index}" aria-label="小節を1つ増やす"${section.bars >= MAX_SECTION_BARS ? " disabled" : ""}>＋</button>
         </div>
+
+        <button class="arrange-variation-toggle" data-arrange-variation-toggle="${index}" aria-expanded="${variationOpenIndex === index}"${hasContent ? "" : " disabled"}>少し違う版にする${variationOpenIndex === index ? " ▲" : " ▼"}</button>
+        ${variationOpenIndex === index ? `
+          <div class="arrange-variation">
+            ${SECTION_VARIATIONS.map((item) => `
+              <button data-arrange-variation="${index}:${item.id}">
+                <strong>${escapeHtml(item.label)}</strong>
+                <small>${escapeHtml(item.description)}</small>
+              </button>
+            `).join("")}
+            <small>コピーした2つ目のSectionなどに使います。押したSectionだけが変わり、元のSectionは変わりません。↶ で戻せます。</small>
+          </div>
+        ` : ""}
 
         <div class="arrange-actions">
           ${copyTargetMode
@@ -210,6 +226,31 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
     };
     query("[data-arrange-energy]").forEach((button) => setSectionField(button, "arrangeEnergy", withSectionEnergy, "盛り上がりを変えました。"));
     query("[data-arrange-transition]").forEach((button) => setSectionField(button, "arrangeTransition", withSectionTransition, "つなぎ方を変えました。"));
+
+    query("[data-arrange-variation-toggle]").forEach((button) => {
+      const index = indexOf(button, "arrangeVariationToggle");
+      button.addEventListener("click", () => {
+        variationOpenIndex = variationOpenIndex === index ? null : index;
+        rerender("arrange");
+      });
+    });
+    query("[data-arrange-variation]").forEach((button) => {
+      const [indexText, variationId] = button.dataset.arrangeVariation.split(":");
+      button.addEventListener("click", () => {
+        const index = Number(indexText);
+        const item = SECTION_VARIATIONS.find((candidate) => candidate.id === variationId);
+        try {
+          const { changed } = projectStore.applySectionVariation(index, variationId);
+          const name = getSections(projectStore.getSnapshot())[index]?.name ?? "Section";
+          message = changed > 0
+            ? `${name}に「${item.label}」を当てました（${changed}か所）。再生して確認してください。↶ で戻せます。`
+            : `${name}には変えられる場所がありませんでした（${variationId === "drums" ? "ドラム" : variationId === "bass" ? "ベース" : "メロディとコード"}が入っているか確認してください）。`;
+        } catch (error) {
+          message = error instanceof Error ? error.message : "操作できませんでした。";
+        }
+        rerender("arrange");
+      });
+    });
 
     query("[data-arrange-grow]").forEach((button) => {
       const index = indexOf(button, "arrangeGrow");
