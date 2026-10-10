@@ -1,7 +1,7 @@
 import { getSections, MAX_TOTAL_BARS, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol } from "../chord/chord-theory.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
-import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
+import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 
 const EIGHTH_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
 const SIXTEENTH_LABELS = ["1", "e", "&", "a", "2", "e", "&", "a", "3", "e", "&", "a", "4", "e", "&", "a"];
@@ -79,12 +79,15 @@ export function createMelodyController({ projectStore, rerender }) {
     const canCopy = (bars) => hasMelodyInBars(notes, { barIndex, bars, barTicks })
       && barIndex + bars * 2 <= MAX_TOTAL_BARS;
 
+    const chordTones = chordTonePitchClasses(chord);
+
     const gridRows = pitches.map((pitch) => {
       const name = pitchName(pitch);
       const keyClass = pianoKeyClass(pitch);
 
+      const toneClass = chordTones.has(pitch % 12) ? " chord-tone" : "";
       return `
-        <div class="melody-row">
+        <div class="melody-row${toneClass}">
           <span class="piano-key ${keyClass}" aria-hidden="true">${escapeHtml(name)}</span>
           ${visibleSteps.map((step) => {
             const startTick = barStartTick + step * stepTicks;
@@ -109,6 +112,7 @@ export function createMelodyController({ projectStore, rerender }) {
           </div>
           <button id="clear-melody-bar" class="small-action">Clear Bar</button>
         </div>
+        ${chord ? `<p class="chord-tone-legend"><span class="chord-tone-dot" aria-hidden="true"></span>色付きの行 ＝ このコードの構成音（合う音）</p>` : ""}
 
         <div class="melody-toolbar">
           <button id="melody-prev-bar"${barIndex === 0 ? " disabled" : ""}>← Bar</button>
