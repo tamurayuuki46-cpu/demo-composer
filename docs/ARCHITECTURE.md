@@ -15,7 +15,7 @@ Module同士は直接呼び合わない。
 - Arrange
 - Sound
 
-現在は Hub / Chord / Melody / Rhythm / Arrange（曲の構成のみ）を実装済み。
+現在は Hub / Chord / Melody / Rhythm / Arrange（曲の構成）/ Sound Sketch Lite を実装済み。
 
 ## Core Responsibilities
 
@@ -25,6 +25,7 @@ Module同士は直接呼び合わない。
 - schema / migration
 - validation
 - shared music constants / utilities
+- shared sound preset / playback profile definitions
 
 ### Project State
 
@@ -38,6 +39,7 @@ v0.2-dev時点:
 - State変更通知（subscribe）
 - 責任Module別の更新API
 - 更新ごとのrevision増加
+- Sound Module向け `updateInstruments()`
 
 Project StateはModuleから直接オブジェクトを書き換えさせず、責任Module用の更新APIを通す。
 
@@ -45,12 +47,13 @@ Project StateはModuleから直接オブジェクトを書き換えさせず、�
 
 Project Store全体で1本の編集履歴を持つ。Moduleごとの履歴は持たない。
 
-- 通常の更新API（`updateHub` / `updateChords` / `updateMelodyNotes` / `updateRhythmNotes`）は、成功時だけ直前のProjectを履歴へ積む
+- 通常の更新API（`updateHub` / `updateChords` / `updateMelodyNotes` / `updateRhythmNotes` / `updateInstruments`）は、成功時だけ直前のProjectを履歴へ積む
 - `undo()` / `redo()` / `getHistoryState()` を公開する
 - 上限は `HISTORY_LIMIT`（50操作）。古い操作から捨てる
 - 新しい編集をするとRedo履歴は捨てる
 - 失敗した編集（Validation / 範囲外）は履歴に残さない
 - Key変更（Global Key Change）は1回のAtomicな操作として、1回のUndoで元に戻る
+- Sound Preset / Tone変更も通常編集として1回ずつUndo / Redoできる
 - `revision` は戻しても増え続ける（保存の新旧判定のため）。Undo / Redoも通常の変更として通知され、AutoSaveされる
 - 履歴はメモリ上だけで、`project.json` / IndexedDBへは保存しない。再読み込みで空になる。Schema変更なし
 - ボタンUIは `src/core/edit-history-ui.js`。ModuleはUndoを意識せず、画面は `rerender` で最新Projectを描き直すだけ
@@ -81,16 +84,22 @@ Key変更はHubから開始するが、Chord / Melody / Bassをまたぐため�
 - Melody / Rhythm画面は `sectionLabel` で「サビ 3/8小節」を見出しに表示し、`totalSectionBars` で小節数の下限を決める
 - MIDI ExportはConductor Trackに各Sectionの先頭Markerを入れる（Cubasis / Cubaseで構成が見える）
 - Demo Playerは `play(project, { lengthTick })` でSection範囲だけを再生できる。Loopも同じ範囲を繰り返す
+- `sliceProject()` はProjectをcloneして範囲内Note / Chordだけを切り出すため、Soundの `instruments[]` は保持される
 
 ### Schema / Migration
 
 - `project-schema.js`: 現在のappVersion / schemaVersion
 - `project-migration.js`: 旧Projectを現在Schemaへ変換
 - `chord-qualities.js`: Chord Qualityと構成音の共通定義
+- `sound-presets.js`: Chord / Melody / BassのSound Preset、Tone方向タグ、Demo Player用Playback Profile定義
 
 Chord / Audio / MIDIは同じChord Quality定義を参照し、表示・試聴・MIDIで構成音が食い違わないようにする。
 
+Sound UIとDemo Playerは同じ `core/sound-presets.js` を参照する。Sound ModuleがAudio Moduleを直接呼び出さず、共通定義をCoreへ置くことでModule間の直接依存を避ける。
+
 schemaVersion 1 → 2ではProject構造自体は維持し、Chord Qualityの許可値を拡張する。旧major / minor / diminishedはそのまま有効。
+
+Arrange SectionとSound Sketch Liteは既存の `structure.sections` / `instruments` を利用するためschemaVersion 2を維持し、追加Migrationは行わない。
 
 ## Chord Assistance
 
@@ -104,6 +113,27 @@ Chord Module内の補助ロジックは `src/chord/` に置く。
 Chord PresetはProject Schemaへ専用データを追加しない。Preset選択状態も保存せず、適用結果だけ `project.chords[]` として保持する。これによりAutoSave / Demo Player / MIDI Exportは既存Chord処理をそのまま利用する。
 
 Diatonic FanもProject DataやChord追加ロジックを変更しない。`data-add-chord` を持つ既存7候補へ表示用classだけを付与し、Chord画面が再Renderされた場合は `MutationObserver` で再適用する。Major / MinorのDegree文字列からスロットを判定し、候補Button自体のclick処理は従来の `main.js` に残す。
+
+## Sound Sketch Lite
+
+Sound Moduleの最小実装は `src/sound/` に置く。
+
+- `sound-screen.js`: Chord / Melody / BassのPreset SelectとTone Buttonを描画・操作
+- `sound.css`: Androidスマホ向けSound UIと6 Module Bottom Navigationの調整
+- `README.md`: Sound Moduleの責務
+
+選択データは `project.instruments[]` に保存する。Sound Moduleだけがこのデータを更新し、Demo PlayerはSnapshotを読み取り専用で参照する。
+
+Sound Sketch Liteは以下だけを担当する。
+
+- Chord: Keys / Pad / Piano
+- Melody: Lead / Keys / Pluck
+- Bass: Soft Bass / Synth Bass / Deep Bass
+- Tone: Natural / Bright / Soft / Warm / Dark / Airy / Aggressive
+
+Preset / Toneはoscillator waveform、low-pass filter、attack、release、gainの軽量Profileへ変換される。これはDemo Playerの仮音色だけに使い、ProjectのNote / Chord / Rhythm DataやMIDI出力は変更しない。
+
+高度なSynth Parameter、FX、Mix、Plugin HostingはSound Moduleへ追加しない。
 
 ## Storage
 
@@ -159,12 +189,14 @@ Chord / Melody / Bass / Drumsを軽量な仮音で再生する。
 
 Chordは`src/core/chord-qualities.js`の構成音を使うため、Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / augを試聴できる。
 
+Chord / Melody / Bassは `src/core/sound-presets.js` のSound Profileを使い、Sound Sketch Liteの選択を再生時だけ反映する。
+
 Android Chromeでは、ユーザー操作後に`AudioContext.resume()`を行い、必要時はsilent bufferを経由してAudioContextをrunningへ復帰させる。
 
 スマホ本体スピーカーで作曲判断しやすくするため、Demo Playerの仮音だけ以下を適用する。
 
 - Chord previewはProject/MIDI本体を変更せず、再生時だけ聞き取りやすい音域を使用
-- Bass previewは低域の聞き取りを補うためtriangle波を使用
+- Sound Presetに応じてwaveform / filter / envelope / gainを軽量変更
 - 出力は `master → loudness gain → compressor → limiter → output gain → destination`
 
 Playbackは作曲判断の確認用途だけを担当し、高度なSynth / Mixing / Mastering機能は持たない。
@@ -189,6 +221,6 @@ Export:
 
 MIDIはSMF Type 1 / PPQ 480。Song.midはConductor + Chord + Melody + Bass + Drums、Part MIDIはConductor + 対象Partで生成する。
 
-Chord MIDIも`chord-qualities.js`の共通構成音定義を利用する。
+Chord MIDIも`chord-qualities.js`の共通構成音定義を利用する。Song.midのConductor TrackにはArrange SectionのMarkerを入れる。
 
-Program ChangeとCCは現時点では出力しない。最終音源はBandLab / Cubasis / Cubase側で差し替える。
+Sound Sketch Liteの選択はDemo Player用であり、Program ChangeとCCは現時点では出力しない。最終音源はBandLab / Cubasis / Cubase側で差し替える。
