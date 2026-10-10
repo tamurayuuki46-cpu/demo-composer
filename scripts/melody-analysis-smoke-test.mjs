@@ -62,7 +62,7 @@ const c = analyzeMelody(project([n(60, 0), n(66, 480)], [C]));
 assert.equal(c.scaleFit.rate, 0.5);
 assert.equal(c.scaleFit.hits, 1);
 // MinorでもScale判定する（A natural minor: A B C D E F G）
-const minor = analyzeMelody(project([n(69, 0), n(72, 480), n(76, 960), n(78, 1440)], [], { key: "A", scale: "minor" }));
+const minor = analyzeMelody(project([n(69, 0), n(72, 480), n(76, 960), n(77, 1440)], [], { key: "A", scale: "minor" }));
 assert.equal(minor.scaleFit.rate, 1);
 assert.equal(minor.keyDegree.counts[0], 1); // A = 1
 assert.equal(minor.keyDegree.counts[3], 1); // C = ♭3
