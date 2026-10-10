@@ -36,7 +36,7 @@ v0.1-dev時点では以下を実装済み。
 - Project全体のValidation
 - Snapshot取得
 - State変更通知（subscribe）
-- Hub責務のmetadata / basic更新
+- 責任Module別の更新API
 - 更新ごとのrevision増加
 
 Project StateはModuleから直接オブジェクトを書き換えさせず、責任Module用の更新APIを通す。
@@ -73,7 +73,19 @@ v0.1-devのStorage実装:
 
 ## Playback
 
-Demo Playerは共通UIとして画面下部に常設予定。
+Demo Playerは共通UIとして画面下部、Module Navigationの上に常設する。
+
+実装:
+
+- `src/audio/demo-player.js`
+- Web Audio API
+- Play / Stop / Loop / Position
+- Play時点のProject Snapshotを読み取り専用で再生
+- Project Stateを書き換えない
+
+Chord / Melody / Bass / Drumsを軽量な仮音で再生する。
+
+Playbackは作曲判断の確認用途だけを担当し、高度なSynth / Mixing / Mastering機能は持たない。
 
 ## Export
 

@@ -23,6 +23,20 @@ Bottom Navigation:
 - Melody
 - Rhythm
 
+## Demo Player
+
+Module Navigationの上に常設。
+
+最低限:
+
+- Play
+- Stop
+- Loop
+- Position progress
+- 現在時間 / 全体時間
+
+作曲確認用のため、Mix / FX / Track Mixer等はPlayerへ追加しない。
+
 ## Hub
 
 表示:

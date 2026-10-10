@@ -20,6 +20,16 @@
 
     <section id="screen" class="screen" aria-live="polite"></section>
 
+    <section id="demo-player" class="demo-player" aria-label="Demo Player">
+      <button id="player-play" class="player-main" aria-label="再生">▶</button>
+      <button id="player-stop" aria-label="停止">■</button>
+      <button id="player-loop" aria-pressed="false">Loop</button>
+      <div class="player-position">
+        <progress id="player-progress" max="1" value="0"></progress>
+        <span id="player-time">0:00 / 0:00</span>
+      </div>
+    </section>
+
     <nav class="bottom-nav" aria-label="主要モジュール">
       <button data-screen="hub" class="nav-btn active">Hub</button>
       <button data-screen="chord" class="nav-btn">Chord</button>
