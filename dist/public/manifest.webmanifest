@@ -1,0 +1,9 @@
+{
+  "name": "Demo Composer",
+  "short_name": "DemoComposer",
+  "start_url": "../index.html",
+  "display": "standalone",
+  "background_color": "#0d0d0f",
+  "theme_color": "#111111",
+  "description": "Android-first songwriting support PWA"
+}

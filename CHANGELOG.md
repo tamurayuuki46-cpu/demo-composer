@@ -46,6 +46,7 @@
 - ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
+- Vercelの自動配信を停止（`vercel.json` に `git.deploymentEnabled: false`）。PRにVercelのチェックが出ないようにした。設定ファイルと手順は残し、公開確認はGitHub Pagesを使う
 - Rhythm Copy: 長いBassがコピー先の範囲からはみ出さないよう収め、コピー先に食い込む前の音を短くする
 - BarをまたぐBass Copyを、全ノートをルートへそろえる動作から、音程関係を保ってコピー先のルートへ移す動作へ変更
 - Bottom Navigationを Hub / Chord / Melody / Rhythm / Arrange / Sound の6 Module構成へ拡張

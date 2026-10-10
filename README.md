@@ -90,7 +90,11 @@ python -m http.server 8080
 
 その後 `http://localhost:8080/` を開きます。
 
-## Vercel Preview
+## Vercel（現在は自動配信を停止中）
+
+`vercel.json` の `git.deploymentEnabled: false` で、GitHubへのPush / PRでVercelが自動配信しないようにしています（PRのチェックにVercelが出ません）。公開確認はGitHub Pagesを使います。再開する場合は `vercel.json` からこの設定を消します。
+
+以下は、Vercelへ手動で配信する場合の設定です。
 
 Vercel配布時のみ `npm run build` を実行し、`dist/` を静的公開します。
 
