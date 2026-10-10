@@ -4,6 +4,12 @@
 更新日: 2026-10-10
 
 ### 追加
+- Hub 出発点: `質問で決める`（3つの質問: 雰囲気 / テンポ / 聴かせ方 → 出発点3候補）。ジャンル名を知らなくても始められる入口（`suggestByAnswers`）
+- Arrange: `📈 感情曲線から構成を作る`。4〜8列の曲線（Low / Mid / High）を指で選ぶと、イントロ / Aメロ / Bメロ / サビ / 間奏 / Cメロ / アウトロの並び・小節数・盛り上がり（Energy）の叩き台を作る。作った後は自由に直せる。`src/core/energy-curve.js`
+- Arrange: `🎼 構成ライブラリ`。好きな曲の構成（Sectionの種類・小節数・盛り上がりだけ。曲の中身は保存しない）を名前を付けて端末に保存し、別の曲へ「当てはめる」。見本3種つき。この端末のlocalStorageのみ、Schema変更なし。`src/arrange/structure-library.js`
+- Melody: `⛰ 山の位置から作る`。最高音（山）を置く小節と形（じわじわ上る / 溜めてから一気に / 山のあとに余韻）を選ぶと、そこへ向かう各小節のコード構成音の目安を出し、空の小節にだけ置ける。`src/melody/peak-guide.js`
+- Smoke Test追加: `npm run test:energy-curve` / `test:structure-library` / `test:peak-guide`（CI対象）、出発点テストに質問ウィザードを追加
+- 追加前の復元ブランチ `restore/v0.2-before-skeleton-entries`（Schema変更なし）
 - Melody Analyzer: `Sectionごとの比べ`。構成（Section）ごとに音域 / 音数 / リズム密度（1小節あたり）を並べ、サビと直前のAメロ / Bメロの差（最高音・平均の高さ・音域のひろさ・密度）を表示。差が小さいと「差が小さめ」と気づかせる一言を出す（評価ではなく気づき）。`src/core/section-compare.js`
 - Section Compare Smoke Test（`npm run test:section-compare`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-section-compare`（Schema変更なし）

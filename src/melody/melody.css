@@ -355,3 +355,71 @@
 .sc-hints p {
   margin: 0;
 }
+
+/* 山の位置から作る */
+.peak-bar-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 96px;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
+.peak-bar-row button {
+  min-height: 48px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-weight: 700;
+}
+
+.peak-bar-row button:disabled {
+  opacity: 0.4;
+}
+
+.peak-shapes {
+  display: grid;
+  gap: 8px;
+}
+
+.peak-shape {
+  display: grid;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  text-align: left;
+}
+
+.peak-shape small {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.peak-shape.active {
+  border-color: #f1f1f1;
+  background: #f1f1f1;
+  color: #111;
+}
+
+.peak-list {
+  margin: 0;
+  padding-left: 22px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.peak-list li.peak {
+  font-weight: 700;
+  color: #fca5a5;
+}
+
+.peak-panel .primary {
+  min-height: 48px;
+}

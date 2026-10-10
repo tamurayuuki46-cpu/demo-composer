@@ -78,6 +78,15 @@ jobs:
       - name: Melody analysis smoke test
         run: npm run test:analysis
 
+      - name: Energy curve smoke test
+        run: npm run test:energy-curve
+
+      - name: Structure library smoke test
+        run: npm run test:structure-library
+
+      - name: Peak guide smoke test
+        run: npm run test:peak-guide
+
       - name: Loop guide smoke test
         run: npm run test:loop-guide
 

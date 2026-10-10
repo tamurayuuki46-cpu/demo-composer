@@ -1,5 +1,7 @@
 import { SECTION_VARIATIONS } from "../core/section-variation.js";
 import { loopGuide, suggestedCopyKind } from "../core/loop-guide.js";
+import { addEntry, loadLibrary, removeEntry, saveLibrary, sectionsFromStructure, STRUCTURE_SAMPLES, structureText } from "./structure-library.js";
+import { curveFromSections, MAX_CURVE_COLUMNS, MIN_CURVE_COLUMNS, sectionsFromCurve } from "../core/energy-curve.js";
 import {
   ENERGY_LEVELS,
   TRANSITIONS,
@@ -61,6 +63,12 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   // ループ案内の開閉と、複製するSectionの種類（画面の状態のみ）
   let guideOpen = false;
   let guideKind = null;
+  // 感情曲線の開閉と編集中の曲線（画面の状態のみ。nullなら開いたとき現在の構成から作る）
+  let curveOpen = false;
+  let curveLevels = null;
+  // 構成ライブラリの開閉と保存名（画面の状態のみ。ライブラリ本体は端末のlocalStorage）
+  let libOpen = false;
+  let libName = "";
 
   function run(action, successMessage) {
     try {
@@ -216,6 +224,67 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
       </div>`;
   }
 
+  // 感情曲線: 山と谷を高さで選ぶと、Sectionの並び・小節数・盛り上がりの叩き台を作る。
+  function curvePanelHtml(project) {
+    const toggle = `<button id="arrange-curve-toggle" class="arrange-guide-toggle" aria-expanded="${curveOpen}">📈 感情曲線から構成を作る${curveOpen ? " ▲" : " ▼"}</button>`;
+    if (!curveOpen) return toggle;
+
+    const levels = curveLevels ?? curveFromSections(getSections(project));
+    const preview = sectionsFromCurve(levels);
+    const total = preview.reduce((sum, section) => sum + section.bars, 0);
+    const rows = [["high", "High"], ["mid", "Mid"], ["low", "Low"]];
+    return `
+      ${toggle}
+      <div class="arrange-guide arrange-curve">
+        <p>曲の流れを左から右へ。各列で盛り上がりの高さを選ぶと、その形に合う構成を作ります。</p>
+        <div class="curve-grid" style="grid-template-columns: repeat(${levels.length}, minmax(0, 1fr))">
+          ${levels.map((level, col) => `
+            <div class="curve-col">
+              ${rows.map(([id, label]) => `<button class="curve-cell lvl-${id}${level === id ? " active" : ""}" data-arrange-curve="${col}:${id}" aria-pressed="${level === id}" aria-label="${col + 1}列目 ${label}">${level === id ? "●" : ""}</button>`).join("")}
+              <small>${escapeHtml(shortName(preview[col]))}</small>
+              <small class="curve-bars">${preview[col].bars}</small>
+            </div>
+          `).join("")}
+        </div>
+        <div class="arrange-bars" role="group" aria-label="列の数">
+          <button id="arrange-curve-less" aria-label="列を減らす"${levels.length <= MIN_CURVE_COLUMNS ? " disabled" : ""}>−</button>
+          <strong>${levels.length}列（全${total}小節）</strong>
+          <button id="arrange-curve-more" aria-label="列を増やす"${levels.length >= MAX_CURVE_COLUMNS ? " disabled" : ""}>＋</button>
+        </div>
+        <button class="primary" id="arrange-curve-apply">この曲線で構成を作る</button>
+        <p class="hint">下の数字は小節数です。音符は消えません。作ったあとで、小節数・種類・盛り上がりを自由に直せます（↶で戻せます）。</p>
+      </div>`;
+  }
+
+  // 好きな曲の構成（Sectionの種類・小節数・盛り上がり）を端末に保存して、別の曲へ借りる。曲の中身は借りない。
+  function libraryPanelHtml(project) {
+    const saved = loadLibrary();
+    const toggle = `<button id="arrange-lib-toggle" class="arrange-guide-toggle" aria-expanded="${libOpen}">🎼 構成ライブラリ（${saved.length}件）${libOpen ? " ▲" : " ▼"}</button>`;
+    if (!libOpen) return toggle;
+
+    const entryHtml = (entry, removable) => `
+      <div class="library-entry">
+        <strong>${escapeHtml(entry.name)}</strong>
+        <span>${escapeHtml(structureText(entry.sections))}</span>
+        <div class="library-actions">
+          <button data-arrange-lib-apply="${escapeHtml(entry.id)}">当てはめる</button>
+          ${removable ? `<button class="danger" data-arrange-lib-remove="${escapeHtml(entry.id)}">削除</button>` : ""}
+        </div>
+      </div>`;
+    return `
+      ${toggle}
+      <div class="arrange-guide">
+        <div class="library-save">
+          <input id="arrange-lib-name" type="text" maxlength="40" placeholder="名前（例: 好きな曲の構成）" value="${escapeHtml(libName)}" aria-label="構成の名前" />
+          <button id="arrange-lib-save"${getSections(project).length ? "" : " disabled"}>いまの構成を保存</button>
+        </div>
+        <p class="hint">保存するのは構成（Sectionの種類・小節数・盛り上がり）だけです。この端末だけに保存され、曲のデータには入りません。</p>
+        ${saved.map((entry) => entryHtml(entry, true)).join("")}
+        <h4>見本</h4>
+        ${STRUCTURE_SAMPLES.map((entry) => entryHtml(entry, false)).join("")}
+      </div>`;
+  }
+
   function render() {
     const project = projectStore.getSnapshot();
     const sections = getSections(project);
@@ -272,6 +341,8 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
           ${sections.length > 0 ? `<button id="arrange-play-all" class="small-action">▶ 全体</button>` : ""}
         </div>
         ${loopGuideHtml(project)}
+        ${curvePanelHtml(project)}
+        ${libraryPanelHtml(project)}
         ${body}
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
       </section>
@@ -281,6 +352,75 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   function bind() {
     const query = (selector) => document.querySelectorAll(selector);
     const indexOf = (button, key) => Number(button.dataset[key]);
+
+    const currentCurve = () => curveLevels ?? curveFromSections(getSections(projectStore.getSnapshot()));
+    document.querySelector("#arrange-curve-toggle")?.addEventListener("click", () => {
+      curveOpen = !curveOpen;
+      if (curveOpen) curveLevels = null;
+      rerender("arrange");
+    });
+    query("[data-arrange-curve]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const [col, level] = button.dataset.arrangeCurve.split(":");
+        const next = [...currentCurve()];
+        next[Number(col)] = level;
+        curveLevels = next;
+        rerender("arrange");
+      });
+    });
+    document.querySelector("#arrange-curve-more")?.addEventListener("click", () => {
+      const levels = currentCurve();
+      curveLevels = [...levels, levels[levels.length - 1] === "low" ? "mid" : "low"];
+      rerender("arrange");
+    });
+    document.querySelector("#arrange-curve-less")?.addEventListener("click", () => {
+      curveLevels = currentCurve().slice(0, -1);
+      rerender("arrange");
+    });
+    document.querySelector("#arrange-curve-apply")?.addEventListener("click", () => {
+      const project = projectStore.getSnapshot();
+      if (getSections(project).length > 0 && !globalThis.confirm("いまの構成を、この曲線から作った構成に置き換えますか？音符は消えませんが、Sectionの区切りが変わります。（↶で戻せます）")) return;
+      const sections = sectionsFromCurve(currentCurve());
+      curveLevels = null;
+      run(() => projectStore.setSections(sections), `曲線から${sections.length}個のSectionを作りました。Sectionごとに小節数や盛り上がりを直せます。`);
+    });
+
+    document.querySelector("#arrange-lib-toggle")?.addEventListener("click", () => {
+      libOpen = !libOpen;
+      rerender("arrange");
+    });
+    document.querySelector("#arrange-lib-name")?.addEventListener("input", (event) => {
+      libName = event.target.value;
+    });
+    document.querySelector("#arrange-lib-save")?.addEventListener("click", () => {
+      try {
+        const next = addEntry(loadLibrary(), { name: libName, sections: getSections(projectStore.getSnapshot()) });
+        if (!saveLibrary(next)) throw new Error("この端末に保存できませんでした（ブラウザの設定を確認してください）。");
+        libName = "";
+        message = "構成を保存しました。別の曲でも「当てはめる」で借りられます。";
+      } catch (error) {
+        message = error instanceof Error ? error.message : "保存できませんでした。";
+      }
+      rerender("arrange");
+    });
+    query("[data-arrange-lib-apply]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.arrangeLibApply;
+        const entry = [...loadLibrary(), ...STRUCTURE_SAMPLES].find((item) => item.id === id);
+        if (!entry) return;
+        if (getSections(projectStore.getSnapshot()).length > 0 && !globalThis.confirm(`いまの構成を「${entry.name}」に置き換えますか？音符は消えませんが、Sectionの区切りが変わります。（↶で戻せます）`)) return;
+        run(() => projectStore.setSections(sectionsFromStructure(entry.sections)), `「${entry.name}」の構成を当てはめました。小節数や盛り上がりは自由に直せます。`);
+      });
+    });
+    query("[data-arrange-lib-remove]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const entry = loadLibrary().find((item) => item.id === button.dataset.arrangeLibRemove);
+        if (!entry || !globalThis.confirm(`「${entry.name}」を削除しますか？`)) return;
+        saveLibrary(removeEntry(loadLibrary(), entry.id));
+        message = "削除しました。";
+        rerender("arrange");
+      });
+    });
 
     document.querySelector("#arrange-guide-toggle")?.addEventListener("click", () => {
       guideOpen = !guideOpen;

@@ -227,3 +227,61 @@ export function applyStartingPointConfirmText(project, point) {
     : "";
   return `「${point.label}」で ${items.join("・")} を置き換えますか？${keep}（↶で戻せます）`;
 }
+
+// ---------------------------------------------------------------- 質問で決める
+// 3つの質問に答えると、出発点を3つ出す。ジャンル名を知らない初心者向けの入口。
+
+export const QUESTIONS = Object.freeze([
+  {
+    id: "mood", title: "どんな雰囲気にしたい？",
+    options: [
+      { id: "bright", label: "明るく元気に" },
+      { id: "sad", label: "切なく" },
+      { id: "night", label: "夜っぽく" },
+      { id: "strong", label: "力強く" },
+      { id: "gentle", label: "やさしく" }
+    ]
+  },
+  {
+    id: "tempo", title: "テンポのイメージは？",
+    options: [
+      { id: "slow", label: "ゆっくり（〜90）" },
+      { id: "mid", label: "ふつう（90〜130）" },
+      { id: "fast", label: "速い（130〜）" }
+    ]
+  },
+  {
+    id: "feel", title: "どんなふうに聴かせたい？",
+    options: [
+      { id: "sing", label: "歌い上げる" },
+      { id: "groove", label: "ノリで引っ張る" },
+      { id: "run", label: "畳みかける" }
+    ]
+  }
+]);
+
+const FEEL_GENRES = { sing: ["pop", "ballad"], groove: ["dance", "rock"], run: ["vocaloid", "rock"] };
+
+function tempoBand(bpm) {
+  return bpm <= 90 ? "slow" : bpm <= 130 ? "mid" : "fast";
+}
+
+// answers: { mood, tempo, feel }。どれが欠けていても使える。必ず3つ返す。
+export function suggestByAnswers({ mood = "", tempo = "", feel = "" } = {}) {
+  const scored = STARTING_POINTS.map((point, order) => {
+    const moodHit = mood !== "" && point.moods.includes(mood);
+    const tempoHit = tempo !== "" && tempoBand(point.bpm) === tempo;
+    const feelHit = feel !== "" && (FEEL_GENRES[feel] ?? []).includes(point.genre);
+    return { point, order, moodHit, tempoHit, feelHit, score: (moodHit ? 3 : 0) + (tempoHit ? 2 : 0) + (feelHit ? 2 : 0) };
+  });
+  scored.sort((a, b) => (b.score - a.score) || (a.order - b.order));
+
+  return scored.slice(0, 3).map(({ point, moodHit, tempoHit, feelHit, score }) => {
+    const hits = [moodHit && "雰囲気", tempoHit && "テンポ", feelHit && "聴かせ方"].filter(Boolean);
+    return {
+      ...point,
+      matched: score === 0 ? "other" : "answers",
+      reason: hits.length === 3 ? "3つの答えにぴったり" : hits.length > 0 ? `${hits.join("・")}が合う` : "ちがう方向から"
+    };
+  });
+}

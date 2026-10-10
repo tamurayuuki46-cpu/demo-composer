@@ -285,3 +285,47 @@
   color: #f5f5f5;
   font: inherit;
 }
+
+/* 感情曲線 */
+.curve-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.curve-col {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+
+.curve-col small {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.curve-col .curve-bars {
+  opacity: 0.6;
+}
+
+.curve-cell {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid #383842;
+  border-radius: 10px;
+  background: #26262d;
+  color: #111;
+  font: inherit;
+}
+
+.curve-cell.active.lvl-high {
+  background: #f87171;
+}
+
+.curve-cell.active.lvl-mid {
+  background: #fbbf24;
+}
+
+.curve-cell.active.lvl-low {
+  background: #60a5fa;
+}
