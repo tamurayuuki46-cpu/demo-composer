@@ -1,0 +1,50 @@
+.melody-grid {
+  margin-top: 14px;
+  gap: 2px;
+}
+
+.melody-row {
+  grid-template-columns: 54px repeat(8, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.melody-header span:not(.piano-key-spacer) {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: .68;
+}
+
+.melody-header .beat-start,
+.note-cell.beat-start {
+  box-shadow: inset 2px 0 0 #4a4a54;
+}
+
+.note-cell {
+  min-height: 44px;
+  border-radius: 7px;
+}
+
+@media (max-width: 420px) {
+  .melody-card {
+    margin-left: -6px;
+    margin-right: -6px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .melody-row {
+    grid-template-columns: 44px repeat(8, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .piano-key {
+    min-height: 44px;
+    padding: 0 4px;
+    font-size: 9px;
+  }
+
+  .note-cell {
+    min-height: 44px;
+    border-radius: 6px;
+  }
+}
