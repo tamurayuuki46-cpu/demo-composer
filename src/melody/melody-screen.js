@@ -1,6 +1,7 @@
 import { getSections, MAX_TOTAL_BARS, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol, rootToPitchClass } from "../chord/chord-theory.js";
-import { analyzeMelody, describeMelody } from "../core/melody-analysis.js";
+import { analyzeMelody, describeMelody, pitchLabel } from "../core/melody-analysis.js";
+import { compareSections, contrastHints } from "../core/section-compare.js";
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
@@ -83,6 +84,45 @@ export function createMelodyController({ projectStore, rerender }) {
           </div>
         `).join("")}
         <p class="hint">良い・悪いの評価ではなく、いまのメロディの特徴です。曲全体のメロディを数えています。</p>
+        ${sectionCompareHtml(project)}
+      </div>
+    `;
+  }
+
+  // Sectionごとの比べ: AメロとサビのSectionの差（音域・音数・リズム密度）を並べて、「差が足りない」に気づく。
+  function sectionCompareHtml(project) {
+    const rows = compareSections(project);
+    if (rows.length === 0) {
+      return `<div class="section-compare"><h4>Sectionごとの比べ</h4><p class="hint">Arrangeで曲の構成を作ると、AメロとサビなどをSectionごとに比べられます。</p></div>`;
+    }
+    const withNotes = rows.filter((row) => row.range);
+    const scaleLow = withNotes.length ? Math.min(...withNotes.map((row) => row.range.low)) : 0;
+    const scaleHigh = withNotes.length ? Math.max(...withNotes.map((row) => row.range.high)) : 1;
+    const scaleSpan = Math.max(scaleHigh - scaleLow, 1);
+    const maxDensity = Math.max(...rows.map((row) => row.density), 1);
+    const hints = contrastHints(rows);
+
+    return `
+      <div class="section-compare">
+        <h4>Sectionごとの比べ</h4>
+        ${rows.map((row) => `
+          <div class="sc-row">
+            <strong>${escapeHtml(row.name)} <small>Bar ${row.startBar + 1}–${row.endBar}</small></strong>
+            ${row.range ? `
+              <div class="sc-track" aria-hidden="true"><span style="left:${((row.range.low - scaleLow) / scaleSpan) * 100}%;width:${Math.max((row.range.span / scaleSpan) * 100, 3)}%"></span></div>
+              <span>音域 ${escapeHtml(pitchLabel(row.range.low))}〜${escapeHtml(pitchLabel(row.range.high))}（${row.range.span}半音）</span>
+              <div class="sc-bar" aria-hidden="true"><span style="width:${(row.density / maxDensity) * 100}%"></span></div>
+              <span>音数 ${row.noteCount}音 ・ 1小節あたり ${row.density.toFixed(1)}音</span>
+            ` : `<span class="sc-empty">メロディなし</span>`}
+          </div>
+        `).join("")}
+        ${hints ? `
+          <div class="sc-hints${hints.lacking ? " lacking" : ""}">
+            <strong>${escapeHtml(hints.target)} と ${escapeHtml(hints.ref)} の差</strong>
+            <ul>${hints.lines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+            <p>${escapeHtml(hints.advice)}</p>
+          </div>
+        ` : `<p class="hint">サビと、その前のAメロ / Bメロの両方にメロディがあると、差を見られます。</p>`}
       </div>
     `;
   }

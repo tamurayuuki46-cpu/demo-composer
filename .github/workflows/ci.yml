@@ -72,6 +72,9 @@ jobs:
       - name: Melody analysis smoke test
         run: npm run test:analysis
 
+      - name: Section compare smoke test
+        run: npm run test:section-compare
+
       - name: Display settings smoke test
         run: npm run test:display
 

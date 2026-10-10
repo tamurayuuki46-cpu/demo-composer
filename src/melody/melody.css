@@ -195,3 +195,78 @@
   font-size: 12px;
   color: #9ca3af;
 }
+
+/* Sectionごとの比べ */
+.section-compare {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #303038;
+}
+
+.section-compare h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.sc-row {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #18181c;
+  font-size: 13px;
+}
+
+.sc-row small {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.sc-track,
+.sc-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: #2a2a31;
+}
+
+.sc-track span,
+.sc-bar span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 4px;
+  background: #93c5fd;
+}
+
+.sc-bar span {
+  background: #86efac;
+}
+
+.sc-empty {
+  opacity: 0.6;
+}
+
+.sc-hints {
+  padding: 10px;
+  border: 1px solid #303038;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sc-hints.lacking {
+  border-color: #b8860b;
+}
+
+.sc-hints ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.sc-hints p {
+  margin: 0;
+}

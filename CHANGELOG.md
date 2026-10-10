@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- Melody Analyzer: `Sectionごとの比べ`。構成（Section）ごとに音域 / 音数 / リズム密度（1小節あたり）を並べ、サビと直前のAメロ / Bメロの差（最高音・平均の高さ・音域のひろさ・密度）を表示。差が小さいと「差が小さめ」と気づかせる一言を出す（評価ではなく気づき）。`src/core/section-compare.js`
+- Section Compare Smoke Test（`npm run test:section-compare`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-section-compare`（Schema変更なし）
 - Rhythm: ドラムフィル（スネア8分 / スネアロール / ブレイク）。Sectionの最後の小節の後半（3・4拍）だけを変え、前半は残す。Sectionが無いときは現在の小節。`各Sectionの最後に入れる` で最後のSectionを除く全Sectionへ一括（`src/rhythm/drum-fills.js`、Schema変更なし）
 - Smoke Test追加: `applyDrumFill` / `applyDrumFillToSectionEnds`（`npm run test:rhythm-presets` に含む）
 - 追加前の復元ブランチ `restore/v0.2-before-drum-fill`

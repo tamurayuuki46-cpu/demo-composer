@@ -28,6 +28,7 @@ v0.2-dev
 - Rhythm: Bass（音程選択: ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下、半音ずらし±6、長さ指定）/ Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
 - Chord 次のコード候補3つ（`chord-next.js`）/ Rhythm Bass候補3つ（`bass-candidates.js`）。どちらもタップで確定、Schema変更なし
+- Melody Analyzer Sectionごとの比べ（`src/core/section-compare.js`、サビと前Sectionの差）
 - Chord ひとスパイス（借用和音3候補、`suggestSpiceChords`）
 - Rhythm ドラムフィル（`src/rhythm/drum-fills.js`）
 - Hub Cubaseでやることメモ（`src/hub/cubase-memo.js`）/ AI相談テンプレート
