@@ -4,6 +4,9 @@
 更新日: 2026-10-10
 
 ### 追加
+- Rhythm: Bassの音程選択（ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下）。16マスはそのまま、ルート以外のベースラインを入力できる（Schema変更なし）
+- Bass Pitch Smoke Test（`npm run test:rhythm` に含む、CI対象）
+- Bass音程選択前の復元ブランチ `restore/v0.2-before-bass-pitch`
 - project.json読み込み（Hub > Export > 読み込み。検証・schema v1移行・確認ダイアログ・Undo可）
 - project.json Import Smoke Test（`npm run test:import`、CI対象）
 - Import実装前の復元ブランチ `restore/v0.2-before-project-import`
@@ -37,6 +40,7 @@
 - ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
+- BarをまたぐBass Copyを、全ノートをルートへそろえる動作から、音程関係を保ってコピー先のルートへ移す動作へ変更
 - Bottom Navigationを Hub / Chord / Melody / Rhythm / Arrange / Sound の6 Module構成へ拡張
 - Sound選択を既存 `project.instruments[]` に保存し、AutoSaveとProject全体Undo / Redoの対象にした
 - Demo PlayerのChord / Melody / Bass仮音をSound Preset / Toneに応じてwaveform / low-pass filter / attack / release / gain変更する方式へ拡張
