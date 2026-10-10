@@ -15,8 +15,10 @@
 - Chord Preset Smoke Test（`npm run test:chord-presets`、CI対象）
 - Rhythm Drum Preset 6種類（8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH）
 - Rhythm Preset Smoke Test（`npm run test:rhythm-presets`、CI対象）
+- Hub Key変更の回帰テスト（`npm run test:key-change`、CI対象）
 - v0.2統合前の復元ブランチ `restore/v0.1-before-v0.2-integration`
 - Chord Preset追加前の復元ブランチ `restore/v0.2-before-chord-presets`
+- Key変更修正前の復元ブランチ `restore/v0.2-before-key-change-fix`
 
 ### 変更
 - Chord画面はダイアトニック7候補を残しつつ、任意の基準音から9種類のQualityを追加できる構成へ変更
@@ -25,13 +27,17 @@
 - Chord QualityをDemo Player / Chord.mid / Song.midへ共通の構成音定義で反映
 - Rhythmに `Drum Preset` select + `適用` を追加し、現在BarのKick / Snare / Closed HHだけを置換する方式にした
 - Preset適用後も通常の16 stepをTapして自由に修正できるようにした
+- HubのKey変更は、Chord root / Melody pitch / Bass pitchを同じ最短半音幅でAtomicに移調し、Drumsは変更しない方式へ変更
+- Scale変更はChord / Melody / Bassが存在する場合は引き続き拒否し、意図しないMajor/Minor変換を行わない
 - `VERSION` / 画面内Version / package versionをv0.2-devへ更新
 - DATA_SCHEMAをschemaVersion 2へ更新
-- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Static Buildを確認する構成へ更新
+- CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Hub Key Change / Static Buildを確認する構成へ更新
 
 ### 修正
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
 - PR #23 / #24がGitHub Pages統合後のdevelopと競合するため、現在developから統合branchを作って安全に再統合した
+- Chord / Melody / BassがあるとHubのKey Selectが元の値へ戻り、Keyを変更できなかった問題を修正
+- Key移調でMIDI Note 0〜127を外れる場合は更新全体を中止し、元Projectを維持するようにした
 
 ### 未対応
 - Chord並べ替え / 長さ変更
