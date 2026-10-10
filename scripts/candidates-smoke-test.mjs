@@ -62,7 +62,7 @@ assert.deepEqual([60, 64, 67, 70, 71].map((p) => degreeLabel(p, 0)), ["R", "3", 
 assert.deepEqual([71, 65, 67].map((p) => degreeLabel(p, 7)), ["3", "♭7", "R"]);
 assert.equal(degreeLabel(48, 7), "4", "octave independent, below root pc");
 
-// --- Bass候補
+// --- Bass候補: 5タイプ（完成形ではなく、選んで直すための叩き台）
 const project = (drumNotes = [], chord = { root: 0, quality: "major" }) => ({
   basic: { key: "C", ppq: 480 },
   chords: [chord, { root: 7, quality: "major" }],
@@ -72,16 +72,34 @@ let id = 0;
 const createId = () => `n${++id}`;
 
 const plain = bassCandidatesForBar(project(), 0, { barTicks: BAR, stepTicks: STEP });
-assert.equal(plain.length, 3);
-assert.equal(plain[0].id, "root-long");
+assert.equal(plain.length, 5);
+assert.deepEqual(plain.map((candidate) => candidate.id), [
+  "root-long",
+  "hook-riff",
+  "funk-sync",
+  "synthwave-eighth",
+  "melodic-counter"
+]);
+assert.deepEqual(plain.map((candidate) => candidate.label), [
+  "ルート型",
+  "リフ型",
+  "ファンク型",
+  "シンセウェーブ型",
+  "裏メロ型"
+]);
+assert.equal(bassPatternDots(plain[1].steps), "●・・●・・●・●・・●・・●・");
+assert.equal(plain[3].steps.length, 8, "synthwave keeps eighth-note drive");
+assert.ok(plain[4].steps.some((step) => step.semitones === 4), "major melodic bass uses chord color tone");
 
 const kicks = [0, 6, 8].map((s) => ({ id: `k${s}`, pitch: 36, startTick: s * STEP, durationTick: STEP, velocity: 100 }));
 const synced = bassCandidatesForBar(project(kicks), 0, { barTicks: BAR, stepTicks: STEP });
-assert.equal(synced[0].id, "kick");
-assert.deepEqual(synced[0].steps.map((s) => s.step), [0, 6, 8]);
-assert.equal(bassPatternDots(synced[0].steps), "●・・・・・●・●・・・・・・・");
+const funk = synced.find((candidate) => candidate.id === "funk-sync");
+assert.ok(funk);
+assert.ok([0, 6, 8].every((step) => funk.steps.some((item) => item.step === step)), "funk keeps kick anchors");
+assert.ok(funk.steps.some((item) => ![0, 6, 8].includes(item.step)), "funk adds short responses");
 // 別小節のKickは影響しない
-assert.equal(bassCandidatesForBar(project(kicks), 1, { barTicks: BAR, stepTicks: STEP })[0].id, "root-long");
+const nextBarFunk = bassCandidatesForBar(project(kicks), 1, { barTicks: BAR, stepTicks: STEP }).find((candidate) => candidate.id === "funk-sync");
+assert.ok(nextBarFunk.description.includes("Kick追加後"));
 
 // 適用: 2小節目(G)に置いても1小節目は変わらず、小節をはみ出さず、重ならない
 const existing = [{ id: "old0", pitch: 36, startTick: 0, durationTick: 480, velocity: 100 },
@@ -100,8 +118,10 @@ for (const candidate of bassCandidatesForBar(p, 1, { barTicks: BAR, stepTicks: S
 }
 assert.equal(existing.length, 2, "input not mutated");
 
-// 5度はコードの種類に合わせる（Am = 7半音、dim = 6半音）
-const dimFifth = bassCandidatesForBar(project([], { root: 0, quality: "diminished" }), 0, { barTicks: BAR, stepTicks: STEP })[1];
-assert.ok(dimFifth.steps.some((s) => s.semitones === 6));
+// 5度 / 色音はコードの種類に合わせる（Am = 3半音+7半音、dim = 3半音+6半音）
+const minor = bassCandidatesForBar(project([], { root: 0, quality: "minor" }), 0, { barTicks: BAR, stepTicks: STEP });
+assert.ok(minor.find((candidate) => candidate.id === "melodic-counter").steps.some((step) => step.semitones === 3));
+const dim = bassCandidatesForBar(project([], { root: 0, quality: "diminished" }), 0, { barTicks: BAR, stepTicks: STEP });
+assert.ok(dim.find((candidate) => candidate.id === "hook-riff").steps.some((step) => step.semitones === 6));
 
 console.log("candidates smoke test passed");
