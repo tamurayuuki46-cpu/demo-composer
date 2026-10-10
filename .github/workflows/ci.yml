@@ -54,6 +54,12 @@ jobs:
       - name: Sound Sketch smoke test
         run: npm run test:sound
 
+      - name: Part switch (mute / solo) smoke test
+        run: npm run test:parts
+
+      - name: AI consult text smoke test
+        run: npm run test:consult
+
       - name: project.json import smoke test
         run: npm run test:import
 

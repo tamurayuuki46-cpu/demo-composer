@@ -1,0 +1,40 @@
+/* Demo Playerの「パート」聴き分けパネル（ミュート / ソロ）。Player下部の1行を広げて表示する */
+.demo-player #player-parts {
+  font-size: 12px;
+  padding: 0;
+}
+.part-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+}
+.part-panel[hidden] {
+  display: none;
+}
+.part-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+.demo-player .part-buttons button {
+  min-height: 44px;
+  font-size: 12px;
+  padding: 0;
+}
+.demo-player .part-buttons button.off {
+  background: #17171b;
+  color: #777784;
+  text-decoration: line-through;
+}
+.demo-player .part-buttons .part-solo {
+  background: #3a3a44;
+}
+.part-hint {
+  margin: 0;
+  font-size: 11px;
+  opacity: .65;
+}
+
+body.parts-open #app {
+  padding-bottom: 240px;
+}

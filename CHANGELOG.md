@@ -4,6 +4,10 @@
 更新日: 2026-10-10
 
 ### 追加
+- Demo Playerのパート聴き分け（Chord / Melody / Bass / Drumsのミュート、ソロ）。再生中も反映、保存・MIDIには影響しない（Schema変更なし）
+- AI相談用テキストのコピー（Hub > AI相談。曲の基本情報・構成・コード・メロディ・ベース・ドラム + 相談したいこと。APIなし）
+- Part Switch Smoke Test（`npm run test:parts`）/ AI Consult Text Smoke Test（`npm run test:consult`）、CI対象
+- 追加前の復元ブランチ `restore/v0.2-before-parts-consult`
 - Melody / Bassの音の長さ指定（16分〜2分・付点。長い音は途中のマスも表示。小節の終わり・次の音を超えない）。`durationTick` を使うためSchema変更なし
 - 共通の `src/core/note-placement.js`（Melody / Rhythmから使う純粋関数）
 - Note Length Smoke Test（`npm run test:melody` に含む、CI対象）

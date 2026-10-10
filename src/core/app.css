@@ -455,8 +455,8 @@ h1 {
   bottom: calc(68px + env(safe-area-inset-bottom));
   z-index: 9;
   display: grid;
-  grid-template-columns: 46px 46px 58px minmax(0, 1fr);
-  gap: 7px;
+  grid-template-columns: 46px 46px 58px 54px minmax(0, 1fr);
+  gap: 6px;
   align-items: center;
   padding: 8px 12px;
   background: rgba(20,20,24,.97);
@@ -548,8 +548,8 @@ h1 {
     font-size: 9px;
   }
   .demo-player {
-    grid-template-columns: 44px 44px 54px minmax(0, 1fr);
-    gap: 5px;
+    grid-template-columns: 42px 42px 50px 50px minmax(0, 1fr);
+    gap: 4px;
   }
 }
 @media (min-width: 520px) {
