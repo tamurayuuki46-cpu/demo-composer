@@ -1,7 +1,7 @@
 # AI_HANDOFF
 
 現在Version:
-v0.2-dev（統合branch `chatgpt/v0.2-integrate-chord-rhythm` で統合作業中）
+v0.2-dev
 
 最新安定版:
 なし。v0.1機能完成地点は復元可能だが、`main` へのstable統合は未実施。
@@ -28,13 +28,15 @@ v0.2-dev（統合branch `chatgpt/v0.2-integrate-chord-rhythm` で統合作業中
 - MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord Smoke Test、Syntax Check、Static BuildのCI
 
 Repository統合状況:
-- `develop` はGitHub Pages Fallback統合済み
+- `develop` HEAD: `c21bb9b0b343e8dc807c6fd884ceaf670c48cd43`
 - PR #26 GitHub Pages Fallback: merged
-- GitHub Pages公開成功: `https://tamurayuuki46-cpu.github.io/demo-composer/`
-- PR #23 Chord Quality + Schema v2: 元branchはopen。Pages統合後のdevelopと競合するため直接mergeしない
-- PR #24 Rhythm Preset: 元branchはopen。#23と同様に直接mergeせず統合branchへ取り込む
-- 統合branch: `chatgpt/v0.2-integrate-chord-rhythm`
+- PR #27 v0.2 Chord Quality + Schema v2 + Rhythm Preset統合: merged
+- PR #23 Chord Quality + Schema v2: #27で置換済みとしてclose。branchは保持
+- PR #24 Rhythm Preset: #27で置換済みとしてclose。branchは保持
+- GitHub Pages v0.2 Deploy: success
+- GitHub Pages公開URL: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 - v0.2統合前復元点: `restore/v0.1-before-v0.2-integration`
+- 元の機能別復元点 / branchも削除せず保持
 - `main` はstable専用。変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
 
@@ -50,19 +52,30 @@ Android実機で確認済み / ユーザー受入済み:
 - BandLab Androidへ個別MIDIをImportして再生
 - GitHub Pages公開URLがAndroidで表示できること
 
-開発中:
-- PR #23 / #24のv0.2統合
-- Chord Quality 9種類 + Schema v2 Migration
-- Rhythm Drum Preset 6種類
-- 共通CIの統合
+v0.2統合CI確認済み:
+- JavaScript syntax check: success
+- MIDI smoke test: success
+- Rhythm copy smoke test: success
+- Rhythm preset smoke test: success
+- Melody grid smoke test: success
+- Chord types smoke test: success
+- Static build: success
+- GitHub Pages Deploy: success
 
-次に実装:
-1. 統合branchのCIを通す
-2. developへ統合
-3. GitHub Pagesでv0.2を公開確認
-4. Android実機でChord Quality 9種類 / Drum Preset / AutoSave / Migration / Play / MIDIを回帰確認
-5. 問題なければChord Tone表示の仕様案を作る
-6. その後Melody Analyzerを検討
+開発中:
+- v0.2統合自体は完了
+- 次はAndroid実機でv0.2追加機能の回帰確認
+
+次に実装 / 確認:
+1. GitHub Pages公開版でVersion表示がv0.2-devになっていることを確認
+2. Chordの基準音C〜B切替と9種類のQuality追加を確認
+3. Demo Playerで新しいChord Qualityが鳴ることを確認
+4. Rhythm Drum Preset 6種類の適用 / 上書き確認 / 手動修正を確認
+5. Bass / 他BarがPreset適用で変わらないことを確認
+6. AutoSave / RestoreとschemaVersion 1 → 2 Migrationを確認
+7. Chord.mid / Song.mid / Drums.midを確認
+8. 問題なければChord Tone表示の仕様案を作る
+9. その後Melody Analyzerを検討
 
 既知の問題:
 - Chordは1コード=1小節固定
@@ -98,7 +111,7 @@ Android実機で確認済み / ユーザー受入済み:
 - Drum Presetは完成形の自動生成ではなく、叩き台を選んで16 stepを手動修正する機能とする
 - Drum Preset選択状態は保存せず、結果だけ通常のDrum Note Dataとして保存する
 - Vercelを残し、GitHub Pagesを第二公開先として運用する
-- PR #23 / #24は過去branchを上書きせず、新しい統合branchで現在developへ安全に取り込む
+- PR #23 / #24は過去branchを上書きせず、最新developから作ったPR #27で安全に統合した
 
 現在のデータSchema:
 schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented。
