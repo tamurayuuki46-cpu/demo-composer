@@ -9,6 +9,7 @@ Rhythm Moduleは `bass` / `drums` Trackを担当する。
 - Bassは現在BarのChord Rootを使用
 - Chord未設定時はKey Rootを使用
 - Bass / Kickを同時に確認可能
+- Bass候補5タイプ: ルート型 / リフ型 / ファンク型 / シンセウェーブ型 / 裏メロ型
 - Kick / Snare / HHはGM準拠Noteを使用
 - Tapでstep ON/OFF
 - Drumは同一stepに複数パートを置ける
@@ -16,6 +17,20 @@ Rhythm Moduleは `bass` / `drums` Trackを担当する。
 - Clear Bass（全Bass消去）
 - Rhythm Beat Copy / Bar Copy
 - Drum Preset 6種類
+
+## v0.2 Bass Candidates
+
+Bass候補は完成したベースラインを自動作曲する機能ではなく、作曲判断の方向性を5タイプで聴き比べるための叩き台とする。
+
+- ルート型: 音数を減らし、コードの土台を明確にする
+- リフ型: 短い反復と空白で、Bass自体をフックとして使う
+- ファンク型: Kick位置を基準にしつつ短い返しを入れ、シンコペーションを作る。Kickが無い場合は既定のリズム叩き台を使う
+- シンセウェーブ型: 8分音符の一定駆動とオクターブで前進感を作る
+- 裏メロ型: コードトーンを使ってBassにも小さな旋律を持たせる
+
+候補は現在Barだけを置き換える。適用結果は通常のBass Noteなので、16 stepで1音ずつ修正でき、Undo / AutoSave / Demo Player / MIDI Exportは既存処理をそのまま使う。候補名や候補IDはProject Dataへ保存しないためSchema変更は不要。
+
+「リフ型」はThe WeekndなどのダークPop / R&Bで見られる、短い低音フレーズを反復してフック化する考え方を参考にする。ただし特定曲のベースラインを再現・コピーする機能にはしない。
 
 ## v0.2 Drum Preset
 
@@ -77,9 +92,6 @@ Chordを変更するときはRhythm画面の `Clear Bass` を使う。
 
 ## Later
 
-- Bass Pitch手動編集
-- Root / 5th / Approach候補
-- Kick連動Bass候補
+- Bass候補のVariation Set / Refresh（必要性を実制作テストで確認してから）
 - Open HH / Percussion / Tom
 - Velocity編集
-- Rhythm候補3案
