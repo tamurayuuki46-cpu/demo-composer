@@ -119,6 +119,51 @@ Rhythm UIでは16分音符Gridを使用するため、1 step = 120 tick。
 
 MelodyとBassはUI上同一stepに1音だけ入力するMonophonic方式。Drumsは同一stepにKick / Snare / HHなど複数Noteを保持できる。
 
+## Instrument / Sound Sketch Data
+
+Sound Sketch Liteは既存の `instruments[]` を利用する。専用Schema Versionは追加しない。
+
+1 Partにつき最大1件:
+
+```json
+{
+  "part": "melody",
+  "preset": "lead",
+  "tone": "bright"
+}
+```
+
+対応Part:
+
+- `chord`
+- `melody`
+- `bass`
+
+初期Preset:
+
+- Chord: `keys / pad / piano`
+- Melody: `lead / keys / pluck`
+- Bass: `soft-bass / synth-bass / deep-bass`
+
+Tone:
+
+- `natural`
+- `bright`
+- `soft`
+- `warm`
+- `dark`
+- `airy`
+- `aggressive`
+
+互換性ルール:
+
+- `instruments: []` は有効で、各Partは既定Preset + `natural` へFallbackする
+- 旧ProjectでSound選択が無くてもMigration不要
+- Sound変更時は `revision` を増やしAutoSaveする
+- Sound選択はDemo Playerの仮音色だけへ反映する
+- Chord / Melody / BassのNote Data、Chord Data、Rhythm Dataは変更しない
+- MIDI Program Change / CCは現時点では出力しない
+
 ## Ownership
 
 - metadata/basic → Hub
@@ -141,6 +186,8 @@ v2ではProjectの基本構造は変更せず、`chords[].quality` の許可値�
 5. 移行後ProjectをActive Projectとして保存
 
 v1で使用していた `major / minor / diminished` はv2でも有効なため、Chordデータ自体の変換は不要。
+
+Sound Sketch Liteはv2に既に存在する `instruments` 配列を利用するため、v2 → v3 Migrationは行わない。
 
 ## Migration Rule
 
