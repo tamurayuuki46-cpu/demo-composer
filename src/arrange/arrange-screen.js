@@ -1,5 +1,6 @@
 import { SECTION_VARIATIONS } from "../core/section-variation.js";
 import { loopGuide, suggestedCopyKind } from "../core/loop-guide.js";
+import { addEntry, loadLibrary, removeEntry, saveLibrary, sectionsFromStructure, STRUCTURE_SAMPLES, structureText } from "./structure-library.js";
 import { curveFromSections, MAX_CURVE_COLUMNS, MIN_CURVE_COLUMNS, sectionsFromCurve } from "../core/energy-curve.js";
 import {
   ENERGY_LEVELS,
@@ -65,6 +66,9 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
   // 感情曲線の開閉と編集中の曲線（画面の状態のみ。nullなら開いたとき現在の構成から作る）
   let curveOpen = false;
   let curveLevels = null;
+  // 構成ライブラリの開閉と保存名（画面の状態のみ。ライブラリ本体は端末のlocalStorage）
+  let libOpen = false;
+  let libName = "";
 
   function run(action, successMessage) {
     try {
@@ -252,6 +256,35 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
       </div>`;
   }
 
+  // 好きな曲の構成（Sectionの種類・小節数・盛り上がり）を端末に保存して、別の曲へ借りる。曲の中身は借りない。
+  function libraryPanelHtml(project) {
+    const saved = loadLibrary();
+    const toggle = `<button id="arrange-lib-toggle" class="arrange-guide-toggle" aria-expanded="${libOpen}">🎼 構成ライブラリ（${saved.length}件）${libOpen ? " ▲" : " ▼"}</button>`;
+    if (!libOpen) return toggle;
+
+    const entryHtml = (entry, removable) => `
+      <div class="library-entry">
+        <strong>${escapeHtml(entry.name)}</strong>
+        <span>${escapeHtml(structureText(entry.sections))}</span>
+        <div class="library-actions">
+          <button data-arrange-lib-apply="${escapeHtml(entry.id)}">当てはめる</button>
+          ${removable ? `<button class="danger" data-arrange-lib-remove="${escapeHtml(entry.id)}">削除</button>` : ""}
+        </div>
+      </div>`;
+    return `
+      ${toggle}
+      <div class="arrange-guide">
+        <div class="library-save">
+          <input id="arrange-lib-name" type="text" maxlength="40" placeholder="名前（例: 好きな曲の構成）" value="${escapeHtml(libName)}" aria-label="構成の名前" />
+          <button id="arrange-lib-save"${getSections(project).length ? "" : " disabled"}>いまの構成を保存</button>
+        </div>
+        <p class="hint">保存するのは構成（Sectionの種類・小節数・盛り上がり）だけです。この端末だけに保存され、曲のデータには入りません。</p>
+        ${saved.map((entry) => entryHtml(entry, true)).join("")}
+        <h4>見本</h4>
+        ${STRUCTURE_SAMPLES.map((entry) => entryHtml(entry, false)).join("")}
+      </div>`;
+  }
+
   function render() {
     const project = projectStore.getSnapshot();
     const sections = getSections(project);
@@ -309,6 +342,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
         </div>
         ${loopGuideHtml(project)}
         ${curvePanelHtml(project)}
+        ${libraryPanelHtml(project)}
         ${body}
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
       </section>
@@ -349,6 +383,43 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
       const sections = sectionsFromCurve(currentCurve());
       curveLevels = null;
       run(() => projectStore.setSections(sections), `曲線から${sections.length}個のSectionを作りました。Sectionごとに小節数や盛り上がりを直せます。`);
+    });
+
+    document.querySelector("#arrange-lib-toggle")?.addEventListener("click", () => {
+      libOpen = !libOpen;
+      rerender("arrange");
+    });
+    document.querySelector("#arrange-lib-name")?.addEventListener("input", (event) => {
+      libName = event.target.value;
+    });
+    document.querySelector("#arrange-lib-save")?.addEventListener("click", () => {
+      try {
+        const next = addEntry(loadLibrary(), { name: libName, sections: getSections(projectStore.getSnapshot()) });
+        if (!saveLibrary(next)) throw new Error("この端末に保存できませんでした（ブラウザの設定を確認してください）。");
+        libName = "";
+        message = "構成を保存しました。別の曲でも「当てはめる」で借りられます。";
+      } catch (error) {
+        message = error instanceof Error ? error.message : "保存できませんでした。";
+      }
+      rerender("arrange");
+    });
+    query("[data-arrange-lib-apply]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.arrangeLibApply;
+        const entry = [...loadLibrary(), ...STRUCTURE_SAMPLES].find((item) => item.id === id);
+        if (!entry) return;
+        if (getSections(projectStore.getSnapshot()).length > 0 && !globalThis.confirm(`いまの構成を「${entry.name}」に置き換えますか？音符は消えませんが、Sectionの区切りが変わります。（↶で戻せます）`)) return;
+        run(() => projectStore.setSections(sectionsFromStructure(entry.sections)), `「${entry.name}」の構成を当てはめました。小節数や盛り上がりは自由に直せます。`);
+      });
+    });
+    query("[data-arrange-lib-remove]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const entry = loadLibrary().find((item) => item.id === button.dataset.arrangeLibRemove);
+        if (!entry || !globalThis.confirm(`「${entry.name}」を削除しますか？`)) return;
+        saveLibrary(removeEntry(loadLibrary(), entry.id));
+        message = "削除しました。";
+        rerender("arrange");
+      });
     });
 
     document.querySelector("#arrange-guide-toggle")?.addEventListener("click", () => {
