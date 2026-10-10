@@ -55,6 +55,10 @@ h1 {
 .card h2 {
   margin-top: 0;
 }
+.card h3 {
+  margin: 22px 0 10px;
+  font-size: 15px;
+}
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -155,14 +159,40 @@ h1 {
 .actions button:disabled {
   opacity: .7;
 }
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.section-heading h2,
+.section-heading p {
+  margin: 0;
+}
+.section-heading p {
+  margin-top: 4px;
+  font-size: 13px;
+  opacity: .72;
+}
+.small-action {
+  min-width: 64px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #2a2a31;
+  color: #f5f5f5;
+}
+.small-action:disabled {
+  color: #777;
+}
 .progression {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 10px;
 }
 .chord-card {
-  min-height: 86px;
+  min-height: 96px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -170,11 +200,61 @@ h1 {
   border-radius: 16px;
   background: #24242a;
 }
+.progression-card {
+  position: relative;
+}
 .chord-card strong {
   font-size: 22px;
 }
 .chord-card span {
   opacity: .65;
+}
+.chord-card small {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: .55;
+}
+.remove-chord {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: #313138;
+  color: #ddd;
+}
+.empty-state {
+  grid-column: 1 / -1;
+  padding: 22px 14px;
+  border: 1px dashed #44444f;
+  border-radius: 14px;
+  text-align: center;
+  color: #aaa;
+}
+.chord-candidates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.candidate-chord {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  border: 1px solid #35353e;
+  border-radius: 14px;
+  background: #202026;
+  color: #f5f5f5;
+}
+.candidate-chord strong {
+  font-size: 19px;
+}
+.candidate-chord span {
+  font-size: 12px;
+  opacity: .66;
 }
 .placeholder {
   min-height: 240px;
@@ -215,6 +295,12 @@ h1 {
 @media (max-width: 420px) {
   .settings-grid {
     grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 520px) {
+  .progression,
+  .chord-candidates {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 @media (min-width: 700px) {
