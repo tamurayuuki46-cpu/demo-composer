@@ -25,6 +25,8 @@
 - Melody Track Validation / updateMelodyNotes API
 - スマホ向け簡易Melody Piano Roll
 - MelodyのBar / Octave / Beat表示切替
+- Melody左端の縦ピアノKeyboard（白鍵 / 黒鍵 + Note名表示）
+- Melody縦ピアノUI変更前の復元ブランチ `restore/v0.1-before-melody-vertical-piano`
 - Monophonicな8分音符Tap入力 / Clear Bar
 - Melody UI大幅変更前の復元ブランチ `restore/v0.1-before-melody-roll`
 - Bass / Drums Track更新API
@@ -62,6 +64,7 @@
 - Chord画面を固定サンプルからProject Data連動UIへ変更
 - Chord進行が存在する間はKey / Scale変更を拒否し、Degree不整合を防止
 - Melody画面をPlaceholderからProject Data連動の簡易Piano Rollへ変更
+- MelodyのPitch表示を文字列だけの列から、白鍵 / 黒鍵が分かる縦ピアノ表示へ変更
 - Melody Noteが存在する間もKey / Scale変更を拒否して整合性を保護
 - Rhythm画面をPlaceholderからBass / Drums同時入力UIへ変更
 - Bass Noteが存在する間はChord変更を拒否してRoot不整合を防止
