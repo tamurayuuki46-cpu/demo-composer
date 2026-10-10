@@ -1,5 +1,13 @@
 import {
+  ENERGY_LEVELS,
+  TRANSITIONS,
   barsHaveContent,
+  energyFlowText,
+  energyHints,
+  sectionEnergy,
+  sectionTransition,
+  withSectionEnergy,
+  withSectionTransition,
   createSection,
   getSections,
   MAX_SECTION_BARS,
@@ -22,6 +30,14 @@ function progressChip(label, { filled, total }) {
   const state = filled === 0 ? "none" : (filled >= total ? "done" : "part");
   const mark = state === "done" ? "✓" : (state === "part" ? "△" : "－");
   return `<span class="progress-chip ${state}">${mark} ${label} ${filled}/${total}</span>`;
+}
+
+// グラフ用の短い名前（Aメロ→A、サビ→サビ、Aメロ2→A2）
+const SHORT_NAMES = { intro: "Int", verse: "A", prechorus: "B", chorus: "サビ", interlude: "間奏", bridge: "C", outro: "Out" };
+
+function shortName(section) {
+  const digits = section.name.match(/\d+$/)?.[0] ?? "";
+  return `${SHORT_NAMES[section.kind] ?? section.name}${digits}`;
 }
 
 function escapeHtml(value) {
@@ -65,6 +81,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
     const progress = sectionProgress(project, startBar, endBar);
     const isCopySource = copyFromIndex === index;
     const copyTargetMode = copyFromIndex !== null && !isCopySource;
+    const isLast = index === getSections(project).length - 1;
 
     return `
       <article class="arrange-section kind-${escapeHtml(section.kind)}${isCopySource ? " copy-source" : ""}">
@@ -79,6 +96,21 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
         <div class="arrange-progress" aria-label="${escapeHtml(section.name)}の入力の進み具合">
           ${PROGRESS_PARTS.map(([part, label]) => progressChip(label, progress[part])).join("")}
         </div>
+
+        <div class="arrange-energy" role="group" aria-label="${escapeHtml(section.name)}の盛り上がり">
+          <span class="arrange-energy-label">盛り上がり</span>
+          ${ENERGY_LEVELS.map((level) => `<button data-arrange-energy="${index}:${level.id}" class="${sectionEnergy(section) === level.id ? "active" : ""}" aria-pressed="${sectionEnergy(section) === level.id}">${level.label}</button>`).join("")}
+        </div>
+
+        ${isLast ? "" : `
+          <div class="arrange-transition" role="group" aria-label="${escapeHtml(section.name)}から次へのつなぎ">
+            <span class="arrange-energy-label">次へのつなぎ</span>
+            <div class="arrange-transition-chips">
+              ${TRANSITIONS.map((item) => `<button data-arrange-transition="${index}:${item.id}" class="${sectionTransition(section) === item.id ? "active" : ""}" aria-pressed="${sectionTransition(section) === item.id}">${item.label}</button>`).join("")}
+            </div>
+            <small>${escapeHtml(TRANSITIONS.find((item) => item.id === sectionTransition(section)).description)}</small>
+          </div>
+        `}
 
         <div class="arrange-bars" role="group" aria-label="${escapeHtml(section.name)}の小節数">
           <button data-arrange-shrink="${index}" aria-label="小節を1つ減らす"${section.bars <= 1 ? " disabled" : ""}>−</button>
@@ -108,6 +140,20 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
         <div class="arrange-templates">${templateCards()}</div>
       `
       : `
+        <div class="energy-design" aria-label="曲の盛り上がり設計">
+          <strong>盛り上がり設計</strong>
+          <div class="energy-map">
+            ${ranges.map((range) => `
+              <div class="energy-col kind-${escapeHtml(range.section.kind)}" style="flex: ${range.section.bars} 1 0">
+                <span class="energy-bar lvl-${ENERGY_LEVELS.find((level) => level.id === sectionEnergy(range.section)).rank}"></span>
+                <small>${escapeHtml(shortName(range.section))}</small>
+              </div>
+            `).join("")}
+          </div>
+          <p class="energy-flow">${escapeHtml(energyFlowText(sections))}</p>
+          ${energyHints(sections).map((hint) => `<p class="energy-hint">💡 ${escapeHtml(hint)}</p>`).join("")}
+        </div>
+
         <div class="arrange-summary" aria-label="曲全体の入力の進み具合">
           <strong>骨子の進み具合（全${total}小節）</strong>
           <div class="arrange-progress">${PROGRESS_PARTS.map(([part, label]) => progressChip(label, sectionProgress(project, 0, total)[part])).join("")}</div>
@@ -153,6 +199,17 @@ export function createArrangeController({ projectStore, rerender, onPlaySection 
         "構成の叩き台を作りました。小節数は自由に変えられます。"
       ));
     });
+
+    // Energy / Transition: Sectionの項目だけを変える（音符・コードは動かさない）。Undo対象
+    const setSectionField = (button, key, apply, doneText) => {
+      const [indexText, value] = button.dataset[key].split(":");
+      button.addEventListener("click", () => run(
+        () => projectStore.setSections(apply(getSections(projectStore.getSnapshot()), Number(indexText), value)),
+        doneText
+      ));
+    };
+    query("[data-arrange-energy]").forEach((button) => setSectionField(button, "arrangeEnergy", withSectionEnergy, "盛り上がりを変えました。"));
+    query("[data-arrange-transition]").forEach((button) => setSectionField(button, "arrangeTransition", withSectionTransition, "つなぎ方を変えました。"));
 
     query("[data-arrange-grow]").forEach((button) => {
       const index = indexOf(button, "arrangeGrow");

@@ -14,6 +14,12 @@
 - Progression Library Smoke Test（`npm run test:library`、CI対象）
 - CSS Brace Balance Test（`npm run test:css`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-progression-library`
+- Section Energy: 各Sectionに盛り上がり（Low / Mid / High）を設定。Arrangeの上部に「盛り上がり設計」（Sectionの幅 = 小節数、高さ = Energyの棒グラフ + 「イントロ Low → Aメロ Low → Bメロ Mid → サビ High」の流れ）と、気づきのヒント（サビが前より低い、Buildの次が低い、全部同じ）を表示
+- Transition: 各Sectionから次のSectionへのつなぎ（Keep / Fill / Stop / Build / Drop）をタグで設定（最後のSectionには出さない）
+- Section Energy / Transition は `structure.sections[]` の任意項目（追記のみ、schemaVersion変更なし）。無い古いProjectは、Sectionの種類ごとの初期値（イントロ Low / Aメロ Low / Bメロ Mid / サビ High / 間奏 Mid / Cメロ Mid / アウトロ Low、つなぎは Keep）で扱う
+- AI相談テキスト・Cubaseメモ・曲の特徴カードの構成欄に、盛り上がりとつなぎを反映
+- Section Smoke Testに Energy / Transition を追加
+- 追加前の復元ブランチ `restore/v0.2-before-section-energy`
 - Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
 - Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
 - コピー処理を `src/hub/clipboard.js` に共通化

@@ -29,6 +29,7 @@ v0.2-dev
 - Sound Sketch Lite: Chord Keys / Pad / Piano、Melody Lead / Keys / Pluck、Bass Soft Bass / Synth Bass / Deep Bass、Tone Natural / Bright / Soft / Warm / Dark / Airy / Aggressive
 - Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drumsの軽量再生、Mute / Solo、Sound / Backing反映
 - Chord 好きな進行ライブラリ（度数で保存、端末のlocalStorageのみ。`src/chord/progression-library.js`）
+- Section Energy（Low/Mid/High）/ Transition（Keep/Fill/Stop/Build/Drop）: `structure.sections[]` の任意項目（schemaVersion 2のまま追記）。`src/core/section-ops.js`
 - Hub Cubaseでやることメモ（`src/hub/cubase-memo.js`）/ AI相談テンプレート
 - Melody Analyzer（Melody内パネル、`src/core/melody-analysis.js`）/ Hub曲の特徴カード（`src/hub/song-card.js`）
 - Chord役割ラベル（`chord-role.js`）/ Melody度数表示（画面のみ）

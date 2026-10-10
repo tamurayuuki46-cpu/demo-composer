@@ -3,7 +3,7 @@
 
 import { chordQualityDefinition } from "../core/chord-qualities.js";
 import { SOUND_PARTS, SOUND_TONES, getSoundSelection } from "../core/sound-presets.js";
-import { getSections, sectionRanges } from "../core/section-ops.js";
+import { TRANSITIONS, energyLabel, getSections, sectionEnergy, sectionRanges, sectionTransition } from "../core/section-ops.js";
 import { BACKING_PATTERNS, getBackingPattern, getBackingPatternSelection } from "../core/backing-patterns.js";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -88,7 +88,15 @@ export function buildCubaseMemo(project) {
 
   lines.push("", "■ 5. 曲の構成（Song.midにMarkerとして入っています）");
   if (sections.length === 0) lines.push("- 構成はまだ決めていません");
-  else sections.forEach((range) => lines.push(`- ${range.section.name}: Bar ${range.startBar + 1}–${range.endBar}`));
+  else {
+    sections.forEach((range) => {
+      const transition = sectionTransition(range.section);
+      const next = range.index < sections.length - 1 && transition !== "keep"
+        ? ` → 次へ ${TRANSITIONS.find((item) => item.id === transition).label}（${TRANSITIONS.find((item) => item.id === transition).description}）`
+        : "";
+      lines.push(`- ${range.section.name}: Bar ${range.startBar + 1}–${range.endBar} / 盛り上がり ${energyLabel(sectionEnergy(range.section))}${next}`);
+    });
+  }
 
   lines.push(
     "",
