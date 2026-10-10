@@ -498,9 +498,9 @@ h1 {
   bottom: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
   background: rgba(17,17,20,.96);
   border-top: 1px solid #2a2a31;
   backdrop-filter: blur(12px);
