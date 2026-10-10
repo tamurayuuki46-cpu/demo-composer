@@ -22,6 +22,8 @@ v0.2-dev
 - Melody: 縦ピアノKeyboard、8分 / 16分切替、音の長さ指定、Bar / Octave切替、Chord Tone強調、度数表示、Copy Bar / Copy 2小節、Melody Analyzer
 - Melody Analyzer音程分析: `Keyからの度数` / `Chordからの度数` / `Scale内率` を表示。既存のコードトーン率と併用し、Projectを読むだけの派生分析として実装（Schema変更なし）
 - Melody Analyzer `旋律の3つの見方`: `歌心・浮遊型（草野マサムネ参考） / 輪郭・違和感型（米津玄師参考） / 推進・高密度型（Ayase / YOASOBI参考）`。既存の跳躍 / Chord度数 / Scale外 / 密度 / モチーフ反復を束ねた読み取り専用ガイドで、類似度採点・候補自動変更・Schema変更なし
+- Melody Analyzer `メロディの働き`: 和声役割を `Guide / Chord / Tension / Other` で表示し、経過音 / 刺繍音 / Approach / 倚音 / 逸音 / 先取音 / 係留音候補を前後関係が明確な場合だけ派生分析する。GuideはChord Toneの3rd / 7th系の内数、Tensionは初期版では9th / 11th / 13th相当。`src/core/melodic-functions.js` / `docs/MELODY_FUNCTIONS.md`（Schema変更なし）
+- Melody Analyzer フレーズ語彙ガイド: モチーフ / リック / リフ / シーケンスの違いを表示。リック / リフは文脈依存のため自動判定せず、既存モチーフ反復も自動でリック / リフと断定しない
 - Melody候補3つ: 安定 / キャッチー / 浮遊感。`src/melody/melody-candidates.js` で現在のKey / Scale / Chord / Bar / 表示Octaveからルールベース生成。外部AI / APIなし
 - Melody候補は `↻ 候補を更新` で4つのVariation Setを循環。安定案はChord Tone中心、キャッチー / 浮遊感もKey / Scale内のルールを維持
 - Melody候補のVariation番号はUI状態のみでProject Dataへ保存しない。Bar移動時は初期Setへ戻る
@@ -61,7 +63,9 @@ v0.2-dev
 - PR #91 Melody Analyzer 旋律の3つの見方: merged / CI success
 - PR #93 Rhythm Bass候補5タイプ: CI success。`ルート / リフ / ファンク / シンセウェーブ / 裏メロ` を1 Bar候補として提示（Schema変更なし）
 - PR #95 Counter Melody Answer（応答型）: merged。現行developへ載せ直し、4候補化。Schema / MIDI形式は変更なし
+- PR #97 Melody Analyzer `メロディの働き`: merged / CI success。Guide / Chord / Tension / Other、非和声音の働き、フレーズ語彙ガイドを追加（Schema変更なし）
 - 旧PR #90 Counter Melody Answer初期版: PR #95で置き換えたためclosed（履歴保持）
+- 旧PR #94 Melody Analyzer Melodic Function初期版: develop先行更新と競合したため、最新developから作り直したPR #97で置き換えてclosed（履歴保持）
 - Melody候補統合merge commit: `6a7f1ce482af9a21eaa30fd6e3b91fd896b4f821`
 - Melody候補Refresh merge commit: `9891c2208287289e13feed4a71b1f8d6aa36bb74`
 - Melody候補Refresh PR CI: success
@@ -69,6 +73,7 @@ v0.2-dev
 - Melody候補Refresh前復元点: `restore/v0.2-before-melody-candidate-refresh`
 - Melody度数分析追加前復元点: `restore/v0.2-before-melody-degree-analysis`
 - Melody 旋律3視点追加前復元点: `restore/v0.2-before-melody-perspectives`
+- Melodyの働き追加前復元点: `restore/v0.2-before-melodic-functions`
 - Backing Pattern追加前復元点: `restore/v0.2-before-backing-pattern-final`
 - Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`
 - 新規Project追加前復元点: `restore/v0.2-before-new-project-final`
@@ -82,6 +87,7 @@ v0.2-dev
 - Melody候補の4 Variation Set / Refreshはdevelop統合済み
 - Rhythm Bass候補5タイプはPR #93でCI success。Android実機で候補の差・縦スクロール量・Kick有無のファンク型を確認する段階
 - Counter Melody 4候補はPR #95でdevelop統合済み。Android実機でSparse / Active / Hook / Answerの差、特にSparseとAnswerの聞き分けを確認する段階
+- Melody Analyzer `メロディの働き` はPR #97でdevelop統合済み。Android実機で表示量・読みやすさと代表的な判定例を確認する段階
 - Android実機で `↻ 候補を更新` と3候補の差・試聴・編集を確認する段階
 - v0.2は機能が増えてきたため、追加機能より実制作での使いやすさ確認を優先する
 
@@ -103,6 +109,7 @@ v0.2-dev
 15. MIDI読み込み: アプリで書き出したSong.midと、DAWで作ったMIDIを読み込み、役割の提案・BPM・Key・コード判定が妥当か、取り込み後に↶で戻せることを確認
 16. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
 17. Melody Analyzerで3つの参考モデルが表示され、Chord未設定時の2(9th)/6thが `—`、Chord設定時は割合表示になることをAndroid実機で確認
+18. Melody Analyzerで `メロディの働き` が表示され、C Major等でGuide / Chord / Tension / Otherと、経過 / 刺繍 / Approach / 倚音 / 逸音 / 先取の代表例が想定どおり読めることをAndroid実機で確認。係留は「候補」として過剰断定しないこと、リック / リフが自動判定されないことも確認
 
 既知の問題:
 - 新規Projectで旧Projectデータは端末内に残るが、保存済みProject一覧 / 過去Projectを選んで再度開くUIは未実装。現時点の復元手段はproject.json Backup / Importを優先する
@@ -110,6 +117,7 @@ v0.2-dev
 - Melody候補の別案は有限4Set。無制限ランダム生成はしない
 - Melody候補はルールベースの叩き台で、歌詞のアクセント / フレーズ文脈 / 前後小節の自然な接続まではまだ評価しない
 - Melody Analyzerの3参考モデルは「似ている度」を判定しない。歌詞アクセント・フレーズ輪郭・シンコペーション等まで含む作家分析ではなく、現状の数値の見方を補助するだけ
+- Melody AnalyzerのMelodic Function判定は初心者向けの保守的なルール。経過 / 刺繍 / 倚音 / 逸音 / Approachは原則同一Chord内の前後3音を見ており、複雑な和声文脈・装飾音・フレーズ境界までは断定しない。係留は保持関係だけを見た「候補」で、リック / リフは自動判定しない
 - Melody Velocity編集 / Scale表示は未対応
 - Chordは1コード=1小節固定。並べ替え / 長さ変更は未対応
 - Chord Presetは度数配列のみの100種類。借用和音 / 7th入りPresetは未対応
@@ -141,6 +149,7 @@ v0.2-dev
 - reload時のvisibility AutoSaveとの競合を避けるため、新規Project要求はsessionStorageでreload境界へ渡し、`app-entry.js` が `main.js` のboot前にActive Projectを確定する。schemaVersionは変更しない
 - Melody AnalyzerのKey度数 / Chord度数 / Scale内率は保存データを増やさず、現在のProjectから毎回計算する読み取り専用分析とする。コードトーン率は別指標として残す
 - Melody Analyzerの3参考モデルも既存の分析値を束ねるだけとし、アーティスト類似度の点数化、特定曲の再現、Melody候補への自動反映はしない。Schema変更なし
+- Melody AnalyzerのMelodic FunctionもProjectへ保存せず、Chord / Melody Noteから毎回派生計算する。GuideはChord Toneの内数、Tensionは初期版では自然9th / 11th / 13th相当。複雑な文脈を無理に断定せず、係留は候補、リック / リフは学習ガイドのみとする。Melody候補生成には自動反映しない
 - Melody自動生成は「完成させる」機能ではなく、1小節につき3候補 → ユーザーが選ぶ → Piano Rollで修正する方式にする
 - Melody候補は外部AI / APIを使わず、説明可能なルールベースから開始する
 - `安定` はChord Tone中心、`キャッチー` は8分中心 + 短い反復、`浮遊感` は2度 / 6度等のScale Tone + 長めの音を使う
@@ -159,7 +168,7 @@ v0.2-dev
 - GitHub Pagesを現在の公開確認先とし、Vercel自動配信は停止状態を維持する
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Bass候補名 / 候補IDも保存せず、適用結果だけ既存 `tracks[role=bass].notes[]` として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。Melody AnalyzerのKey度数 / Chord度数 / Scale内率と3参考モデルも保存せずProjectから派生計算するため、schemaVersion 2のまま。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Bass候補名 / 候補IDも保存せず、適用結果だけ既存 `tracks[role=bass].notes[]` として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。Melody AnalyzerのKey度数 / Chord度数 / Scale内率 / 3参考モデル / Melodic Functionも保存せずProjectから派生計算するため、schemaVersion 2のまま。
 
 最終更新:
 2026-10-11
