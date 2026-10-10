@@ -7,6 +7,9 @@
 - Rhythm: ドラムフィル（スネア8分 / スネアロール / ブレイク）。Sectionの最後の小節の後半（3・4拍）だけを変え、前半は残す。Sectionが無いときは現在の小節。`各Sectionの最後に入れる` で最後のSectionを除く全Sectionへ一括（`src/rhythm/drum-fills.js`、Schema変更なし）
 - Smoke Test追加: `applyDrumFill` / `applyDrumFillToSectionEnds`（`npm run test:rhythm-presets` に含む）
 - 追加前の復元ブランチ `restore/v0.2-before-drum-fill`
+- Melody: 現在Barのメロディ候補3種類（安定 / キャッチー / 浮遊感）。Key / Scale / Chord / 表示OctaveからAPIなしのルールベースで作り、選択後は通常のPiano Rollで1音ずつ修正できる（Schema変更なし）
+- Melody Candidate Smoke Test（`npm run test:melody` に含む）。3候補生成 / Chord Tone中心の安定案 / 現在Barだけの置換 / Chord未設定時のKey・Scale fallbackをCIで確認
+- Melody候補追加前の復元ブランチ `restore/v0.2-before-melody-candidates-final`
 - Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
 - Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
 - コピー処理を `src/hub/clipboard.js` に共通化
@@ -83,6 +86,7 @@
 - ダイアトニック扇形UI変更前の復元ブランチ `restore/v0.2-before-diatonic-fan-ui`
 
 ### 変更
+- Melody候補の適用結果を専用形式ではなく通常の `tracks[role=melody].notes[]` として保存し、既存のAutoSave / Undo / Demo Player / MIDI Exportをそのまま利用する方式にした
 - Backing Pattern選択を `project.instruments[]` の `part: chord-backing` entryとして保存し、AutoSave / Undo / Redo対象にした。未設定ProjectはBlockへFallbackする
 - Demo PlayerのChord発音と `Chord.mid / Song.mid` のChord Track Note配置へBacking Patternを反映。Chord Dataそのものは変更しない
 - `instruments[]` の責任をpart単位で分離し、Soundは `chord / melody / bass`、Chordは `chord-backing` を更新する方式にした
@@ -110,6 +114,7 @@
 - CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Backing Pattern / Hub Key Change / Diatonic Fan / Undo / Arrange / Sound Sketch / Part Switch / AI Consult / Import / Static Buildを確認する構成へ更新
 
 ### 修正
+- `package.json` に重複していた `test:syntax` 定義を1つへ統合し、ドラムフィルを含む最新Syntax CheckとMelody候補ファイルをまとめて検査するようにした
 - Backing Pattern旧PR #45は作業中のdevelop先行更新と競合したためマージせず、最新developからPR #50用branchを作り直し、Bass音程 / Melody長さ / Import / Part Mute/Solo / AI相談を保持したまま再統合した
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした
 - PR #23 / #24がGitHub Pages統合後のdevelopと競合するため、現在developから統合branchを作って安全に再統合した
@@ -119,13 +124,15 @@
 
 ### 未対応
 - Chord並べ替え / 長さ変更
-- 借用和音を目的別に整理した候補
+- 借用和音を目的別に整理した追加候補
 - Chord Preset Libraryの追加分類（Scaler / Melody Sauce / Cubase / 書籍等）
 - Backing PatternのSection別 / Bar別指定、詳細Step編集
-- Chord Tone強調
-- Melody Analyzer
+- Melody Velocity編集 / Scale表示
+- Melody候補のSection単位・複数小節単位の生成（初期版は1小節3候補のみ）
 - Snapshot履歴
+- Section Energy
 - Arrange / Song Structureの実制作検証・正式整理
+- Counter Melody
 - Drums音色変更
 - 本格Sound Sketch整理（詳細Synth / FX / Mixerは原則追加しない）
 
