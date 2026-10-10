@@ -6,11 +6,11 @@
   "scripts": {
     "build": "node scripts/build-static.mjs",
     "serve": "python -m http.server 8080",
-    "test:syntax": "node --check src/main.js && node --check src/chord/chord-theory.js && node --check src/chord/chord-presets.js && node --check src/chord/diatonic-fan.js && node --check src/core/chord-qualities.js && node --check src/core/sound-presets.js && node --check src/core/project-schema.js && node --check src/core/project-state.js && node --check src/core/project-migration.js && node --check src/audio/demo-player.js && node --check src/midi/midi-export.js && node --check src/rhythm/drum-presets.js && node --check src/rhythm/rhythm-screen.js && node --check src/core/edit-history-ui.js && node --check src/core/section-ops.js && node --check src/arrange/arrange-screen.js && node --check src/sound/sound-screen.js && node --check src/storage/project-import.js",
+    "test:syntax": "node --check src/main.js && node --check src/chord/chord-theory.js && node --check src/chord/chord-presets.js && node --check src/chord/diatonic-fan.js && node --check src/core/chord-qualities.js && node --check src/core/sound-presets.js && node --check src/core/project-schema.js && node --check src/core/project-state.js && node --check src/core/project-migration.js && node --check src/audio/demo-player.js && node --check src/midi/midi-export.js && node --check src/rhythm/drum-presets.js && node --check src/rhythm/rhythm-screen.js && node --check src/core/edit-history-ui.js && node --check src/core/section-ops.js && node --check src/arrange/arrange-screen.js && node --check src/sound/sound-screen.js && node --check src/storage/project-import.js && node --check src/core/note-placement.js",
     "test:midi": "node scripts/midi-smoke-test.mjs",
     "test:rhythm": "node scripts/rhythm-copy-smoke-test.mjs && node scripts/bass-pitch-smoke-test.mjs",
     "test:rhythm-presets": "node scripts/rhythm-preset-smoke-test.mjs",
-    "test:melody": "node scripts/melody-grid-smoke-test.mjs",
+    "test:melody": "node scripts/melody-grid-smoke-test.mjs && node scripts/note-length-smoke-test.mjs",
     "test:chord": "node scripts/chord-types-smoke-test.mjs",
     "test:chord-presets": "node scripts/chord-preset-smoke-test.mjs",
     "test:key-change": "node scripts/key-change-smoke-test.mjs",

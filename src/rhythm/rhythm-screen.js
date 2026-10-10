@@ -1,5 +1,6 @@
 import { getSections, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol } from "../chord/chord-theory.js";
+import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import {
   applyDrumPreset,
   DRUM_PRESETS,
@@ -49,6 +50,8 @@ export function createRhythmController({ projectStore, rerender }) {
   let selectedPresetId = DRUM_PRESETS[0].id;
   let bassChoiceId = "root";
   let bassShift = 0;
+  // 次に置くBassの長さ（16分のマス数）。UI状態のみ
+  let bassLength = 1;
   let message = "Bass / Kick / Snare / HHを16分音符16マスで入力します。";
 
   function metrics(project) {
@@ -134,6 +137,13 @@ export function createRhythmController({ projectStore, rerender }) {
           </div>
         </div>
 
+        <div class="note-length" role="group" aria-label="Bassの音の長さ">
+          <span>Bassの長さ</span>
+          <div class="note-length-buttons">
+            ${LENGTH_STEPS.map((steps) => `<button data-bass-length="${steps}" class="${steps === bassLength ? "active" : ""}">${noteValueLabel(steps * stepTicks, project.basic.ppq)}</button>`).join("")}
+          </div>
+        </div>
+
         <div class="bass-shift" role="group" aria-label="Bassを半音ずらす">
           <span>半音ずらし</span>
           <button id="bass-shift-down" aria-label="半音下げる"${bassShift <= -MAX_BASS_SHIFT ? " disabled" : ""}>−</button>
@@ -156,10 +166,15 @@ export function createRhythmController({ projectStore, rerender }) {
                   ? row.notes.some((note) => note.startTick === startTick)
                   : row.notes.some((note) => note.startTick === startTick && note.pitch === row.pitch);
                 const bassNote = row.role === "bass" ? row.notes.find((note) => note.startTick === startTick) : null;
+                // 長いBassの途中のマス（前のマスから伸びている部分）
+                const bassHeldNote = row.role === "bass" && !bassNote
+                  ? row.notes.find((note) => note.startTick < startTick && note.startTick + note.durationTick > startTick)
+                  : null;
+                const heldMark = bassHeldNote ? ` data-bass-held data-bass-role="${bassRoleForPitch(project, barIndex, bassHeldNote.pitch)}"` : "";
                 const bassMark = bassNote ? ` data-bass-mark="${escapeHtml(bassShortLabel(project, barIndex, bassNote.pitch))}" data-bass-role="${bassRoleForPitch(project, barIndex, bassNote.pitch)}"` : "";
                 const beatStartClass = step % 4 === 0 ? " beat-start" : "";
                 const selectedBeatClass = Math.floor(step / 4) === beatIndex ? " selected-beat" : "";
-                return `<button class="rhythm-cell${beatStartClass}${selectedBeatClass}${active ? " active" : ""}" data-rhythm-role="${row.role}" data-rhythm-pitch="${row.pitch}" data-rhythm-step="${step}"${bassMark} aria-label="${escapeHtml(row.label)} ${STEP_LABELS[step]}"></button>`;
+                return `<button class="rhythm-cell${beatStartClass}${selectedBeatClass}${active ? " active" : ""}" data-rhythm-role="${row.role}" data-rhythm-pitch="${row.pitch}" data-rhythm-step="${step}"${bassMark}${heldMark} aria-label="${escapeHtml(row.label)} ${STEP_LABELS[step]}"></button>`;
               }).join("")}
             </div>
           `).join("")}
@@ -223,7 +238,13 @@ export function createRhythmController({ projectStore, rerender }) {
         const drumNotes = getTrackNotes(latest, "drums");
 
         const nextBass = role === "bass"
-          ? toggleBassStep(bassNotes, { pitch, startTick, durationTick: stepTicks })
+          ? toggleBassStep(bassNotes, {
+            pitch,
+            startTick,
+            durationTick: bassLength * stepTicks,
+            limitTick: barStartTick + barTicks,
+            resize: bassLength > 1
+          })
           : bassNotes;
         const nextDrums = role === "drums"
           ? toggleDrumStep(drumNotes, { pitch, startTick, durationTick: stepTicks })
@@ -334,6 +355,13 @@ export function createRhythmController({ projectStore, rerender }) {
     document.querySelector("#rhythm-next-bar")?.addEventListener("click", () => {
       barIndex = Math.min(barCount - 1, barIndex + 1);
       rerender("rhythm");
+    });
+
+    document.querySelectorAll("[data-bass-length]").forEach((button) => {
+      button.addEventListener("click", () => {
+        bassLength = Number(button.dataset.bassLength);
+        rerender("rhythm");
+      });
     });
 
     document.querySelectorAll("[data-bass-choice]").forEach((button) => {
