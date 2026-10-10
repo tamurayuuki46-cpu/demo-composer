@@ -20,6 +20,7 @@ import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPit
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
+import { beginNewProject } from "./hub/new-project.js";
 import { songCardHtml } from "./hub/song-card.js";
 import { bindStartingPoint, startingPointHtml } from "./hub/starting-point-ui.js";
 import { previewProject } from "./hub/starting-point.js";
@@ -110,6 +111,9 @@ function hubScreen() {
 
       <p id="hub-message" class="status-message" aria-live="polite">${escapeHtml(startupMessage)}</p>
 
+      <button id="new-project" class="small-action">＋ 新規Project</button>
+      <p class="hint">現在のProjectを端末に保存してから、空のProjectを開始します。</p>
+
       <div class="actions">
         <button id="save-project" class="primary-action">Save Now</button>
         <button id="toggle-export" class="primary-action" aria-expanded="false">Export</button>
@@ -126,7 +130,7 @@ function hubScreen() {
       <section class="display-settings">
         <h3>文字の大きさ</h3>
         <div class="text-size-switch" role="group" aria-label="文字の大きさ">
-          ${TEXT_SIZES.map((size) => `<button data-text-size-option="${size.id}" class="${size.id === textSize ? "active" : ""}" aria-pressed="${size.id === textSize}">${size.label}</button>`).join("")}
+          ${TEXT_SIZES.map((size) => `<button data-text-size-option="${size.id}" class="${size.id === textSize ? " active" : ""}" aria-pressed="${size.id === textSize}">${size.label}</button>`).join("")}
         </div>
         <p class="hint">この端末だけの設定です（曲のデータには入りません）。上のバー・再生ボタン・下のナビの大きさは変わりません。</p>
       </section>
@@ -160,7 +164,6 @@ function melodyChordPanel(project) {
   if (bars === 0) {
     return `${toggle}<p class="hint">先にMelodyを入力すると、その小節に合うコード候補を3つ出せます。</p>`;
   }
-  // コードは1小節目から隙間なく並べる決まりなので、選べるのは「いまのコード数の次」まで。
   const maxBar = Math.min(bars - 1, project.chords.length);
   const bar = Math.min(melodyChordBar, maxBar);
   const { candidates } = suggestChordsForBar(project, bar, project.chords.slice(0, bar));
@@ -433,6 +436,22 @@ async function saveCurrentProject() {
   }
 }
 
+async function startNewProject() {
+  const button = document.querySelector("#new-project");
+  if (button) button.disabled = true;
+
+  try {
+    await beginNewProject({
+      projectStore,
+      autosave,
+      stopPlayback: () => demoPlayer.stop()
+    });
+  } catch (error) {
+    setHubMessage(error instanceof Error ? error.message : "新規Projectを作成できませんでした。", true);
+    if (button) button.disabled = false;
+  }
+}
+
 function exportMidiFile(filename) {
   const project = projectStore.getSnapshot();
   const files = buildMidiExports(project);
@@ -461,7 +480,6 @@ function bindHubControls() {
     setMessage: setHubMessage,
     rerender: () => render("hub"),
     onPreview: async (point, options) => {
-      // 保存せずに、仮のProjectを鳴らすだけ（曲のデータは変わらない）
       try {
         await demoPlayer.play(previewProject(projectStore.getSnapshot(), point, options));
         setHubMessage(`「${point.label}」を試聴中です（まだ曲には入っていません）。`);
@@ -503,6 +521,7 @@ function bindHubControls() {
     commitHubChange({ basic: { scale: event.target.value } });
   });
 
+  document.querySelector("#new-project")?.addEventListener("click", startNewProject);
   saveButton?.addEventListener("click", saveCurrentProject);
 
   exportToggle?.addEventListener("click", () => {
@@ -774,13 +793,11 @@ function bindChordControls() {
   });
 }
 
-// 再生する内容を作る。index=null は曲全体、数値ならそのSectionの範囲だけ。
-// Loopは次の周に入るたびにこれを呼び直すので、再生中に編集した内容も次の周から聴こえる。
 function buildPlayback(index) {
   const project = projectStore.getSnapshot();
   if (index === null) return { project, lengthTick: null };
   const range = sectionRanges(getSections(project))[index];
-  if (!range) return null; // Sectionが無くなった: 前の内容で続ける
+  if (!range) return null;
   const barTicks = project.basic.ppq * 4;
   return {
     project: sliceProject(project, range.startBar * barTicks, range.endBar * barTicks),
@@ -794,7 +811,6 @@ async function playBuilt(index) {
   await demoPlayer.play(built.project, { lengthTick: built.lengthTick, refresh: () => buildPlayback(index) });
 }
 
-// index=null は曲全体。Sectionは範囲だけを切り出して再生し、Loopも同じ範囲を繰り返す。
 async function playSection(index) {
   try {
     await playBuilt(index);
