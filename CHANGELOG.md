@@ -7,6 +7,9 @@
 - Hub: `＋ 新規Project` を追加。現在のProjectを `Save Now` で確定してからDemo Playerを停止し、空の新しいProjectへ切り替える。旧ProjectはIndexedDBの `projects` storeから削除せず、新しいProjectだけを `activeProjectId` にする（Schema変更なし）
 - 新規Project切替は `src/hub/app-entry.js` / `new-project.js` / `new-project-ui.js` で実装。reload直前の `visibilitychange` AutoSaveが旧Projectを再びActiveにする競合を避けるため、次回bootで `main.js` を読み込む前に新ProjectのActive保存を確定する
 - New Project Smoke Testを `test:history` に追加。追加前の復元ブランチ `restore/v0.2-before-new-project-final`
+- MIDI読み込み: Hub → Export → `MIDIを読み込む（.mid）`。トラックごとの役割（Chord / Melody / Bass / Drums / 裏メロ / 使わない）を提案し、人が直してから取り込む。BPM・Key・小節数・各パートの音数を確認でき、Key / Major・Minorは手で直せる。いまの曲は置き換わり、↶で戻せる。Format 0 / 1、ランニングステータス、任意の分解能（480に換算）に対応
+- 取り込みの変換: メロディ・ベース・裏メロは16分音符の格子に丸めて単音化、ドラムはキック / スネア / ハイハットへ割り当て（その他は読まずに通知）、コードは和音から小節ごとに判定（9種類のQuality）。4/4以外は読み込まない、128小節を超える部分は読み込まない。Schema変更なし（`src/midi/midi-reader.js` / `midi-import.js` / `src/hub/midi-import-ui.js`）
+- MIDI読み込みのSmoke Test（`npm run test:midi-import`、CI対象。書き出したSong.midを読み戻してコード・メロディ・ベース・ドラム・裏メロが戻ることも確認）
 - Hub `📖 作編曲の手引き`: 出発点 → 作曲 → 編曲 → 確認・受け渡し の16手順を、スマホで読めるリストにした。各手順は説明とコツを開閉でき、左の丸で「済み」にできる。ChordやArrangeなど、該当画面への移動ボタン付き。✓はこの端末のlocalStorageにだけ保存し、曲のデータには入れない（`src/hub/guide.js` / `guide-ui.js`、Schema変更なし）
 - 手引きのSmoke Test（`npm run test:guide`、CI対象）
 - `docs/REAL_SONG_TEST.md`: Android実機で1曲を通して作り、MIDIをCubasis / Cubaseへ渡すまでのテスト手順・判定・記録シート

@@ -208,6 +208,7 @@ Hub Exportから`project.json`を手動Backupとしてダウンロードでき�
 - Melody: melody notes（候補生成の適用結果も通常Melody Note）
 - Rhythm: bass / drums
 - Arrange: structure / counterMelody（`tracks[role=counter]`。生成は `src/core/counter-melody.js`、適用はStore `applyCounterMelody`）
+- MIDI Import: `src/midi/midi-reader.js`（SMFの読み取り）/ `midi-import.js`（役割の提案とProjectへの変換）は純粋関数。確認UIは `src/hub/midi-import-ui.js`。取り込みは既存の `replaceProject` を通す（Undo対象）
 - Hub: 骨子完成チェック（`src/core/skeleton-check.js` は読むだけの純粋関数。UIは `src/hub/skeleton-check-ui.js`）
 - Sound: `instruments[part=chord|melody|bass]`
 

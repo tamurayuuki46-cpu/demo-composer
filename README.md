@@ -49,6 +49,8 @@ HubのAI相談は、現在のProject情報を相談用テキストへまとめ�
 
 schemaVersion 1の保存Projectは、v0.2起動時に移行前データをIndexedDB内へ退避した上でschemaVersion 2へ自動Migrationします。Arrange / Sound Sketch Lite / Backing Pattern / Melody候補は既存Data領域を利用するため追加Migrationはありません。
 
+Hubの Export から、`project.json` に加えて MIDI（.mid）も読み込めます（役割を確かめてから取り込みます）。
+
 Hubの「作編曲の手引き」から、出発点からCubasis / Cubaseへ渡すまでの手順をスマホで確認できます。Android実機で1曲を通して作るテスト手順は `docs/REAL_SONG_TEST.md` にあります。
 
 未実装の主要項目は、Snapshot履歴、PWA Service Worker、Drums音色変更、本格Sound Sketch整理です。

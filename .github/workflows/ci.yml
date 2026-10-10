@@ -96,6 +96,9 @@ jobs:
       - name: Guide smoke test
         run: npm run test:guide
 
+      - name: MIDI import smoke test
+        run: npm run test:midi-import
+
       - name: Loop guide smoke test
         run: npm run test:loop-guide
 
