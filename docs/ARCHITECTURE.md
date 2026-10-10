@@ -94,6 +94,17 @@ Demo Playerは共通UIとして画面下部、Module Navigationの上に常設�
 
 Chord / Melody / Bass / Drumsを軽量な仮音で再生する。
 
+Android Chromeでは、ユーザー操作後に`AudioContext.resume()`を行い、必要時はsilent bufferを経由してAudioContextをrunningへ復帰させる。
+
+スマホ本体スピーカーで作曲判断しやすくするため、Demo Playerの仮音だけ以下を適用する。
+
+- Chord previewはProject/MIDI本体を変更せず、再生時だけ1オクターブ上のvoicingを使用
+- Bass previewは低域の聞き取りを補うためtriangle波を使用
+- 出力は `master → loudness gain → compressor → limiter → output gain → destination`
+- 単純な後段2倍ブーストはAndroid実機でクリップが目立ったため不採用
+
+これらはDemo Player専用の再生処理であり、Project DataやMIDI ExportのNote/Pitchには影響させない。
+
 Playbackは作曲判断の確認用途だけを担当し、高度なSynth / Mixing / Mastering機能は持たない。
 
 ## Export
