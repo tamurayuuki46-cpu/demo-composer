@@ -32,6 +32,7 @@
 - Beat 1〜4切替 / Bar移動 / Clear Bar / Clear Bass
 - BassをChord RootまたはKey Rootから入力する方式
 - GM準拠Kick 36 / Snare 38 / Closed HH 42
+- Rhythm Beat Copy（現在BeatのBass / Drumsを次Beatへコピー。Beat 4は次BarのBeat 1へコピー）
 - Rhythm Bar Copy（現在BarのBass / Drumsを次Barへコピー。Bassはコピー先Rootへ追従）
 - Rhythm UI変更前の復元ブランチ `restore/v0.1-before-rhythm-sequencer`
 - Web Audio APIベースの常設Demo Player
