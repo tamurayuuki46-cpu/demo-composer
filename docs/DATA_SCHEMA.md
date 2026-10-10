@@ -76,6 +76,19 @@ Melody Track例:
 }
 ```
 
+Bass Track:
+
+- role: `bass`
+- name: `Bass`
+- midiChannel: 3
+
+Drums Track:
+
+- role: `drums`
+- name: `Drums`
+- midiChannel: 10
+- drumMap: `kick:36`, `snare:38`, `closedHH:42`
+
 ## Note Data
 
 `tracks[].notes[]`:
@@ -88,7 +101,9 @@ Melody Track例:
 
 v0.1 Melody UIでは8分音符Gridを使用するため、PPQ 480では1 step = 240 tick。
 
-UI上は同一stepに1音だけ入力するMonophonic方式だが、Schema自体は将来の拡張を妨げない。
+v0.1 Rhythm UIでは16分音符Gridを使用するため、1 step = 120 tick。
+
+MelodyとBassはUI上同一stepに1音だけ入力するMonophonic方式。Drumsは同一stepにKick / Snare / HHなど複数Noteを保持できる。
 
 ## Ownership
 

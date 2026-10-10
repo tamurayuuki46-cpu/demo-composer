@@ -1,10 +1,12 @@
 import { chordSymbol, getDiatonicChords } from "./chord/chord-theory.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createMelodyController } from "./melody/melody-screen.js";
+import { createRhythmController } from "./rhythm/rhythm-screen.js";
 import { loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
 let projectStore;
 let melodyController;
+let rhythmController;
 let currentScreen = "hub";
 let startupMessage = "Projectを編集できます。変更後はSaveで端末に保存してください。";
 let chordMessage = "下の候補をタップしてコードを追加します。";
@@ -113,14 +115,7 @@ const screens = {
   hub: hubScreen,
   chord: chordScreen,
   melody: () => melodyController.render(),
-  rhythm: () => `
-    <section class="card">
-      <h2>Rhythm</h2>
-      <p>BassとKickを同時に確認できる構成を優先します。</p>
-      <div class="placeholder">16 Step Sequencer v0.1</div>
-      <p class="hint">Kick / Snare / Hi-Hat / Bass を実装予定。</p>
-    </section>
-  `
+  rhythm: () => rhythmController.render()
 };
 
 const screen = document.querySelector("#screen");
@@ -212,6 +207,17 @@ function reflowChords(chords, barTicks) {
   }));
 }
 
+function commitChordUpdate(chords, successMessage) {
+  try {
+    projectStore.updateChords(chords);
+    chordMessage = successMessage;
+  } catch (error) {
+    chordMessage = error instanceof Error ? error.message : "Chord更新に失敗しました。";
+  }
+
+  render("chord");
+}
+
 function bindChordControls() {
   const project = projectStore.getSnapshot();
   const candidates = getDiatonicChords(project.basic.key, project.basic.scale);
@@ -234,9 +240,7 @@ function bindChordControls() {
         }
       ];
 
-      projectStore.updateChords(next);
-      chordMessage = `${candidate.symbol} (${candidate.degree}) を追加しました。`;
-      render("chord");
+      commitChordUpdate(next, `${candidate.symbol} (${candidate.degree}) を追加しました。`);
     });
   });
 
@@ -249,16 +253,12 @@ function bindChordControls() {
         barTicks
       );
 
-      projectStore.updateChords(next);
-      chordMessage = "コードを削除しました。";
-      render("chord");
+      commitChordUpdate(next, "コードを削除しました。");
     });
   });
 
   document.querySelector("#clear-chords")?.addEventListener("click", () => {
-    projectStore.updateChords([]);
-    chordMessage = "コード進行をクリアしました。";
-    render("chord");
+    commitChordUpdate([], "コード進行をクリアしました。");
   });
 }
 
@@ -273,6 +273,7 @@ function render(name) {
   if (name === "hub") bindHubControls();
   if (name === "chord") bindChordControls();
   if (name === "melody") melodyController.bind();
+  if (name === "rhythm") rhythmController.bind();
 }
 
 async function boot() {
@@ -296,6 +297,7 @@ async function boot() {
   }
 
   melodyController = createMelodyController({ projectStore, rerender: render });
+  rhythmController = createRhythmController({ projectStore, rerender: render });
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => render(button.dataset.screen));

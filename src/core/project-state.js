@@ -167,12 +167,55 @@ function validateTracks(tracks) {
   });
 }
 
-function getMelodyNotes(project) {
-  return project.tracks.find((track) => track.role === "melody")?.notes ?? [];
+function getTrackNotes(project, role) {
+  return project.tracks.find((track) => track.role === role)?.notes ?? [];
 }
 
 function hasHarmonyDependentContent(project) {
-  return project.chords.length > 0 || getMelodyNotes(project).length > 0;
+  return project.chords.length > 0 ||
+    getTrackNotes(project, "melody").length > 0 ||
+    getTrackNotes(project, "bass").length > 0;
+}
+
+function trackDefaults(role) {
+  if (role === "melody") {
+    return { role, name: "Melody", midiChannel: 2, instrumentId: null, mute: false, solo: false, volume: 1, pan: 0, notes: [] };
+  }
+
+  if (role === "bass") {
+    return { role, name: "Bass", midiChannel: 3, instrumentId: null, mute: false, solo: false, volume: 1, pan: 0, notes: [] };
+  }
+
+  if (role === "drums") {
+    return {
+      role,
+      name: "Drums",
+      midiChannel: 10,
+      instrumentId: null,
+      mute: false,
+      solo: false,
+      volume: 1,
+      pan: 0,
+      drumMap: { kick: 36, snare: 38, closedHH: 42 },
+      notes: []
+    };
+  }
+
+  return { role, name: role, midiChannel: 1, instrumentId: null, mute: false, solo: false, volume: 1, pan: 0, notes: [] };
+}
+
+function upsertTrackNotes(project, role, notes) {
+  const trackIndex = project.tracks.findIndex((track) => track.role === role);
+  const nextTrack = {
+    ...(trackIndex === -1 ? trackDefaults(role) : project.tracks[trackIndex]),
+    notes: clone(notes)
+  };
+
+  if (trackIndex === -1) {
+    project.tracks.push(nextTrack);
+  } else {
+    project.tracks[trackIndex] = nextTrack;
+  }
 }
 
 export function validateProject(project) {
@@ -227,7 +270,7 @@ export function createProjectStore(initialProject = createDefaultProject()) {
         (Object.hasOwn(basic, "scale") && basic.scale !== state.basic.scale);
 
       if (harmonyChanged && hasHarmonyDependentContent(state)) {
-        throw new Error("コードまたはメロディがある間はKey/Scaleを変更できません。関連データをクリアしてから変更してください。");
+        throw new Error("コード・メロディ・ベースがある間はKey/Scaleを変更できません。関連データをクリアしてから変更してください。");
       }
 
       const next = clone(state);
@@ -253,6 +296,10 @@ export function createProjectStore(initialProject = createDefaultProject()) {
     },
 
     updateChords(chords) {
+      if (getTrackNotes(state, "bass").length > 0) {
+        throw new Error("Bassがある間はChordを変更できません。RhythmでBassをClearしてから変更してください。");
+      }
+
       const next = clone(state);
       next.chords = clone(chords);
       validateChords(next.chords);
@@ -268,28 +315,25 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       const next = clone(state);
       const nextNotes = clone(notes);
       validateNotes(nextNotes, "Melody");
+      upsertTrackNotes(next, "melody", nextNotes);
+      validateTracks(next.tracks);
 
-      const trackIndex = next.tracks.findIndex((track) => track.role === "melody");
+      next.revision = state.revision + 1;
+      state = next;
+      emit();
 
-      if (trackIndex === -1) {
-        next.tracks.push({
-          role: "melody",
-          name: "Melody",
-          midiChannel: 2,
-          instrumentId: null,
-          mute: false,
-          solo: false,
-          volume: 1,
-          pan: 0,
-          notes: nextNotes
-        });
-      } else {
-        next.tracks[trackIndex] = {
-          ...next.tracks[trackIndex],
-          notes: nextNotes
-        };
-      }
+      return clone(state);
+    },
 
+    updateRhythmNotes({ bassNotes = [], drumNotes = [] } = {}) {
+      const next = clone(state);
+      const nextBass = clone(bassNotes);
+      const nextDrums = clone(drumNotes);
+
+      validateNotes(nextBass, "Bass");
+      validateNotes(nextDrums, "Drums");
+      upsertTrackNotes(next, "bass", nextBass);
+      upsertTrackNotes(next, "drums", nextDrums);
       validateTracks(next.tracks);
 
       next.revision = state.revision + 1;
