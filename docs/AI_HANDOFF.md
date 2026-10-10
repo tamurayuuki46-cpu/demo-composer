@@ -36,7 +36,7 @@ v0.2-dev
 - Arrange ループから曲にする案内（`src/core/loop-guide.js`、Core `appendSectionCopy`。#60の上に積んでいる）
 - Section Variation（`少し違う版にする`: ドラム / ベース / メロディ3種（終わり・音程だけ・リズムだけ）の5候補。`src/core/section-variation.js`）
 - Section Energy（Low/Mid/High）/ Transition（Keep/Fill/Stop/Build/Drop）: `structure.sections[]` の任意項目（schemaVersion 2のまま追記）。`src/core/section-ops.js`
-- Counter Melody（裏メロ）: Arrangeの各Sectionで3候補（ロングトーン / レスポンス / 3度下）を聴いて当てる。`tracks[role=counter]`（Schema追記のみ）、`src/core/counter-melody.js`、MIDI `CounterMelody.mid`
+- Counter Melody（裏メロ）: Arrangeの各Sectionで3候補 `Sparse（隙間型） / Active（動く型） / Hook（フック型）` を聴いて当てる。候補説明の小さな補足で `Sparse=米津系 / Active=YOASOBI系 / Hook=Oasis系` を参考イメージとして示し、特定曲のコピーではないことを明記。`tracks[role=counter]`（Schema追記のみ）、`src/core/counter-melody.js`、MIDI `CounterMelody.mid`。詳細は `docs/COUNTER_MELODY_STYLES.md`
 - MIDI読み込み（Hub Export内。提案 → 確かめる → 取り込む。`src/midi/midi-reader.js` / `midi-import.js`、Schema変更なし）
 - Hub 作編曲の手引き（16手順のチェックリスト。✓は端末のlocalStorageのみ。`src/hub/guide.js`）
 - Hub 骨子完成チェック（✓ / △ / －、`src/core/skeleton-check.js`、読むだけ）
@@ -63,6 +63,7 @@ v0.2-dev
 - Backing Pattern追加前復元点: `restore/v0.2-before-backing-pattern-final`
 - Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`
 - 新規Project追加前復元点: `restore/v0.2-before-new-project-final`
+- Counter Melody 3系統整理前復元点: `restore/v0.2-before-counter-style-3ways`
 - `main` はstable専用で変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
 
@@ -81,7 +82,7 @@ v0.2-dev
 7. 再読み込み後に適用結果がAutoSave / Restoreされることを確認（候補Set番号自体は保存しない）
 8. Melody.mid / Song.midをExportして通常Noteとして出力されることを確認
 9. Melody Variation（終わり / 音程だけ / リズムだけ）・ドラムフィル / Backing / Bass候補 / Chord候補 / Arrange / Sound / Import等のAndroid回帰確認
-10. 裏メロ: Sectionごとに3候補を試聴 → 適用 → ↶ / 消す。パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
+10. 裏メロ: Sectionごとに `Sparse / Active / Hook` を試聴 → 適用 → ↶ / 消す。説明の `※` 補足が小さく表示されること、パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
 11. Hubの `骨子チェック` の ✓ / △ / － と、「次に決めること」のボタン遷移を確認
 12. 新機能の追加はいったん止めて、`docs/REAL_SONG_TEST.md` の手順で実制作テスト（1曲を通して作り、MIDIをCubasis / Cubaseへ渡す）を優先
 13. v0.3「骨子作り支援」の計画は `docs/V0_3_SKELETON_PLAN.md`（計画のみ・コード未変更）。ChatGPT案23件 + Claude案のレビュー結果と、骨子レシピ8案、3段階の優先順位、未決事項を記載。実装前にユーザーと未決事項を決める
@@ -131,11 +132,13 @@ v0.2-dev
 - Melody候補の実装中にPR #57のDrum Fillがdevelopへ先行統合されたため、旧PR #61を無理にマージせず、最新developからPR #66を作り直して統合した
 - Backing PatternはChord Module内、Melody候補はMelody Module内に置き、新Moduleを増やさない
 - 生成・候補機能はDemo Composer共通思想の「3候補 → 選択 → 修正」を優先する
+- Counter Melodyも同じ思想で、`Sparse / Active / Hook` の役割が明確に違う3候補へ整理する。アーティスト名は小さな参考イメージに限定し、特定曲の旋律再現・コピーはしない
+- Counter Melody候補名 / 候補IDはProject Dataへ保存しない。適用結果だけ `tracks[role=counter].notes[]` に保存するため、候補方式を変えてもschemaVersion 2を維持できる
 - v0.2のSchemaは2のまま維持し、今回Migrationは追加しない
 - GitHub Pagesを現在の公開確認先とし、Vercel自動配信は停止状態を維持する
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。今回のMelody候補Refreshも専用Schema追加なし。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。今回の裏メロ3系統整理も専用Schema追加なし。
 
 最終更新:
 2026-10-11
