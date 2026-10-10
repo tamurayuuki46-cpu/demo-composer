@@ -1,5 +1,6 @@
 import { isChordQuality } from "./chord-qualities.js";
 import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
+import { applySectionVariation } from "./section-variation.js";
 import { validateStructure, resizeSection, removeSection, copySection, buildTemplateSections } from "./section-ops.js";
 
 const KEY_NAMES = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
@@ -457,6 +458,14 @@ export function createProjectStore(initialProject = createDefaultProject()) {
 
     copySection(fromIndex, toIndex) {
       return applySectionOp(copySection(state, fromIndex, toIndex));
+    },
+
+    // Sectionに「少し違う版」の候補を当てる。変更が無いときは履歴を増やさず、changed=0を返す。
+    applySectionVariation(index, variationId) {
+      const result = applySectionVariation(state, index, variationId);
+      if (result.changed === 0) return { changed: 0 };
+      applySectionOp(clone(result.project));
+      return { changed: result.changed };
     },
 
     // project.jsonの読み込み。現在のProjectのidは維持し、中身だけを置き換える（Undoで戻せる）。
