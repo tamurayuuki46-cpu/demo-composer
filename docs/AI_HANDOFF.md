@@ -29,10 +29,14 @@ v0.1-dev
 - Bass / Kick / Snare / Closed HH同時表示
 - BassのChord Root / Key Root入力
 - Beat 1〜4切替 / Bar移動 / Clear Bar / Clear Bass
+- Rhythm 16分Grid見出しのBeat番号追従
+- Rhythm Bar Copy（現在BarのBass / Drumsを次Barへコピー）
+- Rhythm Bar Copy時のBass Pitchをコピー先Chord Root / Key Rootへ自動追従
 - Key/ScaleおよびChord変更時のHarmony整合性ガード
 - 常設Demo Player
 - Play / Stop / Loop / Position
 - Chord / Melody / Bass / DrumsのWeb Audio軽量プレビュー
+- Demo Player Loopを最後に使用しているBar終端で反復
 - Android Chrome向けAudioContext resume / fallback
 - スマホ本体スピーカー向けChord/Bass preview調整
 - loudness gain + compressor + limiterによるDemo Player出力調整
@@ -46,10 +50,12 @@ v0.1-dev
 
 開発中:
 - v0.1 Android実機確認
+- Rhythm Bar CopyのAndroid実機確認
 
 次に実施:
 - `docs/ANDROID_TEST_CHECKLIST.md`の未確認項目を継続テスト
 - Melody / Bass / Drumsを含むDemo Player再生、Stop / Loop / Position確認
+- Rhythm Bar CopyでBass / Drumsの16分パターンが次Barへ正しくコピーされることを確認
 - AutoSave / Restore実機確認
 - MIDI Export実機確認
 - Cubasis / CubaseへのMIDI Import確認
@@ -68,7 +74,7 @@ Stable化前には実装しない / 慎重に判断:
 - Bass Noteがある間はChord変更を拒否する。RhythmのClear Bassで解除する
 - Melodyは8分音符固定。16分音符 / Note Length / Velocity編集は未対応
 - Melody Scale表示 / Chord Tone強調 / Analyzerは未対応
-- Bass Pitch手動編集 / Velocity / Pattern Copyは未対応
+- Bass Pitch手動編集 / Velocityは未対応
 - DrumsはKick / Snare / Closed HHのみ
 - Demo Playerは仮音確認専用で、本格Synth / Mix / FXは未対応かつ原則追加しない
 - Demo PlayerはPlay時点のProject Snapshotを再生し、再生中の編集は次回Playから反映
@@ -105,9 +111,13 @@ Stable化前には実装しない / 慎重に判断:
 - スマホのTap領域確保のためMelodyは4 stepずつ表示する
 - v0.1 Rhythmは1 Bar=16 step、1 step=120 tick
 - スマホのTap領域確保のためRhythmは1 Beat=4 stepずつ表示する
+- Rhythm Bar Copyは現在BarのBass / Drumsを次Barへコピーし、コピー後は次Barへ移動する
+- Rhythm Bar Copyはコピー先に既存Rhythmがある場合のみ上書き確認を出す
+- Rhythm Bar CopyのBassはNote位置をコピーし、Pitchはコピー先Chord Root（Chord未設定時はKey Root）へ合わせる
 - BassはChord Root優先、Chord未設定時はKey Rootを使う
 - DrumsはGM準拠のKick36 / Snare38 / ClosedHH42、MIDI Channel 10
 - Demo Playerは作曲確認用の仮音のみ。高度な音作りはCubasis / Cubaseへ任せる
+- Demo Player Loopは固定4小節ではなく、最後に使用しているBar終端で反復する
 - Android Demo PlayerはAudioContext resume / fallbackを持つ
 - Chord previewはスマホで聞き取りやすいよう再生時のみ1オクターブ上を使い、Project/MIDI Pitchは変更しない
 - Bass previewはスマホ本体スピーカーで倍音を得るためtriangle波を使う
