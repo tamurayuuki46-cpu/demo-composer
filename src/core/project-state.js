@@ -222,6 +222,36 @@ function validateTracks(tracks) {
   });
 }
 
+function validateInstruments(instruments) {
+  if (!Array.isArray(instruments)) {
+    throw new Error("Instrument data is invalid.");
+  }
+
+  const seenParts = new Set();
+  instruments.forEach((instrument, index) => {
+    if (!instrument || typeof instrument !== "object") {
+      throw new Error(`Instrument ${index + 1} is invalid.`);
+    }
+
+    if (typeof instrument.part !== "string" || !instrument.part) {
+      throw new Error(`Instrument ${index + 1} part is invalid.`);
+    }
+
+    if (seenParts.has(instrument.part)) {
+      throw new Error(`Instrument part ${instrument.part} is duplicated.`);
+    }
+    seenParts.add(instrument.part);
+
+    if (typeof instrument.preset !== "string" || !instrument.preset) {
+      throw new Error(`Instrument ${index + 1} preset is invalid.`);
+    }
+
+    if (typeof instrument.tone !== "string" || !instrument.tone) {
+      throw new Error(`Instrument ${index + 1} tone is invalid.`);
+    }
+  });
+}
+
 function getTrackNotes(project, role) {
   return project.tracks.find((track) => track.role === role)?.notes ?? [];
 }
@@ -287,6 +317,7 @@ export function validateProject(project) {
   validateChords(project.chords);
   validateTracks(project.tracks);
   validateStructure(project.structure);
+  validateInstruments(project.instruments ?? []);
 
   if (!Number.isInteger(project.revision) || project.revision < 1) {
     throw new Error("Project revision is invalid.");
@@ -449,6 +480,17 @@ export function createProjectStore(initialProject = createDefaultProject()) {
         undoCount: undoStack.length,
         redoCount: redoStack.length
       };
+    },
+
+    updateInstruments(instruments) {
+      const next = clone(state);
+      next.instruments = clone(instruments);
+      validateInstruments(next.instruments);
+
+      next.revision = state.revision + 1;
+      commit(next);
+
+      return clone(state);
     },
 
     updateRhythmNotes({ bassNotes = [], drumNotes = [] } = {}) {
