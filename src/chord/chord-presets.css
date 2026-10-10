@@ -1,0 +1,56 @@
+.chord-preset-panel {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.chord-preset-panel > label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chord-preset-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px;
+  gap: 8px;
+}
+
+.chord-preset-controls select,
+.chord-preset-controls button {
+  min-width: 0;
+  min-height: 46px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+}
+
+.chord-preset-controls select {
+  width: 100%;
+  padding: 0 10px;
+}
+
+.chord-preset-controls button {
+  border: 0;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+.chord-preset-panel small {
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: .72;
+}
+
+.chord-preset-preview {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
