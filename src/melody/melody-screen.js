@@ -20,10 +20,15 @@ export function createMelodyController({ projectStore, rerender }) {
 
   function metrics(project) {
     const barTicks = project.basic.ppq * 4;
+    const highestNoteBar = getMelodyNotes(project).reduce(
+      (highest, note) => Math.max(highest, Math.floor(note.startTick / barTicks)),
+      -1
+    );
+
     return {
       barTicks,
       stepTicks: barTicks / 8,
-      barCount: Math.max(project.chords.length, 4)
+      barCount: Math.max(project.chords.length, highestNoteBar + 1, 4)
     };
   }
 
