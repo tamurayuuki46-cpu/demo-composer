@@ -21,7 +21,7 @@ export const COUNTER_STYLES = Object.freeze([
   {
     id: "active",
     label: "Active（動く型）",
-    description: "8分音符中心で下側を動き、コード感と推進力を足す。※イメージ：YOASOBI系（特定曲のコピーではありません）"
+    description: "8分音符中心で下側を動き、①コードトーン型 → ②テンション型 → ③薄い別コード感型を混ぜて色を足す。※イメージ：YOASOBI / Ayase系（特定曲のコピーではありません）"
   },
   {
     id: "hook",
@@ -75,6 +75,26 @@ function chordPitchClasses(project, bar) {
   const tonic = keyPitchClass(project);
   const third = project.basic.scale === "minor" ? 3 : 4;
   return [tonic, (tonic + third) % 12, (tonic + 7) % 12];
+}
+
+// コード構成音以外のKey内音。9th / 11th / 13thなどの「色」に使う。
+function tensionPitchClasses(project, bar) {
+  const scale = scalePitchClasses(project);
+  const chord = chordPitchClasses(project, bar);
+  const tensions = scale.filter((pc) => !chord.includes(pc));
+  return tensions.length > 0 ? tensions : scale;
+}
+
+// 現在コードの3度上のScale Degreeから作る3音を「薄い別コード感」として使う。
+// 例: C Major上のCでは E-G-B となり、土台Cを変えずにEm系の輪郭を薄く重ねられる。
+function upperStructurePitchClasses(project, bar) {
+  const scale = scalePitchClasses(project);
+  const chord = project.chords[bar];
+  if (!chord) return scale;
+  const rootIndex = scale.indexOf(chord.root % 12);
+  if (rootIndex === -1) return chordPitchClasses(project, bar);
+  const upperRoot = (rootIndex + 2) % scale.length;
+  return [0, 2, 4].map((offset) => scale[(upperRoot + offset) % scale.length]);
 }
 
 // 8分(240tick)8マスの使用状況。メロディが鳴っているマスは true
@@ -190,7 +210,7 @@ function buildSparse(project, melody, startBar, endBar) {
   return notes;
 }
 
-// Active: 8分音符中心。コードトーンを軸に、音階内で上下して推進力を出す。
+// Active: 8分音符中心。強拍はコードトーン、間にテンションと「薄い別コード感」を混ぜて推進力を出す。
 function buildActive(project, melody, startBar, endBar) {
   const barTicks = barTicksOf(project);
   const scale = scalePitchClasses(project);
@@ -204,8 +224,14 @@ function buildActive(project, melody, startBar, endBar) {
     const barStart = bar * barTicks;
     const inBar = notesIn(melody, barStart, barStart + barTicks);
     const chordPcs = chordPitchClasses(project, bar);
+    const tensionPcs = tensionPitchClasses(project, bar);
+    const upperPcs = upperStructurePitchClasses(project, bar);
     const anchor = pickPitch({ pcs: chordPcs, target, overlapping: inBar, previous });
     if (anchor === null) continue;
+
+    // ①Chord Tone → ②Tension → ③Upper Structure を2回まわす。
+    // 土台コードは変えず、主旋律とは違う度数を使って「薄い第二のハーモニー」を作る。
+    const palettes = [chordPcs, tensionPcs, upperPcs, chordPcs, tensionPcs, upperPcs];
 
     positions.forEach((step, index) => {
       const startTick = barStart + step * STEP;
@@ -215,10 +241,9 @@ function buildActive(project, melody, startBar, endBar) {
       const desired = move >= 0
         ? scaleStepUp(anchor, Math.round(move / 2), scale)
         : scaleStepDown(anchor, Math.abs(move), scale);
-      const pcs = index === 0 || index === positions.length - 1 ? chordPcs : scale;
-      const pitch = pickPitch({ pcs, target: desired, overlapping: overlap, previous });
+      const pitch = pickPitch({ pcs: palettes[index], target: desired, overlapping: overlap, previous });
       if (pitch === null) return;
-      notes.push(makeNote(pitch, startTick, STEP, index === 0 ? 65 : 58));
+      notes.push(makeNote(pitch, startTick, STEP, index === 0 || index === 3 ? 65 : 58));
       previous = pitch;
     });
   }
