@@ -15,6 +15,7 @@ import { getSections, sectionRanges, sliceProject } from "./core/section-ops.js"
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
+import { createSoundController } from "./sound/sound-screen.js";
 import { createAutosave } from "./storage/autosave.js";
 import { backupProjectForMigration, loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
@@ -22,6 +23,7 @@ let projectStore;
 let melodyController;
 let rhythmController;
 let arrangeController;
+let soundController;
 let demoPlayer;
 let autosave;
 let playerState = { playing: false, loop: false, position: 0, duration: 0 };
@@ -190,7 +192,8 @@ const screens = {
   chord: chordScreen,
   melody: () => melodyController.render(),
   rhythm: () => rhythmController.render(),
-  arrange: () => arrangeController.render()
+  arrange: () => arrangeController.render(),
+  sound: () => soundController.render()
 };
 
 const screen = document.querySelector("#screen");
@@ -502,6 +505,7 @@ function render(name) {
   if (name === "melody") melodyController.bind();
   if (name === "rhythm") rhythmController.bind();
   if (name === "arrange") arrangeController.bind();
+  if (name === "sound") soundController.bind();
 }
 
 async function boot() {
@@ -539,6 +543,7 @@ async function boot() {
 
   melodyController = createMelodyController({ projectStore, rerender: render });
   rhythmController = createRhythmController({ projectStore, rerender: render });
+  soundController = createSoundController({ projectStore, rerender: render });
   demoPlayer = createDemoPlayer({ onStateChange: updatePlayerUi });
   arrangeController = createArrangeController({
     projectStore,
