@@ -51,6 +51,15 @@ Chord / Audio / MIDIは同じChord Quality定義を参照し、表示・試聴�
 
 schemaVersion 1 → 2ではProject構造自体は維持し、Chord Qualityの許可値を拡張する。旧major / minor / diminishedはそのまま有効。
 
+## Chord Assistance
+
+Chord Module内の補助ロジックは `src/chord/` に置く。
+
+- `chord-theory.js`: Scale / Degree / Chord Symbol / Quality候補
+- `chord-presets.js`: Degree配列で定義したChord Presetを現在Key / Scaleの通常Chord Dataへ展開
+
+Chord PresetはProject Schemaへ専用データを追加しない。Preset選択状態も保存せず、適用結果だけ `project.chords[]` として保持する。これによりAutoSave / Demo Player / MIDI Exportは既存Chord処理をそのまま利用する。
+
 ## Storage
 
 Storageは `src/storage/` に分離し、coreはIndexedDBへ直接依存しない。

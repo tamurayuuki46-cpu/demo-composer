@@ -87,6 +87,21 @@ v0.2の基本入力:
 
 ダイアトニック候補は初心者向けの基本導線として残し、基準音からの9種類は「少し色を変えたい」「7th / susを試したい」ときの追加導線にする。候補を大量に一画面へ並べず、基準音を1つ選んでからQualityを選ぶことでスマホ画面を複雑化しない。
 
+### v0.2 Chord Preset
+
+Presetは完成曲を自動生成する機能ではなく、コード進行の叩き台をすぐ作ってから手動修正するために使う。
+
+- `Chord Preset` select + `適用` の2操作にする
+- 初期Presetは `Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行`
+- 選択中Presetの短い説明と、現在Key / Scaleでの実コードPreviewを表示する
+- PresetはHubの現在Key / Scaleのダイアトニックコードへ自動変換する
+- `適用` は現在のコード進行全体を置き換える
+- 既存進行がある場合は上書き確認を表示する
+- Preset適用後は従来どおり個別コード追加 / 削除 / Clearで修正できる
+- Bass Noteが存在する場合は従来の安全ルールどおりChord変更を拒否する
+- Preset選択状態自体はProject Dataへ保存しない
+- 適用結果は通常の `project.chords[]` としてAutoSave / Demo Player / MIDI Exportへそのまま利用する
+
 Bass Noteが存在する間はChord変更を拒否し、Root不整合を防止する。Chordを変更するときはRhythmでClear Bassを行う。
 
 v0.2でも並べ替え・コード長変更は後回し。
