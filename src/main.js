@@ -4,15 +4,17 @@ import { createDefaultProject, createProjectStore } from "./core/project-state.j
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
+import { createAutosave } from "./storage/autosave.js";
 import { loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
 let projectStore;
 let melodyController;
 let rhythmController;
 let demoPlayer;
+let autosave;
 let playerState = { playing: false, loop: false, position: 0, duration: 0 };
 let currentScreen = "hub";
-let startupMessage = "Projectを編集できます。変更後はSaveで端末に保存してください。";
+let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存されます。";
 let chordMessage = "下の候補をタップしてコードを追加します。";
 
 const KEY_OPTIONS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -58,12 +60,13 @@ function hubScreen() {
         <span>4/4</span>
         <span>PPQ ${project.basic.ppq}</span>
         <span>Revision ${project.revision}</span>
+        <span>AutoSave ON</span>
       </div>
 
       <p id="hub-message" class="status-message" aria-live="polite">${escapeHtml(startupMessage)}</p>
 
       <div class="actions">
-        <button id="save-project" class="primary-action">Save</button>
+        <button id="save-project" class="primary-action">Save Now</button>
         <button id="toggle-export" class="primary-action" aria-expanded="false">Export</button>
         <button disabled>AI相談</button>
       </div>
@@ -124,7 +127,7 @@ function chordScreen() {
         `).join("")}
       </div>
 
-      <p class="hint">1回タップすると1小節分追加します。変更後はHubのSaveで端末に保存してください。</p>
+      <p class="hint">1回タップすると1小節分追加します。変更はAutoSaveされます。</p>
     </section>
   `;
 }
@@ -193,7 +196,7 @@ function setHubMessage(message, isError = false) {
 function commitHubChange(change) {
   try {
     projectStore.updateHub(change);
-    setHubMessage("変更しました。Saveすると端末に保存されます。");
+    setHubMessage("変更しました。AutoSaveで端末へ保存されます。");
   } catch (error) {
     render("hub");
     setHubMessage(error instanceof Error ? error.message : "更新に失敗しました。", true);
@@ -209,8 +212,8 @@ async function saveCurrentProject() {
     const persistent = await requestPersistentStorage();
     setHubMessage(
       persistent
-        ? "端末に保存しました。ストレージ保護も有効です。"
-        : "端末に保存しました。必要に応じてproject.jsonバックアップも利用してください。"
+        ? "手動保存しました。ストレージ保護も有効です。"
+        : "手動保存しました。project.json Backupも定期的に利用してください。"
     );
   } catch (error) {
     setHubMessage(error instanceof Error ? error.message : "保存に失敗しました。", true);
@@ -388,8 +391,8 @@ async function boot() {
   try {
     initialProject = await loadActiveProject();
     startupMessage = initialProject
-      ? "保存済みProjectを端末から読み込みました。"
-      : "新しいProjectです。変更後はSaveで端末に保存してください。";
+      ? "保存済みProjectを端末から読み込みました。AutoSaveは有効です。"
+      : "新しいProjectです。変更はAutoSaveされます。";
   } catch {
     initialProject = null;
     startupMessage = "保存データを読み込めなかったため、新しいProjectで開始しました。";
@@ -405,6 +408,17 @@ async function boot() {
   melodyController = createMelodyController({ projectStore, rerender: render });
   rhythmController = createRhythmController({ projectStore, rerender: render });
   demoPlayer = createDemoPlayer({ onStateChange: updatePlayerUi });
+  autosave = createAutosave({
+    projectStore,
+    delay: 1500,
+    onError(error) {
+      setHubMessage(
+        error instanceof Error ? `AutoSaveに失敗しました: ${error.message}` : "AutoSaveに失敗しました。",
+        true
+      );
+    }
+  });
+  autosave.start();
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => render(button.dataset.screen));
@@ -416,7 +430,7 @@ async function boot() {
     projectTitle.textContent = project.metadata.title;
 
     if (currentScreen === "hub") {
-      const revision = document.querySelector(".project-meta span:last-child");
+      const revision = document.querySelector(".project-meta span:nth-child(3)");
       if (revision) revision.textContent = `Revision ${project.revision}`;
     }
   });
