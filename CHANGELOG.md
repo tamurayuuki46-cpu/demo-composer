@@ -10,6 +10,10 @@
 - Melody: 現在Barのメロディ候補3種類（安定 / キャッチー / 浮遊感）。Key / Scale / Chord / 表示OctaveからAPIなしのルールベースで作り、選択後は通常のPiano Rollで1音ずつ修正できる（Schema変更なし）
 - Melody Candidate Smoke Test（`npm run test:melody` に含む）。3候補生成 / Chord Tone中心の安定案 / 現在Barだけの置換 / Chord未設定時のKey・Scale fallbackをCIで確認
 - Melody候補追加前の復元ブランチ `restore/v0.2-before-melody-candidates-final`
+- Chord: 好きな進行ライブラリ。現在のコード進行を名前を付けて「度数（主音からの距離 + コードの種類）」で保存し、別のKeyの曲にも当てはめられる。この端末のlocalStorageにだけ保存（project.jsonには入れない、Schema変更なし。最大50件・32小節まで。`src/chord/progression-library.js`）
+- Progression Library Smoke Test（`npm run test:library`、CI対象）
+- CSS Brace Balance Test（`npm run test:css`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-progression-library`
 - Hub: `Cubaseでやることメモ`（自動作成。プロジェクト設定 / 取り込むMIDI / 使ったコード / 音色の方向性ヒント / 構成 / 次にやることチェックリスト。コピー可。`src/hub/cubase-memo.js`）
 - Hub AI相談: 悩みのテンプレート（次のコード / サビを盛り上げる / メロディを覚えやすく / ベース / Aメロとサビの差 / 構成の見直し / Cubaseで次にやること）。タップで相談欄に入り、書き換え・追記できる
 - コピー処理を `src/hub/clipboard.js` に共通化
@@ -114,6 +118,7 @@
 - CIでSyntax / MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset / Backing Pattern / Hub Key Change / Diatonic Fan / Undo / Arrange / Sound Sketch / Part Switch / AI Consult / Import / Static Buildを確認する構成へ更新
 
 ### 修正
+- `src/chord/chord-presets.css` の閉じ括弧 `}` が1つ抜けていて、そのあとに書いた「次のコード候補」「ひとスパイス」「コードの役割」の見た目が効かなくなっていた。原因: Backing Pattern統合時のrebaseで両側を残した際の取り違え。再発防止としてCSS括弧のテストをCIに追加
 - `package.json` に重複していた `test:syntax` 定義を1つへ統合し、ドラムフィルを含む最新Syntax CheckとMelody候補ファイルをまとめて検査するようにした
 - Backing Pattern旧PR #45は作業中のdevelop先行更新と競合したためマージせず、最新developからPR #50用branchを作り直し、Bass音程 / Melody長さ / Import / Part Mute/Solo / AI相談を保持したまま再統合した
 - 旧schemaVersion 1の保存Projectをv0.2でそのまま破棄せず、自動Migrationして利用できるようにした

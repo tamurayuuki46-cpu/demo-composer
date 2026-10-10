@@ -28,6 +28,10 @@ v0.2-dev
 - Arrange: Section Template / 小節増減 / 追加削除 / Sectionコピー / Section再生 / 骨子の進み具合 / MIDI Marker
 - Sound Sketch Lite: Chord Keys / Pad / Piano、Melody Lead / Keys / Pluck、Bass Soft Bass / Synth Bass / Deep Bass、Tone Natural / Bright / Soft / Warm / Dark / Airy / Aggressive
 - Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drumsの軽量再生、Mute / Solo、Sound / Backing反映
+- Chord 好きな進行ライブラリ（度数で保存、端末のlocalStorageのみ。`src/chord/progression-library.js`）
+- Hub Cubaseでやることメモ（`src/hub/cubase-memo.js`）/ AI相談テンプレート
+- Melody Analyzer（Melody内パネル、`src/core/melody-analysis.js`）/ Hub曲の特徴カード（`src/hub/song-card.js`）
+- Chord役割ラベル（`chord-role.js`）/ Melody度数表示（画面のみ）
 - MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid
 - project.json Backup Export / Import（検証・Migration・確認・Undo可）
 - GitHub Pages公開: `https://tamurayuuki46-cpu.github.io/demo-composer/`

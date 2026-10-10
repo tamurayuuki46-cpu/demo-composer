@@ -66,6 +66,12 @@ jobs:
       - name: Next chord / bass candidates smoke test
         run: npm run test:candidates
 
+      - name: CSS brace balance test
+        run: npm run test:css
+
+      - name: Progression library smoke test
+        run: npm run test:library
+
       - name: Cubase memo / consult template smoke test
         run: npm run test:memo
 

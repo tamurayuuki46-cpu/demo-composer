@@ -85,6 +85,8 @@
   font-size: 11px;
   line-height: 1.45;
   opacity: .58;
+}
+
 /* 次のコード候補（3つ） */
 .chord-next {
   display: grid;
@@ -129,4 +131,72 @@
   font-size: 12px;
   font-style: normal;
   color: #93c5fd;
+}
+
+/* 好きな進行ライブラリ */
+.progression-library {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.library-save {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.library-save input,
+.library-save button {
+  min-height: 48px;
+  min-width: 0;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  padding: 0 12px;
+}
+
+.library-save button:not(:disabled) {
+  border: 0;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+.library-entry {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+}
+
+.library-entry span {
+  font-size: 15px;
+}
+
+.library-entry small {
+  color: #9ca3af;
+}
+
+.library-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.library-actions button {
+  min-height: 46px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
 }
