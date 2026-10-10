@@ -28,6 +28,7 @@ Stable条件を満たすまで`main`へ統合しない。
 
 - Chord支援
 - Chord Tone表示
+- Rhythm Drum Preset（選択 → 16 stepへ展開 → 手動修正）
 - Melody Analyzer
 - Bass候補生成の設計 / 試作
 
