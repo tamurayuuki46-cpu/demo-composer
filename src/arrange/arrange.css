@@ -30,3 +30,28 @@
 .arrange-add select, .arrange-add button { min-height: 44px; }
 .arrange-reset { margin-top: 10px; width: 100%; min-height: 44px; background: transparent; color: #b9b9c2; border: 1px dashed #3a3a44; }
 .section-tag { font-size: 13px; color: #b9b9c2; }
+
+.arrange-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.progress-chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+  background: #26262d;
+  color: #b9b9c2;
+}
+.progress-chip.done { background: #1f3a2c; color: #86efac; }
+.progress-chip.part { background: #3d3216; color: #fcd34d; }
+.progress-chip.none { background: #26262d; color: #8b8b96; }
+.arrange-summary {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid #2f2f38;
+  border-radius: 12px;
+}

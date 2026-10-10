@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { toggleMonophonicStep, clearBar } from "../src/melody/melody-grid.js";
+import { toggleMonophonicStep, clearBar, copyMelodyBars, hasMelodyInBars } from "../src/melody/melody-grid.js";
 
 const EIGHTH = 240;
 const SIXTEENTH = 120;
@@ -48,5 +48,23 @@ assert.equal(original[0].durationTick, EIGHTH, "input must not be mutated");
 // Clear Barは16分位置のNoteも消す
 const cleared = clearBar(split, { barStartTick: 0, barDurationTick: 1920 });
 assert.equal(cleared.length, 0);
+
+// Copy Bar: 次の小節へ複製（既存は上書き・idは新規）
+const src = [
+  { id: "s1", pitch: C4, startTick: 0, durationTick: 480, velocity: 96 },
+  { id: "s2", pitch: E4, startTick: 1920 - 240, durationTick: 960, velocity: 90 },
+  { id: "t1", pitch: G4, startTick: 1920 + 480, durationTick: 240, velocity: 96 }
+];
+const copied = copyMelodyBars(src, { sourceBarIndex: 0, targetBarIndex: 1, bars: 1, barTicks: 1920 });
+const inBar2 = copied.filter((n) => n.startTick >= 1920 && n.startTick < 3840);
+assert.deepEqual(inBar2.map((n) => [n.pitch, n.startTick]), [[C4, 1920], [E4, 3840 - 240]], "target is overwritten");
+assert.ok(inBar2.every((n) => n.startTick + n.durationTick <= 3840), "durations clipped to target end");
+assert.equal(new Set(copied.map((n) => n.id)).size, copied.length, "ids unique");
+assert.equal(src.length, 3, "input not mutated");
+assert.equal(hasMelodyInBars(src, { barIndex: 1, bars: 1, barTicks: 1920 }), true);
+assert.equal(hasMelodyInBars(src, { barIndex: 3, bars: 1, barTicks: 1920 }), false);
+const two = copyMelodyBars(src, { sourceBarIndex: 0, targetBarIndex: 2, bars: 2, barTicks: 1920 });
+assert.ok(two.some((n) => n.startTick === 3840 && n.pitch === C4));
+assert.ok(two.some((n) => n.startTick === 3840 + 1920 + 480 && n.pitch === G4));
 
 console.log("Melody grid smoke test passed");

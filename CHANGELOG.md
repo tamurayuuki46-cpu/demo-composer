@@ -7,6 +7,11 @@
 - Chord Backing Pattern 4種類（Block / 8分刻み / Arpeggio / Syncopation）。コード進行自体は変えず、伴奏の鳴らし方だけを選択できる（Schema変更なし）
 - Backing Pattern Smoke Test（`npm run test:backing`）。Pattern生成 / AutoSave対象データ / Undo・Redo / Chord.midへの反映をCIで確認
 - Backing Pattern最終統合前の復元ブランチ `restore/v0.2-before-backing-pattern-final`
+- Melody: `Copy Bar`（次の小節へ複製）/ `Copy 2小節`（2小節を続けて複製）。コピー先に音があれば上書き確認、音の長さは保つがコピー先の終わりを超えない
+- Rhythm: Drum Presetを「Section全体に適用」（Kick / Snare / Closed HHのみ。Bassは変更しない）
+- Arrange: 骨子の進み具合表示（曲全体と各Sectionで コード / メロ / ベース / ドラム の入力済み小節数。✓ / △ / －）
+- Smoke Test追加: `copyMelodyBars` / `applyDrumPresetToBars` / `sectionProgress`（既存の `test:melody` / `test:rhythm-presets` / `test:section` に含む）
+- 追加前の復元ブランチ `restore/v0.2-before-copy-progress`（Schema変更なし）
 - Demo Playerのパート聴き分け（Chord / Melody / Bass / Drumsのミュート、ソロ）。再生中も反映、保存・MIDIには影響しない（Schema変更なし）
 - AI相談用テキストのコピー（Hub > AI相談。曲の基本情報・構成・コード・メロディ・ベース・ドラム + 相談したいこと。APIなし）
 - Part Switch Smoke Test（`npm run test:parts`）/ AI Consult Text Smoke Test（`npm run test:consult`）、CI対象

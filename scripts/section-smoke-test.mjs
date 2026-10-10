@@ -3,7 +3,7 @@ import { createDefaultProject, createProjectStore, validateProject } from "../sr
 import {
   SECTION_TEMPLATES, buildTemplateSections, createSection, getSections, sectionLabel,
   sectionRanges, sliceProject, totalSectionBars, validateStructure, barsHaveContent,
-  MAX_SECTION_BARS, MAX_TOTAL_BARS
+  MAX_SECTION_BARS, MAX_TOTAL_BARS, sectionProgress
 } from "../src/core/section-ops.js";
 
 const BAR = 1920;
@@ -112,4 +112,19 @@ assert.equal(store.getSnapshot().chords.length, p.chords.length, "slice does not
 // --- createSection / history coexist
 assert.equal(createSection("verse", undefined, []).bars, 8);
 assert.throws(() => store.setSections([{ id: "x", kind: "bad", name: "x", bars: 1 }]));
+// --- sectionProgress
+const pp = {
+  basic: { ppq: 480 },
+  chords: [chord(0), chord(1), chord(2)],
+  tracks: [
+    { role: "melody", notes: [note("m", 60, 0), note("m2", 62, BAR * 2)] },
+    { role: "bass", notes: [note("b", 36, BAR)] },
+    { role: "drums", notes: [] }
+  ]
+};
+const prog = sectionProgress(pp, 0, 4);
+assert.deepEqual(prog.chord, { filled: 3, total: 4 });
+assert.deepEqual(prog.melody, { filled: 2, total: 4 });
+assert.deepEqual(prog.bass, { filled: 1, total: 4 });
+assert.deepEqual(prog.drums, { filled: 0, total: 4 });
 console.log("section smoke test passed");

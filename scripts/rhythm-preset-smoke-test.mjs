@@ -3,7 +3,9 @@ import {
   applyDrumPreset,
   DRUM_PRESETS,
   getDrumPreset,
-  hasEditableDrumsInBar
+  hasEditableDrumsInBar,
+  applyDrumPresetToBars,
+  hasEditableDrumsInBars
 } from "../src/rhythm/drum-presets.js";
 import { DRUM_PITCH } from "../src/rhythm/rhythm-grid.js";
 
@@ -63,5 +65,14 @@ for (const preset of DRUM_PRESETS) {
   );
   assert.ok(notes.every((note) => note.durationTick === stepTicks));
 }
+
+// Section全体への一括適用
+const first = DRUM_PRESETS[0];
+const multi = applyDrumPresetToBars([], { presetId: first.id, startBar: 1, endBar: 4, barTicks, stepTicks });
+const perBar = applyDrumPreset([], { presetId: first.id, barStartTick: 0, stepTicks }).length;
+assert.equal(multi.length, perBar * 3, "3 bars filled");
+assert.ok(multi.every((n) => n.startTick >= barTicks && n.startTick < barTicks * 4));
+assert.equal(hasEditableDrumsInBars(multi, { startBar: 1, endBar: 4, barTicks }), true);
+assert.equal(hasEditableDrumsInBars(multi, { startBar: 0, endBar: 1, barTicks }), false);
 
 console.log("Rhythm preset smoke test passed.");

@@ -26,3 +26,38 @@ export function clearBar(notes, { barStartTick, barDurationTick }) {
   const barEndTick = barStartTick + barDurationTick;
   return notes.filter((note) => note.startTick < barStartTick || note.startTick >= barEndTick);
 }
+
+// 小節の中身(メロディ)を、別の小節へ上書きコピーする。bars=2なら2小節ぶんをまとめて写す（モチーフの繰り返し用）。
+export function copyMelodyBars(notes, { sourceBarIndex, targetBarIndex, bars = 1, barTicks }) {
+  const sourceStart = sourceBarIndex * barTicks;
+  const sourceEnd = (sourceBarIndex + bars) * barTicks;
+  const targetStart = targetBarIndex * barTicks;
+  const targetEnd = (targetBarIndex + bars) * barTicks;
+  const offset = targetStart - sourceStart;
+
+  const retained = notes.filter((note) => note.startTick < targetStart || note.startTick >= targetEnd);
+  const copied = notes
+    .filter((note) => note.startTick >= sourceStart && note.startTick < sourceEnd)
+    .map((note) => ({
+      ...note,
+      id: createCopyId(),
+      startTick: note.startTick + offset,
+      durationTick: Math.min(note.durationTick, targetEnd - (note.startTick + offset))
+    }));
+
+  return [...retained, ...copied].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+}
+
+export function hasMelodyInBars(notes, { barIndex, bars = 1, barTicks }) {
+  const start = barIndex * barTicks;
+  const end = (barIndex + bars) * barTicks;
+  return notes.some((note) => note.startTick >= start && note.startTick < end);
+}
+
+function createCopyId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
