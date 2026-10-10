@@ -226,7 +226,11 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
 - Beat 1〜4ボタンは `Copy Beat` のコピー元Beatを選ぶ
 - セルをTapすると、そのセルが属するBeatもコピー元として選択される
 - `← Bar` / `Bar →` で小節移動
-- Bassは現在BarのChord Rootを使用し、Chord未設定BarではKey Rootを使用
+- Bassは16マスの上にある `Bassの音程` ボタンで、マスをタップしたときに置く音の高さを選ぶ
+  - ルート / 3度 / 5度 / 7度（コードの構成音に合わせる。sus2 / sus4は2度 / 4度）/ オクターブ上 / ルート下
+  - 基準は現在BarのChord Root（Chord未設定BarではKey Root）。選んだ音程がそのBarのコードから見てどの音かをセルに `R` `3` `5` `7` `8` `R↓` で表示する
+  - 同じマスで別の音程を選んでタップすると置き換わり、同じ音程をもう一度タップすると消える
+  - 初期値は「ルート」。従来のルートだけのBassデータはそのまま使える
 - Bass / Kickを同時に確認可能
 - Kick / Snare / HHはGM準拠Noteを使用
 - Tapでstep ON/OFF
@@ -234,7 +238,7 @@ Bass / Kick / Snare / Closed Hi-Hatを同一画面に表示する。
 - `Clear Bass` でBass全体を削除
 - `Copy Beat` / `Copy Bar` でパターンを次位置へコピー
 - コピー先にRhythmがある場合は上書き確認
-- BarをまたぐBass Copyはコピー先のChord Root / Key Rootへ追従
+- BarをまたぐBass Copyは、音程関係（ルート / 5度など）を保ったままコピー先のChord Root / Key Rootへ追従
 
 ### v0.2 Drum Preset
 

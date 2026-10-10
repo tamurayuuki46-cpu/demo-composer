@@ -563,3 +563,38 @@ h1 {
   .bottom-nav,
   .demo-player { max-width: 720px; margin: 0 auto; }
 }
+
+.bass-choice {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.bass-choice > span {
+  font-size: 13px;
+  color: #b9b9c2;
+}
+.bass-choice-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.bass-choice-buttons button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #28282f;
+  color: #f5f5f5;
+}
+.bass-choice-buttons button.active {
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+.rhythm-cell[data-bass-mark]::after {
+  content: attr(data-bass-mark);
+  font-size: 9px;
+  font-weight: 800;
+  color: #111;
+  line-height: 1;
+  pointer-events: none;
+}

@@ -7,7 +7,9 @@ import {
   hasEditableDrumsInBar
 } from "./drum-presets.js";
 import {
+  bassChoicesForBar,
   bassPitchForBar,
+  bassShortLabel,
   clearRhythmBar,
   copyRhythmBar,
   copyRhythmBeat,
@@ -43,6 +45,7 @@ export function createRhythmController({ projectStore, rerender }) {
   let barIndex = 0;
   let beatIndex = 0;
   let selectedPresetId = DRUM_PRESETS[0].id;
+  let bassChoiceId = "root";
   let message = "Bass / Kick / Snare / HHを16分音符16マスで入力します。";
 
   function metrics(project) {
@@ -67,7 +70,9 @@ export function createRhythmController({ projectStore, rerender }) {
     const barStartTick = barIndex * barTicks;
     const beatStartTick = barStartTick + beatIndex * beatTicks;
     const visibleSteps = Array.from({ length: 16 }, (_, step) => step);
-    const bassPitch = bassPitchForBar(project, barIndex);
+    const bassChoices = bassChoicesForBar(project, barIndex);
+    const bassChoice = bassChoices.find((choice) => choice.id === bassChoiceId) ?? bassChoices[0];
+    const bassPitch = bassPitchForBar(project, barIndex) + bassChoice.semitones;
     const bassNotes = getTrackNotes(project, "bass");
     const drumNotes = getTrackNotes(project, "drums");
     const hasRhythm = hasNotesInRange(bassNotes, barStartTick, barTicks)
@@ -119,6 +124,13 @@ export function createRhythmController({ projectStore, rerender }) {
           ${[0, 1, 2, 3].map((beat) => `<button data-rhythm-beat="${beat}" class="${beatIndex === beat ? "active" : ""}">Beat ${beat + 1}</button>`).join("")}
         </div>
 
+        <div class="bass-choice" role="group" aria-label="Bassの音程">
+          <span>Bassの音程</span>
+          <div class="bass-choice-buttons">
+            ${bassChoices.map((choice) => `<button data-bass-choice="${choice.id}" class="${choice.id === bassChoice.id ? "active" : ""}">${escapeHtml(choice.label)}</button>`).join("")}
+          </div>
+        </div>
+
         <div class="rhythm-grid" aria-label="16分音符16ステップRhythm Grid">
           <div class="rhythm-row rhythm-header">
             <span class="rhythm-label"></span>
@@ -132,9 +144,11 @@ export function createRhythmController({ projectStore, rerender }) {
                 const active = row.role === "bass"
                   ? row.notes.some((note) => note.startTick === startTick)
                   : row.notes.some((note) => note.startTick === startTick && note.pitch === row.pitch);
+                const bassNote = row.role === "bass" ? row.notes.find((note) => note.startTick === startTick) : null;
+                const bassMark = bassNote ? ` data-bass-mark="${escapeHtml(bassShortLabel(project, barIndex, bassNote.pitch))}"` : "";
                 const beatStartClass = step % 4 === 0 ? " beat-start" : "";
                 const selectedBeatClass = Math.floor(step / 4) === beatIndex ? " selected-beat" : "";
-                return `<button class="rhythm-cell${beatStartClass}${selectedBeatClass}${active ? " active" : ""}" data-rhythm-role="${row.role}" data-rhythm-pitch="${row.pitch}" data-rhythm-step="${step}" aria-label="${escapeHtml(row.label)} ${STEP_LABELS[step]}"></button>`;
+                return `<button class="rhythm-cell${beatStartClass}${selectedBeatClass}${active ? " active" : ""}" data-rhythm-role="${row.role}" data-rhythm-pitch="${row.pitch}" data-rhythm-step="${step}"${bassMark} aria-label="${escapeHtml(row.label)} ${STEP_LABELS[step]}"></button>`;
               }).join("")}
             </div>
           `).join("")}
@@ -244,7 +258,7 @@ export function createRhythmController({ projectStore, rerender }) {
         sourceBeatStartTick,
         targetBeatStartTick,
         beatDurationTick: beatTicks,
-        pitch: bassPitchForBar(latest, targetBarIndex)
+        pitchShift: bassPitchForBar(latest, targetBarIndex) - bassPitchForBar(latest, sourceBarIndex)
       });
       const nextDrums = copyRhythmBeat(drumNotes, {
         sourceBeatStartTick,
@@ -277,7 +291,7 @@ export function createRhythmController({ projectStore, rerender }) {
         sourceBarStartTick: barStartTick,
         targetBarStartTick,
         barDurationTick: barTicks,
-        pitch: bassPitchForBar(latest, targetBarIndex)
+        pitchShift: bassPitchForBar(latest, targetBarIndex) - bassPitchForBar(latest, sourceBarIndex)
       });
       const nextDrums = copyRhythmBar(drumNotes, {
         sourceBarStartTick: barStartTick,
@@ -309,6 +323,13 @@ export function createRhythmController({ projectStore, rerender }) {
     document.querySelector("#rhythm-next-bar")?.addEventListener("click", () => {
       barIndex = Math.min(barCount - 1, barIndex + 1);
       rerender("rhythm");
+    });
+
+    document.querySelectorAll("[data-bass-choice]").forEach((button) => {
+      button.addEventListener("click", () => {
+        bassChoiceId = button.dataset.bassChoice;
+        rerender("rhythm");
+      });
     });
 
     document.querySelectorAll("[data-rhythm-beat]").forEach((button) => {
