@@ -1,7 +1,7 @@
 import { isChordQuality } from "./chord-qualities.js";
 import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
 import { applySectionVariation } from "./section-variation.js";
-import { validateStructure, resizeSection, removeSection, copySection, buildTemplateSections } from "./section-ops.js";
+import { validateStructure, resizeSection, removeSection, copySection, appendSectionCopy, buildTemplateSections } from "./section-ops.js";
 
 const KEY_NAMES = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
 const VALID_KEYS = new Set(KEY_NAMES);
@@ -458,6 +458,11 @@ export function createProjectStore(initialProject = createDefaultProject()) {
 
     copySection(fromIndex, toIndex) {
       return applySectionOp(copySection(state, fromIndex, toIndex));
+    },
+
+    // Sectionを末尾に足して、fromIndexの中身をコピーする（1回の編集）。ループから曲に増やすときに使う。
+    appendSectionCopy(fromIndex, kind) {
+      return applySectionOp(appendSectionCopy(state, fromIndex, kind));
     },
 
     // Sectionに「少し違う版」の候補を当てる。変更が無いときは履歴を増やさず、changed=0を返す。

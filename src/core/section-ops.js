@@ -423,6 +423,20 @@ export function removeSection(project, index) {
 
 // fromのSectionの中身（コード / メロディ / ベース / ドラム）を、toのSectionへ上書きコピーする。
 // コピーするのは短いほうのSectionの小節数まで。toの外には触らない。
+// Sectionを末尾に1つ足し、fromIndexの中身（コード・メロ・ベース・ドラム）をそのままコピーする。
+// 小節数はコピー元と同じ。1回の編集（Undo1回）として使えるよう、純粋関数にしてある。
+export function appendSectionCopy(project, fromIndex, kind) {
+  const sections = getSections(project);
+  assertSectionIndex(sections, fromIndex);
+
+  const added = createSection(kind, sections[fromIndex].bars, sections);
+  const withSection = clone(project);
+  withSection.structure = { ...(withSection.structure ?? {}), sections: [...sections, added] };
+  validateStructure(withSection.structure);
+
+  return copySection(withSection, fromIndex, sections.length);
+}
+
 export function copySection(project, fromIndex, toIndex) {
   const sections = getSections(project);
   assertSectionIndex(sections, fromIndex);

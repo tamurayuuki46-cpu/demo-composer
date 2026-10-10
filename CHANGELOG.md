@@ -14,6 +14,9 @@
 - Progression Library Smoke Test（`npm run test:library`、CI対象）
 - CSS Brace Balance Test（`npm run test:css`、CI対象）
 - 追加前の復元ブランチ `restore/v0.2-before-progression-library`
+- Arrange: `🔁 ループから曲にする` の案内。8小節ループを先に作り、Sectionへ複製して増やし、「少し違う版にする」で変えていく流れを、いまの段階（①ループを作る / ②複製して増やす / ③違う版にする）を自動判定して次の1手を出す。`ループを複製して追加`（Sectionを末尾に足して中身をコピー、Undo1回。種類はおすすめ初期値あり）、ループと同じ中身のSectionから `少し違う版にする` を直接開く。`src/core/loop-guide.js`、Core Global Operation `appendSectionCopy`
+- Loop Guide Smoke Test（`npm run test:loop-guide`、CI対象）
+- 追加前の復元ブランチ `restore/v0.2-before-loop-to-song`（Schema変更なし）。#60（Section Variation）の上に積んでいる
 - Section Variation（Arrange: 各Sectionの `少し違う版にする`）: コピーしたSectionなどを「少しだけ違う版」にする候補3つ。ドラムを少し増やす / ベースを少し動かす / メロディの終わりを変える。押したSectionだけが変わり、元のSectionは変わらない。変更が無いときは理由を表示し、履歴も増やさない（`src/core/section-variation.js`、Schema変更なし）
 - Section Variation Smoke Test（`npm run test:variation`、CI対象）
 - Section Energy: 各Sectionに盛り上がり（Low / Mid / High）を設定。Arrangeの上部に「盛り上がり設計」（Sectionの幅 = 小節数、高さ = Energyの棒グラフ + 「イントロ Low → Aメロ Low → Bメロ Mid → サビ High」の流れ）と、気づきのヒント（サビが前より低い、Buildの次が低い、全部同じ）を表示

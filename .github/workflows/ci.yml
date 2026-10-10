@@ -78,6 +78,9 @@ jobs:
       - name: Melody analysis smoke test
         run: npm run test:analysis
 
+      - name: Loop guide smoke test
+        run: npm run test:loop-guide
+
       - name: Section variation smoke test
         run: npm run test:variation
 
