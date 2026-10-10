@@ -4,7 +4,7 @@
 v0.1-dev
 
 最新安定版:
-なし（実機確認前）
+なし（実機確認中）
 
 現在実装済み:
 - Repository初期構成
@@ -33,17 +33,25 @@ v0.1-dev
 - 常設Demo Player
 - Play / Stop / Loop / Position
 - Chord / Melody / Bass / DrumsのWeb Audio軽量プレビュー
+- Android Chrome向けAudioContext resume / fallback
+- スマホ本体スピーカー向けChord/Bass preview調整
+- loudness gain + compressor + limiterによるDemo Player出力調整
 - Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid Export
 - SMF Type 1 / Conductor Track / Tempo / 4/4 / Key Signature
 - project.json手動Backup Export
 - MIDI Smoke Test / Pull Request CI
 - Android v0.1実機テストチェックリスト
+- Vercel PreviewのAndroid Chrome起動確認
+- Chordを使ったDemo Player実音再生と音割れ改善の実機確認
 
 開発中:
-- v0.1実機確認準備
+- v0.1 Android実機確認
 
 次に実施:
-- `docs/ANDROID_TEST_CHECKLIST.md`に沿ったAndroid実機テスト
+- `docs/ANDROID_TEST_CHECKLIST.md`の未確認項目を継続テスト
+- Melody / Bass / Drumsを含むDemo Player再生、Stop / Loop / Position確認
+- AutoSave / Restore実機確認
+- MIDI Export実機確認
 - Cubasis / CubaseへのMIDI Import確認
 - 実機テストで見つかった重大バグの最小修正
 - Stable条件を満たしたらv0.1-stable候補作成
@@ -64,6 +72,7 @@ Stable化前には実装しない / 慎重に判断:
 - DrumsはKick / Snare / Closed HHのみ
 - Demo Playerは仮音確認専用で、本格Synth / Mix / FXは未対応かつ原則追加しない
 - Demo PlayerはPlay時点のProject Snapshotを再生し、再生中の編集は次回Playから反映
+- Android実機では単純な最終出力2倍でクリップが発生したため、その方式は不採用
 - All MIDIはブラウザの複数Download制限を受ける場合がある。その場合は個別Downloadを使う
 - MIDIのCubasis / Cubase / BandLab実Import確認はAndroid/PC実機テストが必要
 - AutoSaveはIndexedDB保存。Snapshot履歴は未実装
@@ -76,7 +85,7 @@ Stable化前には実装しない / 慎重に判断:
 - PPQ=480の方針
 - Module責務の分離
 - 「DAWを再現しない」というプロダクト境界
-- 実機確認前の`main`
+- 実機確認完了前の`main`
 
 最近の重要な設計判断:
 - Android Chromeを主対象
@@ -99,6 +108,10 @@ Stable化前には実装しない / 慎重に判断:
 - BassはChord Root優先、Chord未設定時はKey Rootを使う
 - DrumsはGM準拠のKick36 / Snare38 / ClosedHH42、MIDI Channel 10
 - Demo Playerは作曲確認用の仮音のみ。高度な音作りはCubasis / Cubaseへ任せる
+- Android Demo PlayerはAudioContext resume / fallbackを持つ
+- Chord previewはスマホで聞き取りやすいよう再生時のみ1オクターブ上を使い、Project/MIDI Pitchは変更しない
+- Bass previewはスマホ本体スピーカーで倍音を得るためtriangle波を使う
+- Demo Player出力はloudness gain → compressor → limiter方式を採用し、単純な後段2倍ブーストはクリップのため不採用
 - Song.midはConductor + Chord + Melody + Bass + DrumsのSMF Type 1
 - Part MIDIもConductor + 対象PartのType 1
 - MIDI ChannelsはChord1 / Melody2 / Bass3 / Drums10
