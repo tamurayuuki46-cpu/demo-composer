@@ -5,7 +5,7 @@ import { compareSections, contrastHints } from "../core/section-compare.js";
 import { applyPeakGuide, buildPeakGuide, currentPeak, defaultPeakBar, PEAK_SHAPES } from "./peak-guide.js";
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
-import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar } from "./melody-candidates.js";
+import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar, MELODY_CANDIDATE_VARIATION_COUNT } from "./melody-candidates.js";
 import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 
 const EIGHTH_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
@@ -41,6 +41,8 @@ export function createMelodyController({ projectStore, rerender }) {
   let peakOpen = false;
   let peakBar = null;
   let peakShapeId = "rise";
+  // Melody候補の別案番号。UI状態だけで、選んだ結果以外はproject.jsonへ保存しない
+  let candidateVariation = 0;
   let message = "セルをタップして8分音符を入力します。";
 
   function stepTickSize(barTicks) {
@@ -187,7 +189,7 @@ export function createMelodyController({ projectStore, rerender }) {
       && barIndex + bars * 2 <= MAX_TOTAL_BARS;
 
     const chordTones = chordTonePitchClasses(chord);
-    const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave });
+    const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave, variation: candidateVariation });
 
     const gridRows = pitches.map((pitch) => {
       const name = pitchName(pitch);
@@ -232,7 +234,10 @@ export function createMelodyController({ projectStore, rerender }) {
               <strong>メロディ候補</strong>
               <small>Bar ${barIndex + 1} の叩き台を3つ</small>
             </div>
-            <span>C${octave}–B${octave}</span>
+            <div>
+              <small>C${octave}–B${octave} ・ ${candidateVariation + 1}/${MELODY_CANDIDATE_VARIATION_COUNT}</small>
+              <button type="button" id="melody-candidate-refresh" class="small-action" aria-label="Bar ${barIndex + 1} のメロディ候補を更新">↻ 候補を更新</button>
+            </div>
           </div>
           <div class="melody-candidate-list">
             ${melodyCandidates.map((candidate) => `
@@ -243,7 +248,7 @@ export function createMelodyController({ projectStore, rerender }) {
               </button>
             `).join("")}
           </div>
-          <p class="hint">候補を選ぶと現在の1小節だけ置き換えます。選んだ後は下のPiano Rollで1音ずつ直せます（↶ で戻せます）。</p>
+          <p class="hint">候補を選ぶと現在の1小節だけ置き換えます。「候補を更新」で別案に切り替えられます。選んだ後は下のPiano Rollで1音ずつ直せます（↶ で戻せます）。</p>
         </section>
 
         <div class="melody-toolbar">
@@ -305,7 +310,13 @@ export function createMelodyController({ projectStore, rerender }) {
     const project = projectStore.getSnapshot();
     const { barTicks, stepTicks, barCount } = metrics(project);
     const barStartTick = barIndex * barTicks;
-    const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave });
+    const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave, variation: candidateVariation });
+
+    document.querySelector("#melody-candidate-refresh")?.addEventListener("click", () => {
+      candidateVariation = (candidateVariation + 1) % MELODY_CANDIDATE_VARIATION_COUNT;
+      message = `Bar ${barIndex + 1} の候補を更新しました（${candidateVariation + 1}/${MELODY_CANDIDATE_VARIATION_COUNT}）。`;
+      rerender("melody");
+    });
 
     document.querySelectorAll("[data-melody-candidate]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -407,6 +418,7 @@ export function createMelodyController({ projectStore, rerender }) {
       }));
       message = `Bar ${barIndex + 1}${bars > 1 ? `–${barIndex + bars}` : ""} を Bar ${targetBarIndex + 1}${bars > 1 ? `–${targetBarIndex + bars}` : ""} へコピーしました。`;
       barIndex = targetBarIndex;
+      candidateVariation = 0;
       rerender("melody");
     };
 
@@ -441,6 +453,7 @@ export function createMelodyController({ projectStore, rerender }) {
         projectStore.updateMelodyNotes(result.notes);
         message = `目安の音を${result.placed}小節に置きました${result.skipped > 0 ? `（入力済みの${result.skipped}小節は変えていません）` : ""}。山は Bar ${peakNow() + 1} です。`;
         barIndex = Math.max(peakNow() - 3, 0);
+        candidateVariation = 0;
       }
       rerender("melody");
     });
@@ -460,11 +473,13 @@ export function createMelodyController({ projectStore, rerender }) {
 
     document.querySelector("#melody-prev-bar")?.addEventListener("click", () => {
       barIndex = Math.max(0, barIndex - 1);
+      candidateVariation = 0;
       rerender("melody");
     });
 
     document.querySelector("#melody-next-bar")?.addEventListener("click", () => {
       barIndex = Math.min(barCount - 1, barIndex + 1);
+      candidateVariation = 0;
       rerender("melody");
     });
 
