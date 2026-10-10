@@ -213,6 +213,7 @@ export function createDemoPlayer({ onStateChange } = {}) {
   let endTimer = null;
   let currentProject = null;
   let currentLengthTick = null;
+  let currentRefresh = null;
 
   function emit() {
     const position = playing && context
@@ -317,12 +318,15 @@ export function createDemoPlayer({ onStateChange } = {}) {
   }
 
   // lengthTickを渡すと、中身の末尾ではなくその長さで再生する（Section再生で末尾の空き小節も含めるため）
-  async function play(project, { lengthTick = null } = {}) {
+  // refreshを渡すと、Loopで次の周に入るときに呼んで、最新の { project, lengthTick } で鳴らし直す
+  // （再生中に編集したコード・メロディなどを、Stopしなくても次の周から聴けるように）。nullを返すか失敗したら前の内容で続ける。
+  async function play(project, { lengthTick = null, refresh = null } = {}) {
     stop({ notify: false });
     await ensureContext();
 
     currentProject = structuredClone(project);
     currentLengthTick = lengthTick;
+    currentRefresh = refresh;
     duration = tickToSeconds(currentProject, lengthTick ?? projectEndTick(currentProject));
     startTime = context.currentTime + 0.06;
     activeSources = new Set();
@@ -334,10 +338,20 @@ export function createDemoPlayer({ onStateChange } = {}) {
     endTimer = setTimeout(async () => {
       if (!playing) return;
       const shouldLoop = loop;
+      const refreshNow = currentRefresh;
       stop({ notify: !shouldLoop });
       if (shouldLoop && currentProject) {
         try {
-          await play(currentProject, { lengthTick: currentLengthTick });
+          let latest = null;
+          try {
+            latest = refreshNow ? refreshNow() : null;
+          } catch {
+            latest = null; // 最新を作れないときは、前の内容で続ける
+          }
+          await play(latest?.project ?? currentProject, {
+            lengthTick: latest ? (latest.lengthTick ?? null) : currentLengthTick,
+            refresh: refreshNow
+          });
         } catch {
           stop();
         }

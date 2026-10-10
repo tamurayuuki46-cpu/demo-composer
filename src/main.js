@@ -773,20 +773,30 @@ function bindChordControls() {
   });
 }
 
+// 再生する内容を作る。index=null は曲全体、数値ならそのSectionの範囲だけ。
+// Loopは次の周に入るたびにこれを呼び直すので、再生中に編集した内容も次の周から聴こえる。
+function buildPlayback(index) {
+  const project = projectStore.getSnapshot();
+  if (index === null) return { project, lengthTick: null };
+  const range = sectionRanges(getSections(project))[index];
+  if (!range) return null; // Sectionが無くなった: 前の内容で続ける
+  const barTicks = project.basic.ppq * 4;
+  return {
+    project: sliceProject(project, range.startBar * barTicks, range.endBar * barTicks),
+    lengthTick: range.section.bars * barTicks
+  };
+}
+
+async function playBuilt(index) {
+  const built = buildPlayback(index);
+  if (!built) throw new Error("Sectionが見つかりません。");
+  await demoPlayer.play(built.project, { lengthTick: built.lengthTick, refresh: () => buildPlayback(index) });
+}
+
 // index=null は曲全体。Sectionは範囲だけを切り出して再生し、Loopも同じ範囲を繰り返す。
 async function playSection(index) {
   try {
-    const project = projectStore.getSnapshot();
-    if (index === null) {
-      await demoPlayer.play(project);
-      return;
-    }
-    const range = sectionRanges(getSections(project))[index];
-    const barTicks = project.basic.ppq * 4;
-    await demoPlayer.play(
-      sliceProject(project, range.startBar * barTicks, range.endBar * barTicks),
-      { lengthTick: range.section.bars * barTicks }
-    );
+    await playBuilt(index);
   } catch (error) {
     demoPlayer.stop();
     if (playerTime) playerTime.textContent = error instanceof Error ? error.message : "再生できません。";
@@ -796,7 +806,7 @@ async function playSection(index) {
 function bindPlayerControls() {
   playerPlay?.addEventListener("click", async () => {
     try {
-      await demoPlayer.play(projectStore.getSnapshot());
+      await playBuilt(null);
     } catch (error) {
       demoPlayer.stop();
       if (playerTime) {
