@@ -1,4 +1,4 @@
-import { chordSymbol, getDiatonicChords } from "./chord-theory.js";
+import { chordDegreeForVariant, chordSymbol, getDiatonicChords, rootToPitchClass } from "./chord-theory.js";
 
 // 次のコード候補を3つ出す。AIが決めるのではなく、「次に来やすい3つ」を見せて人間が選ぶための叩き台。
 // 候補はダイアトニックコード（Key / Scaleの7和音）の中から、直前のコードに応じて選ぶ。
@@ -54,6 +54,33 @@ export function suggestNextChords(chords, { key, scale }) {
       quality: chord.quality,
       degree: chord.degree,
       symbol: chordSymbol(chord.root, chord.quality),
+      reason
+    };
+  });
+}
+
+// ひとスパイス: 同主調（同じ主音のMajor / Minor）から和音を1つ借りる候補。
+// Majorの曲ではMinor側から、Minorの曲ではMajor側から借りる。使いすぎず、1つだけ混ぜるのがコツ。
+const SPICE_MAJOR = [
+  { semitones: 5, quality: "minor", reason: "切ない影が差す（Fm系）" },
+  { semitones: 10, quality: "major", reason: "ロックっぽく抜ける（♭VII）" },
+  { semitones: 8, quality: "major", reason: "ドラマチックに広がる（♭VI）" }
+];
+const SPICE_MINOR = [
+  { semitones: 5, quality: "major", reason: "ぱっと明るくなる（IV）" },
+  { semitones: 7, quality: "major", reason: "強くIへ向かう（V）" },
+  { semitones: 0, quality: "major", reason: "最後に光が差す（I）" }
+];
+
+export function suggestSpiceChords({ key, scale }) {
+  const tonic = rootToPitchClass(key);
+  return (scale === "major" ? SPICE_MAJOR : SPICE_MINOR).map(({ semitones, quality, reason }) => {
+    const root = (tonic + semitones) % 12;
+    return {
+      root,
+      quality,
+      degree: chordDegreeForVariant(root, key, quality),
+      symbol: chordSymbol(root, quality),
       reason
     };
   });

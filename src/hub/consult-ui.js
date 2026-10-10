@@ -1,4 +1,5 @@
-import { buildConsultText } from "./consult-text.js";
+import { CONSULT_TEMPLATES, buildConsultText } from "./consult-text.js";
+import { copyText } from "./clipboard.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -17,6 +18,9 @@ export function consultPanelHtml() {
     <section id="consult-panel" class="export-panel consult-panel" hidden>
       <h3>AI相談</h3>
       <label for="consult-question" class="hint">相談したいこと（書かなくてもコピーできます）</label>
+      <div class="consult-templates" role="group" aria-label="悩みのテンプレート">
+        ${CONSULT_TEMPLATES.map((template) => `<button type="button" class="consult-template" data-consult-template="${template.id}">${escapeHtml(template.label)}</button>`).join("")}
+      </div>
       <textarea id="consult-question" rows="3" placeholder="例: サビのメロディをもっと盛り上げたい">${escapeHtml(question)}</textarea>
       <button id="consult-copy" class="export-primary consult-copy">相談用テキストをコピー</button>
       <details class="consult-details">
@@ -26,30 +30,6 @@ export function consultPanelHtml() {
       <p class="hint">コピーしたら、ChatGPTやClaudeに貼り付けて相談できます。曲の情報・構成・コード・メロディ・ベース・ドラムがまとまっています。送信はされません。</p>
     </section>
   `;
-}
-
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    // 権限がない環境向けの代替（textareaを選択してコピー）
-    const area = document.createElement("textarea");
-    area.value = text;
-    area.setAttribute("readonly", "");
-    area.style.position = "fixed";
-    area.style.opacity = "0";
-    document.body.append(area);
-    area.select();
-    let ok = false;
-    try {
-      ok = document.execCommand("copy");
-    } catch {
-      ok = false;
-    }
-    area.remove();
-    return ok;
-  }
 }
 
 export function bindConsultPanel({ projectStore, setMessage }) {
@@ -78,6 +58,18 @@ export function bindConsultPanel({ projectStore, setMessage }) {
   questionField?.addEventListener("input", (event) => {
     question = event.target.value;
     refreshPreview();
+  });
+
+  document.querySelectorAll("[data-consult-template]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const template = CONSULT_TEMPLATES.find((item) => item.id === button.dataset.consultTemplate);
+      if (!template || !questionField) return;
+      // 既に書いてあるときは消さず、改行して続けて足す
+      question = question.trim() ? `${question.trim()}\n${template.text}` : template.text;
+      questionField.value = question;
+      refreshPreview();
+      questionField.focus();
+    });
   });
 
   document.querySelector("#consult-copy")?.addEventListener("click", async () => {
