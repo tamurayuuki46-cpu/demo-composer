@@ -17,6 +17,7 @@ v0.2-dev
 - Chord: ダイアトニック7候補 + 基準音C〜B + Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug
 - Chord Preset: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行
 - Chord Presetは現在Key / Scaleへ自動変換し、通常の `project.chords[]` として適用
+- Chord Preset適用後は個別追加 / 削除 / Clearで修正可能
 - Chord Quality共通定義をChord / Demo Player / MIDI Exportで共有
 - Melody: 8分 / 16分切替、Monophonic、Bar / Octave切替、Clear Bar、縦ピアノKeyboard
 - Rhythm: Bass / Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy
@@ -30,16 +31,18 @@ v0.2-dev
 - MIDI / Rhythm Copy / Rhythm Preset / Melody / Chord / Chord Preset Smoke Test、Syntax Check、Static BuildのCI
 
 Repository統合状況:
-- v0.2機能統合commit: `c21bb9b0b343e8dc807c6fd884ceaf670c48cd43`
+- v0.2基礎機能統合commit: `c21bb9b0b343e8dc807c6fd884ceaf670c48cd43`
+- Chord Preset統合commit: `5f0c6cb3d964ccd2d0ba93ed3bb43d81ecef6eb3`
 - PR #26 GitHub Pages Fallback: merged
 - PR #27 v0.2 Chord Quality + Schema v2 + Rhythm Preset統合: merged
+- PR #30 Chord Preset 6種類: merged
 - PR #23 Chord Quality + Schema v2: #27で置換済みとしてclose。branchは保持
 - PR #24 Rhythm Preset: #27で置換済みとしてclose。branchは保持
-- GitHub Pages v0.2 Deploy: success
+- GitHub Pages Chord Preset版 Deploy: success
 - GitHub Pages公開URL: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 - v0.2統合前復元点: `restore/v0.1-before-v0.2-integration`
 - Chord Preset追加前復元点: `restore/v0.2-before-chord-presets`
-- Chord Preset作業branch: `chatgpt/v0.2-chord-presets`
+- Chord Preset作業branch: `chatgpt/v0.2-chord-presets`（履歴として保持）
 - 元の機能別復元点 / branchも削除せず保持
 - `main` はstable専用。変更しない
 - `milestone/v0.1-feature-complete` は復元点として保持
@@ -56,29 +59,30 @@ Android実機で確認済み / ユーザー受入済み:
 - BandLab Androidへ個別MIDIをImportして再生
 - GitHub Pages公開URLがAndroidで表示できること
 
-v0.2統合CI確認済み:
+v0.2 CI確認済み:
 - JavaScript syntax check: success
 - MIDI smoke test: success
 - Rhythm copy smoke test: success
 - Rhythm preset smoke test: success
 - Melody grid smoke test: success
 - Chord types smoke test: success
+- Chord preset smoke test: success
 - Static build: success
 - GitHub Pages Deploy: success
 
 開発中:
-- Chord Preset 6種類の追加
-- Chord PresetのCI / Android実機確認
+- Chord Preset実装とdevelop統合は完了
+- 次はAndroid実機でChord Preset / Drum Presetの回帰確認
 
 次に実装 / 確認:
-1. Chord Preset branchのCIを通す
-2. `develop`へ統合してGitHub Pagesを更新
-3. Android実機でChord Preset 6種類のSelect / Preview / 適用を確認
+1. GitHub Pages公開版でChord画面に `Chord Preset` が表示されることを確認
+2. 6種類のPreset Select / 説明 / 実コードPreviewを確認
+3. Preset適用で現在進行が置き換わることを確認
 4. 既存進行がある時の上書き確認を確認
-5. Bass Noteがある時に安全に拒否されることを確認
+5. Bass Noteがある時に安全にChord変更を拒否することを確認
 6. Preset適用後の個別追加 / 削除 / Clearを確認
 7. Demo Player / Chord.mid / Song.midへPreset結果がそのまま反映されることを確認
-8. Rhythm Drum Preset 6種類も公開版で回帰確認
+8. Rhythm Drum Preset 6種類のSelect / 適用 / 上書き確認 / 手動修正を公開版で回帰確認
 9. 問題なければChord Tone表示の仕様案を作る
 10. その後Melody Analyzerを検討
 
