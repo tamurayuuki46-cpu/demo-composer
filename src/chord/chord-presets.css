@@ -54,3 +54,35 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+.backing-pattern-panel {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.backing-pattern-panel .field {
+  margin: 0;
+}
+
+.backing-pattern-panel select {
+  min-height: 46px;
+  width: 100%;
+}
+
+.backing-pattern-panel small {
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: .72;
+}
+
+.backing-pattern-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: .58;
+}
