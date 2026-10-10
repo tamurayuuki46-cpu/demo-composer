@@ -2,6 +2,7 @@ import { chordSymbol } from "../chord/chord-theory.js";
 import { clearBar, getMelodyNotes, getOctavePitches, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 
 const STEP_LABELS = ["1", "1&", "2", "2&", "3", "3&", "4", "4&"];
+const BLACK_PITCH_CLASSES = new Set([1, 3, 6, 8, 10]);
 
 function escapeHtml(value) {
   return String(value)
@@ -10,6 +11,10 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function pianoKeyClass(pitch) {
+  return BLACK_PITCH_CLASSES.has(pitch % 12) ? "black" : "white";
 }
 
 export function createMelodyController({ projectStore, rerender }) {
@@ -45,16 +50,21 @@ export function createMelodyController({ projectStore, rerender }) {
     const chord = project.chords[barIndex];
     const chordLabel = chord ? `${chordSymbol(chord.root, chord.quality)} (${chord.degree})` : "コード未設定";
 
-    const gridRows = pitches.map((pitch) => `
-      <div class="melody-row">
-        <span class="pitch-label">${escapeHtml(pitchName(pitch))}</span>
-        ${visibleSteps.map((step) => {
-          const startTick = barStartTick + step * stepTicks;
-          const active = notes.some((note) => note.startTick === startTick && note.pitch === pitch);
-          return `<button class="note-cell${active ? " active" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(pitchName(pitch))} ${STEP_LABELS[step]}"></button>`;
-        }).join("")}
-      </div>
-    `).join("");
+    const gridRows = pitches.map((pitch) => {
+      const name = pitchName(pitch);
+      const keyClass = pianoKeyClass(pitch);
+
+      return `
+        <div class="melody-row">
+          <span class="piano-key ${keyClass}" aria-hidden="true">${escapeHtml(name)}</span>
+          ${visibleSteps.map((step) => {
+            const startTick = barStartTick + step * stepTicks;
+            const active = notes.some((note) => note.startTick === startTick && note.pitch === pitch);
+            return `<button class="note-cell${active ? " active" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${STEP_LABELS[step]}"></button>`;
+          }).join("")}
+        </div>
+      `;
+    }).join("");
 
     return `
       <section class="card">
@@ -83,16 +93,16 @@ export function createMelodyController({ projectStore, rerender }) {
           <button data-step-page="1" class="${stepPage === 1 ? "active" : ""}">Beat 3–4</button>
         </div>
 
-        <div class="melody-grid">
+        <div class="melody-grid" aria-label="縦ピアノ付きメロディグリッド">
           <div class="melody-row melody-header">
-            <span class="pitch-label"></span>
+            <span class="piano-key-spacer" aria-hidden="true"></span>
             ${visibleSteps.map((step) => `<span>${STEP_LABELS[step]}</span>`).join("")}
           </div>
           ${gridRows}
         </div>
 
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
-        <p class="hint">同じステップでは1音だけ入力します。別の音をタップすると置き換わります。変更後はHubのSaveで保存してください。</p>
+        <p class="hint">左の縦ピアノを音程の目印にして入力します。同じステップでは1音だけ入力し、別の音をタップすると置き換わります。</p>
       </section>
     `;
   }
