@@ -45,11 +45,14 @@ Module Navigationの上に常設。
 - BPM
 - Key
 - Scale
-- Save
+- AutoSave状態
+- Save Now
 - Export
 - AI相談
 
-現在のSaveは手動。IndexedDBへActive Projectを保存する。
+通常のProject変更は1.5秒無操作後にIndexedDBへAutoSaveする。アプリがhiddenになる時も即時保存する。
+
+`Save Now`は即時保存とPersistent Storage要求のために残す。
 
 ### Export Panel
 
