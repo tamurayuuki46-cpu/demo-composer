@@ -6,8 +6,8 @@ Rhythm Moduleは `bass` / `drums` Trackを担当する。
 
 - Bass / Kick / Snare / Closed Hi-Hatを同じ画面に表示
 - 1 Bar = 16 step（16分音符）
-- スマホでは1 Beat = 4 stepずつ表示
-- Beat 1〜4を切替
+- 1 Barの16 stepを `1 e & a / 2 e & a / 3 e & a / 4 e & a` として同時表示
+- Beat 1〜4ボタンでCopy Beatのコピー元Beatを選択（セルTapでもそのBeatを選択）
 - Bar前後移動
 - Bassは現在ChordのRootを自動採用
 - Chord未設定BarではKey Rootを使用

@@ -31,9 +31,9 @@ HubではProject名 / BPM / Key / Scaleを編集できます。通常の変更�
 
 Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを候補表示し、タップで1小節ずつ進行へ追加できます。追加済みコードの削除 / Clearにも対応しています。
 
-Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。1小節を8分音符8 stepとして扱い、4 stepずつ表示してタップ入力できます。Bar / Octave切替とClear Barに対応しています。
+Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。左端に白鍵 / 黒鍵が分かる縦ピアノKeyboardを表示し、1小節を `1 & 2 & 3 & 4 &` の8分音符8 stepとして1画面に同時表示してタップ入力できます。Bar / Octave切替とClear Barに対応しています。
 
-Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを1 Beat=4 stepずつ表示し、Bassは現在ChordのRootを使用します。現在Beatを次Beatへ、現在Barを次BarへコピーするRhythm Copyにも対応しています。Beat 4のコピーは次BarのBeat 1へ進みます。
+Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを `1 e & a / 2 e & a / 3 e & a / 4 e & a` として1画面に同時表示し、Bassは現在ChordのRootを使用します。現在Beatを次Beatへ、現在Barを次BarへコピーするRhythm Copyにも対応しています。Beat 4のコピーは次BarのBeat 1へ進みます。
 
 Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量な仮音でPlay / Stop / Loop再生できます。Loopは最後に使用しているBarの終端で反復します。
 
