@@ -1,9 +1,11 @@
+import { chordSymbol, getDiatonicChords } from "./chord/chord-theory.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
 let projectStore;
 let currentScreen = "hub";
 let startupMessage = "Projectを編集できます。変更後はSaveで端末に保存してください。";
+let chordMessage = "下の候補をタップしてコードを追加します。";
 
 const KEY_OPTIONS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -61,21 +63,53 @@ function hubScreen() {
   `;
 }
 
+function chordScreen() {
+  const project = projectStore.getSnapshot();
+  const candidates = getDiatonicChords(project.basic.key, project.basic.scale);
+  const progression = project.chords.length
+    ? project.chords.map((chord, index) => `
+        <div class="chord-card progression-card">
+          <button class="remove-chord" data-remove-chord="${index}" aria-label="${escapeAttribute(chordSymbol(chord.root, chord.quality))}を削除">×</button>
+          <strong>${escapeHtml(chordSymbol(chord.root, chord.quality))}</strong>
+          <span>${escapeHtml(chord.degree)}</span>
+          <small>${index + 1}小節目</small>
+        </div>
+      `).join("")
+    : `<div class="empty-state">まだコードがありません。</div>`;
+
+  return `
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <h2>Chord</h2>
+          <p>${escapeHtml(project.basic.key)} ${project.basic.scale === "major" ? "Major" : "Minor"} のダイアトニックコード</p>
+        </div>
+        <button id="clear-chords" class="small-action"${project.chords.length ? "" : " disabled"}>Clear</button>
+      </div>
+
+      <h3>進行</h3>
+      <div class="progression">${progression}</div>
+
+      <p id="chord-message" class="status-message" aria-live="polite">${escapeHtml(chordMessage)}</p>
+
+      <h3>追加候補</h3>
+      <div class="chord-candidates">
+        ${candidates.map((candidate, index) => `
+          <button class="candidate-chord" data-add-chord="${index}">
+            <strong>${escapeHtml(candidate.symbol)}</strong>
+            <span>${escapeHtml(candidate.degree)}</span>
+          </button>
+        `).join("")}
+      </div>
+
+      <p class="hint">1回タップすると1小節分追加します。変更後はHubのSaveで端末に保存してください。</p>
+    </section>
+  `;
+}
+
 const screens = {
   hub: hubScreen,
-  chord: () => `
-    <section class="card">
-      <h2>Chord</h2>
-      <p>コード名 + Degree を見ながら進行を作る画面です。</p>
-      <div class="progression">
-        <div class="chord-card"><strong>C</strong><span>I</span></div>
-        <div class="chord-card"><strong>G</strong><span>V</span></div>
-        <div class="chord-card"><strong>Am</strong><span>vi</span></div>
-        <div class="chord-card"><strong>F</strong><span>IV</span></div>
-      </div>
-      <p class="hint">※ 現在はUIサンプルです。</p>
-    </section>
-  `,
+  chord: chordScreen,
   melody: () => `
     <section class="card">
       <h2>Melody</h2>
@@ -175,6 +209,64 @@ function bindHubControls() {
   saveButton?.addEventListener("click", saveCurrentProject);
 }
 
+function reflowChords(chords, barTicks) {
+  return chords.map((chord, index) => ({
+    ...chord,
+    startTick: index * barTicks,
+    durationTick: barTicks
+  }));
+}
+
+function bindChordControls() {
+  const project = projectStore.getSnapshot();
+  const candidates = getDiatonicChords(project.basic.key, project.basic.scale);
+  const barTicks = project.basic.ppq * 4;
+
+  document.querySelectorAll("[data-add-chord]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const candidate = candidates[Number(button.dataset.addChord)];
+      if (!candidate) return;
+
+      const latest = projectStore.getSnapshot();
+      const next = [
+        ...latest.chords,
+        {
+          startTick: latest.chords.length * barTicks,
+          durationTick: barTicks,
+          root: candidate.root,
+          quality: candidate.quality,
+          degree: candidate.degree
+        }
+      ];
+
+      projectStore.updateChords(next);
+      chordMessage = `${candidate.symbol} (${candidate.degree}) を追加しました。`;
+      render("chord");
+    });
+  });
+
+  document.querySelectorAll("[data-remove-chord]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const removeIndex = Number(button.dataset.removeChord);
+      const latest = projectStore.getSnapshot();
+      const next = reflowChords(
+        latest.chords.filter((_, index) => index !== removeIndex),
+        barTicks
+      );
+
+      projectStore.updateChords(next);
+      chordMessage = "コードを削除しました。";
+      render("chord");
+    });
+  });
+
+  document.querySelector("#clear-chords")?.addEventListener("click", () => {
+    projectStore.updateChords([]);
+    chordMessage = "コード進行をクリアしました。";
+    render("chord");
+  });
+}
+
 function render(name) {
   currentScreen = name;
   screen.innerHTML = screens[name]();
@@ -183,9 +275,8 @@ function render(name) {
     button.classList.toggle("active", button.dataset.screen === name);
   });
 
-  if (name === "hub") {
-    bindHubControls();
-  }
+  if (name === "hub") bindHubControls();
+  if (name === "chord") bindChordControls();
 }
 
 async function boot() {

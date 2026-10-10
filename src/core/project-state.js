@@ -3,6 +3,7 @@ const SCHEMA_VERSION = 1;
 
 const VALID_KEYS = new Set(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
 const VALID_SCALES = new Set(["major", "minor"]);
+const VALID_CHORD_QUALITIES = new Set(["major", "minor", "diminished"]);
 
 function clone(value) {
   return typeof structuredClone === "function"
@@ -88,6 +89,38 @@ function validateBasic(basic) {
   }
 }
 
+function validateChords(chords) {
+  if (!Array.isArray(chords)) {
+    throw new Error("Chord data is invalid.");
+  }
+
+  chords.forEach((chord, index) => {
+    if (!chord || typeof chord !== "object") {
+      throw new Error(`Chord ${index + 1} is invalid.`);
+    }
+
+    if (!Number.isInteger(chord.root) || chord.root < 0 || chord.root > 11) {
+      throw new Error(`Chord ${index + 1} root is invalid.`);
+    }
+
+    if (!VALID_CHORD_QUALITIES.has(chord.quality)) {
+      throw new Error(`Chord ${index + 1} quality is invalid.`);
+    }
+
+    if (!Number.isInteger(chord.startTick) || chord.startTick < 0) {
+      throw new Error(`Chord ${index + 1} startTick is invalid.`);
+    }
+
+    if (!Number.isInteger(chord.durationTick) || chord.durationTick <= 0) {
+      throw new Error(`Chord ${index + 1} durationTick is invalid.`);
+    }
+
+    if (typeof chord.degree !== "string" || !chord.degree) {
+      throw new Error(`Chord ${index + 1} degree is invalid.`);
+    }
+  });
+}
+
 export function validateProject(project) {
   if (!project || typeof project !== "object") {
     throw new Error("Project data is invalid.");
@@ -99,6 +132,7 @@ export function validateProject(project) {
 
   validateMetadata(project.metadata);
   validateBasic(project.basic);
+  validateChords(project.chords);
 
   if (!Number.isInteger(project.revision) || project.revision < 1) {
     throw new Error("Project revision is invalid.");
@@ -133,6 +167,14 @@ export function createProjectStore(initialProject = createDefaultProject()) {
     },
 
     updateHub({ metadata = {}, basic = {} } = {}) {
+      const harmonyChanged =
+        (Object.hasOwn(basic, "key") && basic.key !== state.basic.key) ||
+        (Object.hasOwn(basic, "scale") && basic.scale !== state.basic.scale);
+
+      if (harmonyChanged && state.chords.length > 0) {
+        throw new Error("コード進行がある間はKey/Scaleを変更できません。ChordでClearしてから変更してください。");
+      }
+
       const next = clone(state);
 
       next.metadata = {
@@ -147,6 +189,18 @@ export function createProjectStore(initialProject = createDefaultProject()) {
 
       validateMetadata(next.metadata);
       validateBasic(next.basic);
+
+      next.revision = state.revision + 1;
+      state = next;
+      emit();
+
+      return clone(state);
+    },
+
+    updateChords(chords) {
+      const next = clone(state);
+      next.chords = clone(chords);
+      validateChords(next.chords);
 
       next.revision = state.revision + 1;
       state = next;

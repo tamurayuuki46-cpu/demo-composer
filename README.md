@@ -31,6 +31,8 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 HubではProject名 / BPM / Key / Scaleを編集でき、Saveで現在のProjectを端末に保存できます。次回起動時は保存済みProjectを自動で読み込みます。
 
+Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを候補表示し、タップで1小節ずつ進行へ追加できます。追加済みコードの削除 / Clearにも対応しています。
+
 現段階では手動Saveのみです。Autosave / project.json手動Backup / Migrationは後続実装です。
 
 ## AI共同開発
