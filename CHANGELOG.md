@@ -22,6 +22,11 @@
 - Chord候補タップによる1小節追加
 - Chord削除 / Clear / startTick再配置
 - Chord State Validation / updateChords API
+- Melody Track Validation / updateMelodyNotes API
+- スマホ向け簡易Melody Piano Roll
+- MelodyのBar / Octave / Beat表示切替
+- Monophonicな8分音符Tap入力 / Clear Bar
+- Melody UI大幅変更前の復元ブランチ `restore/v0.1-before-melody-roll`
 
 ### 変更
 - Hub表示を固定値からProject State参照へ変更
@@ -30,9 +35,12 @@
 - Project Stateと永続化処理を分離
 - Chord画面を固定サンプルからProject Data連動UIへ変更
 - Chord進行が存在する間はKey / Scale変更を拒否し、Degree不整合を防止
+- Melody画面をPlaceholderからProject Data連動の簡易Piano Rollへ変更
+- Melody Noteが存在する間もKey / Scale変更を拒否して整合性を保護
 
 ### 修正
 - Chord作成後のKey / Scale変更で表示とDegreeが不整合になる問題を予防
+- ChordをClearした後も5小節目以降のMelody Noteへ移動できるようBar数をNote Dataから補完
 
 ### 未対応
 - Autosave / Snapshot履歴
@@ -41,6 +49,7 @@
 - Demo Player実装
 - MIDI Export
 - Chord並べ替え / 長さ変更 / 7th / 借用和音
-- Piano Roll
+- Melody 16分音符 / Note Length / Velocity編集
+- Scale表示 / Chord Tone強調 / Melody Analyzer
 - Rhythm Step Sequencer
 - PWA Service Worker
