@@ -1,0 +1,115 @@
+name: One-time New Project docs update
+
+on:
+  push:
+    branches:
+      - chatgpt/v0.2-new-project-final
+    paths:
+      - .github/workflows/temp-new-project-docs.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update-docs:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/v0.2-new-project-final
+          fetch-depth: 0
+      - name: Update shared docs
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              if old not in text:
+                  raise SystemExit(f"target not found in {path}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          # CHANGELOG: keep all existing history and prepend only this feature.
+          replace_once(
+              "CHANGELOG.md",
+              "### 追加\n",
+              "### 追加\n"
+              "- Hub: `＋ 新規Project` を追加。現在のProjectを `Save Now` で確定してからDemo Playerを停止し、空の新しいProjectへ切り替える。旧ProjectはIndexedDBの `projects` storeから削除せず、新しいProjectだけを `activeProjectId` にする（Schema変更なし）\n"
+              "- 新規Project切替は `src/hub/app-entry.js` / `new-project.js` / `new-project-ui.js` で実装。reload直前の `visibilitychange` AutoSaveが旧Projectを再びActiveにする競合を避けるため、次回bootで `main.js` を読み込む前に新ProjectのActive保存を確定する\n"
+              "- New Project Smoke Testを `test:history` に追加。追加前の復元ブランチ `restore/v0.2-before-new-project-final`\n"
+          )
+
+          # README: Hub overview only; preserve the rest.
+          replace_once(
+              "README.md",
+              "`Save Now`は即時保存とPersistent Storage要求に使います。",
+              "`Save Now`は即時保存とPersistent Storage要求に使います。Hubの `＋ 新規Project` では現在のProjectを保存してから、別IDの空ProjectをActiveにして新しい曲を始められます。旧Project自体は端末内に残します。"
+          )
+
+          # PRODUCT_SPEC: product behavior and scope.
+          replace_once(
+              "docs/PRODUCT_SPEC.md",
+              "## v0.2 Early Sound Sketch Lite\n",
+              "## v0.2 New Project\n\n"
+              "Hubから `＋ 新規Project` を選ぶと、現在のProjectを端末へ保存した上で、別IDの空Projectへ切り替える。旧Projectは削除しない。目的は、起動時に最後のActive Projectが復元される保存仕様を維持しつつ、ユーザーが明示的に別の曲を開始できるようにすること。\n\n"
+              "切替時はDemo Playerを停止し、旧Projectの保存完了を確認してからreloadする。reload境界では旧ページのvisibility AutoSaveと競合しないよう、次回bootで `main.js` より先に新ProjectをActiveとして保存する。Project一覧・過去Projectを選んで開くUIはこの初期実装には含めない。schemaVersionは2のまま。\n\n"
+              "## v0.2 Early Sound Sketch Lite\n"
+          )
+
+          # ARCHITECTURE: storage/boot responsibility.
+          replace_once(
+              "docs/ARCHITECTURE.md",
+              "- Save Now時に `navigator.storage.persist()` が利用可能なら永続ストレージ保護を要求\n",
+              "- Save Now時に `navigator.storage.persist()` が利用可能なら永続ストレージ保護を要求\n"
+              "- Hubの `＋ 新規Project` は現在Projectを保存後、別IDのDefault Projectを `projects` storeへ追加して `activeProjectId` を切り替える。旧Projectは削除しない\n"
+              "- 起動Entryは `src/hub/app-entry.js`。新規Project要求がある場合だけ `main.js` のbootより先に新ProjectをActive保存し、旧ページのvisibility AutoSaveとの競合を避ける\n"
+          )
+
+          # UI_SPEC: visible interaction and limitation.
+          replace_once(
+              "docs/UI_SPEC.md",
+              "- Save Now\n- Export\n",
+              "- Save Now\n- ＋ 新規Project\n- Export\n"
+          )
+          replace_once(
+              "docs/UI_SPEC.md",
+              "`Save Now`は即時保存とPersistent Storage要求のために残す。\n",
+              "`Save Now`は即時保存とPersistent Storage要求のために残す。\n\n"
+              "`＋ 新規Project` は確認後にDemo Playerを停止し、現在のProjectを保存してから別IDの空Projectへ切り替える。旧Projectは削除しない。保存に失敗した場合は切り替えず、現在Projectを維持する。初期版では保存済みProject一覧 / 過去Projectを選んで開くUIは未実装。\n"
+          )
+
+          # AI_HANDOFF: add implementation + limitation + restore point without removing concurrent work.
+          replace_once(
+              "docs/AI_HANDOFF.md",
+              "- IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now\n",
+              "- IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now\n"
+              "- Hub `＋ 新規Project`: 現在Projectを保存してから別IDの空ProjectをActiveにする。旧Projectは端末内に保持。`src/hub/app-entry.js` / `new-project.js` / `new-project-ui.js`\n"
+          )
+          replace_once(
+              "docs/AI_HANDOFF.md",
+              "- Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`\n",
+              "- Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`\n"
+              "- 新規Project追加前復元点: `restore/v0.2-before-new-project-final`\n"
+          )
+          replace_once(
+              "docs/AI_HANDOFF.md",
+              "既知の問題:\n",
+              "既知の問題:\n"
+              "- 新規Projectで旧Projectデータは端末内に残るが、保存済みProject一覧 / 過去Projectを選んで再度開くUIは未実装。現時点の復元手段はproject.json Backup / Importを優先する\n"
+          )
+          replace_once(
+              "docs/AI_HANDOFF.md",
+              "最近の重要な設計判断:\n",
+              "最近の重要な設計判断:\n"
+              "- `＋ 新規Project` は現在Projectの中身をClearするのではなく、新しいProject IDを作る。旧Projectを上書き・削除しない\n"
+              "- reload時のvisibility AutoSaveとの競合を避けるため、新規Project要求はsessionStorageでreload境界へ渡し、`app-entry.js` が `main.js` のboot前にActive Projectを確定する。schemaVersionは変更しない\n"
+          )
+      - name: Commit docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md CHANGELOG.md docs/PRODUCT_SPEC.md docs/ARCHITECTURE.md docs/UI_SPEC.md docs/AI_HANDOFF.md
+          git commit -m "docs: document New Project flow [skip ci]"
+          git push origin HEAD:chatgpt/v0.2-new-project-final
