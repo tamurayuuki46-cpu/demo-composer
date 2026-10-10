@@ -1,5 +1,6 @@
 import { isChordQuality } from "./chord-qualities.js";
 import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
+import { validateStructure, resizeSection, removeSection, copySection, buildTemplateSections } from "./section-ops.js";
 
 const KEY_NAMES = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
 const VALID_KEYS = new Set(KEY_NAMES);
@@ -285,6 +286,7 @@ export function validateProject(project) {
   validateBasic(project.basic);
   validateChords(project.chords);
   validateTracks(project.tracks);
+  validateStructure(project.structure);
 
   if (!Number.isInteger(project.revision) || project.revision < 1) {
     throw new Error("Project revision is invalid.");
@@ -319,6 +321,13 @@ export function createProjectStore(initialProject = createDefaultProject()) {
   function restore(snapshot) {
     state = { ...clone(snapshot), revision: state.revision + 1 };
     emit();
+  }
+
+  function applySectionOp(next) {
+    next.revision = state.revision + 1;
+    validateProject(next);
+    commit(next);
+    return clone(state);
   }
 
   return {
@@ -391,6 +400,32 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       commit(next);
 
       return clone(state);
+    },
+
+    // Section（曲の構成）。Chord/Melody/Bass/Drumsを一緒にずらすためCoreのGlobal Operationとして扱う。
+    setSections(sections) {
+      const next = clone(state);
+      next.structure = { ...(next.structure ?? {}), sections: clone(sections) };
+      validateStructure(next.structure);
+      next.revision = state.revision + 1;
+      commit(next);
+      return clone(state);
+    },
+
+    applySectionTemplate(templateId) {
+      return this.setSections(buildTemplateSections(templateId));
+    },
+
+    resizeSection(index, bars) {
+      return applySectionOp(resizeSection(state, index, bars));
+    },
+
+    removeSection(index) {
+      return applySectionOp(removeSection(state, index));
+    },
+
+    copySection(fromIndex, toIndex) {
+      return applySectionOp(copySection(state, fromIndex, toIndex));
     },
 
     undo() {
