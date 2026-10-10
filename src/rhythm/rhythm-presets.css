@@ -47,3 +47,14 @@
   line-height: 1.45;
   opacity: .68;
 }
+
+.rhythm-preset-section {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 8px;
+  border: 1px solid #5a5a66;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+}

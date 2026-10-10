@@ -27,6 +27,8 @@ v0.2-dev
 - Melody: 8分 / 16分切替、音の長さ指定（Bassも同様。`src/core/note-placement.js`）、Monophonic、Bar / Octave切替、Clear Bar、縦ピアノKeyboard
 - Rhythm: Bass（音程選択: ルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下、半音ずらし±6、長さ指定）/ Kick / Snare / Closed HH、16 step、Beat Copy、Bar Copy
 - Rhythm Drum Preset: 8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH
+- Melody Chord Tone強調（`chordTonePitchClasses`、見た目のみ）
+- Melody Copy Bar / Copy 2小節（`copyMelodyBars`）、Rhythm Drum PresetのSection一括適用（`applyDrumPresetToBars`）、Arrange骨子の進み具合表示（`sectionProgress`、Schema変更なし）
 - Arrange: Section Template / 小節増減 / 追加削除 / Sectionコピー / Section再生 / Melody・Rhythm見出し表示 / MIDI Marker
 - Sound Sketch Lite: Chord / Melody / Bassの仮音色Preset + Toneタグ
 - Chord Sound: Keys / Pad / Piano

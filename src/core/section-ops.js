@@ -196,6 +196,28 @@ export function sectionLabel(project, bar) {
   return found ? `${found.section.name} ${found.barInSection + 1}/${found.section.bars}小節` : "";
 }
 
+// 骨子の進み具合。範囲(startBar〜endBar、endBarは含まない)のうち、パートごとに「入力のある小節」が何小節あるか。
+export function sectionProgress(project, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const total = endBar - startBar;
+  const hasNotes = (role, bar) => (project.tracks.find((track) => track.role === role)?.notes ?? [])
+    .some((note) => Math.floor(note.startTick / barTicks) === bar);
+  const count = (hasContent) => {
+    let filled = 0;
+    for (let bar = startBar; bar < endBar; bar += 1) {
+      if (hasContent(bar)) filled += 1;
+    }
+    return { filled, total };
+  };
+
+  return {
+    chord: count((bar) => Boolean(project.chords[bar])),
+    melody: count((bar) => hasNotes("melody", bar)),
+    bass: count((bar) => hasNotes("bass", bar)),
+    drums: count((bar) => hasNotes("drums", bar))
+  };
+}
+
 // 範囲内に、コード・メロディ・ベース・ドラムのどれかが入っているか（上書きや削除の確認用）
 export function barsHaveContent(project, startBar, endBar) {
   const barTicks = barTicksOf(project);
