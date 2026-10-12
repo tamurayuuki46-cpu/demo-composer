@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import {
   ALL_CHORD_QUALITY_ORDER, CHORD_QUALITY_DEFINITIONS, CHORD_QUALITY_GROUPS, CHORD_QUALITY_ORDER, chordIntervals, isChordQuality
 } from "../src/core/chord-qualities.js";
-import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicChords } from "../src/chord/chord-theory.js";
-import { SCALE_FAMILIES, SCALE_SET_LEVELS, scaleFamiliesForProject, scaleSetChords } from "../src/chord/chord-scale-sets.js";
+import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicChords, rootToPitchClass } from "../src/chord/chord-theory.js";
+import { SCALE_FAMILIES, SCALE_SET_LEVELS, getScaleFamily, scaleFamiliesForProject, scaleSetChords, scaleTensionChords } from "../src/chord/chord-scale-sets.js";
 import { resolveScaleFamilyId } from "../src/chord/chord-scale-sets-ui.js";
 import { createDefaultProject, createProjectStore, validateProject } from "../src/core/project-state.js";
 import { buildMidiExports } from "../src/midi/midi-export.js";
@@ -112,5 +112,27 @@ assert.equal(text("melodic-minor", "tension"), "CmMaj9 Dm7b9 D#maj9#5 F7#11 G7b1
 assert.equal(scaleSetChords({ key: "C", familyId: "major", level: "seventh" })[4].degree, "V7");
 assert.equal(scaleSetChords({ key: "C", familyId: "harmonic-minor", level: "tension" })[4].degree, "V7♭9");
 assert.throws(() => scaleSetChords({ key: "C", familyId: "major", level: "nope" }), /Unsupported/);
+
+// テンション段階: 各度の候補は「スケール内の音だけ」で、全部そろっている
+{
+  const pcsOf = (key, familyId) => new Set(getScaleFamily(familyId).intervals.map((i) => (rootToPitchClass(key) + i) % 12));
+  for (const familyId of ["major", "natural-minor", "harmonic-minor", "melodic-minor"]) {
+    const rows = scaleTensionChords({ key: "C", familyId });
+    assert.equal(rows.length, 7);
+    const pcs = pcsOf("C", familyId);
+    rows.forEach((row) => row.chords.forEach((chord) => {
+      assert.ok(chordIntervals(chord.quality).every((t) => pcs.has((chord.root + t) % 12)), `${familyId} ${chord.symbol} inside scale`);
+    }));
+    // 固定表のテンションは必ず候補に含まれる
+    getScaleFamily(familyId).tension.forEach((quality, i) => {
+      if (["diminished7", "minor7flat5"].includes(quality)) return;
+      assert.ok(rows[i].chords.some((c) => c.quality === quality), `${familyId} row ${i} has ${quality}`);
+    });
+  }
+  const major = scaleTensionChords({ key: "C", familyId: "major" });
+  assert.ok(major[0].chords.some((c) => c.symbol === "Cmaj9") && major[0].chords.some((c) => c.symbol === "C6"));
+  assert.ok(!major[0].chords.some((c) => c.quality === "dominant7flat9"), "C7b9 has Eb: outside C major");
+  assert.ok(major[4].chords.some((c) => c.symbol === "G13"));
+}
 
 console.log("Chord scale sets smoke test passed.");
