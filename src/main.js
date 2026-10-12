@@ -39,7 +39,7 @@ import { bindEditHistory } from "./core/edit-history-ui.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createArrangeController } from "./arrange/arrange-screen.js";
 import { createCounterController } from "./arrange/counter-screen.js";
-import { getSections, sectionRanges, sliceProject } from "./core/section-ops.js";
+import { getSections, sectionAtBar, sectionEnergy, sectionRanges, sliceProject } from "./core/section-ops.js";
 import { withCounterNotes } from "./core/counter-melody.js";
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
@@ -76,6 +76,13 @@ let phraseContour = "auto";
 let phraseVariation = 0;
 let phraseFlavor = "plain";
 let phraseScaleId = "";
+let phraseEnergyChoice = "auto";
+// おまかせ = 開始小節のSectionのEnergy（ArrangeのLow / Mid / High）。Sectionが無ければMid
+function phraseEnergy(project) {
+  const found = sectionAtBar(getSections(project), phraseStart);
+  if (phraseEnergyChoice !== "auto") return { energy: phraseEnergyChoice, source: "" };
+  return found ? { energy: sectionEnergy(found.section), source: `Section「${found.section.name}」に合わせる` } : { energy: "mid", source: "" };
+}
 // 選んだスケールの音程（未選択は null = 曲のScale）
 function phraseScaleIntervals() {
   return phraseScaleId ? getScaleFamily(phraseScaleId).intervals : null;
@@ -304,7 +311,7 @@ function chordScreen() {
 
       ${melodyChordPanel(project)}
 
-      ${phraseMelodyHtml({ project, open: phraseOpen, startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation, flavor: phraseFlavor, scaleId: phraseScaleId, scaleGroups: scaleFamilyGroups(project.basic.scale), scaleIntervals: phraseScaleIntervals() })}
+      ${phraseMelodyHtml({ project, open: phraseOpen, startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation, flavor: phraseFlavor, scaleId: phraseScaleId, scaleGroups: scaleFamilyGroups(project.basic.scale), scaleIntervals: phraseScaleIntervals(), energyChoice: phraseEnergyChoice, energy: phraseEnergy(project).energy, energySource: phraseEnergy(project).source })}
 
       <h3>${project.chords.length ? "次のコード候補（3つ）" : "最初のコード候補（3つ）"}</h3>
       <div class="chord-next">
@@ -787,6 +794,12 @@ function bindChordControls() {
       render("chord");
     });
   });
+  document.querySelectorAll("[data-phrase-energy]").forEach((button) => {
+    button.addEventListener("click", () => {
+      phraseEnergyChoice = button.dataset.phraseEnergy;
+      render("chord");
+    });
+  });
   document.querySelector("#phrase-scale")?.addEventListener("change", (event) => {
     phraseScaleId = event.target.value;
     phraseVariation = 0;
@@ -798,7 +811,7 @@ function bindChordControls() {
   });
   const phraseCandidateFor = (formId) => phraseCandidates(projectStore.getSnapshot(), {
     startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation,
-    flavor: phraseFlavor, scaleIntervals: phraseScaleIntervals()
+    flavor: phraseFlavor, scaleIntervals: phraseScaleIntervals(), energy: phraseEnergy(projectStore.getSnapshot()).energy
   }).find((item) => item.id === formId);
   document.querySelectorAll("[data-phrase-play]").forEach((button) => {
     button.addEventListener("click", () => {

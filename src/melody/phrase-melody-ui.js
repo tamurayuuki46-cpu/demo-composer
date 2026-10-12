@@ -1,6 +1,7 @@
 import {
   PHRASE_BAR_CHOICES,
   PHRASE_CONTOURS,
+  PHRASE_ENERGIES,
   PHRASE_FLAVORS,
   PHRASE_VARIATION_COUNT,
   melodyNoteCountIn,
@@ -15,7 +16,7 @@ function escapeHtml(value) {
 
 // Chord画面の「4小節メロディをつくる」パネル。開閉・範囲・輪郭・候補番号は画面の状態（保存しない）。
 // scaleGroups: [{ label, families: [{ id, mode, intervals }] }] / scaleId: 選択中のスケールID（空 = 曲のScale） / flavor: 味付け
-export function phraseMelodyHtml({ project, open, startBar, bars, contour, variation, flavor = "plain", scaleId = "", scaleGroups = null, scaleIntervals = null }) {
+export function phraseMelodyHtml({ project, open, startBar, bars, contour, variation, flavor = "plain", scaleId = "", scaleGroups = null, scaleIntervals = null, energyChoice = "auto", energy = "mid", energySource = "" }) {
   const header = `<button id="toggle-phrase" class="spice-toggle" aria-expanded="${open}">🎤 ${bars}小節メロディをつくる${open ? " ▲" : " ▼"}</button>`;
   if (!open) return header;
 
@@ -24,7 +25,7 @@ export function phraseMelodyHtml({ project, open, startBar, bars, contour, varia
   }
 
   const range = phraseRange(project, startBar, bars);
-  const candidates = phraseCandidates(project, { startBar: range.startBar, bars, contour, variation, flavor, scaleIntervals });
+  const candidates = phraseCandidates(project, { startBar: range.startBar, bars, contour, variation, flavor, scaleIntervals, energy });
   const active = PHRASE_CONTOURS.find((item) => item.id === contour) ?? PHRASE_CONTOURS[0];
   const replaced = melodyNoteCountIn(project, range.startBar, range.endBar);
 
@@ -52,6 +53,10 @@ export function phraseMelodyHtml({ project, open, startBar, bars, contour, varia
         ${PHRASE_FLAVORS.map((item) => `<button type="button" data-phrase-flavor="${item.id}" class="${item.id === flavor ? "active" : ""}" aria-pressed="${item.id === flavor}">${escapeHtml(item.label)}</button>`).join("")}
       </div>
       <p class="hint">${escapeHtml((PHRASE_FLAVORS.find((item) => item.id === flavor) ?? PHRASE_FLAVORS[0]).note)}</p>
+      <div class="scale-set-tabs phrase-energies" role="group" aria-label="盛り上がり">
+        ${[{ id: "auto", label: "おまかせ" }, ...PHRASE_ENERGIES].map((item) => `<button type="button" data-phrase-energy="${item.id}" class="${item.id === energyChoice ? "active" : ""}" aria-pressed="${item.id === energyChoice}">${escapeHtml(item.label)}</button>`).join("")}
+      </div>
+      <p class="hint">盛り上がり: ${escapeHtml((PHRASE_ENERGIES.find((item) => item.id === energy) ?? PHRASE_ENERGIES[1]).label)}${energyChoice === "auto" ? `（${escapeHtml(energySource || "Sectionなし → Mid")}）` : ""}。${escapeHtml((PHRASE_ENERGIES.find((item) => item.id === energy) ?? PHRASE_ENERGIES[1]).note)}</p>
       ${scaleGroups ? `
         <label class="field">
           <span>スケールの色</span>
