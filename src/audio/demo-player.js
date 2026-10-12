@@ -75,6 +75,24 @@ export function scheduleTone(context, destination, activeSources, {
   } else {
     input = context.createGain();
     const parts = layers?.length ? layers : [{ type, gain: 1 }];
+
+    // ビブラートのLFOは1音につき1つだけ作り、全レイヤーで共有する（端末負荷を抑える）。
+    // 少し遅れてから揺れ始める（声のビブラートのように）
+    let vibratoGain = null;
+    if (vibrato) {
+      const lfo = context.createOscillator();
+      vibratoGain = context.createGain();
+      const delay = vibrato.delay ?? 0.2;
+      lfo.frequency.value = vibrato.rate;
+      vibratoGain.gain.setValueAtTime(0, startTime);
+      vibratoGain.gain.setValueAtTime(0, startTime + delay);
+      vibratoGain.gain.linearRampToValueAtTime(vibrato.depth, startTime + delay + 0.25);
+      lfo.connect(vibratoGain);
+      lfo.start(startTime);
+      lfo.stop(stopTime);
+      activeSources.add(lfo);
+    }
+
     parts.forEach((part) => {
       const oscillator = context.createOscillator();
       const layerGain = context.createGain();
@@ -84,22 +102,7 @@ export function scheduleTone(context, destination, activeSources, {
       layerGain.gain.value = part.gain ?? 1 / parts.length;
       oscillator.connect(layerGain);
       layerGain.connect(input);
-
-      if (vibrato) {
-        // 少し遅れてから揺れ始める（声のビブラートのように）
-        const lfo = context.createOscillator();
-        const lfoGain = context.createGain();
-        lfo.frequency.value = vibrato.rate;
-        lfoGain.gain.setValueAtTime(0, startTime);
-        lfoGain.gain.setValueAtTime(0, startTime + (vibrato.delay ?? 0.2));
-        lfoGain.gain.linearRampToValueAtTime(vibrato.depth, startTime + (vibrato.delay ?? 0.2) + 0.25);
-        lfo.connect(lfoGain);
-        lfoGain.connect(oscillator.detune);
-        lfo.start(startTime);
-        lfo.stop(stopTime);
-        activeSources.add(lfo);
-      }
-
+      if (vibratoGain) vibratoGain.connect(oscillator.detune);
       oscillator.start(startTime);
       oscillator.stop(stopTime);
       activeSources.add(oscillator);

@@ -403,6 +403,16 @@ const screens = {
 const screen = document.querySelector("#screen");
 const buttons = [...document.querySelectorAll(".nav-btn")];
 const projectTitle = document.querySelector(".topbar h1");
+// 下部ナビの実際の高さに合わせて、Demo Playerをその真上に置く
+{
+  const nav = document.querySelector(".bottom-nav");
+  const syncNavHeight = () => {
+    if (nav) document.documentElement.style.setProperty("--nav-h", `${Math.ceil(nav.getBoundingClientRect().height)}px`);
+  };
+  syncNavHeight();
+  if (nav && typeof ResizeObserver !== "undefined") new ResizeObserver(syncNavHeight).observe(nav);
+  window.addEventListener("resize", syncNavHeight);
+}
 const playerPlay = document.querySelector("#player-play");
 const playerStop = document.querySelector("#player-stop");
 const playerLoop = document.querySelector("#player-loop");

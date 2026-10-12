@@ -116,6 +116,7 @@ v0.2-dev
 18. Melody Analyzerで `メロディの働き` が表示され、C Major等でGuide / Chord / Tension / Otherと、経過 / 刺繍 / Approach / 倚音 / 逸音 / 先取の代表例が想定どおり読めることをAndroid実機で確認。係留は「候補」として過剰断定しないこと、リック / リフが自動判定されないことも確認
 
 既知の問題:
+- Demo Playerが実機で見えない / 鳴らない報告（2026-10-12）に対し、ナビ高さ追従（--nav-h）とビブラートLFO共有で対策済み。ヘッドレスChromeでは再現しなかったため、実機で再確認が必要。続く場合は端末名・Chromeの版・どの画面かを確認する
 - 新規Projectで旧Projectデータは端末内に残るが、保存済みProject一覧 / 過去Projectを選んで再度開くUIは未実装。現時点の復元手段はproject.json Backup / Importを優先する
 - Melody候補は1小節単位。Section単位 / 複数小節一括生成は未対応
 - Melody候補の別案は有限4Set。無制限ランダム生成はしない
