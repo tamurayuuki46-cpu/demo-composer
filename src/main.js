@@ -20,7 +20,7 @@ import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicCho
 import { chordScaleSetsHtml, resolveScaleFamilyId } from "./chord/chord-scale-sets-ui.js";
 import { applyPhraseNotes, phraseCandidates, withPhraseNotes } from "./melody/phrase-generator.js";
 import { phraseMelodyHtml } from "./melody/phrase-melody-ui.js";
-import { scaleLevelRows, scaleSetChords } from "./chord/chord-scale-sets.js";
+import { scaleFamilyGroups, scaleLevelRows, scaleSetChords } from "./chord/chord-scale-sets.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
@@ -1181,7 +1181,8 @@ async function boot() {
   counterController = createCounterController({
     projectStore,
     rerender: render,
-    onPreview: (startBar, endBar, notes) => previewCounterRange(startBar, endBar, notes)
+    onPreview: (startBar, endBar, notes) => previewCounterRange(startBar, endBar, notes),
+    scaleGroups: (project) => scaleFamilyGroups(project.basic.scale)
   });
   autosave = createAutosave({
     projectStore,

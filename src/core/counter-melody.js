@@ -52,6 +52,11 @@ export const COUNTER_STYLES = Object.freeze([
     id: "pentaMajor",
     label: "Major Penta Hook（メジャーペンタ）",
     description: "Keyのメジャーペンタ（ド・レ・ミ・ソ・ラ）だけで作る、明るく素直なフック。半音のぶつかりがなく、どのコードの上でも歌いやすい。2小節で型を繰り返し、3小節目で上へ、4小節目でコードトーンに着地する。※イメージ：爽やかなバンド / J-POP系（特定曲のコピーではありません）"
+  },
+  {
+    id: "character",
+    label: "Character（特性音型）",
+    description: "選んだスケールの特性音（そのスケールらしさを決める音）を、長い音・強い拍で鳴らす。前を半音や全音で助走し、最後はルートか5度へ解決する。※特定曲のコピーではありません"
   }
 ]);
 
@@ -547,8 +552,93 @@ function buildPentaHook(project, melody, startBar, endBar, mode) {
   return notes;
 }
 
+// ---- Character: スケールの特性音を強調するフレーズ ----
+// 特性音 = そのスケールが「近い基本スケール」（長3度があればMajor、短3度ならNatural Minor）と違う音。
+// 例: Dorian → ♮6 / Phrygian → ♭2 / Lydian → ♯4 / Mixolydian → ♭7 / 都節音階 → ♭2・♭6
+// 違いが無い（ペンタなど）ときは、ルートと5度以外の音を特性音として扱う。
+const DEGREE_NAMES = Object.freeze(["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"]);
+const IONIAN = Object.freeze([0, 2, 4, 5, 7, 9, 11]);
+const AEOLIAN = Object.freeze([0, 2, 3, 5, 7, 8, 10]);
+
+export function characterIntervals(intervals) {
+  const reference = intervals.includes(4) ? IONIAN : intervals.includes(3) ? AEOLIAN : IONIAN;
+  const different = intervals.filter((interval) => !reference.includes(interval));
+  if (different.length > 0) return different;
+  const fallback = intervals.filter((interval) => interval !== 0 && interval !== 7);
+  return fallback.length > 0 ? fallback : intervals.filter((interval) => interval !== 0);
+}
+
+export function characterDegreeNames(intervals) {
+  return characterIntervals(intervals).map((interval) => DEGREE_NAMES[interval % 12]);
+}
+
+export function defaultCharacterScale(project) {
+  return project.basic.scale === "minor"
+    ? { id: "dorian", label: "Dorian", intervals: [0, 2, 3, 5, 7, 9, 10] }
+    : { id: "lydian", label: "Lydian", intervals: [0, 2, 4, 6, 7, 9, 11] };
+}
+
+function buildCharacter(project, melody, startBar, endBar, characterScale) {
+  const barTicks = barTicksOf(project);
+  const tonic = keyPitchClass(project);
+  const intervals = characterScale.intervals;
+  const scale = intervals.map((interval) => (tonic + interval) % 12);
+  const characters = characterIntervals(intervals).map((interval) => (tonic + interval) % 12);
+  const target = Math.min(74, Math.max(57, averageMelodyPitch(melody) - 7));
+  const nearestWith = (pcs, to) => {
+    let best = null;
+    for (let pitch = 48; pitch <= 84; pitch += 1) {
+      if (!pcs.includes(pitch % 12)) continue;
+      if (best === null || Math.abs(pitch - to) < Math.abs(best - to)) best = pitch;
+    }
+    return best ?? Math.round(to);
+  };
+  const resolvePcs = [tonic, (tonic + 7) % 12];
+  const notes = [];
+  let previous = target;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inPhrase = (bar - startBar) % 4;
+    const phraseIndex = Math.floor((bar - startBar) / 4);
+    // 特性音を順番に回す（複数あるスケールは、フレーズごとに別の特性音が主役になる）
+    const characterPc = characters[(inPhrase === 3 ? phraseIndex : phraseIndex + (inPhrase % 2)) % characters.length];
+    const tone = nearestWith([characterPc], Math.round((previous + target) / 2));
+    const below = scaleStepDown(tone, 1, scale);
+    const above = scaleStepUp(tone, 1, scale);
+    const home = nearestWith(resolvePcs, tone);
+    const place = (step, pitch, length, velocity) => notes.push(
+      makeNote(pitch, barStart + step * STEP, Math.round(STEP * length * 0.94), velocity)
+    );
+
+    if (inPhrase === 0) {
+      place(0, below, 1, 56);       // 助走
+      place(1, tone, 3, 86);        // 特性音を長く
+      place(4, below, 1, 62);
+      place(5, home, 3, 70);        // ルート / 5度へ
+    } else if (inPhrase === 1) {
+      place(0, tone, 2, 84);
+      place(2, above, 1, 64);
+      place(3, tone, 1, 72);
+      place(4, home, 4, 68);
+    } else if (inPhrase === 2) {
+      place(0, below, 2, 58);
+      place(2, tone, 2, 88);        // 食い気味の強拍
+      place(4, tone, 1, 70);
+      place(5, above, 1, 62);
+      place(6, tone, 2, 74);
+    } else {
+      place(0, tone, 3, 86);
+      place(3, below, 1, 62);
+      place(4, nearestWith([tonic], tone), 4, 74); // ルートに解決して止まる
+    }
+    previous = notes[notes.length - 1].pitch;
+  }
+  return notes;
+}
+
 // Sectionの範囲（startBar〜endBar）に当てる候補を作る。土台（コードかメロディ）が無いときは例外
-export function counterCandidates(project, { startBar, endBar }) {
+export function counterCandidates(project, { startBar, endBar, characterScale = null }) {
   const barTicks = barTicksOf(project);
   const melody = (project.tracks.find((track) => track.role === "melody")?.notes ?? [])
     .slice()
@@ -562,11 +652,21 @@ export function counterCandidates(project, { startBar, endBar }) {
 
   const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer, arpeggio: buildArpeggio, riff: buildRiff,
     pentaMinor: (...args) => buildPentaHook(...args, "minor"),
-    pentaMajor: (...args) => buildPentaHook(...args, "major") };
+    pentaMajor: (...args) => buildPentaHook(...args, "major"),
+    character: (...args) => buildCharacter(...args, scaleForCharacter) };
+  const scaleForCharacter = characterScale ?? defaultCharacterScale(project);
   return COUNTER_STYLES.map((style) => {
     const notes = builders[style.id](project, melody, startBar, endBar)
       .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
-    return { ...style, notes };
+    if (style.id !== "character") return { ...style, notes };
+    const key = KEY_NAMES[keyPitchClass(project)];
+    const names = characterDegreeNames(scaleForCharacter.intervals).join("・");
+    return {
+      ...style,
+      label: `Character（${key} ${scaleForCharacter.label}の特性音）`,
+      description: `${key} ${scaleForCharacter.label} の特性音（${names}）を、長い音・強い拍で鳴らす。前を半音や全音で助走し、最後はルートか5度へ解決する。コードとぶつかる所は、スケールの色として耳で確かめてください。※特定曲のコピーではありません`,
+      notes
+    };
   });
 }
 

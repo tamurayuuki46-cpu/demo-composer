@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { createDefaultProject, createProjectStore, validateProject } from "../src/core/project-state.js";
 import {
   COUNTER_ROLE,
+  characterDegreeNames,
+  characterIntervals,
   COUNTER_STYLES,
   counterBarCount,
   counterCandidates,
@@ -42,7 +44,7 @@ function sampleProject() {
 const project = sampleProject();
 assert.equal(hasCounter(project), false);
 assert.equal(COUNTER_ROLE, "counter");
-assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer", "arpeggio", "riff", "pentaMinor", "pentaMajor"]);
+assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer", "arpeggio", "riff", "pentaMinor", "pentaMajor", "character"]);
 assert.match(COUNTER_STYLES[0].description, /米津/);
 assert.match(COUNTER_STYLES[1].description, /YOASOBI \/ Ayase/);
 assert.match(COUNTER_STYLES[1].description, /コードトーン型/);
@@ -56,7 +58,7 @@ assert.ok(COUNTER_STYLES.every((item) => item.description.includes("特定曲の
 // --- 候補は4つで、どれも範囲内・MIDI範囲内
 const candidates = counterCandidates(project, { startBar: 0, endBar: 4 });
 assert.deepEqual(candidates.map((item) => item.id), COUNTER_STYLES.map((style) => style.id));
-assert.equal(candidates.length, 8);
+assert.equal(candidates.length, 9);
 candidates.forEach((candidate) => {
   assert.ok(candidate.notes.length > 0, `${candidate.id} has notes`);
   assert.ok(candidate.notes.every((note) => note.startTick >= 0 && note.startTick < 4 * BAR), `${candidate.id} stays in range`);
@@ -104,6 +106,26 @@ Object.entries(pentaSets).forEach(([id, allowed]) => {
 });
 assert.match(COUNTER_STYLES.find((item) => item.id === "pentaMinor").label, /マイナーペンタ/);
 assert.match(COUNTER_STYLES.find((item) => item.id === "pentaMajor").label, /メジャーペンタ/);
+
+// Character: 選んだスケールの特性音を強調する。音はすべてスケール内、特性音が長い音に入る
+assert.deepEqual(characterIntervals([0, 2, 3, 5, 7, 9, 10]), [9], "Dorian -> natural 6");
+assert.deepEqual(characterIntervals([0, 1, 3, 5, 7, 8, 10]), [1], "Phrygian -> b2");
+assert.deepEqual(characterIntervals([0, 2, 4, 6, 7, 9, 11]), [6], "Lydian -> #4");
+assert.deepEqual(characterIntervals([0, 2, 4, 5, 7, 9, 10]), [10], "Mixolydian -> b7");
+assert.deepEqual(characterIntervals([0, 1, 5, 7, 8]), [1, 8], "Miyako-bushi -> b2, b6");
+assert.deepEqual(characterDegreeNames([0, 1, 4, 5, 7, 8, 10]), ["♭2", "♭6", "♭7"]);
+assert.ok(characterIntervals([0, 3, 5, 7, 10]).length > 0, "pentatonic falls back");
+const phrygian = [0, 1, 3, 5, 7, 8, 10];
+const characterOf = (scaleDef) => counterCandidates(project, { startBar: 0, endBar: 4, characterScale: scaleDef }).find((item) => item.id === "character");
+const phrygianCandidate = characterOf({ id: "phrygian", label: "Phrygian", intervals: phrygian });
+assert.ok(phrygianCandidate.notes.length >= 12);
+assert.ok(phrygianCandidate.notes.every((note) => phrygian.includes(((note.pitch - 0) % 12 + 12) % 12)), "stays in the chosen scale (key C)");
+assert.ok(phrygianCandidate.notes.some((note) => note.pitch % 12 === 1 && note.durationTick >= STEP * 2), "b2 is held long");
+assert.match(phrygianCandidate.label, /Phrygian/);
+assert.match(phrygianCandidate.description, /♭2/);
+assert.ok(phrygianCandidate.notes.every((note) => note.startTick + note.durationTick <= 4 * BAR));
+const defaultCharacter = counterCandidates(project, { startBar: 0, endBar: 4 }).find((item) => item.id === "character");
+assert.match(defaultCharacter.label, /Lydian|Dorian/);
 
 // Answer: 語尾側（後半）を優先し、Sparseより長い2拍単位の返しを作る。
 // Arpeggio: 8分の細かい動きで、メロディの下に置かれ、半音でぶつからない

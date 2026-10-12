@@ -1,4 +1,4 @@
-// 「裏メロ」タブ: 範囲（開始小節 + 長さ、またはSection）を選び、6タイプの候補を聴いて当てる。
+// 「裏メロ」タブ: 範囲（開始小節 + 長さ、またはSection）を選び、9タイプの候補を聴いて当てる。
 // 候補の生成は src/core/counter-melody.js（Arrangeの各Sectionの裏メロと同じもの）。保存先は tracks[role=counter]。
 import { counterBarCount, counterCandidates, counterNotes } from "../core/counter-melody.js";
 import { getSections, sectionRanges } from "../core/section-ops.js";
@@ -18,8 +18,10 @@ function totalBars(project) {
   return Math.max(project.chords.length, melodyBars, sectionBars);
 }
 
-export function createCounterController({ projectStore, rerender, onPreview }) {
+// scaleGroups(project) → [{ label, families: [{ id, label, mode, intervals }] }] / null のとき特性音のスケール選択は出さない
+export function createCounterController({ projectStore, rerender, onPreview, scaleGroups = null }) {
   let startBar = 0;
+  let characterScaleId = null;
   let bars = 4;
   let message = "範囲を選んで、裏メロの候補を聴き比べます。メインメロディの隙間やコードに合わせて作ります。";
 
@@ -29,10 +31,19 @@ export function createCounterController({ projectStore, rerender, onPreview }) {
     return { startBar: start, endBar: Math.min(total, start + bars), total };
   }
 
+  function findScale(project) {
+    if (!scaleGroups || !characterScaleId) return null;
+    for (const group of scaleGroups(project)) {
+      const family = group.families.find((item) => item.id === characterScaleId);
+      if (family) return family;
+    }
+    return null;
+  }
+
   function candidatesFor(project) {
     const { startBar: from, endBar: to } = range(project);
     try {
-      return { candidates: counterCandidates(project, { startBar: from, endBar: to }), error: null };
+      return { candidates: counterCandidates(project, { startBar: from, endBar: to, characterScale: findScale(project) }), error: null };
     } catch (error) {
       return { candidates: [], error: error instanceof Error ? error.message : "候補を作れませんでした。" };
     }
@@ -51,7 +62,7 @@ export function createCounterController({ projectStore, rerender, onPreview }) {
         <div class="section-heading">
           <div>
             <h2>裏メロ</h2>
-            <p>メインメロディのもう1本の旋律を作ります。6タイプを聴き比べて、範囲に当てます。</p>
+            <p>メインメロディのもう1本の旋律を作ります。9タイプ（スケールの特性音型を含む）を聴き比べて、範囲に当てます。</p>
           </div>
         </div>
 
@@ -83,6 +94,20 @@ export function createCounterController({ projectStore, rerender, onPreview }) {
         </div>
 
         <p class="hint">${from + 1}〜${to}小節。${filled > 0 ? `いまの裏メロが${filled}小節に入っています（当てるとこの範囲だけ置き換わり、↶で戻せます）。` : "この範囲にはまだ裏メロがありません。"}</p>
+
+        ${scaleGroups ? `
+          <label class="field">
+            <span>Character（特性音型）のスケール</span>
+            <select id="counter-character-scale">
+              <option value=""${characterScaleId ? "" : " selected"}>おまかせ（${project.basic.scale === "minor" ? "Dorian" : "Lydian"}）</option>
+              ${scaleGroups(project).map((group) => `
+                <optgroup label="${escapeHtml(group.label)}">
+                  ${group.families.map((family) => `<option value="${family.id}"${family.id === characterScaleId ? " selected" : ""}>${escapeHtml(`${project.basic.key} ${family.mode}`)}</option>`).join("")}
+                </optgroup>
+              `).join("")}
+            </select>
+          </label>
+        ` : ""}
 
         ${error ? `<p class="hint">${escapeHtml(error)}</p>` : `
           <div class="counter-candidates">
@@ -119,6 +144,10 @@ export function createCounterController({ projectStore, rerender, onPreview }) {
     });
     document.querySelector("#counter-start")?.addEventListener("change", (event) => {
       startBar = Number(event.target.value);
+      rerenderCounter();
+    });
+    document.querySelector("#counter-character-scale")?.addEventListener("change", (event) => {
+      characterScaleId = event.target.value || null;
       rerenderCounter();
     });
     document.querySelector("#counter-bars")?.addEventListener("change", (event) => {
