@@ -27,7 +27,7 @@ export async function saveCurrentProjectThroughHub() {
     await sleep(60);
   }
 
-  throw new Error("現在のProjectの保存確認に時間がかかったため、新規Projectの作成を中止しました。");
+  throw new Error("現在のProjectの保存確認に時間がかかったため、操作を中止しました。");
 }
 
 function newProjectControls() {
