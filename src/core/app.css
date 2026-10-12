@@ -159,6 +159,21 @@ h1 {
 .actions button:disabled {
   opacity: .7;
 }
+/* Export / AI相談 を開いている間は、押したことが分かる色と ▲ にする */
+.actions button.primary-action[aria-expanded="true"]:not(:disabled) {
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, .45);
+}
+.actions button.primary-action[aria-expanded="true"]::after {
+  content: " ▲";
+}
+.actions button.primary-action[aria-expanded="false"][id^="toggle-"]::after {
+  content: " ▼";
+}
+.actions button.primary-action:active:not(:disabled) {
+  transform: scale(.96);
+}
 .section-heading {
   display: flex;
   align-items: flex-start;

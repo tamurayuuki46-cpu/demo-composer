@@ -637,6 +637,7 @@ function bindHubControls() {
     const open = exportPanel?.hasAttribute("hidden") ?? true;
     if (open) {
       exportPanel?.removeAttribute("hidden");
+      exportPanel?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
     } else {
       exportPanel?.setAttribute("hidden", "");
     }
