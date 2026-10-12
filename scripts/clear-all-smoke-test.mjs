@@ -35,6 +35,7 @@ function trackNotes(project, role) {
 
 const hubHtml = partClearHtml();
 assert.match(hubHtml, /パートを消去/);
+assert.match(hubHtml, /裏メロを消去/);
 
 for (const part of ["chord", "melody", "counter", "bass", "drums"]) {
   const store = seededStore();
