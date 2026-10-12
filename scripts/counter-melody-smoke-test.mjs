@@ -42,7 +42,7 @@ function sampleProject() {
 const project = sampleProject();
 assert.equal(hasCounter(project), false);
 assert.equal(COUNTER_ROLE, "counter");
-assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer"]);
+assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer", "arpeggio", "riff"]);
 assert.match(COUNTER_STYLES[0].description, /米津/);
 assert.match(COUNTER_STYLES[1].description, /YOASOBI \/ Ayase/);
 assert.match(COUNTER_STYLES[1].description, /コードトーン型/);
@@ -56,7 +56,7 @@ assert.ok(COUNTER_STYLES.every((item) => item.description.includes("特定曲の
 // --- 候補は4つで、どれも範囲内・MIDI範囲内
 const candidates = counterCandidates(project, { startBar: 0, endBar: 4 });
 assert.deepEqual(candidates.map((item) => item.id), COUNTER_STYLES.map((style) => style.id));
-assert.equal(candidates.length, 4);
+assert.equal(candidates.length, 6);
 candidates.forEach((candidate) => {
   assert.ok(candidate.notes.length > 0, `${candidate.id} has notes`);
   assert.ok(candidate.notes.every((note) => note.startTick >= 0 && note.startTick < 4 * BAR), `${candidate.id} stays in range`);
@@ -93,6 +93,30 @@ for (let bar = 0; bar < 4; bar += 1) {
 }
 
 // Answer: 語尾側（後半）を優先し、Sparseより長い2拍単位の返しを作る。
+// Arpeggio: 8分の細かい動きで、メロディの下に置かれ、半音でぶつからない
+const arpeggio = candidates.find((item) => item.id === "arpeggio");
+assert.ok(arpeggio.notes.length > sparse.notes.length, "arpeggio is denser than sparse");
+assert.ok(arpeggio.notes.every((note) => note.durationTick < STEP), "arpeggio uses short eighth notes");
+const mainMelody = project.tracks.find((track) => track.role === "melody").notes;
+arpeggio.notes.forEach((note) => {
+  mainMelody.filter((m) => m.startTick < note.startTick + note.durationTick && m.startTick + m.durationTick > note.startTick).forEach((m) => {
+    const distance = Math.abs(note.pitch - m.pitch) % 12;
+    assert.ok(distance !== 1 && distance !== 11, "arpeggio does not clash by a semitone");
+    assert.ok(note.pitch < m.pitch - 2, "arpeggio stays below the main melody");
+  });
+});
+
+// Riff: 低い音域で、各小節の頭はそのコードのルート。4小節目は駆け上がる
+const riff = candidates.find((item) => item.id === "riff");
+assert.ok(riff.notes.every((note) => note.pitch >= 36 && note.pitch <= 70), "riff stays in a low register");
+[0, 1, 2].forEach((bar) => {
+  const first = riff.notes.find((note) => note.startTick === bar * BAR);
+  assert.equal(first.pitch % 12, project.chords[bar].root % 12, `riff bar ${bar + 1} starts on the chord root`);
+});
+const riffBar4 = riff.notes.filter((note) => Math.floor(note.startTick / BAR) === 3);
+assert.equal(riffBar4.length, 8, "riff bar 4 is an eighth-note run");
+assert.ok(riffBar4.every((note, index) => index === 0 || note.pitch > riffBar4[index - 1].pitch), "riff bar 4 climbs");
+
 const answer = candidates.find((item) => item.id === "answer");
 for (let bar = 0; bar < 4; bar += 1) {
   const inBar = answer.notes.filter((note) => Math.floor(note.startTick / BAR) === bar);
