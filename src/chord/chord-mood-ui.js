@@ -1,3 +1,4 @@
+import { getCompositionIntent, subscribeCompositionIntent } from "../core/composition-intent.js";
 import {
   CHORD_MOOD_TAG_GROUPS,
   recommendChordPresetsByMood
@@ -15,9 +16,21 @@ const DIFFICULTY_LABELS = Object.freeze({
   adventurous: "挑戦的"
 });
 
+const ALL_TAGS = Object.freeze(Object.values(CHORD_MOOD_TAG_GROUPS).flat());
+const TAG_BY_ID = new Map(ALL_TAGS.map((tag) => [tag.id, tag]));
+const TAG_ALIAS = new Map([
+  ...ALL_TAGS.flatMap((tag) => [[tag.id, tag.id], [tag.label, tag.id]]),
+  ["やさしい", "gentle"],
+  ["優しい", "gentle"]
+]);
+
 const selectedTags = new Set();
 let observer = null;
 let rendering = false;
+let unsubscribeIntent = null;
+let lastIntentSignature = null;
+let inheritedMoodValues = [];
+let manualAdjusted = false;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -41,9 +54,47 @@ function degreeText(candidate) {
   return candidate.degreeIndexes.map((index) => romans[index] ?? "?").join(" → ");
 }
 
-export function chordMoodPanelHtml({ mode = "major", tags = [...selectedTags] } = {}) {
+export function intentMoodTagIds(moodValues, { limit = 3 } = {}) {
+  const values = Array.isArray(moodValues) ? moodValues : moodValues == null ? [] : [moodValues];
+  const normalized = [];
+
+  for (const value of values) {
+    const key = String(value ?? "").trim();
+    const tagId = TAG_ALIAS.get(key);
+    if (!tagId || normalized.includes(tagId)) continue;
+    normalized.push(tagId);
+    if (normalized.length >= limit) break;
+  }
+
+  return normalized;
+}
+
+function inheritedLabels(values) {
+  return intentMoodTagIds(values).map((tagId) => TAG_BY_ID.get(tagId)?.label ?? tagId);
+}
+
+function applyCompositionIntent(intent) {
+  const moodValues = Array.isArray(intent?.moodValues) ? intent.moodValues : [];
+  const signature = JSON.stringify(moodValues);
+  if (signature === lastIntentSignature) return;
+
+  lastIntentSignature = signature;
+  inheritedMoodValues = [...moodValues];
+  selectedTags.clear();
+  intentMoodTagIds(moodValues).forEach((tagId) => selectedTags.add(tagId));
+  manualAdjusted = false;
+  renderPanel();
+}
+
+export function chordMoodPanelHtml({
+  mode = "major",
+  tags = [...selectedTags],
+  intentValues = inheritedMoodValues,
+  adjusted = manualAdjusted
+} = {}) {
   const selected = new Set(tags);
   const candidates = recommendChordPresetsByMood([...selected], { mode, limit: 3 });
+  const fromHub = inheritedLabels(intentValues);
 
   const groupsHtml = Object.entries(CHORD_MOOD_TAG_GROUPS).map(([groupId, groupTags]) => `
     <div class="chord-mood-group">
@@ -80,6 +131,10 @@ export function chordMoodPanelHtml({ mode = "major", tags = [...selectedTags] } 
           `).join("")}
         </div>`;
 
+  const sourceHtml = fromHub.length
+    ? `<p class="hint chord-mood-source">Hubの曲想から自動選択: ${escapeHtml(fromHub.join("・"))}${adjusted ? "（Chordで調整中）" : ""}</p>`
+    : "";
+
   return `
     <section class="chord-mood-panel" aria-label="曲想からコード進行を選ぶ">
       <div class="chord-mood-heading">
@@ -89,6 +144,7 @@ export function chordMoodPanelHtml({ mode = "major", tags = [...selectedTags] } 
         </div>
         <button type="button" class="chord-mood-clear" data-chord-mood-clear${selected.size ? "" : " disabled"}>クリア</button>
       </div>
+      ${sourceHtml}
       ${groupsHtml}
       ${resultsHtml}
       <p class="hint">※ コード進行だけで感情は決まりません。BPM・メロディ・リズム・ボイシング・音色でも印象は変わります。</p>
@@ -118,12 +174,14 @@ function bindPanelEvents() {
       if (!tagId) return;
       if (selectedTags.has(tagId)) selectedTags.delete(tagId);
       else if (selectedTags.size < 3) selectedTags.add(tagId);
+      manualAdjusted = true;
       renderPanel();
     });
   });
 
   document.querySelector("[data-chord-mood-clear]")?.addEventListener("click", () => {
     selectedTags.clear();
+    manualAdjusted = true;
     renderPanel();
   });
 
@@ -143,6 +201,12 @@ function bindPanelEvents() {
 }
 
 export function initChordMoodUi() {
+  if (!unsubscribeIntent) {
+    unsubscribeIntent = subscribeCompositionIntent(applyCompositionIntent);
+  } else {
+    applyCompositionIntent(getCompositionIntent());
+  }
+
   if (observer || typeof document === "undefined" || typeof MutationObserver === "undefined") return;
   const screen = document.querySelector("#screen");
   if (!screen) return;
