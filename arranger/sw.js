@@ -1,4 +1,4 @@
-const CACHE = 'arrangement-lab-v0.1-dev';
+const CACHE = 'arrangement-lab-v0.2-dev';
 const ASSETS = ['./', './index.html', './styles.css', './manifest.webmanifest', './src/app.js', './src/core.js'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));

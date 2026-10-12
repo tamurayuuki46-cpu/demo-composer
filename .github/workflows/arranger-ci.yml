@@ -1,0 +1,38 @@
+name: Arrangement Lab CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'arranger/**'
+      - '.github/workflows/arranger-ci.yml'
+
+jobs:
+  arranger-v02:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JavaScript syntax check
+        run: |
+          node --check arranger/src/core.js
+          node --check arranger/src/app.js
+          node --check arranger/sw.js
+
+      - name: Arrangement Lab core regression
+        run: node arranger/tests/core.test.mjs
+
+      - name: Static build includes Arrangement Lab
+        run: |
+          npm run build
+          test -f dist/arranger/index.html
+          test -f dist/arranger/src/app.js
+          test -f dist/arranger/src/core.js
