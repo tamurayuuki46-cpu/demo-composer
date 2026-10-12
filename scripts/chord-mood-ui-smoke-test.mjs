@@ -57,6 +57,20 @@ console.log("Chord mood UI smoke test passed.");
     const tag = CHORD_MOOD_TAG_GROUPS[group][0].id;
     const html = emotionListHtml({ group, tag, mode: "major", key: "C", showAll: false });
     assert.ok(html.includes(`data-chord-tab="${group}"`) && /aria-selected="true"/.test(html));
-    assert.equal((html.match(/data-chord-emotion="/g) ?? []).length, CHORD_MOOD_TAG_GROUPS[group].length, `${group}のタグだけ並ぶ`);
+    assert.equal((html.match(/data-chord-emotion="/g) ?? []).length, CHORD_MOOD_TAG_GROUPS[group].length + 1, `${group}のタグ＋未選択が並ぶ`);
   }
+}
+
+// どのタブも開いていない（未選択）状態
+{
+  const { emotionListHtml, chordMoodPanelHtml } = await import("../src/chord/chord-mood-ui.js");
+  const closed = emotionListHtml({ group: null, tag: null, mode: "major", key: "C", showAll: false });
+  assert.equal((closed.match(/data-chord-tab=/g) ?? []).length, 3);
+  assert.ok(!closed.includes("data-chord-emotion="), "タブを開くまでタグは出さない");
+  assert.ok(!/aria-selected="true"/.test(closed));
+  const panel = chordMoodPanelHtml({ mode: "major", tags: [], intentValues: [], adjusted: false });
+  assert.equal((panel.match(/<details class="chord-mood-group"/g) ?? []).length, 3, "組み合わせも3グループが折りたたみ");
+  assert.equal((panel.match(/data-chord-mood-group-clear=/g) ?? []).length, 3, "各グループに未選択");
+  const picked = chordMoodPanelHtml({ mode: "major", tags: ["bright"], intentValues: [], adjusted: false });
+  assert.ok(/chord-mood-group" open/.test(picked), "選択中のグループは開く");
 }
