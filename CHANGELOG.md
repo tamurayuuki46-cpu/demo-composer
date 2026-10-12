@@ -9,7 +9,14 @@
 ### 変更
 - 裏メロ `Character（特性音型）` を、スケールごとの「らしい動き」で作るようにした（`src/core/character-phrases.js`）。Dorian（♮6を伸ばして下りる）/ Phrygian（♭2↔主音のため息）/ Lydian（♯4から5度へ浮かぶ）/ Mixolydian（♭7）/ Locrian（解決せず♭5で止まる）/ ハーモニックマイナー（♭6→♮7の増2度）/ メロディックマイナー（♮6→♮7の駆け上がり）/ Phrygian Dominant（4→3→♭2→1のアンダルシア）/ Double Harmonic / Hungarian Minor / ホールトーン（全音で浮遊、解決しない）/ ディミニッシュ（減七のジグザグ）/ ブルース（♭5の経過）/ Lydian Dominant / Altered / 都節音階・陰旋法・律・琉球音階。小節ごとに ①提示 ②返し ③高まり ④解決 が違い、範囲の最後は必ず④。型の無いスケールは従来の共通型。主旋律が鳴っている所は少し弱める。Schema変更なし
 
-### 追加
+### 追加（v0.3 骨子作り支援: 優先度A + B。計画は `docs/V0_3_SKELETON_PLAN.md`）
+- Arrange `📈 骨子レシピ・感情曲線から構成を作る`: **骨子レシピ8種**（切ない→解放 / 王道1番サビ型 / ラスサビ最大型 / 徐々に上昇型 / 一度落として最後に最大 / サビ先行 / ダンス・ループ / バラード）。感情の言葉・山の形（▂▅█）・小節数を見て、`中身を見る`（各Sectionの小節数・感情・役割・つなぎ）→ `このレシピにする`。確認のうえ構成を置き換え、音符・コード・ドラムは変えない（↶で戻せる）。適用結果は「いまの構成の山」と既存の感情曲線に反映される。Schema変更なし（`structure.sections` の既存項目のみ。`src/arrange/skeleton-recipes.js`、`npm run test:recipes`）
+- Hub 骨子チェック: 次に決める1つに `次はここ`、それ以外の未完了項目に `今は後でOK`（控えめ表示）。判断疲れを減らす表示のみで、`next` の決まり方は従来どおり
+- `なぜ？`: 裏メロ・メロディ生成の候補、Arrangeのつなぎ、レシピの説明文を、折りたたみの `なぜ？` に統一（`src/core/why-ui.js`、`npm run test:why-ui`）。メロディ候補・Bass候補は `<button>` 内のため従来表示
+- Arrange 空Sectionアシスト: 入力のない Section に、前のSectionをコピーして始める3つの方向（メロディを少し変える / コードだけ変える / リズムを密にする）。コピー後、`少し違う版にする` の該当Variationに `おすすめ` が付く（既存のコピー・Variationを使うだけ）
+- Rhythm Bass候補: `Kickとの関係`（Kickと一緒に鳴る / 裏拍でBassが動く / Bassだけ動く / 一部が重なる）を各候補に表示。Kickが無いときは案内文
+- AI相談用テキスト: `■ 骨子チェック（✓ / △ / －と次に決めること）` を追加
+- CI: `test:recipes` / `test:why-ui` を追加。`test:syntax` に `character-phrases.js` / `skeleton-recipes.js` / `why-ui.js` を追加
 - Chord画面 `メロディをつくる` に「盛り上がり」を追加（`おまかせ / Low / Mid / High`）。おまかせは開始小節のSectionのEnergy（ArrangeのLow / Mid / High）に合わせる。Low = 低めの音域・弱い拍の短い音を間引く・やさしく、High = 高めの音域・強く。Midは従来どおり。Schema変更なし（`PHRASE_ENERGIES`、`npm run test:phrase-melody` に追加）
 - 裏メロに `Motion（対位の動き）` を追加。主旋律との動きの関係で作る: 反行（主旋律と逆向きに動く）/ 平行（スケール内の3度下でなぞる）/ 保続（主音を2小節ずつ持続）。裏メロタブに `Motion` セレクトを追加（Arrangeは反行）。候補は計10タイプ。Schema変更なし（`COUNTER_MOTIONS` / `buildMotion`、`npm run test:counter-melody` に追加）
 - Chord画面 `🎤 メロディをつくる` に「味付け」と「スケールの色」を追加。味付け: `ふつう / 2度・6度 / 高密度`。2度・6度はキーの2度と6度を弱い拍で多用（小節頭・着地はコードトーンのまま）。高密度は16分を含む同音連打 → 跳躍、拍の裏からの先取り、後ろから2小節目で音域を上げる（YOASOBI系の“参考イメージ”で、特定曲のコピーではない）。スケールの色: 曲のScale以外に、チャーチ・モード / スパニッシュ / 都節音階 / ペンタ / ブルースなどの音だけで同じ型の候補を作れる（選んだスケールは画面の状態で保存しない）。候補のドット表示は ● = 8分の頭、○ = 16分位置の始まり。Schema変更なし（`PHRASE_FLAVORS`、`npm run test:phrase-melody` に追加）

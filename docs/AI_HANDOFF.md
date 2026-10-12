@@ -109,7 +109,7 @@ v0.2-dev
 11. 裏メロ: Sectionごとに `Sparse / Active / Hook / Answer` を試聴 → 適用 → ↶ / 消す。説明の `※` 補足が小さく表示されること、SparseとAnswerの差が分かること、パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
 12. Hubの `骨子チェック` の ✓ / △ / － と、「次に決めること」のボタン遷移を確認
 13. 新機能の追加はいったん止めて、`docs/REAL_SONG_TEST.md` の手順で実制作テスト（1曲を通して作り、MIDIをCubasis / Cubaseへ渡す）を優先
-14. v0.3「骨子作り支援」の計画は `docs/V0_3_SKELETON_PLAN.md`（計画のみ・コード未変更）。ChatGPT案23件 + Claude案のレビュー結果と、骨子レシピ8案、3段階の優先順位、未決事項を記載。実装前にユーザーと未決事項を決める
+14. v0.3「骨子作り支援」は優先度A + Bを実装済み（骨子レシピ8種 / 今は後でOK / なぜ？ / 空Sectionアシスト / Bass×Kick / 骨子チェックのAI相談）。計画と実装メモは `docs/V0_3_SKELETON_PLAN.md`。Android実機で、レシピ → コード → メロディ → Rhythm → Hub骨子チェックの流れを通して確認する。未実装（C）: 曲の方針（芯・3語）、メロディ輪郭・モチーフ、Lock
 15. MIDI読み込み: アプリで書き出したSong.midと、DAWで作ったMIDIを読み込み、役割の提案・BPM・Key・コード判定が妥当か、取り込み後に↶で戻せることを確認
 16. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
 17. Melody Analyzerで3つの参考モデルが表示され、Chord未設定時の2(9th)/6thが `—`、Chord設定時は割合表示になることをAndroid実機で確認

@@ -133,6 +133,9 @@ export function skeletonCheck(project) {
 
   const doneCount = items.filter((item) => item.mark === "done").length;
   const next = items.find((item) => item.mark !== "done") ?? null;
+  // 「今は決めなくていい」: 次に決める1つ以外の未完了項目は、表示を控えめにする（判断疲れを減らす）。評価ではなく表示だけの印
+  items.forEach((item) => { item.later = item.mark !== "done" && item !== next; });
+  optional.forEach((item) => { item.later = false; });
 
   return {
     items,

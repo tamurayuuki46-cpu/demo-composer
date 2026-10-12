@@ -90,6 +90,12 @@ jobs:
       - name: Counter melody smoke test
         run: npm run test:counter-melody
 
+      - name: Why UI smoke test
+        run: npm run test:why-ui
+
+      - name: Skeleton recipe smoke test
+        run: npm run test:recipes
+
       - name: Skeleton check smoke test
         run: npm run test:skeleton-check
 

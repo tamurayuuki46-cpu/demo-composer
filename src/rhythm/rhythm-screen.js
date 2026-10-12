@@ -153,6 +153,7 @@ export function createRhythmController({ projectStore, rerender }) {
               <strong>${escapeHtml(candidate.label)}</strong>
               <span class="bass-candidate-dots" aria-hidden="true">${bassPatternDots(candidate.steps)}</span>
               <small>${escapeHtml(candidate.description)}</small>
+              <small class="kick-relation">Kickとの関係: ${escapeHtml(candidate.kickRelation)}</small>
             </button>
           `).join("")}
           <small>押すとこの小節のBassが置き換わります（↶ で戻せます）。あとから16マスで1音ずつ直せます。</small>

@@ -1,3 +1,4 @@
+import { whyHtml } from "../core/why-ui.js";
 import {
   PHRASE_BAR_CHOICES,
   PHRASE_CONTOURS,
@@ -71,7 +72,7 @@ export function phraseMelodyHtml({ project, open, startBar, bars, contour, varia
         ${candidates.map((candidate) => `
           <div class="phrase-candidate">
             <strong>${escapeHtml(candidate.label)}</strong>
-            <small>${escapeHtml(candidate.description)}</small>
+            ${whyHtml(candidate.description)}
             <code class="phrase-dots" aria-hidden="true">${phraseDots(candidate).map(escapeHtml).join("<br>")}</code>
             <div class="phrase-actions">
               <button type="button" data-phrase-play="${candidate.id}">▶ 聴く</button>
