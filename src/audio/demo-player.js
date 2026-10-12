@@ -302,12 +302,16 @@ export function createDemoPlayer({ onStateChange } = {}) {
   let buses = null;
   // パートごとのミュート状態（再生の聴き分け用。プロジェクトには保存しない）
   const mutedParts = { chord: false, melody: false, bass: false, drums: false, counter: false };
+  const loopLookaheadSeconds = 0.08;
+  const endGraceSeconds = 0.03;
   let activeSources = new Set();
+  let pendingLoop = null;
   let playing = false;
   let loop = false;
   let startTime = 0;
   let duration = 0;
   let positionTimer = null;
+  let loopPrepareTimer = null;
   let endTimer = null;
   let currentProject = null;
   let currentLengthTick = null;
@@ -321,22 +325,39 @@ export function createDemoPlayer({ onStateChange } = {}) {
     onStateChange?.({ playing, loop, position, duration });
   }
 
-  function clearTimers() {
-    if (positionTimer) clearInterval(positionTimer);
+  function clearCycleTimers() {
+    if (loopPrepareTimer) clearTimeout(loopPrepareTimer);
     if (endTimer) clearTimeout(endTimer);
-    positionTimer = null;
+    loopPrepareTimer = null;
     endTimer = null;
   }
 
-  function stopSources() {
-    activeSources.forEach((source) => {
+  function clearTimers() {
+    if (positionTimer) clearInterval(positionTimer);
+    positionTimer = null;
+    clearCycleTimers();
+  }
+
+  function stopSourceSet(sources) {
+    sources?.forEach((source) => {
       try {
         source.stop();
       } catch {
-        // Source may already have ended.
+        // Source may already have ended or have been cancelled before start.
       }
     });
-    activeSources.clear();
+    sources?.clear?.();
+  }
+
+  function cancelPendingLoop() {
+    if (!pendingLoop) return;
+    stopSourceSet(pendingLoop.sources);
+    pendingLoop = null;
+  }
+
+  function stopSources() {
+    stopSourceSet(activeSources);
+    cancelPendingLoop();
   }
 
   function stop({ notify = true } = {}) {
@@ -417,8 +438,114 @@ export function createDemoPlayer({ onStateChange } = {}) {
     }
   }
 
+  function scheduleNaturalEnd() {
+    if (!playing || !context) return;
+    if (endTimer) clearTimeout(endTimer);
+    const cycleEndTime = startTime + duration;
+    const delay = Math.max(0, cycleEndTime + endGraceSeconds - context.currentTime);
+    endTimer = setTimeout(() => {
+      endTimer = null;
+      if (!playing) return;
+      if (loop) {
+        prepareLoopCycle();
+        return;
+      }
+      stop();
+    }, delay * 1000);
+  }
+
+  function activatePendingLoop() {
+    if (!playing || !pendingLoop) return;
+    const next = pendingLoop;
+    pendingLoop = null;
+
+    // The previous cycle has naturally reached its boundary. Do not call stop()
+    // here: doing so and then starting a fresh play() caused an audible gap/pop.
+    activeSources = next.sources;
+    currentProject = next.project;
+    currentLengthTick = next.lengthTick;
+    currentRefresh = next.refresh;
+    startTime = next.startTime;
+    duration = next.duration;
+    emit();
+    scheduleLoopPreparation();
+  }
+
+  function prepareLoopCycle() {
+    if (!playing || !context || pendingLoop) return;
+    if (endTimer) {
+      clearTimeout(endTimer);
+      endTimer = null;
+    }
+
+    if (!loop) {
+      scheduleNaturalEnd();
+      return;
+    }
+
+    const refreshNow = currentRefresh;
+    let latest = null;
+    try {
+      latest = refreshNow ? refreshNow() : null;
+    } catch {
+      latest = null; // 最新を作れないときは、前の内容で続ける
+    }
+
+    const nextProject = structuredClone(latest?.project ?? currentProject);
+    const nextLengthTick = latest ? (latest.lengthTick ?? null) : currentLengthTick;
+    const nextDuration = tickToSeconds(nextProject, nextLengthTick ?? projectEndTick(nextProject));
+    const cycleEndTime = startTime + duration;
+    const nextStartTime = Math.max(cycleEndTime, context.currentTime + 0.01);
+    const nextSources = new Set();
+
+    try {
+      // Web Audioに次周のノートを先に予約する。JS timerでplay()を再起動する方式と違い、
+      // 周回境界そのものはAudioContextの時刻で連続する。
+      scheduleProject(context, buses, nextSources, nextProject, nextStartTime);
+    } catch {
+      stop();
+      return;
+    }
+
+    pendingLoop = {
+      sources: nextSources,
+      project: nextProject,
+      lengthTick: nextLengthTick,
+      refresh: refreshNow,
+      startTime: nextStartTime,
+      duration: nextDuration
+    };
+
+    const boundaryDelay = Math.max(0, nextStartTime - context.currentTime);
+    endTimer = setTimeout(() => {
+      endTimer = null;
+      activatePendingLoop();
+    }, boundaryDelay * 1000);
+  }
+
+  function scheduleLoopPreparation() {
+    if (!playing || !context) return;
+    if (loopPrepareTimer) clearTimeout(loopPrepareTimer);
+    if (endTimer) {
+      clearTimeout(endTimer);
+      endTimer = null;
+    }
+
+    const prepareAt = startTime + duration - loopLookaheadSeconds;
+    const delay = Math.max(0, prepareAt - context.currentTime);
+    loopPrepareTimer = setTimeout(() => {
+      loopPrepareTimer = null;
+      if (!playing) return;
+      if (loop) {
+        prepareLoopCycle();
+      } else {
+        scheduleNaturalEnd();
+      }
+    }, delay * 1000);
+  }
+
   // lengthTickを渡すと、中身の末尾ではなくその長さで再生する（Section再生で末尾の空き小節も含めるため）
-  // refreshを渡すと、Loopで次の周に入るときに呼んで、最新の { project, lengthTick } で鳴らし直す
+  // refreshを渡すと、Loopで次の周に入るときに呼んで、最新の { project, lengthTick } で次周を先行予約する。
   // （再生中に編集したコード・メロディなどを、Stopしなくても次の周から聴けるように）。nullを返すか失敗したら前の内容で続ける。
   async function play(project, { lengthTick = null, refresh = null } = {}) {
     stop({ notify: false });
@@ -430,37 +557,26 @@ export function createDemoPlayer({ onStateChange } = {}) {
     duration = tickToSeconds(currentProject, lengthTick ?? projectEndTick(currentProject));
     startTime = context.currentTime + 0.06;
     activeSources = new Set();
+    pendingLoop = null;
     scheduleProject(context, buses, activeSources, currentProject, startTime);
     playing = true;
     emit();
 
     positionTimer = setInterval(emit, 100);
-    endTimer = setTimeout(async () => {
-      if (!playing) return;
-      const shouldLoop = loop;
-      const refreshNow = currentRefresh;
-      stop({ notify: !shouldLoop });
-      if (shouldLoop && currentProject) {
-        try {
-          let latest = null;
-          try {
-            latest = refreshNow ? refreshNow() : null;
-          } catch {
-            latest = null; // 最新を作れないときは、前の内容で続ける
-          }
-          await play(latest?.project ?? currentProject, {
-            lengthTick: latest ? (latest.lengthTick ?? null) : currentLengthTick,
-            refresh: refreshNow
-          });
-        } catch {
-          stop();
-        }
-      }
-    }, Math.max(0, (duration + 0.08) * 1000));
+    scheduleLoopPreparation();
   }
 
   function setLoop(value) {
     loop = Boolean(value);
+
+    if (!loop && pendingLoop) {
+      cancelPendingLoop();
+      scheduleNaturalEnd();
+    } else if (loop && playing && !pendingLoop && !loopPrepareTimer) {
+      // Loop準備時刻を過ぎた後にONへ切り替えた場合も、可能な限り現在周の終端へ予約する。
+      prepareLoopCycle();
+    }
+
     emit();
   }
 

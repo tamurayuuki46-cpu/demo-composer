@@ -32,7 +32,9 @@ Audio Moduleは作曲確認用のDemo Playerを担当する。
 - AudioContext は `latencyHint: "playback"` で余裕のある出力バッファを使う。
 - Tone系は従来どおり Attack / Release のGain envelopeで波形の不連続を避ける。
 - Kick / Snare / Closed HHも、開始時に約3msの短いGain rampを入れる。特にNoise系を任意のサンプル値から最大Gainで突然開始しないことで、スマートフォンの小型スピーカーで「プツッ」と聞こえるクリック成分を抑える。
-- これはクリック除去用の極短処理で、Project/MIDI、BPM、ノート位置、音量設定には影響しない。
+- Loopは周回ごとに `stop() -> play()` をやり直さず、終端の約80ms前に次周を同じAudioContextの時刻へ先行予約する。周回境界の空白と再起動由来のクリックを避ける。
+- Loop中の編集は従来どおり次周へ反映する。LoopをOFFにした場合は先行予約済みの次周Sourceをキャンセルし、現在周の終端で停止する。
+- これらはPreview再生だけの処理で、Project/MIDI、BPM、ノート位置、保存形式には影響しない。
 
 ## Timing
 
