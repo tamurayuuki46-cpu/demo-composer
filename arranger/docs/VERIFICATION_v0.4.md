@@ -17,4 +17,11 @@ Story: source JSON → category/method variants → actual chords/voicing/part n
 - Screenshots: https://github.com/tamurayuuki46-cpu/demo-composer/actions/runs/38320356468/artifacts/11778376437
 
 ## v0.4.1 update correction
-公開ブラウザでv0.3 cacheが残る状態を観測。build-stamped entry/dependencies、build別SW登録/cache、network-first navigationとoffline fallbackへ変更。追加pwa-update.test.cjsで旧v0.3 cache→新入口→通常URL→offline、旧保存/別PWA cache保持を確認する。
+公開ブラウザでv0.3 cacheが残る状態を観測。build-stamped entry/dependencies、build別SW登録/cache、network-first navigationとoffline fallbackへ変更。
+
+旧Workerが新Service Workerのinstall中にも同scopeの未versioned precache取得へ応答できる更新経路を再現したため、precache request自体にもbuild IDを付与。これにより旧cacheのHTML/Moduleが新build cacheへ混入しないようにした。追加pwa-update.test.cjsで旧v0.3 worker/cache → build-stamped v0.4.1 → 新Worker activation/controller切替 → 通常URL → offline reloadを通し、v0.3保存データと別PWA cacheの保持も確認。
+
+- 修正確認commit: cefdd7ed112c5afd01a63781e6ebde07c1a32b29
+- Arrangement Lab CI run 38323158962: success
+- Demo Composer CI run 38323158948: success
+- Pages PR build run 38323158865: success
