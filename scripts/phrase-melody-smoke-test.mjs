@@ -4,7 +4,7 @@ import { rootToPitchClass } from "../src/chord/chord-theory.js";
 import { createDefaultProject, createProjectStore, validateProject } from "../src/core/project-state.js";
 import { buildMidiExports } from "../src/midi/midi-export.js";
 import {
-  PHRASE_BAR_CHOICES, PHRASE_CONTOURS, PHRASE_FLAVORS, PHRASE_FORMS, PHRASE_VARIATION_COUNT,
+  PHRASE_BAR_CHOICES, PHRASE_CONTOURS, PHRASE_ENERGIES, PHRASE_FLAVORS, PHRASE_FORMS, PHRASE_VARIATION_COUNT,
   applyPhraseNotes, melodyNoteCountIn, phraseCandidates, phraseDots, phraseRange, withPhraseNotes
 } from "../src/melody/phrase-generator.js";
 
@@ -183,3 +183,21 @@ for (const intervals of [[0, 1, 4, 5, 7, 8, 10], [0, 1, 5, 7, 8], [0, 2, 3, 5, 7
   });
 }
 console.log("Phrase flavor / scale tests passed.");
+
+// ---- 盛り上がり（Energy）: Low は低く・少なく・弱く、High は高く・強く ----
+assert.deepEqual(PHRASE_ENERGIES.map((e) => e.id), ["low", "mid", "high"]);
+for (const [key, scale] of [["C", "major"], ["A", "minor"]]) {
+  const project = makeProject(key, scale);
+  const avg = (list, f) => list.reduce((sum, n) => sum + f(n), 0) / list.length;
+  for (let variation = 0; variation < PHRASE_VARIATION_COUNT; variation += 1) {
+    const [low, mid, high] = ["low", "mid", "high"].map((energy) => phraseCandidates(project, { startBar: 0, bars: 4, variation, energy }));
+    mid.forEach((candidate, index) => {
+      assert.ok(avg(low[index].notes, (n) => n.pitch) < avg(candidate.notes, (n) => n.pitch), "low is lower");
+      assert.ok(avg(high[index].notes, (n) => n.pitch) > avg(candidate.notes, (n) => n.pitch), "high is higher");
+      assert.ok(low[index].notes.length <= candidate.notes.length, "low has fewer or equal notes");
+      assert.ok(avg(low[index].notes, (n) => n.velocity) < avg(high[index].notes, (n) => n.velocity), "low is softer than high");
+      assert.ok(high[index].notes.every((n) => n.velocity <= 127));
+    });
+  }
+}
+console.log("Phrase energy tests passed.");

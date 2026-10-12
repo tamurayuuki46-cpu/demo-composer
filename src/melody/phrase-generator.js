@@ -36,6 +36,13 @@ export const PHRASE_FLAVORS = Object.freeze([
   { id: "dense", label: "高密度", note: "16分を含む細かいリズム、同音連打 → 跳躍、拍の裏から入る先取り、後ろから2小節目で音域を上げる。※YOASOBI系のイメージ（特定曲のコピーではありません）" }
 ]);
 
+// 盛り上がり（ArrangeのSection Energy）。音域・音数・強さを変える
+export const PHRASE_ENERGIES = Object.freeze([
+  { id: "low", label: "Low", note: "低めの音域で音数を減らし、やさしく。Aメロ・イントロ向き。", shift: -3, velocity: -10 },
+  { id: "mid", label: "Mid", note: "ふつうの音域・音数。", shift: 0, velocity: 0 },
+  { id: "high", label: "High", note: "高めの音域で強く。サビ向き。", shift: 4, velocity: 8 }
+]);
+
 // 16分(0.5step)を含む高密度モチーフ。小節頭は必ず off 0（コードトーン）
 const DENSE_MOTIFS = Object.freeze([
   // 同音連打 → 跳躍 → 細かく下りて、また連打 → 駆け上がり
@@ -82,11 +89,12 @@ function scaleIntervalsOf(project, scaleIntervals) {
   return SCALE_INTERVALS[project.basic.scale] ?? SCALE_INTERVALS.major;
 }
 
-function scaleList(project, octave, scaleIntervals) {
+// shift: 音域の窓を半音単位で上下にずらす（Energy用）
+function scaleList(project, octave, scaleIntervals, shift = 0) {
   const tonic = rootToPitchClass(project.basic.key);
   const intervals = scaleIntervalsOf(project, scaleIntervals);
   const pcs = new Set(intervals.map((interval) => (tonic + interval) % 12));
-  const lo = (octave + 1) * 12;
+  const lo = (octave + 1) * 12 + shift;
   const pitches = [];
   for (let pitch = lo; pitch <= lo + WINDOW_SEMITONES; pitch += 1) {
     if (pcs.has(pitch % 12)) pitches.push(pitch);
@@ -110,12 +118,12 @@ function isChordTone(scale, index, info) {
   return info.chordPcs.has(scale.pitches[index] % 12);
 }
 
-// 指定位置の近くにあるコードトーン（同じ距離なら下を優先）
-function nearestChordTone(scale, target, info, { maxDistance = 6 } = {}) {
+// 指定位置の近くにあるコードトーン（同じ距離なら下を優先。prefer: 1 のときは上を優先）
+function nearestChordTone(scale, target, info, { maxDistance = 6, prefer = -1 } = {}) {
   const last = scale.pitches.length - 1;
   const start = clamp(target, 0, last);
   for (let distance = 0; distance <= maxDistance; distance += 1) {
-    for (const index of [start - distance, start + distance]) {
+    for (const index of [start + prefer * distance, start - prefer * distance]) {
       if (index >= 0 && index <= last && isChordTone(scale, index, info)) return index;
     }
   }
@@ -174,8 +182,9 @@ function trendFor(contour, form, bar, bars) {
 
 // ---- 1候補 ----
 
-function buildCandidate(project, { form, startBar, bars, contour, variation, octave, flavor = "plain", scaleIntervals = null }) {
-  const scale = scaleList(project, octave, scaleIntervals);
+function buildCandidate(project, { form, startBar, bars, contour, variation, octave, flavor = "plain", scaleIntervals = null, energy = "mid" }) {
+  const energyInfo = PHRASE_ENERGIES.find((item) => item.id === energy) ?? PHRASE_ENERGIES[1];
+  const scale = scaleList(project, octave, scaleIntervals, energyInfo.shift);
   const intervalsUsed = scaleIntervalsOf(project, scaleIntervals);
   // 2度・6度: キーの2度と6度のpitch class（無いスケールは近い度数）
   const favorPcs = new Set([
@@ -190,7 +199,7 @@ function buildCandidate(project, { form, startBar, bars, contour, variation, oct
 
   // 基準位置: 1小節目のコードトーンで、音域の中ほど
   const center = scale.pitches.findIndex((pitch) => pitch >= scale.pitches[0] + 7);
-  const base = nearestChordTone(scale, center, infos[0]);
+  const base = nearestChordTone(scale, center, infos[0], { prefer: energyInfo.shift > 0 ? 1 : -1 });
   const motifIndex = positiveMod(variation + (form === "qa" ? 1 : form === "peak" ? 2 : 0), MOTIFS.length);
 
   // 各小節の基準位置（アンカー）は強拍のコードトーン
@@ -252,6 +261,18 @@ function buildCandidate(project, { form, startBar, bars, contour, variation, oct
       return { ...item, idx, index };
     });
 
+    // Low: 弱い拍の短い音を1つおきに抜いて、音数を減らす（小節頭・長い音・小節の最後の音は残す）
+    if (energyInfo.id === "low" && role !== "land") {
+      let weak = 0;
+      const thinned = placed.filter((item, index) => {
+        if (item.step === 0 || item.len >= 2 || index === placed.length - 1) return true;
+        weak += 1;
+        return weak % 2 === 0;
+      });
+      placed.length = 0;
+      placed.push(...thinned);
+    }
+
     // 着地: 直前の音から段差が小さいコードトーン（少し下がって落ち着く向き）へ。最後は長く置く
     if (role === "land") {
       const previousIdx = placed.length > 0 ? placed[placed.length - 1].idx : anchor;
@@ -278,7 +299,7 @@ function buildCandidate(project, { form, startBar, bars, contour, variation, oct
         pitch: scale.pitches[item.idx],
         startTick,
         durationTick,
-        velocity: item.step === 0 ? 104 : (flavor === "dense" && item.step % 1 !== 0 ? 88 : role === "peak" ? 102 : 94)
+        velocity: clamp((item.step === 0 ? 104 : (flavor === "dense" && item.step % 1 !== 0 ? 88 : role === "peak" ? 102 : 94)) + energyInfo.velocity, 1, 127)
       });
     });
   });
@@ -300,7 +321,7 @@ export function phraseRange(project, startBar, bars) {
   return { startBar: start, endBar: end, bars: end - start };
 }
 
-export function phraseCandidates(project, { startBar = 0, bars = 4, contour = "auto", variation = 0, octave = 4, flavor = "plain", scaleIntervals = null } = {}) {
+export function phraseCandidates(project, { startBar = 0, bars = 4, contour = "auto", variation = 0, octave = 4, flavor = "plain", scaleIntervals = null, energy = "mid" } = {}) {
   const range = phraseRange(project, startBar, bars);
   if (!range) return [];
   const variationIndex = positiveMod(Math.trunc(variation), PHRASE_VARIATION_COUNT);
@@ -315,7 +336,8 @@ export function phraseCandidates(project, { startBar = 0, bars = 4, contour = "a
       variation: variationIndex,
       octave,
       flavor: PHRASE_FLAVORS.some((item) => item.id === flavor) ? flavor : "plain",
-      scaleIntervals
+      scaleIntervals,
+      energy
     });
     return {
       id: form.id,
