@@ -67,7 +67,7 @@ schemaVersion 2のまま、既存の `structure.sections` に次の形で入れ�
 `chords[]`:
 
 - `root`: 0〜11
-- `quality`: 下記35種類（基本9種類 + 拡張26種類）
+- `quality`: 下記44種類（基本9種類 + 拡張35種類）
 - `degree`: Degree文字列
 - `startTick`: 0以上の整数
 - `durationTick`: 1以上の整数
@@ -90,7 +90,9 @@ schemaVersion 2のまま、既存の `structure.sections` に次の形で入れ�
 - add系: `add9` / `minorAdd9`
 - 7th系: `minor7flat5` / `diminished7` / `minorMajor7` / `major7sharp5` / `dominant7sus4`
 - 9th・11th・13th系: `major9` / `dominant9` / `minor9` / `minor11` / `minor7add11` / `dominant13` / `major13` / `minorMajor9` / `major9sharp5` / `minor9flat5` / `minor7flat5add11`
-- 変化音系: `dominant7flat9` / `dominant7sharp9` / `dominant7flat13` / `dominant7sharp11` / `major7sharp11` / `minor7flat9`
+- 変化音系: `dominant7flat9` / `dominant7sharp9` / `dominant7flat13` / `dominant7sharp11` / `major7sharp11` / `minor7flat9` / `dominant9flat5` / `dominant9sharp5`
+- 7th追加（全音音階向け）: `dominant7flat5` / `dominant7sharp5`
+- 4度堆積・特殊和音: `quartal3` / `quartal4` / `quintal3` / `soWhat` / `mystic`
 
 構成音は rootからの半音数で、9th以上は1オクターブ上（例: 9th=14、11th=17、13th=21、♭9=13、♯9=15、♯11=18、♭13=20）で保存する。ピッチクラスが必要な処理は `% 12` で扱う。
 
@@ -98,7 +100,7 @@ schemaVersion 2のまま、既存の `structure.sections` に次の形で入れ�
 
 v0.2のUIでも1コード=1小節（1920 tick）を維持する。
 
-Chord Moduleでは従来のダイアトニック7候補に加えて、任意の基準音から上記35種類を選べる。さらに「スケール系のコード」（ダイアトニック / ハーモニックマイナー系 / メロディックマイナー系 × 3和音 / 7th / テンション）から1タップで追加できる。新しいQualityはDemo PlayerとMIDI Exportの両方で構成音を反映する。
+Chord Moduleでは従来のダイアトニック7候補に加えて、任意の基準音から上記44種類を選べる。さらに「スケール系のコード」（ダイアトニック / ハーモニックマイナー系 / メロディックマイナー系 × 3和音 / 7th / テンション）から1タップで追加できる。新しいQualityはDemo PlayerとMIDI Exportの両方で構成音を反映する。
 
 ## Track Data
 

@@ -59,3 +59,26 @@
   margin: 0 0 4px;
   font-size: 15px;
 }
+
+.scale-set-select {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+  font-weight: 700;
+}
+
+.scale-set-select {
+  min-width: 0;
+}
+
+.scale-set-select select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  font: inherit;
+}
+
+.scale-set-levels button {
+  min-width: 70px;
+}

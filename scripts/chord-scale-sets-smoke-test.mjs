@@ -3,7 +3,7 @@ import {
   ALL_CHORD_QUALITY_ORDER, CHORD_QUALITY_DEFINITIONS, CHORD_QUALITY_GROUPS, CHORD_QUALITY_ORDER, chordIntervals, isChordQuality
 } from "../src/core/chord-qualities.js";
 import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicChords, rootToPitchClass } from "../src/chord/chord-theory.js";
-import { SCALE_FAMILIES, SCALE_SET_LEVELS, getScaleFamily, scaleFamiliesForProject, scaleSetChords, scaleTensionChords } from "../src/chord/chord-scale-sets.js";
+import { SCALE_FAMILIES, SCALE_SET_LEVELS, EXTRA_SCALE_GROUPS, SCALE_PANEL_LEVELS, getScaleFamily, scaleFamiliesForProject, scaleFamilyGroups, scaleLevelRows, scaleSetChords, scaleTensionChords } from "../src/chord/chord-scale-sets.js";
 import { resolveScaleFamilyId } from "../src/chord/chord-scale-sets-ui.js";
 import { createDefaultProject, createProjectStore, validateProject } from "../src/core/project-state.js";
 import { buildMidiExports } from "../src/midi/midi-export.js";
@@ -13,7 +13,7 @@ import { detectChord } from "../src/midi/midi-import.js";
 // ---- Quality定義: 9種類の基本 + 拡張、すべてグループに入っている
 const ids = Object.keys(CHORD_QUALITY_DEFINITIONS);
 assert.equal(CHORD_QUALITY_ORDER.length, 9, "基本の9種類は変えない");
-assert.equal(ids.length, 35);
+assert.equal(ids.length, 44);
 assert.deepEqual([...ALL_CHORD_QUALITY_ORDER].sort(), [...ids].sort(), "全Qualityがグループに入っている");
 assert.equal(new Set(ids.map((id) => CHORD_QUALITY_DEFINITIONS[id].suffix)).size, ids.length, "表記（suffix）が重複しない");
 assert.ok(CHORD_QUALITY_GROUPS.every((group) => group.qualities.length > 0));
@@ -33,14 +33,14 @@ assert.equal(sym(0, "major9"), "Cmaj9");
 assert.equal(sym(7, "dominant13"), "G13");
 assert.equal(sym(0, "add9"), "Cadd9");
 const variantsOfC = getAllChordVariants(0, "C");
-assert.equal(variantsOfC.length, 35);
+assert.equal(variantsOfC.length, 44);
 assert.equal(variantsOfC.find((v) => v.quality === "dominant9").degree, "I9");
 assert.equal(variantsOfC.find((v) => v.quality === "minor9").degree, "i9");
 assert.equal(variantsOfC.find((v) => v.quality === "minor7flat5").degree, "iø7");
 assert.equal(variantsOfC.find((v) => v.quality === "diminished7").degree, "i°7");
 assert.equal(variantsOfC.find((v) => v.quality === "dominant7").degree, "I7", "従来の表記のまま");
 const groups = getChordVariantGroups(2, "C");
-assert.equal(groups.reduce((sum, group) => sum + group.variants.length, 0), 35);
+assert.equal(groups.reduce((sum, group) => sum + group.variants.length, 0), 44);
 groups.forEach((group) => group.variants.forEach((v) => assert.equal(getAllChordVariants(2, "C")[v.index].quality, v.quality, "indexがgetAllChordVariantsと一致")));
 
 // ---- Project / MIDI / Bass: 全Qualityを全ルートで通す
@@ -133,6 +133,42 @@ assert.throws(() => scaleSetChords({ key: "C", familyId: "major", level: "nope" 
   assert.ok(major[0].chords.some((c) => c.symbol === "Cmaj9") && major[0].chords.some((c) => c.symbol === "C6"));
   assert.ok(!major[0].chords.some((c) => c.quality === "dominant7flat9"), "C7b9 has Eb: outside C major");
   assert.ok(major[4].chords.some((c) => c.symbol === "G13"));
+}
+
+// ---- その他のスケール・特殊和音
+{
+  const extras = EXTRA_SCALE_GROUPS.flatMap((group) => group.scales);
+  assert.ok(extras.length >= 25);
+  assert.equal(new Set(extras.map((e) => e.id)).size, extras.length, "scale idが重複しない");
+  assert.deepEqual(SCALE_PANEL_LEVELS.map((l) => l.id), ["triad", "seventh", "tension", "special"]);
+  assert.ok(extras.every((e) => e.intervals[0] === 0 && e.intervals.every((v, i) => i === 0 || v > e.intervals[i - 1]) && e.intervals.at(-1) < 12));
+  for (const key of ["C", "F#"]) {
+    const tonic = rootToPitchClass(key);
+    for (const family of [...SCALE_FAMILIES, ...extras]) {
+      for (const level of SCALE_PANEL_LEVELS) {
+        const rows = scaleLevelRows({ key, familyId: family.id, level: level.id });
+        assert.equal(rows.length, family.intervals.length);
+        const pcs = new Set(family.intervals.map((i) => (tonic + i) % 12));
+        rows.forEach((row) => row.chords.forEach((chord) => {
+          assert.ok(isChordQuality(chord.quality));
+          assert.ok(chordIntervals(chord.quality).every((t) => pcs.has((chord.root + t) % 12)), `${family.id}/${level.id}/${key}: ${chord.symbol} inside scale`);
+        }));
+      }
+    }
+  }
+  const names = (familyId, level, i) => scaleLevelRows({ key: "C", familyId, level })[i].chords.map((c) => c.symbol);
+  assert.deepEqual(names("phrygian-dominant", "triad", 0), ["C", "Caug", "Csus4"], "Cスパニッシュ(フリジアン・ドミナント)のIはC");
+  assert.ok(names("phrygian-dominant", "seventh", 0).includes("C7"));
+  assert.ok(names("phrygian-dominant", "triad", 3).includes("Fm"), "Fmがある");
+  assert.deepEqual(names("whole-tone", "triad", 0), ["Caug"]);
+  assert.ok(names("whole-tone", "seventh", 0).includes("C7b5") && names("whole-tone", "seventh", 0).includes("C7#5"));
+  assert.ok(names("major-pentatonic", "triad", 0).includes("C") && names("minor-pentatonic", "seventh", 0).includes("Cm7"));
+  assert.ok(names("miyako-bushi", "triad", 0).includes("Csus4"));
+  assert.ok(names("major", "special", 1).includes("Dq4"), "ドの4度堆積はDのQuartalが出る");
+  assert.equal(scaleFamilyGroups("major").length, 1 + EXTRA_SCALE_GROUPS.length);
+  assert.equal(getScaleFamily("phrygian-dominant").mode, "Phrygian Dominant（スパニッシュ）");
+  assert.equal(resolveScaleFamilyId("major", "whole-tone"), "whole-tone");
+  assert.equal(resolveScaleFamilyId("minor", "major"), "natural-minor");
 }
 
 console.log("Chord scale sets smoke test passed.");
