@@ -30,6 +30,18 @@ const CHROMATIC_DEGREES = Object.freeze([
   "VII"
 ]);
 
+// 基準音のボタン用: 現在のKey / Scaleでの度数名（ローマ数字）。ScaleのダイアトニックはそのScaleの数え方、外れた音は♭ / ♯で示す。
+// Major: I ♭II II ♭III III IV ♯IV V ♭VI VI ♭VII VII / Minor: I ♭II II III ♯III IV ♯IV V VI ♯VI VII ♯VII
+const ROOT_DEGREE_NAMES = Object.freeze({
+  major: CHROMATIC_DEGREES,
+  minor: Object.freeze(["I", "♭II", "II", "III", "♯III", "IV", "♯IV", "V", "VI", "♯VI", "VII", "♯VII"])
+});
+
+export function rootDegreeName(root, key, scale = "major") {
+  const distance = (((root - rootToPitchClass(key)) % 12) + 12) % 12;
+  return (ROOT_DEGREE_NAMES[scale] ?? ROOT_DEGREE_NAMES.major)[distance];
+}
+
 export function rootToPitchClass(key) {
   const pitchClass = NOTE_NAMES.indexOf(key);
   if (pitchClass === -1) {

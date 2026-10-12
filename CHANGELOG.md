@@ -4,6 +4,7 @@
 更新日: 2026-10-11
 
 ### 追加
+- Chord: 「基準音」Selectの各音名の隣に、現在のKey / Scaleでの度数名を併記（例: Cメジャー `C　I` / `D#　♭III`、Aマイナー `C　III`）。表示のみでSchema変更なし（`rootDegreeName`、`npm run test:chord` に追加）
 - Melody Piano Rollの色分けを拡張: コード構成音（1・3・5・7相当）= 青 / テンション（9・11・13相当）= 緑 / 選択Scaleの7音以外 = 黄 / アボイドノート（構成音の半音上のScale内の音）= 赤く光る。置いたアボイドの音は縁が赤く光る。優先は 赤 > 青 > 緑 > 黄。見た目のみでSchema変更なし（`src/melody/pitch-roles.js`、`npm run test:pitch-roles`、CI対象）
 - Melody Analyzer: `メロディの働き` を追加。和声での役割を `Guide / Chord / Tension / Other` に分け、Guide Toneは3rd / 7th系のChord Tone内数、Tensionは初期版では9th / 11th / 13th相当として表示する（Schema変更なし）
 - Melody Analyzer: 経過音 / 刺繍音 / Approach / 倚音 / 逸音 / 先取音 / 係留音候補を、前後関係が明確な場合だけルールベースで派生分析する。係留は解決まで断定せず候補として扱う。`src/core/melodic-functions.js` / `docs/MELODY_FUNCTIONS.md`

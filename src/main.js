@@ -16,7 +16,7 @@ import { addEntry, chordsFromProgression, loadLibrary, progressionDegreeText, pr
 import { chordRole } from "./chord/chord-role.js";
 import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordsWithBarChord, draftChordsFromMelody, melodyBarCount, suggestChordsForBar } from "./chord/chord-for-melody.js";
-import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootToPitchClass } from "./chord/chord-theory.js";
+import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootDegreeName, rootToPitchClass } from "./chord/chord-theory.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
@@ -349,7 +349,7 @@ function chordScreen() {
         <label class="field">
           <span>基準音</span>
           <select id="chord-root-select">
-            ${NOTE_NAMES.map((name, root) => `<option value="${root}"${root === selectedRoot ? " selected" : ""}>${name}</option>`).join("")}
+            ${NOTE_NAMES.map((name, root) => `<option value="${root}"${root === selectedRoot ? " selected" : ""}>${name}　${rootDegreeName(root, project.basic.key, project.basic.scale)}</option>`).join("")}
           </select>
         </label>
       </div>
