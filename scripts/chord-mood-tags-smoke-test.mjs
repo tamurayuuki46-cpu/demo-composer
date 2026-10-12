@@ -35,3 +35,18 @@ assert.deepEqual(recommendChordPresetsByMood([], { mode: "major" }), []);
 assert.deepEqual(recommendChordPresetsByMood(["unknown-tag"], { mode: "major" }), []);
 
 console.log(`Chord mood tags OK: ${CHORD_MOOD_PROFILES.length} presets linked.`);
+
+// 曲想を1つ選んで一覧
+{
+  const { chordPresetsForEmotion } = await import("../src/chord/chord-mood-tags.js");
+  const sad = chordPresetsForEmotion("sad", { mode: "major" });
+  assert.ok(sad.length >= 5);
+  assert.ok(sad.every((row) => row.mode === "major" && row.weight >= 3));
+  assert.ok(sad.every((row, index) => index === 0 || sad[index - 1].weight >= row.weight));
+  assert.deepEqual(chordPresetsForEmotion("floating"), []); // 質感・場面のタグは曲想の一覧には使わない
+  assert.deepEqual(chordPresetsForEmotion("nope"), []);
+  const minorSad = chordPresetsForEmotion("sad", { mode: "minor" });
+  assert.ok(minorSad.every((row) => row.mode === "minor"));
+  const all = chordPresetsForEmotion("bright", { mode: "any", minWeight: 0 });
+  assert.equal(all.length, 100);
+}

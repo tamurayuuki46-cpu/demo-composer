@@ -1,8 +1,11 @@
 import { getCompositionIntent, subscribeCompositionIntent } from "../core/composition-intent.js";
 import {
   CHORD_MOOD_TAG_GROUPS,
+  chordPresetMoodText,
+  chordPresetsForEmotion,
   recommendChordPresetsByMood
 } from "./chord-mood-tags.js";
+import { chordPresetNames } from "./chord-presets.js";
 
 const GROUP_LABELS = Object.freeze({
   emotion: "感情",
@@ -25,6 +28,10 @@ const TAG_ALIAS = new Map([
 ]);
 
 const selectedTags = new Set();
+// 曲想を1つ選んで一覧にする（UI状態のみ）。null = 未選択
+let listEmotion = null;
+let listShowAll = false;
+const LIST_LIMIT = 10;
 let observer = null;
 let rendering = false;
 let unsubscribeIntent = null;
@@ -44,6 +51,47 @@ function escapeHtml(value) {
 function currentMode() {
   const subtitle = document.querySelector("#screen .section-heading p")?.textContent ?? "";
   return subtitle.includes("Minor") ? "minor" : "major";
+}
+
+// 画面の「C Major のコード選択」から Key を読む（Chord画面の見出しに出ているもの）
+function currentKey() {
+  if (typeof document === "undefined") return "C";
+  const subtitle = document.querySelector("#screen .section-heading p")?.textContent ?? "";
+  const key = subtitle.trim().split(/\s+/)[0];
+  return /^[A-G][#b]?$/.test(key) ? key : "C";
+}
+
+export function emotionListHtml({ emotion = listEmotion, mode = "major", key = "C", showAll = listShowAll } = {}) {
+  const emotionTags = CHORD_MOOD_TAG_GROUPS.emotion;
+  const rows = emotion ? chordPresetsForEmotion(emotion, { mode }) : [];
+  const shown = showAll ? rows : rows.slice(0, LIST_LIMIT);
+  const label = emotionTags.find((tag) => tag.id === emotion)?.label ?? "";
+  return `
+    <div class="chord-emotion-list">
+      <strong>曲想を1つ選んで一覧</strong>
+      <div class="chord-mood-chips" role="radiogroup" aria-label="曲想を1つ選ぶ">
+        ${emotionTags.map((tag) => `
+          <button type="button" role="radio" class="chord-mood-chip${tag.id === emotion ? " active" : ""}" data-chord-emotion="${escapeHtml(tag.id)}" aria-checked="${tag.id === emotion}">${escapeHtml(tag.label)}</button>
+        `).join("")}
+      </div>
+      ${emotion ? (rows.length === 0
+        ? `<p class="chord-mood-empty">「${escapeHtml(label)}」に合う進行は、このScaleでは見つかりません。</p>`
+        : `<p class="hint">「${escapeHtml(label)}」が強い順に ${shown.length} / ${rows.length} 件（${key} ${mode === "minor" ? "Minor" : "Major"} のコード名）</p>
+          <ol class="chord-emotion-rows">
+            ${shown.map((row) => `
+              <li class="chord-emotion-row">
+                <div class="chord-emotion-main">
+                  <strong>${escapeHtml(chordPresetNames(row.presetId, { key, scale: mode }))}</strong>
+                  <small>${escapeHtml(degreeText(row))}　${escapeHtml(DIFFICULTY_LABELS[row.difficulty] ?? "")}</small>
+                  <small>${escapeHtml(chordPresetMoodText(row.presetId))}</small>
+                </div>
+                <button type="button" data-chord-mood-preset="${escapeHtml(row.presetId)}">使う</button>
+              </li>
+            `).join("")}
+          </ol>
+          ${rows.length > LIST_LIMIT ? `<button type="button" class="chord-emotion-more" data-chord-emotion-more>${showAll ? "上位だけ表示" : `全${rows.length}件を表示`}</button>` : ""}`)
+        : `<p class="chord-mood-empty">曲想を1つ選ぶと、その印象が強い進行を一覧にします。</p>`}
+    </div>`;
 }
 
 function degreeText(candidate) {
@@ -145,6 +193,8 @@ export function chordMoodPanelHtml({
         <button type="button" class="chord-mood-clear" data-chord-mood-clear${selected.size ? "" : " disabled"}>クリア</button>
       </div>
       ${sourceHtml}
+      ${emotionListHtml({ mode, key: currentKey() })}
+      <strong class="chord-mood-combine">組み合わせて3案に絞る（最大3つ）</strong>
       ${groupsHtml}
       ${resultsHtml}
       <p class="hint">※ コード進行だけで感情は決まりません。BPM・メロディ・リズム・ボイシング・音色でも印象は変わります。</p>
@@ -168,6 +218,19 @@ function renderPanel() {
 }
 
 function bindPanelEvents() {
+  document.querySelectorAll("[data-chord-emotion]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.chordEmotion;
+      listEmotion = listEmotion === id ? null : id;
+      listShowAll = false;
+      renderPanel();
+    });
+  });
+  document.querySelector("[data-chord-emotion-more]")?.addEventListener("click", () => {
+    listShowAll = !listShowAll;
+    renderPanel();
+  });
+
   document.querySelectorAll("[data-chord-mood-tag]").forEach((button) => {
     button.addEventListener("click", () => {
       const tagId = button.dataset.chordMoodTag;
