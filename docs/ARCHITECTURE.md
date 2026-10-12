@@ -138,6 +138,8 @@ Backing PatternはChordの責任機能とする。
 
 ## Melody Assistance
 
+4小節フレーズ生成（`src/melody/phrase-generator.js`）はProjectを読むだけの純粋関数で、Chord画面（`src/main.js`）は結果のノート配列を `updateMelodyNotes` へ渡すだけ。Chord Moduleは生成ロジックに依存せず、Melodyのデータ責任（`tracks[role=melody]`）もMelody側のままにする。
+
 Melody Moduleの候補生成ロジックは `src/melody/melody-candidates.js` に置き、UIは `melody-screen.js` が担当する。
 
 - `melodyCandidatesForBar()`: 現在の Key / Scale / Chord / Bar / Octave から、安定 / キャッチー / 浮遊感の3候補を純粋計算する
