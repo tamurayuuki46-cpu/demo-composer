@@ -26,9 +26,12 @@ jobs:
           node --check arranger/src/core.js
           node --check arranger/src/app.js
           node --check arranger/sw.js
+          node --check arranger/src/preview.js
 
       - name: Arrangement Lab core regression
-        run: node arranger/tests/core.test.mjs
+        run: |
+          node arranger/tests/core.test.mjs
+          node arranger/tests/regression.test.mjs
 
       - name: Static build includes Arrangement Lab
         run: |
@@ -36,3 +39,17 @@ jobs:
           test -f dist/arranger/index.html
           test -f dist/arranger/src/app.js
           test -f dist/arranger/src/core.js
+
+      - name: Mobile Chromium end-to-end
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8080 --directory dist > /tmp/arranger-server.log 2>&1 &
+          node arranger/tests/browser.test.cjs
+
+      - name: Upload mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arranger-mobile-evidence
+          path: test-results/

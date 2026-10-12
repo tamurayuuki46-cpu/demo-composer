@@ -111,3 +111,14 @@ button.mini { min-height: 36px; padding: 0 10px; font-size: .74rem; }
   .midi-grid { grid-template-columns: repeat(5, 1fr); }
   .app-header { padding-inline: max(18px, calc((100vw - 820px)/2)); }
 }
+
+/* Android 360px: keep long labels inside cards and touch targets reachable. */
+.app-header > div, .section-head > div, .field, select { min-width: 0; }
+.version { flex-shrink: 0; white-space: nowrap; }
+.app-header { gap: 8px; }
+.section-head, .reharm-head { flex-wrap: wrap; }
+.role-row strong, .reharm-option, .candidate-meta { overflow-wrap: anywhere; }
+.toggle-chip { min-height: 44px; }
+.toggle-chip:focus-within { outline: 2px solid #a5b4fc; }
+button.mini, .text-button { min-height: 44px; }
+.toast { pointer-events: none; }

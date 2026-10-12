@@ -1,3 +1,4 @@
+import { startPreview } from './preview.js';
 import {
   ARRANGER_VERSION,
   STYLE_PROFILES,
@@ -11,6 +12,7 @@ import {
   createArrangerProject,
   summarizeCandidate,
   createPartMidi,
+  restoreArrangerProject,
 } from './core.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.2';
@@ -30,7 +32,7 @@ const $ = (selector) => document.querySelector(selector);
 const els = {
   version: $('#version'), file: $('#project-file'), drop: $('#drop-zone'), sourceSummary: $('#source-summary'),
   collisionSummary: $('#collision-summary'), style: $('#style-select'), generate: $('#generate-btn'),
-  preview: $('#preview-btn'), stop: $('#stop-btn'), candidateTabs: $('#candidate-tabs'), mixA: $('#mix-a'), mixB: $('#mix-b'),
+  previewSection: $('#preview-section'), preview: $('#preview-btn'), stop: $('#stop-btn'), candidateTabs: $('#candidate-tabs'), mixA: $('#mix-a'), mixB: $('#mix-b'),
   mix: $('#mix-btn'), candidateMeta: $('#candidate-meta'), curve: $('#curve'), sections: $('#sections'),
   midiButtons: $('#midi-buttons'), adopt: $('#adopt-btn'), exportBtn: $('#export-btn'), clear: $('#clear-btn'), message: $('#message'),
 };
@@ -84,7 +86,20 @@ async function importFile(file) {
   try {
     stopPreview();
     const text = await file.text();
-    state.source = normalizeSourceProject(JSON.parse(text));
+    const data = JSON.parse(text);
+    if (data.arrangerSchemaVersion) {
+      restorePlan(data);
+      flash(state.source ? '編曲プランを復元しました。' : '旧プランを読み込みました。同じrevisionの元project.jsonを選ぶと編集を再開できます。');
+      return;
+    }
+    const source = normalizeSourceProject(data);
+    if (state.arrangerProject && !state.arrangerProject.sourceSnapshot && state.arrangerProject.source.projectId === source.sourceProjectId) {
+      const restored = restoreArrangerProject(state.arrangerProject, source);
+      applyRestored(restored);
+      flash('元project.jsonと旧プランから編集を再開しました。');
+      return;
+    }
+    state.source = source;
     state.arrangerProject = null;
     state.reharmSuggestions = {};
     renderSource();
@@ -102,6 +117,7 @@ function renderSource() {
     return;
   }
   const s = state.source;
+  els.previewSection.innerHTML = s.sections.map((section) => `<option value="${section.startTick}">${escapeHtml(section.name)}から</option>`).join('');
   const bars = s.sections.reduce((sum, section) => sum + section.bars, 0);
   els.sourceSummary.innerHTML = `
     <div class="summary-grid">
@@ -168,6 +184,8 @@ function renderCandidates() {
   const candidate = currentCandidate();
   const hasCandidate = Boolean(candidate);
   els.preview.disabled = !hasCandidate;
+  els.adopt.disabled = !hasCandidate;
+  els.exportBtn.disabled = !hasCandidate && !state.arrangerProject;
   els.mix.disabled = state.candidates.length < 2;
   if (!candidate) {
     els.candidateMeta.innerHTML = '<p class="muted">候補はまだありません。</p>';
@@ -200,7 +218,7 @@ function renderCurve(candidate) {
 }
 
 function renderMixControls() {
-  const options = state.candidates.slice(0, 6).map((candidate, index) => `<option value="${index}">${escapeHtml(candidate.label)}</option>`).join('');
+  const options = state.candidates.map((candidate, index) => `<option value="${index}">${escapeHtml(candidate.label)}</option>`).join('');
   els.mixA.innerHTML = options;
   els.mixB.innerHTML = options;
   els.mixA.value = '0';
@@ -208,6 +226,7 @@ function renderMixControls() {
 }
 
 function createMixCandidate() {
+  stopPreview();
   const a = state.candidates[Number(els.mixA.value)];
   const b = state.candidates[Number(els.mixB.value)];
   if (!a || !b || a === b) {
@@ -274,6 +293,7 @@ function handleSectionChange(event) {
   const sectionId = target.dataset.section;
   const candidate = currentCandidate();
   if (!candidate || !sectionId) return;
+  stopPreview();
   if (target.dataset.action === 'density') {
     state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { density: target.value });
     renderCandidates();
@@ -289,6 +309,7 @@ function handleSectionClick(event) {
   if (!button || !state.source) return;
   const sectionId = button.dataset.section;
   const action = button.dataset.action;
+  stopPreview();
   if (action === 'reharm-show') {
     state.reharmSuggestions[sectionId] = buildReharmSuggestions(state.source, sectionId);
     if (!state.reharmSuggestions[sectionId].length) flash('このSectionにはコードがありません。', true);
@@ -315,78 +336,31 @@ async function previewCurrentCandidate() {
   if (!state.source || !candidate) return;
   stopPreview();
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  if (!AudioCtx) {
-    flash('このブラウザでは簡易試聴を利用できません。', true);
-    return;
+  if (!AudioCtx) { flash('このブラウザでは簡易試聴を利用できません。', true); return; }
+  let ctx;
+  try {
+    ctx = new AudioCtx();
+    state.previewContext = ctx;
+    els.stop.disabled = false;
+    await ctx.resume();
+    if (state.previewContext !== ctx) return;
+    if (ctx.state !== 'running') throw new Error('音声を開始できません。もう一度試聴を押してください。');
+    state.stopAudio = startPreview(ctx, state.source, candidate, Number(els.previewSection.value) || 0, stopPreview);
+    flash(`${candidate.label} を最大16秒、簡易試聴します。`);
+  } catch (error) {
+    if (state.previewContext === ctx) { stopPreview(); flash(error.message || '音声を開始できませんでした。', true); }
   }
-  const ctx = new AudioCtx();
-  state.previewContext = ctx;
-  els.stop.disabled = false;
-  try { await ctx.resume(); } catch {}
-  const start = ctx.currentTime + 0.05;
-  const secondsPerTick = 60 / state.source.basic.bpm / state.source.basic.ppq;
-  const maxSeconds = 16;
-  const maxTick = Math.floor(maxSeconds / secondsPerTick);
-
-  const melody = state.source.tracks.find((track) => track.role === 'melody')?.notes || [];
-  scheduleNotes(ctx, melody.filter((note) => note.startTick < maxTick), start, secondsPerTick, 'triangle', 0.035);
-
-  for (const sourceSection of state.source.sections) {
-    if (sourceSection.startTick >= maxTick) break;
-    const arrSection = candidate.sections.find((section) => section.sectionId === sourceSection.id);
-    if (!arrSection) continue;
-    let chords = state.source.chords.filter((chord) => chord.startTick >= sourceSection.startTick && chord.startTick < sourceSection.endTick && chord.startTick < maxTick);
-    if (arrSection.reharmonization?.chords?.length) chords = arrSection.reharmonization.chords.filter((chord) => chord.startTick < maxTick);
-    if (arrSection.enabled.harmony) {
-      chords.forEach((chord) => {
-        const root = 48 + ((chord.root % 12) + 12) % 12;
-        const intervals = chord.quality?.includes('minor') ? [0, 3, 7] : [0, 4, 7];
-        const count = arrSection.density === 'thin' ? 2 : 3;
-        intervals.slice(0, count).forEach((interval) => scheduleTone(ctx, root + interval, start + chord.startTick * secondsPerTick, Math.min(1.2, chord.durationTick * secondsPerTick * .8), 'sine', .018));
-      });
-    }
-    if (arrSection.enabled.bass) {
-      chords.forEach((chord) => scheduleTone(ctx, 36 + (((chord.root % 12) + 12) % 12), start + chord.startTick * secondsPerTick, Math.min(.8, chord.durationTick * secondsPerTick * .6), 'square', .018));
-    }
-    if (arrSection.enabled.counter) {
-      const counter = state.source.tracks.find((track) => track.role === 'counter')?.notes || [];
-      scheduleNotes(ctx, counter.filter((note) => note.startTick >= sourceSection.startTick && note.startTick < Math.min(sourceSection.endTick, maxTick)), start, secondsPerTick, 'sawtooth', .014);
-    }
-    if (arrSection.enabled.drums) {
-      const beat = state.source.basic.ppq;
-      for (let tick = sourceSection.startTick; tick < Math.min(sourceSection.endTick, maxTick); tick += beat) {
-        scheduleTone(ctx, tick % (beat * 4) === 0 ? 48 : 60, start + tick * secondsPerTick, .045, 'square', .012);
-      }
-    }
-  }
-  const finishMs = Math.min(maxSeconds, maxTick * secondsPerTick) * 1000 + 300;
-  window.setTimeout(() => {
-    if (state.previewContext === ctx) stopPreview();
-  }, finishMs);
-  flash(`${candidate.label} を簡易試聴しています。`);
-}
-
-function scheduleNotes(ctx, notes, start, secondsPerTick, type, gain) {
-  notes.slice(0, 140).forEach((note) => scheduleTone(ctx, note.pitch, start + note.startTick * secondsPerTick, Math.max(.04, note.durationTick * secondsPerTick), type, gain));
-}
-function scheduleTone(ctx, pitch, when, duration, type, level) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = type;
-  osc.frequency.value = 440 * (2 ** ((pitch - 69) / 12));
-  gain.gain.setValueAtTime(0.0001, when);
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.001, level), when + 0.008);
-  gain.gain.exponentialRampToValueAtTime(0.0001, when + Math.max(0.03, duration));
-  osc.connect(gain).connect(ctx.destination);
-  osc.start(when);
-  osc.stop(when + Math.max(0.05, duration) + 0.02);
 }
 function stopPreview() {
   const ctx = state.previewContext;
   state.previewContext = null;
+  state.stopAudio?.(); state.stopAudio = null;
   els.stop.disabled = true;
   if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {});
 }
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopPreview(); });
+window.addEventListener('pagehide', stopPreview);
+els.previewSection.addEventListener('change', stopPreview);
 
 function handleMidiExport(event) {
   const button = event.target.closest('button[data-part]');
@@ -403,7 +377,7 @@ function handleMidiExport(event) {
     return;
   }
   const safeTitle = safeFileName(state.source.title || 'untitled');
-  downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${safeTitle}_${part}_arranged_v0.2.mid`);
+  downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${safeTitle}_${part}_arranged_${ARRANGER_VERSION}.mid`);
   flash(`${part}.mid を書き出しました。`);
 }
 
@@ -425,16 +399,11 @@ function adoptCurrentCandidate() {
 }
 
 function exportPlan() {
-  if (!state.arrangerProject) {
-    const candidate = currentCandidate();
-    if (!state.source || !candidate) {
-      flash('先に編曲案を用意してください。', true);
-      return;
-    }
-    state.arrangerProject = createArrangerProject(state.source, candidate, null);
-  }
+  const candidate = currentCandidate();
+  if (state.source && candidate) state.arrangerProject = createArrangerProject(state.source, candidate, state.arrangerProject);
+  if (!state.arrangerProject) { flash('先に編曲案を用意してください。', true); return; }
   const blob = new Blob([JSON.stringify(state.arrangerProject, null, 2)], { type: 'application/json' });
-  downloadBlob(blob, `${safeFileName(state.arrangerProject.source.title || 'untitled')}_arrangement_v0.2.json`);
+  downloadBlob(blob, `${safeFileName(state.arrangerProject.source.title || 'untitled')}_arrangement_${ARRANGER_VERSION}.json`);
   flash('編曲プランJSONを書き出しました。');
 }
 
@@ -451,6 +420,7 @@ function downloadBlob(blob, filename) {
 function safeFileName(value) { return String(value).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80); }
 
 function clearAll() {
+  if (!window.confirm('保存した編曲プランを消去しますか？必要なら先にJSONを書き出してください。')) return;
   stopPreview();
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
@@ -469,17 +439,29 @@ function clearAll() {
   flash('端末内の編曲プランを消去しました。元のDemo Composerデータは変更していません。');
 }
 
+function applyRestored({ source, candidate }) {
+  state.source = source;
+  state.candidates = candidate ? [candidate] : [];
+  state.selectedIndex = 0;
+  state.reharmSuggestions = {};
+  if (candidate) { state.styleId = candidate.styleId; els.style.value = state.styleId; }
+  renderSource(); renderCollisionSummary(); renderCandidates(); renderMixControls();
+}
+function restorePlan(saved) {
+  const restored = restoreArrangerProject(saved);
+  state.arrangerProject = saved;
+  applyRestored(restored);
+  els.exportBtn.disabled = false;
+}
 function restoreSavedPlan() {
-  const text = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
-  if (!text) return;
   try {
-    const saved = JSON.parse(text);
-    state.arrangerProject = saved;
-    els.exportBtn.disabled = false;
-    flash(`前回の採用プラン「${saved.source?.title || 'Untitled'}」が端末に残っています。JSONとして書き出せます。`);
+    const text = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!text) return;
+    restorePlan(JSON.parse(text));
+    flash(state.source ? '前回の採用プランを復元しました。' : '旧プランを保持しています。同じrevisionの元project.jsonで編集を再開できます。');
   } catch {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    // Preserve unreadable data for recovery; never silently delete either version.
+    flash('保存プランを読み込めませんでした。保存データは消去せず保持しています。', true);
   }
 }
 

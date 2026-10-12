@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
   <title>Arrangement Lab</title>
+  <link rel="icon" href="./icons/icon-192.png">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -23,7 +24,7 @@
       <div class="panel-title"><span class="step">1</span><div><h2>曲を読み込む</h2><p>Demo Composerのproject.jsonを使用します。元データは変更しません。</p></div></div>
       <label id="drop-zone" class="drop-zone">
         <input id="project-file" type="file" accept="application/json,.json,.txt">
-        <strong>project.jsonを選ぶ</strong><span>またはここへドロップ</span>
+        <strong>project.json / 編曲プランを選ぶ</strong><span>またはここへドロップ</span>
       </label>
       <div id="source-summary" class="source-summary"></div>
       <div id="collision-summary" class="analysis-box"></div>
@@ -35,11 +36,12 @@
         <label class="field"><span>Style</span><select id="style-select"></select></label>
         <button id="generate-btn" class="secondary">A/B/Cを作り直す</button>
       </div>
+      <label class="field"><span>試聴開始Section</span><select id="preview-section"><option value="0">先頭から</option></select></label>
       <div class="preview-row">
         <button id="preview-btn" class="primary" disabled>▶ 選択案を簡易試聴</button>
         <button id="stop-btn" class="secondary" disabled>■ 停止</button>
       </div>
-      <p class="hint">簡易試聴はproject.jsonのコード/ノートをWeb Audioで鳴らす比較用スケッチです。</p>
+      <p class="hint">選択Sectionから最大16秒。色付けは編曲メモ（試聴・MIDI対象外）。簡易試聴はproject.jsonのコード/ノートをWeb Audioで鳴らす比較用スケッチです。</p>
     </section>
 
     <section class="panel">
@@ -81,7 +83,7 @@
     </section>
   </main>
 
-  <div id="message" class="toast" hidden></div>
+  <div id="message" role="status" aria-live="polite" class="toast" hidden></div>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>

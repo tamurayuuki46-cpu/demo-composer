@@ -1,4 +1,4 @@
-# Arrangement Lab v0.2-dev
+# Arrangement Lab v0.2.1-dev
 
 ## 目的
 Demo Composerで作った曲の骨格を、Cubasis / Cubaseへ渡す前に「複数の編曲候補を鳴らして比べ、Section単位で混ぜ、必要ならリハモして、MIDIへ渡せる状態」にする。
@@ -54,3 +54,17 @@ Web Audioを使う比較用スケッチ。Demo ComposerのMelody / Counter Note�
 - Drum Fill / Bass Approachの実Note生成
 - Song.mid一括出力
 - Android Chrome / Cubasisの実機受け渡し自動テスト手順整備
+
+## v0.2.1 検証後の契約
+- 試聴は選択Sectionから最大16秒。MIDIと同じNote生成を利用。元Bass/Drumsが無ければそのパートは無音。
+- 色付けON/OFFは計画・楽器数の指標のみ。音源やMIDI Noteを生成しない。
+- Harmonyは44 Quality対応。thinは2音、standardは最大3音、fullは全構成音。拡張コードでは特徴音を残す。
+- リハモはSection内で開始するコードだけを対象にし開始tick/長さを維持。音声/MIDI出力時はSection境界に切り詰める。
+- 自然はRoot保持。Secondary Dominantは次Root+7。Tritoneは次Rootへ解決するV7のみRoot+6。Approach dim7は次Root-1。
+- SMF Type 0、1トラック、入力PPQ、Tempo/4/4/Track Name/EOT。Note Offを同tickのNote Onより先に置く。Drumsはch10固定。
+- パートのON範囲内にNoteを切り詰める。連続ON Sectionでは元持続音を維持する。
+- localStorageキーはv0.2のまま、Schema 2への任意sourceSnapshot追加。採用時に保存。変更後は再採用で保存、JSONは表示中の案を出力。
+- sourceSnapshotは元Projectのコピー。元Project/IndexedDBには書込まない。
+- v0.1/初期v0.2のsnapshotなしプランはJSON出力を維持。同じID/revisionの元project.jsonを再読込すると編集再開。旧キーや不正データを自動削除しない。
+- Service WorkerはArrangement Lab自身のcache/scopeだけを管理。キャッシュ更新時はversionを上げる。
+- 詳細検証記録: VERIFICATION_v0.2.1.md。

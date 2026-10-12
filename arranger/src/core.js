@@ -1,4 +1,5 @@
-export const ARRANGER_VERSION = 'v0.2-dev';
+import { CHORD_QUALITY_DEFINITIONS as QUALITIES } from './chord-qualities.js';
+export const ARRANGER_VERSION = 'v0.2.1-dev';
 export const ARRANGER_SCHEMA_VERSION = 2;
 
 export const STYLE_PROFILES = {
@@ -32,27 +33,12 @@ const DEFAULT_SECTION_ENERGY = {
 const ENERGY_SCORE = { low: 1, mid: 2, high: 3 };
 const DENSITY_SCORE = { thin: 1, standard: 2, full: 3 };
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const QUALITY_SUFFIX = {
-  major: '', minor: 'm', dominant7: '7', major7: 'maj7', minor7: 'm7',
-  sus2: 'sus2', sus4: 'sus4', diminished: 'dim', augmented: 'aug',
-  major6: '6', minor6: 'm6', add9: 'add9', minorAdd9: 'm(add9)',
-  minor7flat5: 'm7♭5', diminished7: 'dim7', minorMajor7: 'mMaj7',
-  major9: 'maj9', dominant9: '9', minor9: 'm9', dominant13: '13', major13: 'maj13',
-};
-const QUALITY_INTERVALS = {
-  major: [0, 4, 7], minor: [0, 3, 7], dominant7: [0, 4, 7, 10], major7: [0, 4, 7, 11],
-  minor7: [0, 3, 7, 10], sus2: [0, 2, 7], sus4: [0, 5, 7], diminished: [0, 3, 6],
-  augmented: [0, 4, 8], major6: [0, 4, 7, 9], minor6: [0, 3, 7, 9], add9: [0, 4, 7, 14],
-  minorAdd9: [0, 3, 7, 14], minor7flat5: [0, 3, 6, 10], diminished7: [0, 3, 6, 9],
-  minorMajor7: [0, 3, 7, 11], major9: [0, 4, 7, 11, 14], dominant9: [0, 4, 7, 10, 14],
-  minor9: [0, 3, 7, 10, 14], dominant13: [0, 4, 7, 10, 14, 21], major13: [0, 4, 7, 11, 14, 21],
-};
-
 export function normalizeSourceProject(input) {
   if (!input || typeof input !== 'object') throw new Error('Project JSONが正しくありません。');
   if (!input.basic || !Array.isArray(input.structure?.sections)) {
     throw new Error('Demo Composerのproject.jsonとして必要なbasic / structure.sectionsが見つかりません。');
   }
+  if (input.basic.timeSignature && input.basic.timeSignature !== '4/4') throw new Error('対応拍子は4/4です。');
   const ppq = clampInt(input.basic.ppq, 24, 9600, 480);
   const ticksPerBar = ppq * 4;
   let cursorTick = 0;
@@ -98,18 +84,18 @@ export function normalizeSourceProject(input) {
 function normalizeChord(chord) {
   if (!chord || !Number.isFinite(Number(chord.startTick))) return null;
   return {
-    root: mod12(chord.root), quality: chord.quality || 'major', degree: chord.degree || '',
-    startTick: Math.max(0, Number(chord.startTick) || 0),
-    durationTick: Math.max(1, Number(chord.durationTick) || 1),
+    root: mod12(chord.root), quality: Object.hasOwn(QUALITIES, chord.quality) ? chord.quality : 'major', degree: chord.degree || '',
+    startTick: clampInt(chord.startTick, 0, 0x0fffffff, 0),
+    durationTick: clampInt(chord.durationTick, 1, 0x0fffffff, 1),
   };
 }
 function normalizeTrack(track) {
   if (!track?.role) return null;
   return {
     role: track.role, name: track.name || track.role, midiChannel: clampInt(track.midiChannel, 1, 16, track.role === 'drums' ? 10 : 1),
-    notes: Array.isArray(track.notes) ? track.notes.map((note) => ({
+    notes: Array.isArray(track.notes) ? track.notes.filter(Boolean).map((note) => ({
       id: note.id || makeId(), pitch: clampInt(note.pitch, 0, 127, 60),
-      startTick: Math.max(0, Number(note.startTick) || 0), durationTick: Math.max(1, Number(note.durationTick) || 1),
+      startTick: clampInt(note.startTick, 0, 0x0fffffff, 0), durationTick: clampInt(note.durationTick, 1, 0x0fffffff, 1),
       velocity: clampInt(note.velocity, 1, 127, 96),
     })) : [],
   };
@@ -123,7 +109,7 @@ function structuredCloneSafe(value) {
   if (typeof structuredClone === 'function') return structuredClone(value);
   return JSON.parse(JSON.stringify(value));
 }
-function mod12(value) { return ((Number(value) || 0) % 12 + 12) % 12; }
+function mod12(value) { return ((clampInt(value, -100000, 100000, 0) % 12) + 12) % 12; }
 function sectionSeed(section, index) {
   return [...`${section.kind}:${section.name}:${section.bars}:${index}`]
     .reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 2166136261);
@@ -209,6 +195,8 @@ export function updateCandidateSection(candidate, sectionId, patch = {}) {
   if (patch.density && DENSITY_SCORE[patch.density]) section.density = patch.density;
   if (patch.enabled) section.enabled = { ...section.enabled, ...patch.enabled };
   if ('reharmonization' in patch) section.reharmonization = patch.reharmonization ? structuredCloneSafe(patch.reharmonization) : null;
+  const profile = STYLE_PROFILES[next.styleId] || STYLE_PROFILES['jpop-band'];
+  section.roles = { drums: drumsRole(section, section.density, profile.id), bass: bassRole(section, section.density, profile.id), harmony: harmonyRole(section, section.density, profile), counter: counterRole(section, section.density), color: colorRole(section, section.density, profile) };
   return next;
 }
 
@@ -248,7 +236,7 @@ export function detectMelodyCounterCollisions(source) {
     const mel = melody.filter((note) => overlapsRange(note, section.startTick, section.endTick));
     const ctr = counter.filter((note) => overlapsRange(note, section.startTick, section.endTick));
     for (const a of mel) for (const b of ctr) {
-      if (notesOverlap(a, b) && Math.abs(a.pitch - b.pitch) <= 2) pairs.push({ melodyPitch: a.pitch, counterPitch: b.pitch, tick: Math.max(a.startTick, b.startTick) });
+      if (Math.max(a.startTick, b.startTick, section.startTick) < Math.min(a.startTick + a.durationTick, b.startTick + b.durationTick, section.endTick) && Math.abs(a.pitch - b.pitch) >= 1 && Math.abs(a.pitch - b.pitch) <= 2) pairs.push({ melodyPitch: a.pitch, counterPitch: b.pitch, tick: Math.max(a.startTick, b.startTick) });
     }
     return { sectionId: section.id, sectionName: section.name, count: pairs.length, pairs: pairs.slice(0, 8), status: pairs.length === 0 ? 'ok' : pairs.length <= 2 ? 'watch' : 'warning' };
   });
@@ -259,19 +247,19 @@ function notesOverlap(a, b) { return a.startTick < b.startTick + b.durationTick 
 export function buildReharmSuggestions(source, sectionId) {
   const section = source.sections.find((item) => item.id === sectionId);
   if (!section) return [];
-  const original = source.chords.filter((chord) => chord.startTick >= section.startTick && chord.startTick < section.endTick);
+  const original = source.chords.filter((chord) => chord.startTick >= section.startTick && chord.startTick < section.endTick).sort((a, b) => a.startTick - b.startTick);
   if (!original.length) return [];
   const natural = original.map((chord) => ({ ...chord, quality: upgradeQuality(chord.quality) }));
   const color = original.map((chord, index) => {
     const next = original[index + 1];
-    if (!next || index % 2 === 0) return { ...chord, quality: upgradeQuality(chord.quality) };
+    if (!next || index % 2 === 1) return { ...chord, quality: upgradeQuality(chord.quality) };
     return { ...chord, root: mod12(next.root + 7), quality: 'dominant7', degree: 'V/next' };
   });
   const bold = original.map((chord, index) => {
     const next = original[index + 1];
-    if (chord.quality === 'dominant7') return { ...chord, root: mod12(chord.root + 6), quality: 'dominant7', degree: 'tritone-sub' };
-    if (next && index % 2 === 1) return { ...chord, root: mod12(next.root + 1), quality: 'diminished7', degree: 'approach-dim' };
-    if (chord.quality === 'major') return { ...chord, quality: 'major7' };
+    if (chord.quality === 'dominant7' && next && mod12(chord.root - next.root) === 7) return { ...chord, root: mod12(chord.root + 6), quality: 'dominant7', degree: 'tritone-sub' };
+    if (next && index % 2 === 1) return { ...chord, root: mod12(next.root - 1), quality: 'diminished7', degree: 'approach-dim' };
+    if (chord.quality === 'major') return { ...chord, quality: 'major9' };
     if (chord.quality === 'minor') return { ...chord, quality: 'minor9' };
     return { ...chord };
   });
@@ -289,7 +277,7 @@ function upgradeQuality(quality) {
 function reharmResult(id, label, description, chords) {
   return { id, label, description, chords, display: chords.map(chordName).join(' → ') };
 }
-export function chordName(chord) { return `${NOTE_NAMES[mod12(chord.root)]}${QUALITY_SUFFIX[chord.quality] ?? `(${chord.quality})`}`; }
+export function chordName(chord) { return `${NOTE_NAMES[mod12(chord.root)]}${QUALITIES[chord.quality]?.suffix ?? `(${chord.quality})`}`; }
 
 export function createArrangerProject(source, candidate, existing = null) {
   const now = new Date().toISOString();
@@ -300,6 +288,7 @@ export function createArrangerProject(source, candidate, existing = null) {
       projectId: source.sourceProjectId, revision: source.sourceRevision, schemaVersion: source.sourceSchemaVersion,
       appVersion: source.sourceAppVersion, title: source.title, basic: source.basic, sections: source.sections,
     },
+    sourceSnapshot: structuredCloneSafe(source.sourceSnapshot),
     selectedCandidateId: candidate.id, arrangement: structuredCloneSafe(candidate),
   };
 }
@@ -314,18 +303,11 @@ export function summarizeCandidate(candidate) {
 
 export function createPartMidi(source, candidate, part) {
   const ppq = source.basic.ppq || 480;
-  let notes = [];
-  let channel = part === 'drums' ? 9 : ({ melody: 1, bass: 2, counter: 3, harmony: 4 }[part] ?? 0);
-  if (part === 'harmony') {
-    notes = harmonyNotes(source, candidate);
-  } else {
-    const track = source.tracks.find((item) => item.role === part);
-    if (!track) return null;
-    channel = Math.max(0, Math.min(15, (track.midiChannel || (part === 'drums' ? 10 : 1)) - 1));
-    notes = track.notes.filter((note) => isPartEnabledAtTick(source, candidate, part, note.startTick));
-  }
+  const notes = arrangedNotes(source, candidate, part);
+  const track = source.tracks.find((item) => item.role === part);
+  const channel = part === 'drums' ? 9 : Math.max(0, Math.min(15, (track?.midiChannel || ({ melody: 2, bass: 3, counter: 4, harmony: 5 }[part] || 1)) - 1));
   if (!notes.length) return null;
-  const events = [];
+  const events = [{ tick: 0, order: 0, bytes: [0xff, 0x58, 4, 4, 2, 24, 8] }];
   const bpm = source.basic.bpm || 120;
   const micros = Math.round(60000000 / bpm);
   events.push({ tick: 0, order: 0, bytes: [0xff, 0x51, 0x03, (micros >> 16) & 0xff, (micros >> 8) & 0xff, micros & 0xff] });
@@ -348,28 +330,59 @@ export function createPartMidi(source, candidate, part) {
     ...ascii('MTrk'), ...u32(trackData.length), ...trackData,
   ]);
 }
-function isPartEnabledAtTick(source, candidate, part, tick) {
-  const sourceSection = source.sections.find((section) => tick >= section.startTick && tick < section.endTick);
-  if (!sourceSection) return true;
-  const arrangementSection = candidate.sections.find((section) => section.sectionId === sourceSection.id);
-  return arrangementSection?.enabled?.[part] !== false;
+// Shared event source for MIDI and preview. OFF boundaries cut sustained notes.
+export function arrangedNotes(source, candidate, part) {
+  if (part === 'harmony') return harmonyNotes(source, candidate);
+  const notes = source.tracks.filter((track) => track.role === part).flatMap((track) => track.notes);
+  const ranges = [];
+  for (const section of source.sections) {
+    const plan = candidate.sections.find((item) => item.sectionId === section.id);
+    if (plan?.enabled?.[part] === false) continue;
+    const previous = ranges.at(-1);
+    if (previous?.end === section.startTick) previous.end = section.endTick;
+    else ranges.push({ start: section.startTick, end: section.endTick });
+  }
+  return notes.flatMap((note) => ranges.flatMap((range) => {
+    const startTick = Math.max(note.startTick, range.start);
+    const endTick = Math.min(note.startTick + note.durationTick, range.end);
+    return endTick > startTick ? [{ ...note, startTick, durationTick: endTick - startTick }] : [];
+  })).sort((a, b) => a.startTick - b.startTick);
 }
-function harmonyNotes(source, candidate) {
+export function harmonyNotes(source, candidate) {
   const output = [];
-  for (const sourceSection of source.sections) {
-    const arrSection = candidate.sections.find((section) => section.sectionId === sourceSection.id);
-    if (arrSection?.enabled?.harmony === false) continue;
-    let chords = source.chords.filter((chord) => chord.startTick >= sourceSection.startTick && chord.startTick < sourceSection.endTick);
-    if (arrSection?.reharmonization?.chords?.length) chords = arrSection.reharmonization.chords;
-    const density = DENSITY_SCORE[arrSection?.density] || 2;
-    for (const chord of chords) {
-      const intervals = QUALITY_INTERVALS[chord.quality] || QUALITY_INTERVALS.major;
-      const base = 48 + mod12(chord.root);
-      const chosen = density === 1 ? intervals.slice(0, 2) : density === 2 ? intervals.slice(0, 3) : intervals.slice(0, 5);
-      for (const interval of chosen) output.push({ pitch: Math.min(96, base + interval), startTick: chord.startTick, durationTick: chord.durationTick, velocity: 64 + density * 8 });
+  for (const section of source.sections) {
+    const plan = candidate.sections.find((item) => item.sectionId === section.id);
+    if (plan?.enabled?.harmony === false) continue;
+    const chords = plan?.reharmonization?.chords?.length ? plan.reharmonization.chords : source.chords;
+    const density = DENSITY_SCORE[plan?.density] || 2;
+    for (const raw of chords) {
+      const chord = normalizeChord(raw);
+      if (!chord || !overlapsRange(chord, section.startTick, section.endTick)) continue;
+      const intervals = QUALITIES[chord.quality].intervals;
+      // Keep the defining extension even in a sparse voicing (e.g. maj7/9).
+      const chosen = density === 3 ? intervals : intervals.length > 3
+        ? (density === 1 ? [intervals[1], intervals.at(-1)] : [0, intervals[1], intervals.at(-1)])
+        : intervals.slice(0, density === 1 ? 2 : 3);
+      const startTick = Math.max(chord.startTick, section.startTick);
+      const durationTick = Math.min(chord.startTick + chord.durationTick, section.endTick) - startTick;
+      for (const interval of chosen) output.push({ pitch: 48 + mod12(chord.root) + interval, startTick, durationTick, velocity: 64 + density * 8 });
     }
   }
   return output;
+}
+
+export function restoreArrangerProject(saved, sourceOverride = null) {
+  if (![1, 2].includes(saved?.arrangerSchemaVersion) || !saved.source || !Array.isArray(saved.arrangement?.sections)) throw new Error('編曲プランの形式が正しくありません。');
+  const source = sourceOverride || (saved.sourceSnapshot ? normalizeSourceProject(saved.sourceSnapshot) : null);
+  if (!source) return { source: null, candidate: null };
+  if (saved.source.projectId !== source.sourceProjectId || saved.source.revision !== source.sourceRevision) throw new Error('元のProject ID / revisionが一致しません。');
+  const base = buildArrangementCandidate(source, { styleId: saved.arrangement.styleId });
+  const candidate = { ...base, ...structuredCloneSafe(saved.arrangement), sections: base.sections.map((section) => {
+    const old = saved.arrangement.sections.find((item) => item.sectionId === section.sectionId);
+    if (!old) return section;
+    return { ...section, ...old, enabled: { ...section.enabled, ...old.enabled }, roles: { ...section.roles, ...old.roles } };
+  }) };
+  return { source, candidate };
 }
 function ascii(text) { return [...text].map((char) => char.charCodeAt(0)); }
 function u32(value) { return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff]; }
