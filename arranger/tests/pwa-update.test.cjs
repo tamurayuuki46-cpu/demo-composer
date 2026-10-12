@@ -29,7 +29,13 @@ const server=http.createServer(async(req,res)=>{
   phase='current';
   // The old cache still owns the normal URL. A fresh entry must not reuse its core module.
   await page.goto(base+'?v=0.4.1');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
-  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated' && r.active.scriptURL.includes('?build=') && navigator.serviceWorker.controller?.scriptURL===r.active.scriptURL});
+  // First wait until the build-stamped worker is fully active. An already-open document can still
+  // report the legacy controller briefly, so reload once activation has completed and then assert
+  // that the new document is controlled by that exact build worker.
+  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated'&&r.active.scriptURL.includes('?build=')});
+  const buildWorkerUrl=await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.scriptURL||''});
+  assert.ok(buildWorkerUrl.includes('?build='));
+  await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
   assert.equal(await page.evaluate(()=>localStorage.getItem('demo-composer-arranger-v0.3')),'old-data-kept');
   assert.ok((await page.evaluate(()=>caches.keys())).includes('another-pwa-sentinel'));
   await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
