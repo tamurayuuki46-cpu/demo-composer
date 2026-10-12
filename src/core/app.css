@@ -785,3 +785,16 @@ h1 {
 .decision-tags label { min-height: 44px; display: flex; gap: 6px; align-items: center; border: 1px solid #45465e; border-radius: 8px; padding: 6px; }
 .decision-comparison, .decision-log { border-top: 1px solid #45465e; padding-top: 10px; margin-top: 12px; }
 .decision-comparison li { font-size: .9em; }
+.decision-details button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #45465e;
+  border-radius: 10px;
+  background: #252735;
+  color: #f5f5f5;
+  font: inherit;
+  cursor: pointer;
+}
+.decision-details button:disabled { opacity: .5; cursor: default; }
+.decision-details button:focus-visible { outline: 2px solid #7195ff; outline-offset: 2px; }
+.decision-details input:not([type=checkbox]), .decision-details select { min-height: 44px; }
