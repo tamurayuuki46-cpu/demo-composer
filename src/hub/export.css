@@ -61,6 +61,22 @@
   font-weight: 700;
 }
 
+.drive-single-label {
+  margin: 14px 0 6px;
+}
+
+/* 個別ボタンは2列・控えめな濃い色（上の2つが主な操作） */
+.drive-single-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.drive-single-grid button {
+  background: #2a2a33;
+  color: #f1f1f1;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
 .drive-export-grid button:disabled {
   opacity: 0.48;
 }

@@ -234,6 +234,29 @@ function bindDriveSection(section) {
     }
   });
 
+  section.querySelectorAll("[data-drive-file]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const name = button.dataset.driveFile;
+      const project = cachedProject ?? await readyProject();
+      void readyProject();
+      if (!project) {
+        setHubMessage("保存済みのProjectが見つかりません。「Save Now」を押してから、もう一度押してください。", true);
+        return;
+      }
+      const files = midiShareFiles(project).filter((file) => file.name === name);
+      if (files.length === 0) {
+        setHubMessage(name === "CounterMelody.mid" ? "裏メロがまだないため、CounterMelody.midはありません。" : `${name}を作れませんでした。`, true);
+        return;
+      }
+      try {
+        const result = await shareFiles(files, { title: `${safeTitle(project)} - ${name}` });
+        await handleShareResult(result, `${name}を共有しました。Google Driveを選んだ場合はDriveへ保存されています。`, files);
+      } catch (error) {
+        fallbackDownload(files, error);
+      }
+    });
+  });
+
   void syncSavedProject(section);
 }
 
@@ -251,6 +274,10 @@ function ensureDriveExportUi() {
       <div class="drive-export-grid">
         <button type="button" data-drive-export="project">Driveへバックアップ</button>
         <button type="button" data-drive-export="midi">MIDI一式をDriveへ</button>
+      </div>
+      <p class="hint drive-single-label">1ファイルずつDriveへ</p>
+      <div class="drive-export-grid drive-single-grid">
+        ${["Song.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid", "CounterMelody.mid"].map((name) => `<button type="button" data-drive-file="${name}">${name}</button>`).join("")}
       </div>
       <p class="hint" data-drive-export-hint>AutoSaveの状態を確認しています…</p>
       <p class="status-message" data-drive-export-status aria-live="polite"></p>

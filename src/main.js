@@ -40,7 +40,7 @@ import { createDefaultProject, createProjectStore } from "./core/project-state.j
 import { createArrangeController } from "./arrange/arrange-screen.js";
 import { createCounterController } from "./arrange/counter-screen.js";
 import { getSections, sectionAtBar, sectionEnergy, sectionRanges, sliceProject } from "./core/section-ops.js";
-import { withCounterNotes } from "./core/counter-melody.js";
+import { counterNotes, withCounterNotes } from "./core/counter-melody.js";
 import { createMelodyController } from "./melody/melody-screen.js";
 import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJson } from "./midi/midi-export.js";
 import { MAX_IMPORT_BYTES, parseProjectJson } from "./storage/project-import.js";
@@ -190,8 +190,10 @@ function hubScreen() {
           <button data-midi-file="Melody.mid">Melody.mid</button>
           <button data-midi-file="Bass.mid">Bass.mid</button>
           <button data-midi-file="Drums.mid">Drums.mid</button>
+          ${counterNotes(project).length > 0 ? `<button data-midi-file="CounterMelody.mid">CounterMelody.mid</button>` : ""}
           <button id="export-project-json">project.json</button>
         </div>
+        <p class="status-message" id="export-status" aria-live="polite"></p>
         <h3 class="import-heading">読み込み</h3>
         <button id="import-project-json" class="import-button">project.jsonを読み込む</button>
         <input id="import-project-file" type="file" accept=".json,application/json" hidden />
@@ -468,6 +470,15 @@ function updatePlayerUi(nextState) {
   }
 }
 
+// Exportボタンの結果は、押したボタンの近く（Export一覧の下）にも出す。Hub最上部だけだと、下へスクロール中は見えない
+function setExportMessage(message, isError = false) {
+  setHubMessage(message, isError);
+  const target = document.querySelector("#export-status");
+  if (!target) return;
+  target.textContent = message;
+  target.classList.toggle("error", isError);
+}
+
 function setHubMessage(message, isError = false) {
   startupMessage = message;
   const target = document.querySelector("#hub-message");
@@ -511,12 +522,12 @@ function exportMidiFile(filename) {
   const files = buildMidiExports(project);
   const bytes = files[filename];
   if (!bytes) {
-    setHubMessage(`${filename}を生成できませんでした。`, true);
+    setExportMessage(`${filename}を生成できませんでした。`, true);
     return;
   }
 
   downloadBytes(bytes, filename);
-  setHubMessage(`${filename}を書き出しました。`);
+  setExportMessage(`${filename}を書き出しました。`);
 }
 
 function bindHubControls() {
@@ -623,7 +634,7 @@ function bindHubControls() {
 
   document.querySelector("#export-all-midi")?.addEventListener("click", () => {
     downloadMidiBundle(projectStore.getSnapshot());
-    setHubMessage("Song.midとパート別MIDIの書き出しを開始しました。");
+    setExportMessage("Song.midとパート別MIDIの書き出しを開始しました。");
   });
 
   document.querySelectorAll("[data-midi-file]").forEach((button) => {
@@ -673,7 +684,7 @@ function bindHubControls() {
 
   document.querySelector("#export-project-json")?.addEventListener("click", () => {
     downloadProjectJson(projectStore.getSnapshot());
-    setHubMessage("project.jsonを書き出しました。バックアップとして保管できます。");
+    setExportMessage("project.jsonを書き出しました。バックアップとして保管できます。");
   });
 }
 
