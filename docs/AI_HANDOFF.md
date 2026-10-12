@@ -4,186 +4,84 @@
 v0.2-dev
 
 最新安定版:
-なし。v0.1機能完成地点は復元可能だが、`main` へのstable統合は未実施。
+なし。`main` はstable専用。v0.1機能完成地点は復元可能だが、正式stable統合は未実施。
 
 現在実装済み:
-- Android Chrome向けDemo Composer
-- Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite の6 Module（＋ 裏メロタブ）
+- Android Chrome向け作曲支援PWA。目的はスマホDAW化ではなく、PCを起動する前の作曲判断を済ませること
+- Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite + 裏メロタブ
 - schemaVersion 2 / PPQ 480 / 4/4固定の共通Project State
-- IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now
-- Hub `＋ 新規Project`: 現在Projectを保存してから別IDの空ProjectをActiveにする。旧Projectは端末内に保持。`src/hub/app-entry.js` / `new-project.js` / `new-project-ui.js`
-- schemaVersion 1 → 2 Migration / Migration前Project退避
+- IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now / Persistent Storage要求
 - Project全体Undo / Redo（最大50操作、メモリのみ）
-- Hub: Project名 / BPM / Key / Scale、Key変更時のChord / Melody / Bass Atomic移調、文字サイズ3段階、曲の特徴カード、AI相談テキスト / 相談テンプレート、Cubaseでやることメモ
-- Chord: ダイアトニック7候補の五度圏扇形UI、基準音C〜B、Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug、コード役割ラベル
-- Chord Preset 100種類（7カテゴリ。既存6種: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行）
-- Chord 次のコード候補3つ / ひとスパイス（借用和音3候補）
-- Chord Backing Pattern: Block / 8分刻み / Arpeggio / Syncopation。Demo PlayerとChord.mid / Song.midへ反映
-- Chord 曲想 / 感情タグ: 既存100 Presetを感情 / 質感 / 場面から3候補へ絞る `曲想から選ぶ`。Hub / 将来の作曲シートの曲想は `metadata.mood[]` → `src/core/composition-intent.js` → Chord Tagへ最大3個自動反映。日本語Label / Tag ID両対応。同じIntent中はChordの手動Tag調整を維持し、Hub Intentが変わった時だけ再同期する。PR #132 merged / CI success（Schema / MIDI変更なし）。詳細は `docs/COMPOSITION_INTENT.md` / `docs/CHORD_MOOD_TAGS.md`
-- Melody: 縦ピアノKeyboard、8分 / 16分切替、音の長さ指定、Bar / Octave切替、音の役割の色分け（青=コード構成音 / 緑=テンション / 黄=スケール外 / 赤=アボイド。`src/melody/pitch-roles.js`）、度数表示、Copy Bar / Copy 2小節、Melody Analyzer
-- Melody Analyzer音程分析: `Keyからの度数` / `Chordからの度数` / `Scale内率` を表示。既存のコードトーン率と併用し、Projectを読むだけの派生分析として実装（Schema変更なし）
-- Melody Analyzer `旋律の3つの見方`: `歌心・浮遊型（草野マサムネ参考） / 輪郭・違和感型（米津玄師参考） / 推進・高密度型（Ayase / YOASOBI参考）`。既存の跳躍 / Chord度数 / Scale外 / 密度 / モチーフ反復を束ねた読み取り専用ガイドで、類似度採点・候補自動変更・Schema変更なし
-- Melody Analyzer `メロディの働き`: 和声役割を `Guide / Chord / Tension / Other` で表示し、経過音 / 刺繍音 / Approach / 倚音 / 逸音 / 先取音 / 係留音候補を前後関係が明確な場合だけ派生分析する。GuideはChord Toneの3rd / 7th系の内数、Tensionは初期版では9th / 11th / 13th相当。`src/core/melodic-functions.js` / `docs/MELODY_FUNCTIONS.md`（Schema変更なし）
-- Melody Analyzer フレーズ語彙ガイド: モチーフ / リック / リフ / シーケンスの違いを表示。リック / リフは文脈依存のため自動判定せず、既存モチーフ反復も自動でリック / リフと断定しない
-- Melody候補3つ: 安定 / キャッチー / 浮遊感。`src/melody/melody-candidates.js` で現在のKey / Scale / Chord / Bar / 表示Octaveからルールベース生成。外部AI / APIなし
-- Melody候補は `↻ 候補を更新` で4つのVariation Setを循環。安定案はChord Tone中心、キャッチー / 浮遊感もKey / Scale内のルールを維持
-- Melody候補のVariation番号はUI状態のみでProject Dataへ保存しない。Bar移動時は初期Setへ戻る
-- Melody候補は現在Barだけを置き換え、他Barを保持。適用結果は通常のMelody Noteになり、Piano Rollで修正可能
-- Melody候補適用後は既存のAutoSave / Undo / Redo / Demo Player / Melody.mid / Song.midをそのまま利用
-- Rhythm: Bass音程（Root / 3rd / 5th / 7th / Octave等）/ 半音ずらし±6 / 長さ指定 / Kick / Snare / Closed HH、16 step、Beat Copy / Bar Copy
-- Rhythm Bass候補5タイプ: `ルート型 / リフ型 / ファンク型 / シンセウェーブ型 / 裏メロ型`。現在Barだけを通常Bass Noteへ置き換え、16 stepで修正可能。ファンク型はKick位置がある場合それをAnchorに短い返しを追加。詳細は `docs/BASS_STYLES.md`（Schema変更なし）
-- Rhythm Drum Preset 6種類 / Drum PresetのSection一括適用
-- Rhythm ドラムフィル: スネア8分 / スネアロール / ブレイク。Section終端の後半を変える。全Section終端への一括適用にも対応
-- Arrange: Section Template / 小節増減 / 追加削除 / Sectionコピー / Section再生 / 骨子の進み具合 / MIDI Marker
-- Sound Sketch Lite: Chord Keys / Pad / Piano、Melody Lead / Keys / Pluck、Bass Soft Bass / Synth Bass / Deep Bass、Tone Natural / Bright / Soft / Warm / Dark / Airy / Aggressive
-- Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drumsの軽量再生、Mute / Solo、Sound / Backing反映
-- Chord 好きな進行ライブラリ（度数で保存、端末のlocalStorageのみ。`src/chord/progression-library.js`）
-- Hub 出発点の質問ウィザード（`suggestByAnswers`）/ Arrange 感情曲線（`src/core/energy-curve.js`）/ 構成ライブラリ（`src/arrange/structure-library.js`、端末のlocalStorageのみ）/ Melody 山の位置（`src/melody/peak-guide.js`）
-- Arrange ループから曲にする案内（`src/core/loop-guide.js`、Core `appendSectionCopy`。#60の上に積んでいる）
-- Section Variation（`少し違う版にする`: ドラム / ベース / メロディ3種（終わり・音程だけ・リズムだけ）の5候補。`src/core/section-variation.js`）
-- Section Energy（Low/Mid/High）/ Transition（Keep/Fill/Stop/Build/Drop）: `structure.sections[]` の任意項目（schemaVersion 2のまま追記）。`src/core/section-ops.js`
-- Counter Melody（裏メロ）: Arrangeの各Sectionで4候補 `Sparse（隙間型） / Active（動く型） / Hook（フック型） / Answer（応答型）` を聴いて当てる。候補説明の小さな補足で `Sparse=米津系 / Active=YOASOBI系 / Hook=Oasis系 / Answer=Mr.Children系` を参考イメージとして示し、特定曲のコピーではないことを明記。`tracks[role=counter]`（Schema追記のみ）、`src/core/counter-melody.js`、MIDI `CounterMelody.mid`。詳細は `docs/COUNTER_MELODY_STYLES.md`
-- MIDI読み込み（Hub Export内。提案 → 確かめる → 取り込む。`src/midi/midi-reader.js` / `midi-import.js`、Schema変更なし）
-- Hub 作編曲の手引き（16手順のチェックリスト。✓は端末のlocalStorageのみ。`src/hub/guide.js`）
-- Hub 骨子完成チェック（✓ / △ / －、`src/core/skeleton-check.js`、読むだけ）
-- Chord メロディからコード候補3つ（`src/chord/chord-for-melody.js`、小節ごと・まとめ付け）
-- Hub 出発点（ジャンル×ムード→3候補、`src/hub/starting-point.js`、Store `applyStartingPoint`）
-- Melody Analyzer Sectionごとの比べ（`src/core/section-compare.js`、サビと前Sectionの差）
-- Hub Cubaseでやることメモ（`src/hub/cubase-memo.js`）/ AI相談テンプレート
-- Melody Analyzer（Melody内パネル、`src/core/melody-analysis.js`）/ Hub曲の特徴カード（`src/hub/song-card.js`）
-- Chord役割ラベル（`chord-role.js`）/ Melody度数表示（画面のみ）
-- MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid
-- project.json Backup Export / Import（検証・Migration・確認・Undo可）
+- Hub: Project名 / BPM / Key / Scale。Key変更時はChord / Melody / Bass / Counter MelodyをAtomic移調、Drumsは変更しない
+- Hub `＋ 新規Project`: 現在Projectを保存後、別IDの空ProjectをActiveにする。旧Projectは端末内へ保持
+- Hub `📁 Project一覧`: IndexedDBに保存済みの曲を一覧表示し、`開く / 複製 / 削除`。現在開いているProjectは削除不可。切替前にSave Nowし、reload境界のAutoSave競合を避けるためsessionStorage経由でActive Project IDを確定する。詳細 `docs/PROJECT_LIBRARY.md`
+- Hub `🧹 パートを消去`: Chord / Melody / Bass / Drums / Counter Melody（裏メロ）を個別消去。選んだパート以外、Key / BPM / Scale / Structure / Soundは保持。1回のUndoで戻せる。詳細 `docs/HUB_PART_CLEAR.md`
+- Hub: 出発点、骨子チェック、16手順の作編曲ガイド、曲の特徴カード、AI相談テキスト、Cubaseでやることメモ、作曲シートリンク
+- Chord: ダイアトニック候補、44 Chord Quality、100 Preset、次コード候補、借用和音、曲想/質感/場面タグ、Backing Pattern、好きな進行ライブラリ、メロディからコード、2/4/8小節メロディ生成
+- Melody: Android向けPiano Roll、8/16分Grid、Note長、Key基準の音域表示、コード/Key度数、役割色分け、候補3種 + 4 Variation、Melody Analyzer、Section比較、Peak Guide
+- Melody Analyzer: 音域 / 跳躍 / コードトーン率 / リズム密度 / 同音連打 / モチーフ反復、Key/Chord度数、Scale内率、Guide/Chord/Tension/Other、非和声音候補、旋律の3視点
+- Rhythm: Bass / Kick / Snare / HH、Bass音程・長さ・半音ずらし、Bass候補5タイプ、Drum Preset 6種、Section一括、Fill
+- Arrange: Section Template / 小節増減 / 追加削除 / コピー / Section再生 / Energy / Transition / Loop Guide / Section Variation / 骨子レシピ
+- Counter Melody: 専用タブ + Arrange連携。Sparse / Active / Hook / Answer / Arpeggio / Riff等の候補、Character Scale / Motion / 別案。保存先 `tracks[role=counter]`
+- Sound Sketch Lite: Chord / Melody / Bass Preset + Tone方向タグ。最終音色作成やMixer/FXは行わない
+- Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drums / 裏メロの聴き分け、Mute/Solo
+- MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid / CounterMelody.mid（存在時）。Section Marker、Backing Pattern反映
+- MIDI Import: 役割提案 → 確認 → Projectへ取り込み
+- project.json Export / Import。Demo Composer内の正本はproject.json
 - GitHub Pages公開: `https://tamurayuuki46-cpu.github.io/demo-composer/`
-- Cloudflare Pages Fallback手順あり（Dashboard接続は未実施）
-- PR #57 ドラムフィル: merged
-- PR #61 Melody候補初期実装: develop先行更新と競合したため未mergeでclose
-- PR #66 Melody候補最終統合: merged
-- PR #73 Melody候補Refresh: merged
-- PR #71 Melody Variation（音程だけ / リズムだけ）: merged。PR #73の後にdevelopへ統合され、Refreshを含む親commitを保持
-- PR #91 Melody Analyzer 旋律の3つの見方: merged / CI success
-- PR #93 Rhythm Bass候補5タイプ: CI success。`ルート / リフ / ファンク / シンセウェーブ / 裏メロ` を1 Bar候補として提示（Schema変更なし）
-- PR #95 Counter Melody Answer（応答型）: merged。現行developへ載せ直し、4候補化。Schema / MIDI形式は変更なし
-- PR #97 Melody Analyzer `メロディの働き`: merged / CI success。Guide / Chord / Tension / Other、非和声音の働き、フレーズ語彙ガイドを追加（Schema変更なし）
-- PR #132 Hub / 作曲シートの曲想をChordへ自動引き継ぎ: merged / CI success。復元点 `restore/v0.2-before-hub-chord-intent-link` / `restore/v0.2-before-composition-intent-core`
-- 旧PR #90 Counter Melody Answer初期版: PR #95で置き換えたためclosed（履歴保持）
-- 旧PR #94 Melody Analyzer Melodic Function初期版: develop先行更新と競合したため、最新developから作り直したPR #97で置き換えてclosed（履歴保持）
-- Melody候補統合merge commit: `6a7f1ce482af9a21eaa30fd6e3b91fd896b4f821`
-- Melody候補Refresh merge commit: `9891c2208287289e13feed4a71b1f8d6aa36bb74`
-- Melody候補Refresh PR CI: success
-- Melody候補追加前復元点: `restore/v0.2-before-melody-candidates-final`
-- Melody候補Refresh前復元点: `restore/v0.2-before-melody-candidate-refresh`
-- Melody度数分析追加前復元点: `restore/v0.2-before-melody-degree-analysis`
-- Melody 旋律3視点追加前復元点: `restore/v0.2-before-melody-perspectives`
-- Melodyの働き追加前復元点: `restore/v0.2-before-melodic-functions`
-- Backing Pattern追加前復元点: `restore/v0.2-before-backing-pattern-final`
-- Drum Fill追加前復元点: `restore/v0.2-before-drum-fill`
-- 新規Project追加前復元点: `restore/v0.2-before-new-project-final`
-- Counter Melody 3系統整理前復元点: `restore/v0.2-before-counter-style-3ways`
-- Counter Melody Answer追加前復元点: `restore/v0.2-before-counter-answer-style-merge`
-- Bass候補5タイプ追加前復元点: `restore/v0.2-before-bass-style-5ways`
-- `main` はstable専用で変更しない
-- `milestone/v0.1-feature-complete` は復元点として保持
 
 開発中:
-- Chord品質を9→44種類に拡張（6 / add9 / 9・11・13 / m7♭5 / dim7 / mMaj7 / 変化音 / 4度堆積・So What・神秘和音）。Chord画面に「スケール系のコード」を追加（スケールをセレクトで選択: ダイアトニック・ハーモニック/メロディックマイナー系・チャーチ・各モード・スパニッシュ・全音・ディミニッシュ・ペンタ・ブルース・都節など約40種 × 3和音/7th/テンション/特殊和音）。`chord-qualities.js` / `chord-theory.js` / 新規 `chord-scale-sets*.js` / `main.js` のChord部分。schemaVersionは2のまま（許可値の追記のみ。旧アプリは新Qualityを含むproject.jsonを拒否）。4度堆積などの特殊和音も追加済み。復元点: `restore/v0.2-before-chord-quality-ext`
-- Melody候補の4 Variation Set / Refreshはdevelop統合済み
-- Rhythm Bass候補5タイプはPR #93でCI success。Android実機で候補の差・縦スクロール量・Kick有無のファンク型を確認する段階
-- Counter Melody 4候補はPR #95でdevelop統合済み。Android実機でSparse / Active / Hook / Answerの差、特にSparseとAnswerの聞き分けを確認する段階
-- Melody Analyzer `メロディの働き` はPR #97でdevelop統合済み。Android実機で表示量・読みやすさと代表的な判定例を確認する段階
-- Android実機で `↻ 候補を更新` と3候補の差・試聴・編集を確認する段階
-- v0.2は機能が増えてきたため、追加機能より実制作での使いやすさ確認を優先する
+- PR #154 `v0.2-dev: Project一覧と裏メロ個別消去`
+- branch: `chatgpt/v0.2-project-library-counter-clear`
+- 復元点: `restore/v0.2-before-project-library`
+- Project一覧のAndroid実機UI確認（開く / 複製 / 削除 / reload切替）
 
 次に実装:
-000. Android実機で、`裏メロ` タブ（7ボタンの収まり）と新2タイプ（Arpeggio / Riff）の聞こえ方を確認。裏メロのPiano Roll手入力は実装済み（Melody画面の `メイン / 裏メロ` 切替）。実機で切替・薄い目印・入力のしやすさを確認
-00. Android実機で、Sound初期設定（Chord Pad / Bass Deep Bass / Melody Strings Lead）と音量（-2dB）が合うか聴く。気になる音色は Sound画面で `Vocal Soft / Pad Lead` などに変えて比べる。音量が合わなければ `src/audio/demo-player.js` の `PART_LEVEL` を調整
-0. メロディ生成（味付け・スケールの色・盛り上がり）と裏メロ（ペンタ・Character・Motion）をAndroid実機で聴いて調整する。ブレスト案（`docs/MELODY_PHRASE_PLAN.md`）は実装済み
-1. Android公開版で Melody → 安定 / キャッチー / 浮遊感 の3候補と `↻ 候補を更新` が表示されることを確認
-2. `候補を更新` を押すたびに 1/4 → 2/4 → 3/4 → 4/4 → 1/4 と切り替わり、3候補の音型が変わることを確認
-3. C MajorなどでChordを入力し、どのSetでも安定案がChord Tone中心であることを確認
-4. 3候補を切り替えてDemo Playerで違いを聴き比べる
-5. 候補適用後、Piano Rollで1音ずつ修正できることを確認
-6. 既存MelodyがあるBarで上書き確認が出て、`↶ / ↷` で戻る / 進むことを確認
-7. 再読み込み後に適用結果がAutoSave / Restoreされることを確認（候補Set番号自体は保存しない）
-8. Melody.mid / Song.midをExportして通常Noteとして出力されることを確認
-9. Melody Variation（終わり / 音程だけ / リズムだけ）・ドラムフィル / Backing / Bass候補 / Chord候補 / Arrange / Sound / Import等のAndroid回帰確認
-10. Rhythm Bass候補5タイプを同じChordで順に試聴し、`ルート / リフ / ファンク / シンセウェーブ / 裏メロ` の差が分かること、Kick有無でファンク型が破綻しないこと、適用後に16 step編集・↶が使えることを確認
-11. 裏メロ: Sectionごとに `Sparse / Active / Hook / Answer` を試聴 → 適用 → ↶ / 消す。説明の `※` 補足が小さく表示されること、SparseとAnswerの差が分かること、パートパネルの `裏メロ` ミュート、`CounterMelody.mid` のExport、Cubase / Cubasisでの読み込みを確認
-12. Hubの `骨子チェック` の ✓ / △ / － と、「次に決めること」のボタン遷移を確認
-13. 新機能の追加はいったん止めて、`docs/REAL_SONG_TEST.md` の手順で実制作テスト（1曲を通して作り、MIDIをCubasis / Cubaseへ渡す）を優先
-14. v0.3「骨子作り支援」は優先度A + Bを実装済み（骨子レシピ8種 / 今は後でOK / なぜ？ / 空Sectionアシスト / Bass×Kick / 骨子チェックのAI相談）。計画と実装メモは `docs/V0_3_SKELETON_PLAN.md`。Android実機で、レシピ → コード → メロディ → Rhythm → Hub骨子チェックの流れを通して確認する。未実装（C）: 曲の方針（芯・3語）、メロディ輪郭・モチーフ、Lock
-15. MIDI読み込み: アプリで書き出したSong.midと、DAWで作ったMIDIを読み込み、役割の提案・BPM・Key・コード判定が妥当か、取り込み後に↶で戻せることを確認
-16. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
-17. Melody Analyzerで3つの参考モデルが表示され、Chord未設定時の2(9th)/6thが `—`、Chord設定時は割合表示になることをAndroid実機で確認
-18. Melody Analyzerで `メロディの働き` が表示され、C Major等でGuide / Chord / Tension / Otherと、経過 / 刺繍 / Approach / 倚音 / 逸音 / 先取の代表例が想定どおり読めることをAndroid実機で確認。係留は「候補」として過剰断定しないこと、リック / リフが自動判定されないことも確認
-19. Android実機で Hubの出発点から `切ない / 夜 / やさしい` 等を選択 → Chordの `曲想から選ぶ` へ自動反映 → Chord側でTagを調整 → Hub往復後も調整保持 → Hub Moodを変えた時だけ再同期、を確認する
+- PR #154をCI / Android実機で確認してdevelopへ統合
+- PWA Service Worker / オフライン対応
+- Cubasis / Cubase実機でMIDI受け渡し回帰確認
+- Export導線の整理（Drive専用ではなく共有/保存の実態に沿うUIを検討）
+- v0.3骨格設計は、追加機能を増やす前に実制作テスト結果を優先
 
 既知の問題:
-- 外部の独立PWA `作曲シート` からDemo ComposerへIntentを実際にImportするUI / transportは未実装。内部契約は `docs/COMPOSITION_INTENT.md` に定義済みで、Hub → Chord連携は実装済み
-- メロディ生成のブレスト案（MELODY_PHRASE_PLAN.md の B / C / D / エネルギー連動）はすべて実装済み。耳での調整は実機で
-- Characterの型は20スケール分。耳での調整は実機で。型の無いスケールは共通型。型は音程のデータなので `character-phrases.js` の数字を直すだけで調整できる
-- 裏メロの `Character（特性音型）` は選んだスケールの色を優先し、コードやメロディとのぶつかり回避はしない。Arrange画面からはスケールを選べない（未選択のDorian / Lydian）
-- 裏メロは8タイプ（Sparse / Active / Hook / Answer / Arpeggio / Riff / Minor Penta Hook / Major Penta Hook）。ペンタの音とメロディの衝突回避はまだ行っていない（耳で確認して調整）
-- Demo Playerが実機で見えない / 鳴らない報告（2026-10-12）に対し、ナビ高さ追従（--nav-h）とビブラートLFO共有で対策済み。ヘッドレスChromeでは再現しなかったため、実機で再確認が必要。続く場合は端末名・Chromeの版・どの画面かを確認する
-- 新規Projectで旧Projectデータは端末内に残るが、保存済みProject一覧 / 過去Projectを選んで再度開くUIは未実装。現時点の復元手段はproject.json Backup / Importを優先する
-- Melody候補は1小節単位。Section単位 / 複数小節一括生成は未対応
-- Melody候補の別案は有限4Set。無制限ランダム生成はしない
-- Melody候補はルールベースの叩き台で、歌詞のアクセント / フレーズ文脈 / 前後小節の自然な接続まではまだ評価しない
-- Melody Analyzerの3参考モデルは「似ている度」を判定しない。歌詞アクセント・フレーズ輪郭・シンコペーション等まで含む作家分析ではなく、現状の数値の見方を補助するだけ
-- Melody AnalyzerのMelodic Function判定は初心者向けの保守的なルール。経過 / 刺繍 / 倚音 / 逸音 / Approachは原則同一Chord内の前後3音を見ており、複雑な和声文脈・装飾音・フレーズ境界までは断定しない。係留は保持関係だけを見た「候補」で、リック / リフは自動判定しない
-- Melody Velocity編集 / Scale表示は未対応
-- Chordは1コード=1小節固定。並べ替え / 長さ変更は未対応
-- Chord Presetは度数配列のみの100種類。借用和音 / 7th入りPresetは未対応
-- Backing Patternは曲全体で1種類。Section別 / Bar別指定、詳細Step編集は未対応
-- Backing Patternは4種類の叩き台のみ。DAW級Pattern Sequencer / Arpeggiatorは作らない方針
-- Scale変更時の既存Chord / Melody / Bass自動変換は未対応。Harmony依存データがある場合は変更を拒否
-- Bass Noteがある間はChord Data変更を拒否（Backing Pattern変更は可能）
-- Rhythm Bass候補は1 Bar単位の有限5タイプ。前後小節のVoice Leadingや曲全体のBassモチーフまでは自動評価しない
-- Rhythm 16 stepは狭い端末でセル幅が小さい。Bass候補が5タイプになったため、縦スクロール量はAndroid実機で要確認
-- Drum Preset / Drum FillはKick / Snare / Closed HH中心。Open HH / Percussion / Tomは未対応
-- Arrange Sectionは名前変更UIなし。後ろにコードがある場合、小節増加を安全のため拒否することがある
-- Undo履歴は保存されず、再読み込みで空になる
-- Sound Sketch LiteはWeb Audio oscillatorベースの方向性確認用。最終音色ではない
-- Drums音色変更は未対応
-- Snapshot履歴 / PWA Service Workerは未実装
-- Cubasis実機確認 / PC Cubase Importの全回帰確認は未完了
+- Google Drive連携はDrive API/OAuthではなくAndroid Web Share。ブラウザや共有対象によって動作差がある
+- Android Chromeは `.mid` / `.json` のWeb Share制約があり、Drive共有では `.txt` 名を使う回避処理がある
+- PWA Service Workerは未実装
+- Cubasis / Cubaseへの実機MIDI Import回帰テストが未完了
+- Project削除はUndo不可。安全のためActive Projectは削除不可
+- Snapshot履歴は未実装（通常のUndo/Redoはメモリのみ）
 
 触らない部分:
-- `main`
-- `milestone/v0.1-feature-complete`
-- PPQ=480 / 4/4固定
-- `project.json`をDemo Composer内の正本とする方針
-- Module責務の分離
-- 「スマホ版DAWを作らない」というプロダクト境界
-- 高度なSynth / Mix / Mastering / Audio Editing / Vocal Editing / Plugin HostingはCubasis / Cubase側へ任せる方針
+- `main` branchは動作確認済みstable専用。開発機能を直接入れない
+- `milestone/v0.1-feature-complete` および各 `restore/*` 復元点を上書きしない
+- schemaVersion 2を理由なく変更しない
+- MIDI PPQ 480 / 4/4固定の前提を無断変更しない
+- project.jsonの既存フィールドをModule間で勝手に書き換えない
+- Chord / Melody / Rhythm / Arrange / Soundの責任分離を壊さない
+- PC DAW級のMixing / Mastering / Plugin Hosting / 高度Audio Editingを追加しない
 
 最近の重要な設計判断:
-- 作曲シート / Hub → Chord の曲想連携は新しい保存Schemaを作らず、正本 `metadata.mood[]` → Core Composition Intent（メモリBridge）→ Chord派生Tag の一方向参照とする。ChordはHubのMoodを直接書き換えない。同じIntent中のChord手動Tag調整は維持し、Hub Intentが変わった時だけ再同期する。外部作曲シートも最終的に同じ `metadata.mood[]` 契約へ寄せる
-- Melody Piano Rollの色分けは、現在Barのコードと選択Key / Scaleから毎回計算するだけで保存しない（Schema変更なし）。Tensionの定義はMelody Analyzerと同じ自然9 / 11 / 13（ルートから2 / 5 / 9半音）。アボイドは「構成音でなく、構成音の半音上にあるScale内の音」という初心者向けの簡易定義で、厳密なジャズ理論の全ケースは網羅しない。優先は 赤 > 青 > 緑 > 黄
-- `＋ 新規Project` は現在Projectの中身をClearするのではなく、新しいProject IDを作る。旧Projectを上書き・削除しない
-- reload時のvisibility AutoSaveとの競合を避けるため、新規Project要求はsessionStorageでreload境界へ渡し、`app-entry.js` が `main.js` のboot前にActive Projectを確定する。schemaVersionは変更しない
-- Melody AnalyzerのKey度数 / Chord度数 / Scale内率は保存データを増やさず、現在のProjectから毎回計算する読み取り専用分析とする。コードトーン率は別指標として残す
-- Melody Analyzerの3参考モデルも既存の分析値を束ねるだけとし、アーティスト類似度の点数化、特定曲の再現、Melody候補への自動反映はしない。Schema変更なし
-- Melody AnalyzerのMelodic FunctionもProjectへ保存せず、Chord / Melody Noteから毎回派生計算する。GuideはChord Toneの内数、Tensionは初期版では自然9th / 11th / 13th相当。複雑な文脈を無理に断定せず、係留は候補、リック / リフは学習ガイドのみとする。Melody候補生成には自動反映しない
-- Melody自動生成は「完成させる」機能ではなく、1小節につき3候補 → ユーザーが選ぶ → Piano Rollで修正する方式にする
-- Melody候補は外部AI / APIを使わず、説明可能なルールベースから開始する
-- `安定` はChord Tone中心、`キャッチー` は8分中心 + 短い反復、`浮遊感` は2度 / 6度等のScale Toneを混ぜ、余白（休み・長い音）を作らず切れ目なく動く
-- 同じ条件で候補が固定される問題への対応は、完全ランダムではなく4つの有限Variation Setを循環する方式にする
-- Melody候補のVariation番号はUI状態だけに持ち、Project Data / MIDI / Schemaへ追加しない
-- Melody候補自体はProject Dataへ保存せず、適用結果だけ通常の `tracks[role=melody].notes[]` へ保存する
-- Melody候補専用Schema / MIDI形式を作らず、既存のNote処理・Undo・AutoSave・Player・MIDI Exportを再利用する
-- Melody候補の実装中にPR #57のDrum Fillがdevelopへ先行統合されたため、旧PR #61を無理にマージせず、最新developからPR #66を作り直して統合した
-- Backing PatternはChord Module内、Melody候補はMelody Module内に置き、新Moduleを増やさない
-- 生成・候補機能はDemo Composer共通思想の「候補提示 → 選択 → 修正」を優先する
-- Rhythm Bass候補は既存の3候補を無制限生成へ広げず、役割が明確な5タイプ `ルート / リフ / ファンク / シンセウェーブ / 裏メロ` に整理する。The Weeknd等は「短い低音リフをフック化する考え方」の参考に留め、特定曲コピーはしない
-- Bass候補名 / 候補IDはProject Dataへ保存せず、適用結果だけ通常の `tracks[role=bass].notes[]` に保存する。既存のUndo / AutoSave / Demo Player / MIDI Exportを再利用し、schemaVersion 2を維持する
-- Counter Melodyは `Sparse / Active / Hook / Answer` の4役割に整理する。Answerは主旋律の語尾・後半へ少し長めに返し、3度・7度などコード色を優先する。アーティスト名は小さな参考イメージに限定し、特定曲の旋律再現・コピーはしない
-- Counter Melody候補名 / 候補IDはProject Dataへ保存しない。適用結果だけ `tracks[role=counter].notes[]` に保存するため、候補方式を変えてもschemaVersion 2を維持できる
-- v0.2のSchemaは2のまま維持し、今回Migrationは追加しない
-- GitHub Pagesを現在の公開確認先とし、Vercel自動配信は停止状態を維持する
+- Project一覧は新しいCloud DBを導入せず、既存IndexedDB `projects` storeをそのまま一覧化する
+- Project切替は、旧画面のvisibility AutoSaveがActive IDを戻す競合を避けるため、sessionStorageに切替要求を置き、reload後 `main.js` より先にActive IDを確定する
+- 複製は元Projectを変更せず、別ID・revision 1・`元タイトル のコピー` として保存する。複製しても自動では開かない
+- 削除は誤操作防止のため確認必須・Undo不可・Active Project削除不可
+- Hubのパート個別消去は専用Schemaを追加せず、通常のProject Snapshotを1回置き換えることでUndo/AutoSaveを再利用する
+- Counter Melodyも個別消去対象に含める
+- Project Library / パート消去の追加でもProject Data Schema・MIDI形式・Versionは変更しない
+- Drive機能はGoogle DriveアカウントやURLを保持しない。Web Shareで端末側の共有先を選ぶ方式
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Bass候補名 / 候補IDも保存せず、適用結果だけ既存 `tracks[role=bass].notes[]` として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。Melody AnalyzerのKey度数 / Chord度数 / Scale内率 / 3参考モデル / Melodic Functionも保存せずProjectから派生計算するため、schemaVersion 2のまま。Composition Intentは保存せず、`metadata.mood[]` を正本としてメモリ上で共有するためschemaVersion 2を維持する。
+- `schemaVersion: 2`
+- `appVersion: v0.2-dev`
+- `project.json` が正本
+- `basic.ppq: 480` / `timeSignature: 4/4`
+- `chords[]`: root / quality / degree / startTick / durationTick
+- `tracks[]`: melody / bass / drums / counter（counterは任意）
+- `tracks[].notes[]`: id / pitch / startTick / durationTick / velocity
+- `structure.sections[]`: id / kind / name / bars + 任意 energy / transition
+- `instruments[]`: chord / melody / bass / chord-backing
+- IndexedDB DB `demo-composer`: `projects` storeにProject Snapshot、`meta.activeProjectId` に起動対象ID
+- Project Library追加によるDB version変更なし / Migrationなし
 
 最終更新:
 2026-10-12
