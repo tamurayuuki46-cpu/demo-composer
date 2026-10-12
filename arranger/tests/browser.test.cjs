@@ -31,6 +31,9 @@ const fixture = {
     await page.click('#stop-btn');await page.waitForFunction(()=>window.testContexts.every(c=>c.state==='closed'));
    }
    await page.click('#mix-btn');assert.equal(await page.locator('.candidate-tab').count(),4);
+   await page.locator('.section-workshop').first().locator('summary').first().click();
+   await page.locator('[data-section-field=donor]').first().selectOption('0');
+   await page.locator('[data-action=section-adopt]').first().click();
    await page.locator('[data-action=density]').first().selectOption('full');
    await page.locator('[data-action=toggle][data-role=bass]').first().uncheck();
    await page.locator('[data-action=reharm-show]').first().click();assert.equal(await page.locator('.reharm-option').count(),3);
@@ -39,7 +42,7 @@ const fixture = {
    await page.locator('[data-reharm=bold]').click();
    assert.equal(await page.locator('.curve-row').count(),2);
    await page.click('#adopt-btn');
-   const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.2')));
+   const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.3')));
    assert.equal(before.arrangement.sections[0].reharmonization.id,'bold');
    await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===2);
    assert.equal(await page.locator('[data-action=density]').first().inputValue(),'full');
@@ -54,6 +57,42 @@ const fixture = {
     downloadP=page.waitForEvent('download');await page.locator(`[data-part=${part}]`).click(); download=await downloadP;
     const bytes=await fs.readFile(await download.path());assert.equal(bytes.subarray(0,4).toString(),'MThd');
    }
+   // Seven features share the same current Section and persistence/export path.
+   await page.locator('.section-workshop').first().locator('summary').first().click();
+   await page.locator('[data-action=theory-show]').first().click();
+   assert.equal(await page.locator('.theory-card').count(),6);
+   await page.locator('.theory-explanation').first().locator('summary').first().click();
+   assert.ok(await page.locator('.note-diff').count());
+   for(const mode of ['original','candidate','guide','bass']) {
+    await page.locator(`[data-action=theory-preview][data-mode=${mode}]`).first().click();
+    await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='running');
+    await page.locator('#stop-btn').click();await page.waitForFunction(()=>window.testContexts.every(c=>c.state==='closed'));
+   }
+   await page.locator('[data-action=theory-apply]').first().click();
+   await page.locator('[data-action=counter-show]').first().click();assert.equal(await page.locator('.counter-card').count(),5);
+   await page.locator('[data-action=counter-apply]').nth(2).click();
+   await page.locator('[data-action=lead-apply][data-mode=counter]').first().click();
+   await page.locator('[data-action=decision-note]').first().fill('裏メロは隙間で受け渡す');
+   await page.locator('[data-action=decision-note]').first().press('Tab');
+   await page.locator('[data-action=subtract-show]').first().click();
+   assert.equal(await page.locator('[data-action=subtract-apply]').count(),3);
+   await page.locator('[data-action=subtract-apply]').nth(2).click();
+   await page.locator('.section-workshop').nth(1).locator('summary').first().click();
+   await page.locator('[data-action=chorus-show]').click();assert.equal(await page.locator('[data-action=chorus-apply]').count(),5);
+   await page.locator('[data-action=chorus-preview]').nth(4).click();
+   await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='running');await page.locator('#stop-btn').click();
+   await page.locator('[data-action=chorus-apply]').nth(4).click();
+   await page.locator('#adopt-btn').click();
+   const all=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.3')));
+   assert.equal(all.arrangerSchemaVersion,3);
+   assert.equal(all.arrangement.sections[0].counterArrangement.id,'color');
+   assert.equal(all.arrangement.sections[0].restPolicy,'melody-gaps');
+   assert.equal(all.arrangement.sections[0].decisionNote,'裏メロは隙間で受け渡す');
+   assert.equal(all.arrangement.sections[1].harmonyPattern,'offbeat');
+   assert.deepEqual(all.sourceSnapshot,fixture);
+   await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===2);
+   const reloaded=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.3')));
+   assert.deepEqual(reloaded.arrangement,all.arrangement);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'horizontal overflow');
    await page.screenshot({path:`test-results/arranger-${width}.png`,fullPage:true});
    await page.evaluate(()=>navigator.serviceWorker.ready);await page.reload();
@@ -64,7 +103,7 @@ const fixture = {
    await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='running');
    await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='closed',{},{timeout:12000});
    assert.deepEqual(errors,[],`console errors ${width}`);
-   await context.close();console.log(`PASS ${width}px: ABC/styles/play-stop/end/mix/edit/reharm/MIDI/JSON/reload/offline/cache`);
+   await context.close();console.log(`PASS ${width}px: seven features + ABC/styles/play-stop/end/mix/MIDI/JSON/reload/offline/cache`);
   }
  } finally {await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

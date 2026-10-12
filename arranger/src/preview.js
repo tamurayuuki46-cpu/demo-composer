@@ -1,12 +1,12 @@
 import { arrangedNotes } from './core.js';
 
 // Short lookahead bounds mobile oscillator allocation; MIDI and preview share notes.
-export function startPreview(ctx, source, candidate, startTick = 0, onEnd = () => {}) {
+export function startPreview(ctx, source, candidate, startTick = 0, onEnd = () => {}, options = {}) {
   const secondsPerTick = 60 / source.basic.bpm / source.basic.ppq;
   const songEnd = source.sections.at(-1).endTick;
-  const endTick = Math.min(songEnd, startTick + 16 / secondsPerTick);
-  const types = { melody: 'triangle', counter: 'triangle', bass: 'sine', drums: 'square', harmony: 'sine' };
-  const events = Object.keys(types).flatMap((part) => arrangedNotes(source, candidate, part)
+  const endTick = Math.min(songEnd, options.endTick ?? songEnd, startTick + 16 / secondsPerTick);
+  const types = { melody: 'triangle', counter: 'triangle', bass: 'sine', drums: 'square', harmony: 'sine', guide: 'sine' };
+  const events = (options.parts || ['melody','counter','bass','drums','harmony']).flatMap((part) => arrangedNotes(source, candidate, part)
     .filter((note) => note.startTick < endTick && note.startTick + note.durationTick > startTick)
     .map((note) => ({ ...note, part, time: (Math.max(startTick, note.startTick) - startTick) * secondsPerTick,
       duration: (Math.min(endTick, note.startTick + note.durationTick) - Math.max(startTick, note.startTick)) * secondsPerTick })))

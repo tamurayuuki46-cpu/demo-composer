@@ -1,3 +1,6 @@
+import { THEORY_METHODS, buildTheorySuggestions, theoryAudition } from './reharm-theory.js';
+import { adoptSectionFrom, buildChorusCandidates, buildSubtractionCandidates, buildCounterScaleCandidates, leadHandoffCandidate } from './arrangement-tools.js';
+import { sectionFeatures } from './feature-ui.js';
 import { startPreview } from './preview.js';
 import {
   ARRANGER_VERSION,
@@ -15,7 +18,8 @@ import {
   restoreArrangerProject,
 } from './core.js';
 
-const STORAGE_KEY = 'demo-composer-arranger-v0.2';
+const STORAGE_KEY = 'demo-composer-arranger-v0.3';
+const PREVIOUS_STORAGE_KEY = 'demo-composer-arranger-v0.2';
 const LEGACY_STORAGE_KEY = 'demo-composer-arranger-v0.1';
 
 const state = {
@@ -25,6 +29,7 @@ const state = {
   selectedIndex: 1,
   arrangerProject: null,
   reharmSuggestions: {},
+  features: {},
   previewContext: null,
 };
 
@@ -102,6 +107,7 @@ async function importFile(file) {
     state.source = source;
     state.arrangerProject = null;
     state.reharmSuggestions = {};
+  state.features = {};
     renderSource();
     renderCollisionSummary();
     generateCandidates();
@@ -158,6 +164,7 @@ function generateCandidates() {
   state.candidates = buildThreeCandidates(state.source, state.styleId);
   state.selectedIndex = 1;
   state.reharmSuggestions = {};
+  state.features = {};
   renderCandidates();
   renderMixControls();
 }
@@ -175,6 +182,7 @@ function renderCandidates() {
     button.addEventListener('click', () => {
       stopPreview();
       state.selectedIndex = index;
+      state.features = {};
       renderCandidates();
       renderMixControls();
     });
@@ -261,7 +269,7 @@ function sectionCard(section, index) {
     <article class="section-card">
       <div class="section-head">
         <div><span class="eyebrow">${index + 1}. ${escapeHtml(section.kind)}</span><h3>${escapeHtml(section.sectionName)}</h3></div>
-        <div class="chips"><span>${section.bars} bars</span><span>${escapeHtml(section.energy)}</span><span>${densityLabel}</span></div>
+        <div class="chips"><span>${escapeHtml(section.bars)} bars</span><span>${escapeHtml(section.energy)}</span><span>${densityLabel}</span></div>
       </div>
       <div class="section-controls">
         <label class="field compact"><span>密度</span>
@@ -284,6 +292,7 @@ function sectionCard(section, index) {
           </button>`).join('')}</div>` : ''}
         ${selectedReharm ? `<button class="text-button" data-action="reharm-clear" data-section="${escapeAttr(section.sectionId)}">リハモを解除</button>` : ''}
       </div>
+${sectionFeatures(state.source,currentCandidate(),state.candidates,section,state.features[section.sectionId])}
       <div class="transition"><span>次へのつなぎ</span><strong>${escapeHtml(section.transition)}</strong></div>
     </article>`;
 }
@@ -294,6 +303,10 @@ function handleSectionChange(event) {
   const candidate = currentCandidate();
   if (!candidate || !sectionId) return;
   stopPreview();
+  if (target.dataset.sectionField === 'method') { state.features[sectionId] = { ...state.features[sectionId], method: target.value }; return; }
+  if (target.dataset.action === 'decision-note') {
+    state.candidates[state.selectedIndex] = updateCandidateSection(candidate,sectionId,{decisionNote:target.value.slice(0,400)}); return;
+  }
   if (target.dataset.action === 'density') {
     state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { density: target.value });
     renderCandidates();
@@ -310,6 +323,7 @@ function handleSectionClick(event) {
   const sectionId = button.dataset.section;
   const action = button.dataset.action;
   stopPreview();
+  if (handleFeatureAction(button)) return;
   if (action === 'reharm-show') {
     state.reharmSuggestions[sectionId] = buildReharmSuggestions(state.source, sectionId);
     if (!state.reharmSuggestions[sectionId].length) flash('このSectionにはコードがありません。', true);
@@ -331,9 +345,59 @@ function handleSectionClick(event) {
   }
 }
 
+function handleFeatureAction(button) {
+  const action = button.dataset.action, sectionId = button.dataset.section;
+  if (!/^(section-adopt|chorus-|subtract-|theory-|counter-|lead-|rest-)/.test(action)) return false;
+  const current = currentCandidate();
+  if (!current) return true;
+  const section = state.source.sections.find(s=>s.id===sectionId);
+  if (!section) return true;
+  const features = state.features[sectionId] ||= {};
+  features.open = true;
+  const index = Number(button.dataset.option), mode = button.dataset.mode;
+  const install = candidate => { state.candidates[state.selectedIndex] = adoptSectionFrom(current,candidate,sectionId); renderCandidates(); };
+  const preview = (candidate,label,parts) => playSketch({source:state.source,candidate,startTick:section.startTick,endTick:section.endTick,parts},label);
+  try {
+    if (action === 'section-adopt') {
+      const select = els.sections.querySelector(`[data-section-field="donor"][data-section="${CSS.escape(sectionId)}"]`);
+      install(state.candidates[Number(select.value)]); flash('このSectionだけ採用しました。');
+    } else if (action === 'chorus-show') { features.chorus = buildChorusCandidates(state.source,current,sectionId); renderCandidates(); }
+    else if (action === 'subtract-show') { features.subtract = buildSubtractionCandidates(state.source,current,sectionId); renderCandidates(); }
+    else if (action === 'theory-show') {
+      const select = els.sections.querySelector(`[data-section-field="method"][data-section="${CSS.escape(sectionId)}"]`);
+      features.method=select.value;
+      features.theory=buildTheorySuggestions(state.source,sectionId,features.method); renderCandidates();
+    } else if (action === 'counter-show') { features.counter=buildCounterScaleCandidates(state.source,current,sectionId);renderCandidates(); }
+    else if (action === 'theory-preview') {
+      const suggestion=features.theory?.[index]; if(suggestion?.available) playSketch(theoryAudition(state.source,current,sectionId,suggestion,mode),`${suggestion.label}: ${{original:'元',candidate:'候補',guide:'特徴音',bass:'元ベース'}[mode]}`);
+    } else if (action === 'theory-apply') {
+      const suggestion=features.theory?.[index]; if(suggestion?.available)install(updateCandidateSection(current,sectionId,{reharmonization:suggestion}));
+    } else if (action === 'lead-apply') { install(leadHandoffCandidate(current,sectionId,mode)); }
+    else if (action === 'rest-clear') { install(updateCandidateSection(current,sectionId,{restPolicy:'none',leadRole:null,reason:''})); }
+    else if (action === 'counter-clear') { install(updateCandidateSection(current,sectionId,{counterArrangement:null,restPolicy:'none'})); }
+    else {
+      const group=action.split('-')[0], choice=features[group]?.[index];
+      if(choice) {
+        const candidate=adoptSectionFrom(current,choice.candidate||choice,sectionId);
+        if(action.endsWith('-apply'))install(candidate);
+        else if(action.endsWith('-preview'))preview(candidate,choice.label);
+        else if(action === 'counter-midi') {
+          const midi=createPartMidi(state.source,candidate,'counter');
+          if(midi)downloadBlob(new Blob([midi],{type:'audio/midi'}),`${safeFileName(choice.label)}_counter_${ARRANGER_VERSION}.mid`);
+          else flash('休み指定により出力する裏メロNoteがありません。',true);
+        }
+      }
+    }
+  } catch(error) { flash(error.message || '編曲案を処理できませんでした。',true); }
+  return true;
+}
+
 async function previewCurrentCandidate() {
   const candidate = currentCandidate();
   if (!state.source || !candidate) return;
+  return playSketch({ source:state.source, candidate, startTick:Number(els.previewSection.value)||0 },candidate.label);
+}
+async function playSketch(sketch,label) {
   stopPreview();
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   if (!AudioCtx) { flash('このブラウザでは簡易試聴を利用できません。', true); return; }
@@ -345,8 +409,8 @@ async function previewCurrentCandidate() {
     await ctx.resume();
     if (state.previewContext !== ctx) return;
     if (ctx.state !== 'running') throw new Error('音声を開始できません。もう一度試聴を押してください。');
-    state.stopAudio = startPreview(ctx, state.source, candidate, Number(els.previewSection.value) || 0, stopPreview);
-    flash(`${candidate.label} を最大16秒、簡易試聴します。`);
+    state.stopAudio = startPreview(ctx, sketch.source, sketch.candidate, sketch.startTick || 0, stopPreview, sketch);
+    flash(`${label} を最大16秒、簡易試聴します。`);
   } catch (error) {
     if (state.previewContext === ctx) { stopPreview(); flash(error.message || '音声を開始できませんでした。', true); }
   }
@@ -423,12 +487,14 @@ function clearAll() {
   if (!window.confirm('保存した編曲プランを消去しますか？必要なら先にJSONを書き出してください。')) return;
   stopPreview();
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(PREVIOUS_STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
   state.source = null;
   state.candidates = [];
   state.arrangerProject = null;
   state.selectedIndex = 1;
   state.reharmSuggestions = {};
+  state.features = {};
   els.file.value = '';
   els.exportBtn.disabled = true;
   els.preview.disabled = true;
@@ -444,6 +510,7 @@ function applyRestored({ source, candidate }) {
   state.candidates = candidate ? [candidate] : [];
   state.selectedIndex = 0;
   state.reharmSuggestions = {};
+  state.features = {};
   if (candidate) { state.styleId = candidate.styleId; els.style.value = state.styleId; }
   renderSource(); renderCollisionSummary(); renderCandidates(); renderMixControls();
 }
@@ -455,7 +522,7 @@ function restorePlan(saved) {
 }
 function restoreSavedPlan() {
   try {
-    const text = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const text = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(PREVIOUS_STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!text) return;
     restorePlan(JSON.parse(text));
     flash(state.source ? '前回の採用プランを復元しました。' : '旧プランを保持しています。同じrevisionの元project.jsonで編集を再開できます。');

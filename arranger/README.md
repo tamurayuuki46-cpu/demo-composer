@@ -5,7 +5,7 @@ Demo Composer companion PWA.
 ## Flow
 Demo Composer → Arrangement Lab → Cubasis → Cubase
 
-## v0.2.1-dev
+## v0.3-dev
 Demo Composerのproject.jsonを読み込み、A/B/C編曲案を試聴・比較・Mixし、Sectionごとの密度/楽器ON-OFFとリハモ3案を編集して、パート別MIDIとArrangement Plan JSONを書き出す。
 
 ## Start
@@ -29,3 +29,8 @@ node arranger/tests/core.test.mjs
 
 追加検証: `node arranger/tests/regression.test.mjs`。ブラウザCIは `arranger/tests/browser.test.cjs`。
 検証詳細は `docs/VERIFICATION_v0.2.1.md`。
+
+## 7機能の入口
+project.json読込後、Sectionカードの「Sectionの編曲ラボ・7つの機能」を開く。
+リハモ理論・メロディとの関係、裏メロ5案、Section採用、サビ5案、引き算、主役の受け渡しを試聴して採用する。
+`node arranger/tests/features.test.mjs`でNote不変/Section範囲/保存/MIDIを検証。
