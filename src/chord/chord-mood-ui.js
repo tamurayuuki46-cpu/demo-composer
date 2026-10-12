@@ -5,6 +5,7 @@ import {
   chordPresetsForTags
 } from "./chord-mood-tags.js";
 import { chordPresetNames } from "./chord-presets.js";
+import { addMoodFavorite, favoriteKey, isMoodFavorite, loadMoodFavorites, removeMoodFavorite } from "./mood-favorites.js";
 
 const GROUP_LABELS = Object.freeze({
   emotion: "感情",
@@ -62,7 +63,7 @@ function currentKey() {
 }
 
 // タブ（感情/質感/場面）をまたいで複数のタグを選ぶ。選んだタグは、どのタブを開いていてもいつも上に見える。
-export function moodPickerHtml({ tags = [...selectedTags], group = listGroup, mode = "major", key = "C", showAll = listShowAll } = {}) {
+export function moodPickerHtml({ tags = [...selectedTags], group = listGroup, mode = "major", key = "C", showAll = listShowAll, favorites = typeof document === "undefined" ? [] : loadMoodFavorites() } = {}) {
   const selected = new Set(tags);
   const groupId = CHORD_MOOD_TAG_GROUPS[group] ? group : null;
   const { rows, matchedAll } = chordPresetsForTags([...selected], { mode });
@@ -70,9 +71,22 @@ export function moodPickerHtml({ tags = [...selectedTags], group = listGroup, mo
   const modeLabel = `${key} ${mode === "minor" ? "Minor" : "Major"}`;
 
   const groupOfTag = (id) => Object.keys(CHORD_MOOD_TAG_GROUPS).find((g) => CHORD_MOOD_TAG_GROUPS[g].some((tag) => tag.id === id));
+  const saved = favorites.some((item) => favoriteKey(item.tags) === favoriteKey([...selected]));
+  const favLabel = (list) => list.map((id) => TAG_BY_ID.get(id)?.label ?? id).join("＋");
+  const favoritesHtml = favorites.length
+    ? `<div class="mood-favorites" aria-label="お気に入りのタグ組み合わせ">
+        <span class="mood-selected-label">★ お気に入り</span>
+        <div class="mood-fav-list">
+          ${favorites.map((item) => `<span class="mood-fav">
+            <button type="button" class="mood-fav-apply${favoriteKey(item.tags) === favoriteKey([...selected]) ? " on" : ""}" data-mood-fav-apply="${escapeHtml(favoriteKey(item.tags))}">${escapeHtml(favLabel(item.tags))}</button>
+            <button type="button" class="mood-fav-remove" data-mood-fav-remove="${escapeHtml(favoriteKey(item.tags))}" aria-label="${escapeHtml(favLabel(item.tags))}をお気に入りから削除">×</button>
+          </span>`).join("")}
+        </div>
+      </div>`
+    : "";
   const selectedHtml = selected.size
     ? `<div class="mood-selected" aria-label="選んでいるタグ">
-        <div class="mood-selected-head"><span class="mood-selected-label">選択中 ${selected.size}/${MAX_TAGS}</span><button type="button" class="mood-clear" data-chord-mood-clear>すべて外す</button></div>
+        <div class="mood-selected-head"><span class="mood-selected-label">選択中 ${selected.size}/${MAX_TAGS}</span><span class="mood-selected-actions"><button type="button" class="mood-fav-save${saved ? " on" : ""}" data-mood-fav-save aria-pressed="${saved}">${saved ? "★ 保存済み" : "☆ お気に入りに保存"}</button><button type="button" class="mood-clear" data-chord-mood-clear>すべて外す</button></span></div>
         <div class="mood-selected-pills">
           ${[...selected].map((id) => `<button type="button" class="mood-pill g-${escapeHtml(groupOfTag(id) ?? "x")}" data-chord-mood-tag="${escapeHtml(id)}" aria-label="${escapeHtml(TAG_BY_ID.get(id)?.label ?? id)}を外す"><small>${escapeHtml(GROUP_LABELS[groupOfTag(id)] ?? "")}</small>${escapeHtml(TAG_BY_ID.get(id)?.label ?? id)}<b aria-hidden="true">×</b></button>`).join("")}
         </div>
@@ -116,6 +130,7 @@ export function moodPickerHtml({ tags = [...selectedTags], group = listGroup, mo
 
   return `
     <div class="mood-picker">
+      ${favoritesHtml}
       ${selectedHtml}
       <div class="mood-tabs" role="tablist" aria-label="タグの種類">${tabsHtml}</div>
       ${chipsHtml}
@@ -226,6 +241,30 @@ function bindPanelEvents() {
       else if (selectedTags.size < MAX_TAGS) selectedTags.add(tagId);
       listShowAll = false;
       manualAdjusted = true;
+      renderPanel();
+    });
+  });
+
+  document.querySelector("[data-mood-fav-save]")?.addEventListener("click", () => {
+    const tags = [...selectedTags];
+    if (isMoodFavorite(tags)) removeMoodFavorite(tags);
+    else addMoodFavorite(tags);
+    renderPanel();
+  });
+  document.querySelectorAll("[data-mood-fav-apply]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const ids = String(button.dataset.moodFavApply ?? "").split("+").filter((id) => TAG_BY_ID.has(id)).slice(0, MAX_TAGS);
+      if (ids.length === 0) return;
+      selectedTags.clear();
+      ids.forEach((id) => selectedTags.add(id));
+      listShowAll = false;
+      manualAdjusted = true;
+      renderPanel();
+    });
+  });
+  document.querySelectorAll("[data-mood-fav-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      removeMoodFavorite(String(button.dataset.moodFavRemove ?? "").split("+"));
       renderPanel();
     });
   });

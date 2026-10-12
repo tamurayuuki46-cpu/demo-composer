@@ -65,4 +65,32 @@ assert.equal(chordPresetsForTags([], { mode: "major" }).rows.length, 0);
 assert.match(moodPickerHtml({ tags: ["sad"], group: null }), /data-chord-mood-clear/);
 assert.ok(!/data-chord-mood-clear/.test(moodPickerHtml({ tags: [], group: null })));
 
+// お気に入り（タグの組み合わせ）: 端末に保存。同じ組み合わせは1件にまとまる
+{
+  const { addMoodFavorite, removeMoodFavorite, loadMoodFavorites, isMoodFavorite, favoriteKey, MAX_FAVORITES } = await import("../src/chord/mood-favorites.js");
+  const memory = new Map();
+  const storage = { getItem: (k) => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, v) };
+  assert.deepEqual(loadMoodFavorites(storage), []);
+  addMoodFavorite(["night", "sad"], storage);
+  addMoodFavorite(["sad", "night"], storage); // 順番違いの同じ組み合わせ
+  assert.equal(loadMoodFavorites(storage).length, 1, "同じ組み合わせは1件");
+  assert.ok(isMoodFavorite(["sad", "night"], storage));
+  addMoodFavorite(["bright"], storage);
+  assert.deepEqual(loadMoodFavorites(storage)[0].tags, ["bright"], "新しく保存したものが先頭");
+  assert.deepEqual(removeMoodFavorite(["night", "sad"], storage).map((f) => favoriteKey(f.tags)), ["bright"]);
+  for (let i = 0; i < MAX_FAVORITES + 3; i += 1) addMoodFavorite([`t${i}`], storage);
+  assert.equal(loadMoodFavorites(storage).length, MAX_FAVORITES, "上限を超えたら古いものから消える");
+  assert.deepEqual(loadMoodFavorites({ getItem: () => "{broken" }), [], "壊れた保存データでも落ちない");
+  assert.equal(loadMoodFavorites({ getItem: () => { throw new Error("blocked"); } }).length, 0, "localStorageが使えなくても落ちない");
+  addMoodFavorite(["sad"], { getItem: () => null, setItem: () => { throw new Error("quota"); } });
+
+  const withFav = moodPickerHtml({ tags: ["sad", "night"], group: null, favorites: [{ tags: ["night", "sad"] }, { tags: ["bright"] }] });
+  assert.equal(count(withFav, /data-mood-fav-apply=/g), 2);
+  assert.equal(count(withFav, /data-mood-fav-remove=/g), 2);
+  assert.match(withFav, /★ 保存済み/, "いまの選択が保存済みなら★保存済み");
+  const notSaved = moodPickerHtml({ tags: ["hope"], group: null, favorites: [{ tags: ["bright"] }] });
+  assert.match(notSaved, /☆ お気に入りに保存/);
+  assert.ok(!/data-mood-fav-save/.test(moodPickerHtml({ tags: [], group: null, favorites: [] })), "何も選んでいなければ保存ボタンは出ない");
+}
+
 console.log("Chord mood UI smoke test passed.");
