@@ -452,7 +452,8 @@ h1 {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(68px + env(safe-area-inset-bottom));
+  /* --nav-h は main.js が下部ナビの実際の高さで更新する（文字サイズ拡大でナビが高くなっても再生バーが隠れない） */
+  bottom: var(--nav-h, calc(68px + env(safe-area-inset-bottom)));
   z-index: 9;
   display: grid;
   grid-template-columns: 46px 46px 58px 54px minmax(0, 1fr);
