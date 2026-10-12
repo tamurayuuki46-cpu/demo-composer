@@ -48,6 +48,7 @@ export function bindConsultPanel({ projectStore, setMessage }) {
     const open = panel.hasAttribute("hidden");
     if (open) {
       panel.removeAttribute("hidden");
+      panel.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
       refreshPreview();
     } else {
       panel.setAttribute("hidden", "");
