@@ -35,6 +35,11 @@ export function createSoundController({ projectStore, rerender } = {}) {
           </select>
         </label>
 
+        ${(() => {
+          const description = part.presets.find((item) => item.id === selection.preset)?.description;
+          return description ? `<p class="sound-preset-note">${escapeHtml(description)}</p>` : "";
+        })()}
+
         <div class="sound-tone-group" aria-label="${escapeHtml(part.label)} Tone">
           <span class="sound-tone-label">Tone</span>
           <div class="sound-tone-buttons">

@@ -409,3 +409,11 @@ Stable判定後:
 - [ ] `これにする` で範囲内のMelodyだけが置き換わり、他の小節のメロディとChordは変わらない。`↶` で戻る
 - [ ] Melody画面のPiano Rollで、入ったメロディを1音ずつ直せる。小節頭と最後の長い音がコードトーン（青）になっている
 - [ ] `↻ 候補を更新` で4通りに変わる
+
+## 16. 音色の追加・Melody音量（v0.2-dev）
+
+- [ ] Sound画面のMelody Presetに `Vocal（ボカロ風）` ほか7種類があり、選ぶと下に説明が出る（Chord / Bassも増えている）
+- [ ] 新規Projectで、Melodyが `Vocal（ボカロ風）` の音で鳴る（Chordのパッドに近い、やわらかい立ち上がり）
+- [ ] `Vocal Soft / Vocal Bright / Pad Lead / Flute / Strings Lead / Bell` を聴き比べ、好みの方向を決められる
+- [ ] 以前より、メロディが少しだけ控えめで、コードやベースと混ざりやすい（大きすぎ / 小さすぎなら教える）
+- [ ] 保存済みのProjectは、以前選んだMelody音色のまま鳴る

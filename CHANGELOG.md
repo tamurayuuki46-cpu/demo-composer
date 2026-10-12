@@ -4,6 +4,9 @@
 更新日: 2026-10-11
 
 ### 追加
+- 音色（Sound Sketch）を増やした: Melody `Vocal（ボカロ風） / Vocal Soft / Vocal Bright / Pad Lead（パッド寄り） / Flute / Strings Lead / Bell`、Chord `Strings / Organ / Choir`、Bass `Sub Bass / Pluck Bass / Growl Bass`。声に近い音は、波形の重ね合わせ・ビブラート（少し遅れて揺れ始める）・母音の山（あ / お / い）で作る。Presetを選ぶと、下に一言の説明が出る。音量は既存Presetに近いレベルに合わせた（耳での最終調整は実機で）
+- Melodyの初期音色を `Vocal（ボカロ風）` に変更（Chordのパッドに近い、やわらかい立ち上がり）。保存済みの音色選択は変わらず、Presetはいつでも `Keys` などへ戻せる。Schema変更なし（Preset idの追加のみ）
+- メインメロディの音量を少し下げた（Demo Playerのパート音量 0.8倍 ≒ -2dB。ミュート / ソロの動作は従来どおり）。裏メロの音量は変えていない
 - Chord画面 `🎤 4小節メロディをつくる`: コード進行に合わせて、2 / 4 / 8小節のフレーズを3つの型（モチーフ反復型 / 問いと答え型 / ピーク型）で生成する。`おまかせ / 上行 / 下降 / 平坦` の輪郭を選べ、各候補を `▶ 聴く`（その範囲だけ仮に再生）→ `これにする`（範囲内のMelodyだけ置き換え、↶で戻せる）。小節頭・着地はコードトーン、小節の最後は次のコードへの着地、問いは浮かせて止める。音はすべてKey / Scale内。`↻ 候補を更新` で4通りのモチーフ。Schema変更なし（`src/melody/phrase-generator.js` / `phrase-melody-ui.js`、`npm run test:phrase-melody`、CI対象）。今後の拡張（味付け・裏メロの新しい型など）は `docs/MELODY_PHRASE_PLAN.md`
 - Chord `スケール系のコード` を大幅拡張: スケールをセレクトで選べるようにした（C Dorian / Phrygian / Lydian / Mixolydian / Locrian、ハーモニックマイナー系のモード＝Phrygian Dominant（スパニッシュ）など、メロディックマイナー系のモード＝Lydian Dominant・Altered など、Double Harmonic / Hungarian Minor / Spanish 8-Note、Whole Tone、ディミニッシュ（全半・半全）、メジャー・マイナーペンタ、ブルース、都節音階 / 陰旋法 / 律・陽旋法 / 琉球音階）。スケール名はKeyを頭にしたコード表記（例: `C Phrygian Dominant（スパニッシュ）`）。固定表を持たないスケールは「そのスケールの音だけで作れるコード」を度ごとに全部表示する（3和音 / 7th / テンション / 特殊和音）
 - Quality を35→44種類へ追加: 7♭5 / 7♯5 / 9♭5 / 9♯5（全音音階向け）、4度堆積（3音・4音）/ 5度堆積 / So What / 神秘和音。許可値の追記のみでschemaVersionは2のまま
