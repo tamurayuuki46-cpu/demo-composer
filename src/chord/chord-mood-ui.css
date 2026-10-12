@@ -121,3 +121,51 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* 曲想を1つ選んで一覧 */
+.chord-emotion-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.chord-emotion-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.chord-emotion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #303038;
+  border-radius: 12px;
+  background: #17171b;
+}
+.chord-emotion-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.chord-emotion-main strong {
+  overflow-wrap: anywhere;
+}
+.chord-emotion-main small {
+  opacity: 0.72;
+  overflow-wrap: anywhere;
+}
+.chord-emotion-row button {
+  flex: none;
+  min-height: 44px;
+  min-width: 64px;
+}
+.chord-emotion-more {
+  min-height: 44px;
+}
+.chord-mood-combine {
+  display: block;
+  margin: 6px 0;
+}

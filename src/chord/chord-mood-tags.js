@@ -245,3 +245,28 @@ export function chordPresetMoodText(presetOrId) {
     .filter(Boolean)
     .join("｜");
 }
+
+// 曲想（感情）タグを1つ選んで、そのタグが強い順に並べた一覧。minWeight 未満（そのタグが弱い進行）は出さない。
+// 同じ重みなら、王道 → 少し個性的 → 挑戦的 の順（まず定番から見られるように）
+const DIFFICULTY_ORDER = Object.freeze({ standard: 0, expressive: 1, adventurous: 2 });
+export function chordPresetsForEmotion(tagId, { mode = "any", minWeight = 3 } = {}) {
+  if (!CHORD_MOOD_TAG_GROUPS.emotion.some((tag) => tag.id === tagId)) return [];
+  return CHORD_MOOD_PROFILES
+    .filter((profile) => mode === "any" || profile.mode === mode)
+    .map((profile) => ({ profile, weight: profile.tags.find((tag) => tag.id === tagId)?.weight ?? 0 }))
+    .filter((item) => item.weight >= minWeight)
+    .sort((a, b) => (b.weight - a.weight)
+      || (DIFFICULTY_ORDER[a.profile.difficulty] - DIFFICULTY_ORDER[b.profile.difficulty])
+      || a.profile.presetId.localeCompare(b.profile.presetId))
+    .map(({ profile, weight }) => {
+      const preset = CHORD_PRESETS.find((item) => item.id === profile.presetId);
+      return {
+        presetId: profile.presetId,
+        label: preset?.label ?? profile.presetId,
+        mode: profile.mode,
+        difficulty: profile.difficulty,
+        weight,
+        degreeIndexes: [...(preset?.degreeIndexes ?? [])]
+      };
+    });
+}
