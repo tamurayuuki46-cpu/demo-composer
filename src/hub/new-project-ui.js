@@ -6,7 +6,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function saveCurrentProjectThroughHub() {
+export async function saveCurrentProjectThroughHub() {
   const saveButton = document.querySelector("#save-project");
   const message = document.querySelector("#hub-message");
   if (!saveButton || !message) {
