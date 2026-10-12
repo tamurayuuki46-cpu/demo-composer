@@ -1,4 +1,5 @@
 import { chordSymbol, getDiatonicChords } from "./chord-theory.js";
+import { chordSongReference } from "./chord-song-references.js";
 
 const ROMANS = Object.freeze({
   major: ["I", "ii", "iii", "IV", "V", "vi", "vii°"],
@@ -89,6 +90,28 @@ const ENDING_HINTS = Object.freeze({
   7: "最後は7度で、強く次へ解決したくなります。"
 });
 
+function presetNumber(preset) {
+  return preset.degreeIndexes.map((degreeIndex) => degreeIndex + 1).join("");
+}
+
+export function chordPresetOptionLabel(preset) {
+  const number = presetNumber(preset);
+  const base = preset.label.includes(number) ? preset.label : `${number} ${preset.label}`;
+  const reference = chordSongReference(preset.id);
+  return reference ? `${base}｜${reference.song} / ${reference.artist}` : base;
+}
+
+function withLearningReference(preset) {
+  const reference = chordSongReference(preset.id);
+  if (!reference) return Object.freeze(preset);
+
+  return Object.freeze({
+    ...preset,
+    description: `${preset.description} 参考曲: ${reference.song} / ${reference.artist}。${reference.note}`,
+    reference
+  });
+}
+
 function buildExtraPresets() {
   const presets = [];
   for (const category of CHORD_PRESET_CATEGORIES) {
@@ -109,13 +132,16 @@ function buildExtraPresets() {
 }
 
 export const CHORD_PRESETS = Object.freeze(
-  [...BASE_PRESETS, ...buildExtraPresets()].map((preset) => Object.freeze(preset))
+  [...BASE_PRESETS, ...buildExtraPresets()].map(withLearningReference)
 );
 
 export function chordPresetsByCategory() {
   return CHORD_PRESET_CATEGORIES.map((category) => ({
     ...category,
-    presets: CHORD_PRESETS.filter((preset) => preset.category === category.id)
+    presets: CHORD_PRESETS.filter((preset) => preset.category === category.id).map((preset) => ({
+      ...preset,
+      label: chordPresetOptionLabel(preset)
+    }))
   }));
 }
 
