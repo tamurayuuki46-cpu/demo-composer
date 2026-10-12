@@ -31,6 +31,19 @@ function funkSteps(kickSteps, color, fifth) {
   return sortedUnique(notes);
 }
 
+// Bass × Kick: 候補がKickとどういう関係かを一言で。Kickが無いときは判定せず、Kickを入れるよう案内する。
+export function kickRelation(steps, kickSteps) {
+  if (kickSteps.length === 0) return "Kickがまだありません。Kickを入れると、Bassとの関係が分かります。";
+  const bassSteps = steps.map((item) => item.step);
+  const together = bassSteps.filter((step) => kickSteps.includes(step)).length;
+  const alone = bassSteps.length - together;
+  const offbeat = bassSteps.filter((step) => step % 4 === 2 && !kickSteps.includes(step)).length;
+  if (alone === 0 || together / bassSteps.length >= 0.7) return "Kickと一緒に鳴る（低音が揃って、重く安定する）";
+  if (offbeat >= 2) return "裏拍でBassが動く（Kickの間を埋めて、ノリが出る）";
+  if (together / bassSteps.length < 0.5) return "Bassだけ動く（Kickは土台、Bassが動きをつける）";
+  return "Kickと一部が重なる（土台は揃えて、ところどころ動く）";
+}
+
 export function bassCandidatesForBar(project, barIndex, { barTicks, stepTicks }) {
   const barStartTick = barIndex * barTicks;
   const quality = project.chords[barIndex]?.quality ?? "major";
@@ -45,7 +58,7 @@ export function bassCandidatesForBar(project, barIndex, { barTicks, stepTicks })
       .map((note) => Math.round((note.startTick - barStartTick) / stepTicks))
   )].filter((step) => step >= 0 && step < STEPS).sort((a, b) => a - b);
 
-  return [
+  const candidates = [
     {
       id: "root-long",
       label: "ルート型",
@@ -100,6 +113,7 @@ export function bassCandidatesForBar(project, barIndex, { barTicks, stepTicks })
       ]
     }
   ];
+  return candidates.map((candidate) => ({ ...candidate, kickRelation: kickRelation(candidate.steps, kickSteps) }));
 }
 
 // 16文字の見た目（● = 音あり）

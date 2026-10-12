@@ -20,12 +20,23 @@ export function skeletonCheckSummary(project) {
     : `骨子チェック ${check.doneCount}/${check.total}`;
 }
 
-function row(item) {
-  return `
-    <li class="skeleton-row mark-${item.mark}">
-      <span class="skeleton-mark" aria-label="${item.mark === "done" ? "OK" : item.mark === "part" ? "一部" : "未"}">${SKELETON_MARKS[item.mark]}</span>
+function row(item, { isNext = false } = {}) {
+  if (item.later) {
+    return `
+    <li class="skeleton-row mark-${item.mark} later">
+      <span class="skeleton-mark" aria-label="${item.mark === "part" ? "一部" : "未"}">${SKELETON_MARKS[item.mark]}</span>
       <div class="skeleton-body">
         <strong>${escapeHtml(item.label)}</strong>
+        <small class="skeleton-detail">${escapeHtml(item.detail)}　<span class="later-tag">今は後でOK</span></small>
+      </div>
+      <button class="skeleton-go" data-skeleton-go="${escapeHtml(item.screen)}">${escapeHtml(SCREEN_LABELS[item.screen] ?? "開く")}</button>
+    </li>`;
+  }
+  return `
+    <li class="skeleton-row mark-${item.mark}${isNext ? " next" : ""}">
+      <span class="skeleton-mark" aria-label="${item.mark === "done" ? "OK" : item.mark === "part" ? "一部" : "未"}">${SKELETON_MARKS[item.mark]}</span>
+      <div class="skeleton-body">
+        <strong>${escapeHtml(item.label)}${isNext ? ` <span class="next-tag">次はここ</span>` : ""}</strong>
         <small class="skeleton-detail">${escapeHtml(item.detail)}</small>
         ${item.mark === "done" ? "" : `<small>${escapeHtml(item.hint)}</small>`}
       </div>
@@ -40,9 +51,9 @@ export function skeletonCheckHtml(project) {
       <p class="skeleton-lead">${check.complete
         ? "骨子はそろいました。Song.mid などを書き出して、Cubasis / Cubase に渡せます。"
         : `次に決めるのは「${escapeHtml(check.next.label)}」です。${escapeHtml(check.next.hint)}`}</p>
-      <ul class="skeleton-list">${check.items.map(row).join("")}</ul>
+      <ul class="skeleton-list">${check.items.map((item) => row(item, { isNext: item === check.next })).join("")}</ul>
       <h4>あとで足すもの（任意）</h4>
       <ul class="skeleton-list">${check.optional.map(row).join("")}</ul>
-      <small>✓ そろっている　△ 一部だけ　－ まだ。曲の良し悪しを採点するものではありません。</small>
+      <small>✓ そろっている　△ 一部だけ　－ まだ。「今は後でOK」の項目は、次の1つが終わってからで大丈夫です。曲の良し悪しを採点するものではありません。</small>
     </div>`;
 }

@@ -1,6 +1,7 @@
 // 「裏メロ」タブ: 範囲（開始小節 + 長さ、またはSection）を選び、10タイプの候補を聴いて当てる。
 // 候補の生成は src/core/counter-melody.js（Arrangeの各Sectionの裏メロと同じもの）。保存先は tracks[role=counter]。
 import { COUNTER_MOTIONS, counterBarCount, counterCandidates, counterNotes } from "../core/counter-melody.js";
+import { whyHtml } from "../core/why-ui.js";
 import { getSections, sectionRanges } from "../core/section-ops.js";
 
 const BAR_CHOICES = Object.freeze([2, 4, 8, 16]);
@@ -122,7 +123,7 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
             ${candidates.map((candidate) => `
               <div class="counter-pick">
                 <strong>${escapeHtml(candidate.label)}</strong>
-                <small>${escapeHtml(candidate.description)}</small>
+                ${whyHtml(candidate.description)}
                 <div class="counter-pick-actions">
                   <button type="button" data-counter-play="${candidate.id}"${candidate.notes.length > 0 ? "" : " disabled"}>▶ 聴く</button>
                   <button type="button" class="primary" data-counter-apply="${candidate.id}"${candidate.notes.length > 0 ? "" : " disabled"}>これにする</button>

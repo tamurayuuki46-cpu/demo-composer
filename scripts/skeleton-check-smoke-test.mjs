@@ -15,6 +15,11 @@ assert.ok(emptyCheck.items.every((item) => item.mark === "none"));
 assert.equal(emptyCheck.doneCount, 0);
 assert.equal(emptyCheck.complete, false);
 assert.equal(emptyCheck.next.id, "chord");
+// 今は後でOK: 次に決める1つ以外の未完了項目に later が付く。完了済みと任意項目には付かない
+assert.equal(emptyCheck.next.later, false);
+assert.ok(emptyCheck.items.filter((item) => item !== emptyCheck.next && item.mark !== "done").every((item) => item.later === true));
+assert.ok(emptyCheck.items.filter((item) => item.mark === "done").every((item) => item.later === false));
+assert.ok(emptyCheck.optional.every((item) => item.later === false));
 assert.equal(emptyCheck.next.screen, "chord");
 
 function track(role, notes) {

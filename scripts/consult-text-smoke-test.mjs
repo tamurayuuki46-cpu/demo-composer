@@ -43,6 +43,12 @@ assert.match(text, /Bar 1–2: K x\.\.\.x\.\.\.x\.\.\.x\.\.\./, "identical drum 
 assert.match(text, /■ 相談したいこと\nサビを盛り上げたい/);
 assert.ok(!text.includes(CONSULT_PLACEHOLDER), "placeholder replaced by the question");
 
+// 骨子チェックの結果が入る（✓ / △ / － と、次に決めること）
+assert.match(text, /■ 骨子チェック（\d\/\d）/);
+assert.match(text, /[✓△－] Chord: /);
+assert.match(text, /次に決めること: |骨子はそろっています。/);
+assert.ok(text.indexOf("■ 骨子チェック") < text.indexOf("■ 相談したいこと"), "skeleton check comes before the question");
+
 // 読むだけ: Projectを書き換えない
 const before = JSON.stringify(store.getSnapshot());
 buildConsultText(store.getSnapshot(), "x");

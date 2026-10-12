@@ -119,6 +119,11 @@
 .skeleton-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .skeleton-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px; border-radius: 10px; background: #26262d; }
 .skeleton-row.mark-done { opacity: .8; }
+.skeleton-row.later { opacity: .6; }
+.skeleton-row.next { border: 1px solid #7aa7ff; }
+.later-tag, .next-tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.later-tag { background: #30303a; color: #c7c7d1; }
+.next-tag { background: #7aa7ff; color: #111; }
 .skeleton-mark { font-size: 18px; font-weight: 700; text-align: center; }
 .skeleton-row.mark-done .skeleton-mark { color: #7bd88f; }
 .skeleton-row.mark-part .skeleton-mark { color: #f2c46d; }

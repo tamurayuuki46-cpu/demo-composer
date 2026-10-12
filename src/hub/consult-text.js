@@ -1,6 +1,7 @@
 // AI相談用テキスト。ChatGPT / Claudeへそのまま貼れる形で、曲の骨子をまとめる。
 // Hubの責務。Projectを読むだけで、書き換えない（純粋関数）。
 
+import { SKELETON_MARKS, skeletonCheck } from "../core/skeleton-check.js";
 import { chordQualityDefinition } from "../core/chord-qualities.js";
 import { noteValueLabel } from "../core/note-placement.js";
 import { TRANSITIONS, energyLabel, getSections, sectionEnergy, sectionRanges, sectionTransition, totalSectionBars } from "../core/section-ops.js";
@@ -186,6 +187,14 @@ export function buildConsultText(project, question = "") {
   lines.push("", "■ ドラム（K=キック S=スネア H=ハイハット / 16マス、x=鳴る）");
   if (drumLines.length === 0) lines.push("（まだありません）");
   else lines.push(...drumLines);
+
+  // 骨子チェックの結果（✓ / △ / －）。相談相手が「何が決まっていて何が未定か」を把握できるように
+  const check = skeletonCheck(project);
+  lines.push("", `■ 骨子チェック（${check.doneCount}/${check.total}）`);
+  check.items.forEach((item) => {
+    lines.push(`${SKELETON_MARKS[item.mark]} ${item.label}: ${item.detail}`);
+  });
+  lines.push(check.complete ? "骨子はそろっています。" : `次に決めること: ${check.next.label}`);
 
   lines.push("", "■ 相談したいこと", question.trim() || CONSULT_PLACEHOLDER);
 

@@ -3,7 +3,7 @@ import { suggestNextChords, suggestSpiceChords } from "../src/chord/chord-next.j
 import { getDiatonicChords } from "../src/chord/chord-theory.js";
 import { chordRole } from "../src/chord/chord-role.js";
 import { degreeLabel } from "../src/melody/melody-grid.js";
-import { applyBassCandidate, bassCandidatesForBar, bassPatternDots } from "../src/rhythm/bass-candidates.js";
+import { applyBassCandidate, bassCandidatesForBar, bassPatternDots, kickRelation } from "../src/rhythm/bass-candidates.js";
 
 const BAR = 1920;
 const STEP = 120;
@@ -125,3 +125,11 @@ const dim = bassCandidatesForBar(project([], { root: 0, quality: "diminished" })
 assert.ok(dim.find((candidate) => candidate.id === "hook-riff").steps.some((step) => step.semitones === 6));
 
 console.log("candidates smoke test passed");
+
+// Bass × Kick: 候補ごとに関係を一言で示す
+plain.forEach((candidate) => assert.match(candidate.kickRelation, /Kickがまだありません/));
+synced.forEach((candidate) => assert.ok(candidate.kickRelation.length > 0 && !/Kickがまだありません/.test(candidate.kickRelation)));
+assert.match(kickRelation([{ step: 0 }, { step: 8 }], [0, 8]), /Kickと一緒/);
+assert.match(kickRelation([{ step: 2 }, { step: 6 }, { step: 10 }], [0, 8]), /裏拍/);
+assert.match(kickRelation([{ step: 1 }, { step: 3 }, { step: 5 }, { step: 0 }], [0, 8]), /Bassだけ動く/);
+console.log("Bass x Kick relation tests passed.");

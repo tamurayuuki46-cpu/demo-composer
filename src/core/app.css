@@ -683,3 +683,40 @@ h1 {
   background: #8a6a12;
   border-color: #8a6a12;
 }
+
+/* 「なぜ？」の折りたたみ説明（候補・Preset・つなぎで共通） */
+.why {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+.why summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  color: #8fb4ff;
+  cursor: pointer;
+  list-style: none;
+}
+
+.why summary::-webkit-details-marker {
+  display: none;
+}
+
+.why summary::before {
+  content: "？ ";
+  margin-right: 4px;
+}
+
+.why[open] summary::before {
+  content: "？ ";
+}
+
+.why p {
+  margin: 0 0 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #26262d;
+  line-height: 1.55;
+}

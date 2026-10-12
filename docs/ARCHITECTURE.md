@@ -280,3 +280,11 @@ Chord MIDIは`chord-qualities.js`の共通構成音定義と `backing-patterns.j
 Melody候補の適用結果は通常Melody Track Noteとして、既存のMelody.mid / Song.midへそのまま出力する。
 
 Sound Sketch Liteの選択はDemo Player用であり、Program ChangeとCCは現時点では出力しない。最終音源はBandLab / Cubasis / Cubase側で差し替える。
+
+## v0.3 骨子作り支援の部品
+
+- `src/arrange/skeleton-recipes.js`: 骨子レシピの定数と `sectionsFromRecipe`（Projectを読み書きしない純粋データ。適用は既存の `setSections`）
+- `src/core/why-ui.js`: 「なぜ？」折りたたみのHTMLを返すだけの共通部品（各Moduleが自分の説明文を渡す）
+- `src/core/skeleton-check.js`: `item.later`（今は後でOK）を表示用に追加。`next` の決まり方は変えない
+- `src/rhythm/bass-candidates.js`: `kickRelation` / 候補の `kickRelation`（Kickとの関係の文）
+- Module同士は直接依存しない。ArrangeはCoreの `copySection` / `setSections` / `applySectionVariation` を呼ぶだけ

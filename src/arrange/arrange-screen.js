@@ -1,8 +1,10 @@
+import { whyHtml } from "../core/why-ui.js";
 import { SECTION_VARIATIONS } from "../core/section-variation.js";
 import { counterBarCount, counterCandidates } from "../core/counter-melody.js";
 import { loopGuide, suggestedCopyKind } from "../core/loop-guide.js";
 import { addEntry, loadLibrary, removeEntry, saveLibrary, sectionsFromStructure, STRUCTURE_SAMPLES, structureText } from "./structure-library.js";
 import { curveFromSections, MAX_CURVE_COLUMNS, MIN_CURVE_COLUMNS, sectionsFromCurve } from "../core/energy-curve.js";
+import { SECTION_ROLES, SKELETON_RECIPES, energyShape, getSkeletonRecipe, recipeTotalBars, sectionsFromRecipe } from "./skeleton-recipes.js";
 import {
   ENERGY_LEVELS,
   TRANSITIONS,
@@ -61,6 +63,8 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
   let addKind = "verse";
   // 「少し違う版」の候補を開いているSection（画面の状態のみ）
   let variationOpenIndex = null;
+  // 空Sectionのアシストで「おすすめ」にするVariation（画面の状態のみ）: { index, ids }
+  let assistRecommend = null;
   // 裏メロの候補を開いているSection（画面の状態のみ）
   let counterOpenIndex = null;
   // ループ案内の開閉と、複製するSectionの種類（画面の状態のみ）
@@ -69,6 +73,8 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
   // 感情曲線の開閉と編集中の曲線（画面の状態のみ。nullなら開いたとき現在の構成から作る）
   let curveOpen = false;
   let curveLevels = null;
+  // 骨子レシピで中身を開いているもの（画面の状態のみ）
+  let recipeDetailId = null;
   // 構成ライブラリの開閉と保存名（画面の状態のみ。ライブラリ本体は端末のlocalStorage）
   let libOpen = false;
   let libName = "";
@@ -93,6 +99,34 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
     `).join("");
   }
 
+  // 空のSectionのアシスト: いちばん近い入力のある前のSectionをコピーして、「作り方の方向性」を3案から選ぶ（完成は作らない）
+  function assistSource(project, index) {
+    const ranges = sectionRanges(getSections(project));
+    for (let i = index - 1; i >= 0; i -= 1) {
+      if (barsHaveContent(project, ranges[i].startBar, ranges[i].endBar)) return ranges[i];
+    }
+    return null;
+  }
+
+  const ASSISTS = Object.freeze([
+    { id: "melody", label: "メロディを少し変える", ids: ["melody-pitch", "melody"], after: "音程だけ・終わりだけを変える版が、下の『少し違う版にする』で選べます。" },
+    { id: "chord", label: "コードだけ変える", ids: [], after: "メロディとリズムは借りたまま、Chord画面でこのSectionのコードだけ変えてみましょう。" },
+    { id: "rhythm", label: "リズムを密にする", ids: ["drums", "bass"], after: "ドラム・ベースを少し増やす版が、下の『少し違う版にする』で選べます。" }
+  ]);
+
+  function assistHtml(project, range) {
+    const source = assistSource(project, range.index);
+    if (!source) return "";
+    return `
+      <div class="arrange-assist">
+        <strong>空のSectionです。作り方の方向性を選ぶ</strong>
+        <small>「${escapeHtml(source.section.name)}」をコピーして始めます。コピー後は、少しずつ変えていきます（↶で戻せます）。</small>
+        <div class="arrange-assist-buttons">
+          ${ASSISTS.map((item) => `<button type="button" data-arrange-assist="${range.index}:${item.id}">コピーして、${escapeHtml(item.label)}</button>`).join("")}
+        </div>
+      </div>`;
+  }
+
   function sectionCard(project, range) {
     const { section, index, startBar, endBar } = range;
     const hasContent = barsHaveContent(project, startBar, endBar);
@@ -115,6 +149,8 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
           ${PROGRESS_PARTS.map(([part, label]) => progressChip(label, progress[part])).join("")}
         </div>
 
+        ${hasContent ? "" : assistHtml(project, range)}
+
         <div class="arrange-energy" role="group" aria-label="${escapeHtml(section.name)}の盛り上がり">
           <span class="arrange-energy-label">盛り上がり</span>
           ${ENERGY_LEVELS.map((level) => `<button data-arrange-energy="${index}:${level.id}" class="${sectionEnergy(section) === level.id ? "active" : ""}" aria-pressed="${sectionEnergy(section) === level.id}">${level.label}</button>`).join("")}
@@ -126,7 +162,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
             <div class="arrange-transition-chips">
               ${TRANSITIONS.map((item) => `<button data-arrange-transition="${index}:${item.id}" class="${sectionTransition(section) === item.id ? "active" : ""}" aria-pressed="${sectionTransition(section) === item.id}">${item.label}</button>`).join("")}
             </div>
-            <small>${escapeHtml(TRANSITIONS.find((item) => item.id === sectionTransition(section)).description)}</small>
+            ${whyHtml(TRANSITIONS.find((item) => item.id === sectionTransition(section)).description)}
           </div>
         `}
 
@@ -140,8 +176,8 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
         ${variationOpenIndex === index ? `
           <div class="arrange-variation">
             ${SECTION_VARIATIONS.map((item) => `
-              <button data-arrange-variation="${index}:${item.id}">
-                <strong>${escapeHtml(item.label)}</strong>
+              <button data-arrange-variation="${index}:${item.id}"${assistRecommend?.index === index && assistRecommend.ids.includes(item.id) ? ' class="recommended"' : ""}>
+                <strong>${escapeHtml(item.label)}${assistRecommend?.index === index && assistRecommend.ids.includes(item.id) ? ' <span class="next-tag">おすすめ</span>' : ""}</strong>
                 <small>${escapeHtml(item.description)}</small>
               </button>
             `).join("")}
@@ -183,7 +219,7 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
         ${problem ? `<small>${escapeHtml(problem)}</small>` : candidates.map((candidate) => `
           <div class="counter-candidate">
             <strong>${escapeHtml(candidate.label)}</strong>
-            <small>${escapeHtml(candidate.description)}</small>
+            ${whyHtml(candidate.description)}
             <small>${candidate.notes.length > 0 ? `${candidate.notes.length}音` : "このSectionには入る場所がありません"}</small>
             <div class="counter-actions">
               <button data-arrange-counter-play="${index}:${candidate.id}"${candidate.notes.length > 0 ? "" : " disabled"}>▶ 聴く</button>
@@ -266,8 +302,9 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
 
   // 感情曲線: 山と谷を高さで選ぶと、Sectionの並び・小節数・盛り上がりの叩き台を作る。
   function curvePanelHtml(project) {
-    const toggle = `<button id="arrange-curve-toggle" class="arrange-guide-toggle" aria-expanded="${curveOpen}">📈 感情曲線から構成を作る${curveOpen ? " ▲" : " ▼"}</button>`;
+    const toggle = `<button id="arrange-curve-toggle" class="arrange-guide-toggle" aria-expanded="${curveOpen}">📈 骨子レシピ・感情曲線から構成を作る${curveOpen ? " ▲" : " ▼"}</button>`;
     if (!curveOpen) return toggle;
+    const currentSections = getSections(project);
 
     const levels = curveLevels ?? curveFromSections(getSections(project));
     const preview = sectionsFromCurve(levels);
@@ -276,6 +313,41 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
     return `
       ${toggle}
       <div class="arrange-guide arrange-curve">
+        ${currentSections.length > 0 ? `
+          <div class="current-shape">
+            <span>いまの構成の山</span>
+            <strong class="energy-shape" aria-label="${escapeHtml(energyFlowText(currentSections))}">${energyShape(currentSections.map(sectionEnergy))}</strong>
+            <small>${escapeHtml(currentSections.map(shortName).join(" "))}</small>
+          </div>
+        ` : ""}
+        <h3 class="recipe-heading">骨子レシピ</h3>
+        <p>完成曲ではなく「作曲判断の流れ」の型です。選ぶと、Sectionの並び・小節数・盛り上がり・つなぎがまとめて決まります。</p>
+        <div class="recipe-list">
+          ${SKELETON_RECIPES.map((recipe) => `
+            <div class="recipe-card">
+              <div class="recipe-head">
+                <strong>${escapeHtml(recipe.label)}</strong>
+                <span class="energy-shape" aria-hidden="true">${energyShape(recipe.sections.map((item) => item.energy))}</span>
+              </div>
+              <small class="recipe-feelings">${escapeHtml(recipe.feelings)}（${recipeTotalBars(recipe)}小節）</small>
+              ${recipeDetailId === recipe.id ? `
+                ${whyHtml(recipe.description)}
+                <ol class="recipe-sections">
+                  ${sectionsFromRecipe(recipe).map((section, index) => {
+                    const item = recipe.sections[index];
+                    const transition = TRANSITIONS.find((entry) => entry.id === (section.transition ?? "keep"));
+                    return `<li><strong>${escapeHtml(section.name)}</strong> ${section.bars}小節 ・ ${escapeHtml(item.feeling)} ・ ${escapeHtml(section.energy === "high" ? "High" : section.energy === "mid" ? "Mid" : "Low")}<br><small>役割: ${escapeHtml(SECTION_ROLES[section.kind] ?? "")}${section.transition ? ` ／ 次へ: ${escapeHtml(transition.label)}（${escapeHtml(transition.description)}）` : ""}</small></li>`;
+                  }).join("")}
+                </ol>
+              ` : ""}
+              <div class="recipe-actions">
+                <button type="button" data-recipe-detail="${recipe.id}" aria-expanded="${recipeDetailId === recipe.id}">${recipeDetailId === recipe.id ? "閉じる" : "中身を見る"}</button>
+                <button type="button" class="primary" data-recipe-apply="${recipe.id}">このレシピにする</button>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        <h3 class="recipe-heading">感情曲線（自分で山を描く）</h3>
         <p>曲の流れを左から右へ。各列で盛り上がりの高さを選ぶと、その形に合う構成を作ります。</p>
         <div class="curve-grid" style="grid-template-columns: repeat(${levels.length}, minmax(0, 1fr))">
           ${levels.map((level, col) => `
@@ -406,6 +478,40 @@ export function createArrangeController({ projectStore, rerender, onPlaySection,
         next[Number(col)] = level;
         curveLevels = next;
         rerender("arrange");
+      });
+    });
+    query("[data-arrange-assist]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const [indexText, kind] = button.dataset.arrangeAssist.split(":");
+        const index = Number(indexText);
+        const project = projectStore.getSnapshot();
+        const source = assistSource(project, index);
+        const assist = ASSISTS.find((item) => item.id === kind);
+        if (!source || !assist) return;
+        const target = sectionRanges(getSections(project))[index];
+        run(() => {
+          projectStore.copySection(source.index, index);
+          assistRecommend = assist.ids.length > 0 ? { index, ids: assist.ids } : null;
+          variationOpenIndex = assist.ids.length > 0 ? index : null;
+        }, `「${source.section.name}」を「${target.section.name}」へコピーしました。${assist.after}`);
+      });
+    });
+    query("[data-recipe-detail]").forEach((button) => {
+      button.addEventListener("click", () => {
+        recipeDetailId = recipeDetailId === button.dataset.recipeDetail ? null : button.dataset.recipeDetail;
+        rerender("arrange");
+      });
+    });
+    query("[data-recipe-apply]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const recipe = getSkeletonRecipe(button.dataset.recipeApply);
+        if (!recipe) return;
+        const project = projectStore.getSnapshot();
+        if (getSections(project).length > 0 && !globalThis.confirm(`いまの構成を「${recipe.label}」に置き換えますか？Sectionの並び・盛り上がり・つなぎが変わります。音符・コード・ドラムは消えません。（↶で戻せます）`)) return;
+        const sections = sectionsFromRecipe(recipe);
+        curveLevels = null;
+        recipeDetailId = null;
+        run(() => projectStore.setSections(sections), `「${recipe.label}」で${sections.length}個のSectionを作りました（${recipe.feelings}）。次はChordでコードを入れていきます。Sectionごとに小節数や盛り上がりは自由に直せます。`);
       });
     });
     document.querySelector("#arrange-curve-more")?.addEventListener("click", () => {
