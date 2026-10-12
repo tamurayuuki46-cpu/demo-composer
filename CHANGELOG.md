@@ -4,6 +4,11 @@
 更新日: 2026-10-11
 
 ### 追加
+- Chord: Quality を9種類から35種類へ拡張（6 / m6 / add9 / madd9 / m7♭5 / dim7 / mMaj7 / maj7♯5 / 7sus4 / 9th・11th・13th系 / ♭9・♯9・♭13・♯11 などの変化音）。「基準音からコード種類を選ぶ」は基本 / 6th・add / 7th / テンション / 変化音のグループ表示にした。許可値の追記のみでschemaVersionは2のまま
+- Chord: `スケール系のコード` パネルを追加。ダイアトニック（選択Scale）/ ハーモニックマイナー系 / メロディックマイナー系を、3和音 / 7th / テンションの3段階で7コードずつ表示し、1タップで進行へ追加できる（`src/chord/chord-scale-sets.js` / `chord-scale-sets-ui.js`）
+- Rhythm: 9th以上を含むコードでもBass候補が1オクターブ内に収まるよう、構成音を `% 12` で畳み込む
+- `npm run test:chord-scale-sets`（CI対象）: 35 Qualityの記号・度数、Project検証 / MIDI出力、各スケール系の構成音がスケール内に収まることを確認
+- Chord拡張前復元点: `restore/v0.2-before-chord-quality-ext`
 - Chord: 「基準音」Selectの各音名の隣に、現在のKey / Scaleでの度数名を併記（例: Cメジャー `C　I` / `D#　♭III`、Aマイナー `C　III`）。表示のみでSchema変更なし（`rootDegreeName`、`npm run test:chord` に追加）
 - Melody Piano Rollの色分けを拡張: コード構成音（1・3・5・7相当）= 青 / テンション（9・11・13相当）= 緑 / 選択Scaleの7音以外 = 黄 / アボイドノート（構成音の半音上のScale内の音）= 赤く光る。置いたアボイドの音は縁が赤く光る。優先は 赤 > 青 > 緑 > 黄。見た目のみでSchema変更なし（`src/melody/pitch-roles.js`、`npm run test:pitch-roles`、CI対象）
 - Melody Analyzer: `メロディの働き` を追加。和声での役割を `Guide / Chord / Tension / Other` に分け、Guide Toneは3rd / 7th系のChord Tone内数、Tensionは初期版では9th / 11th / 13th相当として表示する（Schema変更なし）

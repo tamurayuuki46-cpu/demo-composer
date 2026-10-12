@@ -35,12 +35,13 @@ export function bassPitchForBar(project, barIndex) {
 
 // Bassのマスをタップしたときに選べる音程。コードのルートからの半音数で表す。
 // 3度 / 5度 / 7度は、その小節のコードの構成音（Major / Minor / sus 等）に合わせる。
-const INTERVAL_NAMES = { 2: "2度", 3: "3度", 4: "3度", 5: "4度", 6: "5度", 7: "5度", 8: "5度", 10: "7度", 11: "7度" };
-const INTERVAL_SHORT = { 2: "2", 3: "3", 4: "3", 5: "4", 6: "5", 7: "5", 8: "5", 10: "7", 11: "7" };
+const INTERVAL_NAMES = { 1: "♭9度", 2: "2度", 3: "3度", 4: "3度", 5: "4度", 6: "5度", 7: "5度", 8: "5度", 9: "6度", 10: "7度", 11: "7度" };
+const INTERVAL_SHORT = { 1: "♭9", 2: "2", 3: "3", 4: "3", 5: "4", 6: "5", 7: "5", 8: "5", 9: "6", 10: "7", 11: "7" };
 
 export function bassChoicesForBar(project, barIndex) {
   const quality = project.chords[barIndex]?.quality ?? "major";
-  const intervals = chordIntervals(quality).slice(1);
+  // 9th / 11th / 13thは1オクターブ上の位置で持っているので、Bassは1オクターブ内に折りたたむ（重複と0は除く）
+  const intervals = [...new Set(chordIntervals(quality).slice(1).map((interval) => interval % 12))].filter((interval) => interval !== 0).sort((a, b) => a - b);
   const choices = [{ id: "root", label: "ルート", short: "R", semitones: 0 }];
 
   intervals.forEach((semitones) => {

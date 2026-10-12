@@ -1,4 +1,4 @@
-import { CHORD_QUALITY_ORDER } from "../core/chord-qualities.js";
+import { isChordQuality } from "../core/chord-qualities.js";
 import { chordDegreeForVariant, chordSymbol, rootToPitchClass } from "./chord-theory.js";
 
 // 好きな曲のコード進行を「度数（主音からの距離 + コードの種類）」で保存するライブラリ。
@@ -49,7 +49,7 @@ function validItems(items) {
   return Array.isArray(items)
     && items.length >= 1
     && items.length <= MAX_PROGRESSION_CHORDS
-    && items.every((item) => Number.isInteger(item?.offset) && item.offset >= 0 && item.offset <= 11 && CHORD_QUALITY_ORDER.includes(item.quality));
+    && items.every((item) => Number.isInteger(item?.offset) && item.offset >= 0 && item.offset <= 11 && isChordQuality(item.quality));
 }
 
 // 壊れたデータは捨てて、使えるものだけ返す

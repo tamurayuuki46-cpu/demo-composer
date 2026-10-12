@@ -1,4 +1,4 @@
-import { CHORD_QUALITY_ORDER, chordQualityDefinition } from "../core/chord-qualities.js";
+import { ALL_CHORD_QUALITY_ORDER, CHORD_QUALITY_GROUPS, CHORD_QUALITY_ORDER, chordQualityDefinition } from "../core/chord-qualities.js";
 
 export const NOTE_NAMES = Object.freeze(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]);
 
@@ -61,29 +61,60 @@ function lowercaseRoman(value) {
   return value.replace(/[IV]+/g, (match) => match.toLowerCase());
 }
 
+// ローマ数字の土台（base。大文字）と Quality から度数表記を作る。
+// 基本の9種類は従来の表記（ii / ii7 / vii° / I7 / Imaj7 / Isus2 / I+ ...）を保つ。拡張Qualityは Quality定義の degree（小文字にするか / 後ろに付ける文字）で作る。
+export function degreeFromBase(base, quality) {
+  if (quality === "major") return base;
+  if (quality === "minor") return lowercaseRoman(base);
+  if (quality === "minor7") return `${lowercaseRoman(base)}7`;
+  if (quality === "diminished") return `${lowercaseRoman(base)}°`;
+  if (quality === "dominant7") return `${base}7`;
+  if (quality === "major7") return `${base}maj7`;
+  if (quality === "sus2") return `${base}sus2`;
+  if (quality === "sus4") return `${base}sus4`;
+  if (quality === "augmented") return `${base}+`;
+
+  const degree = chordQualityDefinition(quality).degree;
+  if (!degree) return base;
+  return `${degree.minor ? lowercaseRoman(base) : base}${degree.suffix ?? ""}`;
+}
+
 export function chordDegreeForVariant(root, key, quality) {
   const tonic = rootToPitchClass(key);
   const distance = (root - tonic + 12) % 12;
-  const baseDegree = CHROMATIC_DEGREES[distance];
-
-  if (quality === "minor") return lowercaseRoman(baseDegree);
-  if (quality === "minor7") return `${lowercaseRoman(baseDegree)}7`;
-  if (quality === "diminished") return `${lowercaseRoman(baseDegree)}°`;
-  if (quality === "dominant7") return `${baseDegree}7`;
-  if (quality === "major7") return `${baseDegree}maj7`;
-  if (quality === "sus2") return `${baseDegree}sus2`;
-  if (quality === "sus4") return `${baseDegree}sus4`;
-  if (quality === "augmented") return `${baseDegree}+`;
-  return baseDegree;
+  return degreeFromBase(CHROMATIC_DEGREES[distance], quality);
 }
 
-export function getChordVariants(root, key) {
-  return CHORD_QUALITY_ORDER.map((quality) => ({
+function variantFor(root, key, quality) {
+  return {
     root,
     quality,
     degree: chordDegreeForVariant(root, key, quality),
     symbol: chordSymbol(root, quality),
     label: chordQualityDefinition(quality).label
+  };
+}
+
+// 基本の9種類（従来どおり）
+export function getChordVariants(root, key) {
+  return CHORD_QUALITY_ORDER.map((quality) => variantFor(root, key, quality));
+}
+
+// 拡張を含む全種類（ALL_CHORD_QUALITY_ORDER の順）。画面の data-add-variant の番号は、この配列の番号
+export function getAllChordVariants(root, key) {
+  return ALL_CHORD_QUALITY_ORDER.map((quality) => variantFor(root, key, quality));
+}
+
+// 画面表示用のグループ。各variantの index は getAllChordVariants() の番号
+export function getChordVariantGroups(root, key) {
+  const all = getAllChordVariants(root, key);
+  return CHORD_QUALITY_GROUPS.map((group) => ({
+    id: group.id,
+    label: group.label,
+    variants: group.qualities.map((quality) => {
+      const index = ALL_CHORD_QUALITY_ORDER.indexOf(quality);
+      return { ...all[index], index };
+    })
   }));
 }
 
