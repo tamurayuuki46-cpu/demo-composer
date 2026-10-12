@@ -6,6 +6,9 @@
 ### 修正
 - Demo Player（再生バー）が下部ナビに隠れる / 再生が止まる症状への対策。再生バーの位置を、下部ナビの実際の高さ（`--nav-h`、ResizeObserverで追従）の真上に固定した（Androidの文字サイズ拡大などでナビが高くなっても重ならない）。ビブラートのLFOを「1音につき1つ」に共有し、ボカロ風などの音色で1音あたりのノード数を減らして端末負荷を軽くした（音量・音色は変わらない）
 
+### 変更
+- 裏メロ `Character（特性音型）` を、スケールごとの「らしい動き」で作るようにした（`src/core/character-phrases.js`）。Dorian（♮6を伸ばして下りる）/ Phrygian（♭2↔主音のため息）/ Lydian（♯4から5度へ浮かぶ）/ Mixolydian（♭7）/ Locrian（解決せず♭5で止まる）/ ハーモニックマイナー（♭6→♮7の増2度）/ メロディックマイナー（♮6→♮7の駆け上がり）/ Phrygian Dominant（4→3→♭2→1のアンダルシア）/ Double Harmonic / Hungarian Minor / ホールトーン（全音で浮遊、解決しない）/ ディミニッシュ（減七のジグザグ）/ ブルース（♭5の経過）/ Lydian Dominant / Altered / 都節音階・陰旋法・律・琉球音階。小節ごとに ①提示 ②返し ③高まり ④解決 が違い、範囲の最後は必ず④。型の無いスケールは従来の共通型。主旋律が鳴っている所は少し弱める。Schema変更なし
+
 ### 追加
 - 裏メロに `Character（特性音型）` を追加。選んだスケールの特性音（Dorian=♮6 / Phrygian=♭2 / Lydian=♯4 / Mixolydian=♭7 / 都節音階=♭2・♭6 など、近い基本スケール＝長3度ならMajor・短3度ならNatural Minor との違いの音）を、長い音・強い拍で鳴らす。助走 → 特性音 → ルート / 5度へ解決を4小節で変化させる。裏メロタブにスケール選択（チャーチ・モード、ハーモニック / メロディック系、スパニッシュ、ホールトーン、ペンタ、ブルース、日本の音階まで）を追加。未選択は Dorian（マイナーKey）/ Lydian（メジャーKey）。候補は計9タイプ。スケールの選択は画面の状態で保存しない。Schema変更なし（`characterIntervals` / `buildCharacter`、`npm run test:counter-melody` に追加）
 - 裏メロに2タイプを追加: `Minor Penta Hook（マイナーペンタ）` / `Major Penta Hook（メジャーペンタ）`。Keyのペンタトニックの音だけで短いフックを作り、2小節で型を繰り返し → 3小節目で変化 → 4小節目でコードトーンに着地。候補は計8タイプ（裏メロタブ / Arrangeの `🎶 裏メロ` 共通）。Schema変更なし（`buildPentaHook`、`npm run test:counter-melody` に追加）

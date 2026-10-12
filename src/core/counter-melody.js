@@ -4,6 +4,7 @@
 // ProjectをUIにもAudioにも依存せずに読む純粋関数。元のProjectは変更しない。
 
 import { chordIntervals } from "./chord-qualities.js";
+import { characterIdiomFor } from "./character-phrases.js";
 
 export const COUNTER_ROLE = "counter";
 const STEP = 240; // 8分音符
@@ -578,7 +579,46 @@ export function defaultCharacterScale(project) {
     : { id: "lydian", label: "Lydian", intervals: [0, 2, 4, 6, 7, 9, 11] };
 }
 
+// スケール別の「らしい動き」（character-phrases.js）で4小節を作る。小節ごとに ①提示 ②返し ③高まり ④解決。
+// 範囲の最後の小節は必ず ④（解決 / 浮かせる）にする。主旋律が鳴っている所は少し弱める。
+function buildCharacterIdiom(project, melody, startBar, endBar, idiom) {
+  const barTicks = barTicksOf(project);
+  const tonic = keyPitchClass(project);
+  const target = Math.min(72, Math.max(58, averageMelodyPitch(melody) - 7));
+  const first = idiom.bars[0];
+  const centre = first.reduce((sum, item) => sum + item.interval, 0) / first.length;
+  let base = null;
+  for (let pitch = 36; pitch <= 72; pitch += 1) {
+    if (pitch % 12 !== tonic) continue;
+    if (base === null || Math.abs(pitch + centre - target) < Math.abs(base + centre - target)) base = pitch;
+  }
+  const notes = [];
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const position = bar === endBar - 1 ? 3 : (bar - startBar) % 4;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const lines = idiom.bars[position];
+    let shift = 0;
+    const highest = Math.max(...lines.map((item) => base + item.interval));
+    const lowest = Math.min(...lines.map((item) => base + item.interval));
+    if (highest > HIGH + 4) shift = -12;
+    else if (lowest < LOW) shift = 12;
+
+    lines.forEach((item) => {
+      const startTick = barStart + Math.round(item.step * STEP);
+      const duration = Math.min(Math.round(item.length * STEP * 0.94), barStart + barTicks - startTick);
+      if (duration < 30) return;
+      const busy = overlappingNotes(inBar, startTick, startTick + duration).length > 0;
+      notes.push(makeNote(base + item.interval + shift, startTick, duration, Math.max(1, Math.round(item.velocity * (busy ? 0.86 : 1)))));
+    });
+  }
+  return notes;
+}
+
 function buildCharacter(project, melody, startBar, endBar, characterScale) {
+  const idiom = characterIdiomFor(characterScale.id);
+  if (idiom) return buildCharacterIdiom(project, melody, startBar, endBar, idiom);
   const barTicks = barTicksOf(project);
   const tonic = keyPitchClass(project);
   const intervals = characterScale.intervals;
@@ -661,10 +701,13 @@ export function counterCandidates(project, { startBar, endBar, characterScale = 
     if (style.id !== "character") return { ...style, notes };
     const key = KEY_NAMES[keyPitchClass(project)];
     const names = characterDegreeNames(scaleForCharacter.intervals).join("・");
+    const idiom = characterIdiomFor(scaleForCharacter.id);
     return {
       ...style,
       label: `Character（${key} ${scaleForCharacter.label}の特性音）`,
-      description: `${key} ${scaleForCharacter.label} の特性音（${names}）を、長い音・強い拍で鳴らす。前を半音や全音で助走し、最後はルートか5度へ解決する。コードとぶつかる所は、スケールの色として耳で確かめてください。※特定曲のコピーではありません`,
+      description: idiom
+        ? `${key} ${scaleForCharacter.label} の特性音（${names}）を軸に、このスケールらしい動きで作る。${idiom.feel}コードとぶつかる所は、スケールの色として耳で確かめてください。※特定曲のコピーではありません`
+        : `${key} ${scaleForCharacter.label} の特性音（${names}）を、長い音・強い拍で鳴らす。前を半音や全音で助走し、最後はルートか5度へ解決する。コードとぶつかる所は、スケールの色として耳で確かめてください。※特定曲のコピーではありません`,
       notes
     };
   });
