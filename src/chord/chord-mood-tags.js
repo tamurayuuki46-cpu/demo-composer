@@ -279,6 +279,48 @@ export function chordPresetsForTag(tagId, { mode = "any", minWeight } = {}) {
     });
 }
 
+// 複数タグを選んで一覧にする（タブをまたいでOK）。
+// 選んだ全部のタグに合う進行を、合計の強さ順に。全部に合う進行が無いときは、より多くに合う進行（matchedAll=false）。
+export function chordPresetsForTags(tagIds, { mode = "any" } = {}) {
+  const ids = normalizeTagIds(tagIds);
+  if (ids.length === 0) return { rows: [], matchedAll: true };
+  if (ids.length === 1) {
+    return {
+      rows: chordPresetsForTag(ids[0], { mode }).map((row) => ({ ...row, matchedCount: 1, matchedTags: [{ id: ids[0], label: tagInfo(ids[0]).label }] })),
+      matchedAll: true
+    };
+  }
+
+  const ranked = CHORD_MOOD_PROFILES
+    .filter((profile) => mode === "any" || profile.mode === mode)
+    .map((profile) => {
+      const scored = scoreProfile(profile, ids);
+      return { profile, score: scored.rawScore, matchedCount: scored.matchedTags.length, matched: scored.matchedTags };
+    })
+    .filter((item) => item.matchedCount > 0)
+    .sort((a, b) => (b.matchedCount - a.matchedCount) || (b.score - a.score)
+      || (DIFFICULTY_ORDER[a.profile.difficulty] - DIFFICULTY_ORDER[b.profile.difficulty])
+      || a.profile.presetId.localeCompare(b.profile.presetId));
+  const all = ranked.filter((item) => item.matchedCount === ids.length);
+  const used = all.length > 0 ? all : ranked.filter((item) => item.matchedCount === ranked[0]?.matchedCount);
+  return {
+    matchedAll: all.length > 0,
+    rows: used.map(({ profile, score, matchedCount, matched }) => {
+      const preset = CHORD_PRESETS.find((item) => item.id === profile.presetId);
+      return {
+        presetId: profile.presetId,
+        label: preset?.label ?? profile.presetId,
+        mode: profile.mode,
+        difficulty: profile.difficulty,
+        weight: score,
+        matchedCount,
+        matchedTags: matched.map((tag) => ({ id: tag.id, label: tag.label })),
+        degreeIndexes: [...(preset?.degreeIndexes ?? [])]
+      };
+    })
+  };
+}
+
 // 感情（曲想）タグ専用。質感・場面のタグは空を返す（chordPresetsForTag は3種すべて）
 export function chordPresetsForEmotion(tagId, options = {}) {
   if (!CHORD_MOOD_TAG_GROUPS.emotion.some((tag) => tag.id === tagId)) return [];

@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { chordMoodPanelHtml, intentMoodTagIds } from "../src/chord/chord-mood-ui.js";
+import { chordMoodPanelHtml, intentMoodTagIds, moodPickerHtml } from "../src/chord/chord-mood-ui.js";
+import { chordPresetsForTags, CHORD_MOOD_TAG_GROUPS } from "../src/chord/chord-mood-tags.js";
+
+const count = (html, pattern) => (html.match(pattern) ?? []).length;
 
 assert.deepEqual(
   intentMoodTagIds(["切ない", "夜", "浮遊感", "やさしい"]),
@@ -8,69 +11,58 @@ assert.deepEqual(
 );
 assert.deepEqual(intentMoodTagIds(["bright", "優しい"]), ["bright", "gentle"]);
 
-const empty = chordMoodPanelHtml({ mode: "major", tags: [], intentValues: [] });
+// 何も選んでいない: 3タブ + 説明。一覧は出ない
+const empty = chordMoodPanelHtml({ mode: "major", tags: [], intentValues: [], group: null });
 assert.match(empty, /曲想から選ぶ/);
+assert.equal(count(empty, /data-chord-tab=/g), 3);
 assert.match(empty, /感情/);
 assert.match(empty, /質感/);
 assert.match(empty, /場面/);
-assert.match(empty, /1〜3個/);
+assert.match(empty, /複数OK/);
+assert.equal(count(empty, /data-chord-mood-preset=/g), 0);
+assert.equal(count(empty, /data-chord-mood-tag=/g), 0, "タブを開くまでタグは出さない");
 
+// Hubから引き継いだ3タグ: 選択中にタブをまたいで3つ全部見える（どのタブを開いていても）
 const inherited = chordMoodPanelHtml({
   mode: "major",
   tags: ["sad", "night", "floating"],
-  intentValues: ["切ない", "夜", "浮遊感"]
+  intentValues: ["切ない", "夜", "浮遊感"],
+  group: "emotion"
 });
 assert.match(inherited, /Hubの曲想から自動選択/);
 assert.match(inherited, /切ない・夜・浮遊感/);
-assert.equal((inherited.match(/data-chord-mood-preset=/g) ?? []).length, 3);
+assert.match(inherited, /選択中 3\//);
+assert.equal(count(inherited, /class="mood-pill /g), 3, "選択中のタグが3つ常に見える");
+for (const group of ["emotion", "texture", "scene", null]) {
+  const html = moodPickerHtml({ tags: ["sad", "night", "floating"], group, mode: "major", key: "C" });
+  assert.equal(count(html, /class="mood-pill /g), 3, `${group}タブでも選択中の3つが見える`);
+}
 
-const adjusted = chordMoodPanelHtml({
-  mode: "major",
-  tags: ["sad", "night"],
-  intentValues: ["切ない", "夜", "浮遊感"],
-  adjusted: true
-});
+const adjusted = chordMoodPanelHtml({ mode: "major", tags: ["sad", "night"], intentValues: ["切ない", "夜", "浮遊感"], adjusted: true });
 assert.match(adjusted, /Chordで調整中/);
 
-const major = chordMoodPanelHtml({ mode: "major", tags: ["bright", "hope", "youth"] });
-assert.equal((major.match(/data-chord-mood-preset=/g) ?? []).length, 3, "Majorで3候補を表示する");
-assert.match(major, /明るい/);
-assert.match(major, /希望/);
-assert.match(major, /青春/);
-assert.match(major, /この進行を使う/);
+// 開いているタブのタグだけが並ぶ。選んだタグは on
+const scene = moodPickerHtml({ tags: ["night"], group: "scene", mode: "major", key: "C" });
+assert.equal(count(scene, /class="mood-chip[" ]/g), CHORD_MOOD_TAG_GROUPS.scene.length);
+assert.equal(count(scene, /mood-chip on/g), 1);
 
-const minor = chordMoodPanelHtml({ mode: "minor", tags: ["dark", "tension", "night"] });
-assert.equal((minor.match(/data-chord-mood-preset=/g) ?? []).length, 3, "Minorで3候補を表示する");
-assert.match(minor, /ダーク/);
-assert.match(minor, /緊張/);
-assert.match(minor, /夜/);
+// 複数選択の一覧: 全部のタグに合う進行だけ（無ければ最も多く合う進行）
+const major = chordMoodPanelHtml({ mode: "major", tags: ["bright", "hope", "youth"], group: null });
+assert.ok(count(major, /data-chord-mood-preset=/g) >= 1 && count(major, /data-chord-mood-preset=/g) <= 10);
+assert.match(major, /使う/);
+const minor = chordMoodPanelHtml({ mode: "minor", tags: ["dark", "tension", "night"], group: null });
+assert.ok(count(minor, /data-chord-mood-preset=/g) >= 1);
+
+const one = chordPresetsForTags(["sad"], { mode: "major" });
+const two = chordPresetsForTags(["sad", "night"], { mode: "major" });
+assert.ok(one.rows.length >= two.rows.length, "タグを足すと絞り込まれる（増えない）");
+if (two.matchedAll) assert.ok(two.rows.every((row) => row.matchedCount === 2));
+const none = chordPresetsForTags(["sad", "bright", "tension", "night", "rain"], { mode: "major" });
+assert.ok(none.rows.length > 0, "全部に合う進行が無くても、近い進行を返す");
+assert.equal(chordPresetsForTags([], { mode: "major" }).rows.length, 0);
+
+// 「すべて外す」は選択中があるときだけ出る
+assert.match(moodPickerHtml({ tags: ["sad"], group: null }), /data-chord-mood-clear/);
+assert.ok(!/data-chord-mood-clear/.test(moodPickerHtml({ tags: [], group: null })));
 
 console.log("Chord mood UI smoke test passed.");
-
-// 曲想 / 質感 / 場面 のタブ。タブごとに1つのタグで一覧を出す
-{
-  const { emotionListHtml } = await import("../src/chord/chord-mood-ui.js");
-  const { CHORD_MOOD_TAG_GROUPS } = await import("../src/chord/chord-mood-tags.js");
-  const base = emotionListHtml({ group: "emotion", tag: null, mode: "major", key: "C", showAll: false });
-  assert.equal((base.match(/data-chord-tab=/g) ?? []).length, 3, "タブは3つ");
-  for (const group of ["texture", "scene"]) {
-    const tag = CHORD_MOOD_TAG_GROUPS[group][0].id;
-    const html = emotionListHtml({ group, tag, mode: "major", key: "C", showAll: false });
-    assert.ok(html.includes(`data-chord-tab="${group}"`) && /aria-selected="true"/.test(html));
-    assert.equal((html.match(/data-chord-emotion="/g) ?? []).length, CHORD_MOOD_TAG_GROUPS[group].length + 1, `${group}のタグ＋未選択が並ぶ`);
-  }
-}
-
-// どのタブも開いていない（未選択）状態
-{
-  const { emotionListHtml, chordMoodPanelHtml } = await import("../src/chord/chord-mood-ui.js");
-  const closed = emotionListHtml({ group: null, tag: null, mode: "major", key: "C", showAll: false });
-  assert.equal((closed.match(/data-chord-tab=/g) ?? []).length, 3);
-  assert.ok(!closed.includes("data-chord-emotion="), "タブを開くまでタグは出さない");
-  assert.ok(!/aria-selected="true"/.test(closed));
-  const panel = chordMoodPanelHtml({ mode: "major", tags: [], intentValues: [], adjusted: false });
-  assert.equal((panel.match(/<details class="chord-mood-group"/g) ?? []).length, 3, "組み合わせも3グループが折りたたみ");
-  assert.equal((panel.match(/data-chord-mood-group-clear=/g) ?? []).length, 3, "各グループに未選択");
-  const picked = chordMoodPanelHtml({ mode: "major", tags: ["bright"], intentValues: [], adjusted: false });
-  assert.ok(/chord-mood-group" open/.test(picked), "選択中のグループは開く");
-}
