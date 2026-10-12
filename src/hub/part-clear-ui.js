@@ -1,6 +1,6 @@
 import { clearMusicPart, musicPartHasData } from "../core/music-clear.js";
 
-const PART_LABELS = Object.freeze({
+export const PART_LABELS = Object.freeze({
   chord: "コード",
   melody: "メロディ",
   counter: "裏メロ",
