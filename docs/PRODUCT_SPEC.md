@@ -51,6 +51,10 @@ Chord Module内に、コード進行自体は変えず伴奏の鳴らし方を�
 
 Patternは完成伴奏を自動作曲する機能ではなく、曲の骨子を判断するための少数Presetとする。詳細な伴奏編集やDAW級のArpeggiatorは追加しない。
 
+## v0.2 4小節メロディ生成
+
+Chord画面から、コード進行に合わせた2 / 4 / 8小節のメロディを3つの型で生成する（`docs/MELODY_PHRASE_PLAN.md`）。ルールベースで外部AI / APIは使わず、候補を聴いて選び、Piano Rollで直す。範囲内のMelodyだけを置き換え、Chord・他の小節は変えない。Schema変更なし。
+
 ## v0.2 Melody Candidates
 
 Melody Module内に、現在の1小節へ適用するルールベースのMelody候補を3つ表示する。

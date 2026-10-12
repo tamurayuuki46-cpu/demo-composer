@@ -104,6 +104,9 @@ jobs:
       - name: Chord scale sets smoke test
         run: npm run test:chord-scale-sets
 
+      - name: Phrase melody smoke test
+        run: npm run test:phrase-melody
+
       - name: Loop guide smoke test
         run: npm run test:loop-guide
 

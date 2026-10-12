@@ -18,6 +18,8 @@ import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordsWithBarChord, draftChordsFromMelody, melodyBarCount, suggestChordsForBar } from "./chord/chord-for-melody.js";
 import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicChords, NOTE_NAMES, rootDegreeName, rootToPitchClass } from "./chord/chord-theory.js";
 import { chordScaleSetsHtml, resolveScaleFamilyId } from "./chord/chord-scale-sets-ui.js";
+import { applyPhraseNotes, phraseCandidates, withPhraseNotes } from "./melody/phrase-generator.js";
+import { phraseMelodyHtml } from "./melody/phrase-melody-ui.js";
 import { scaleLevelRows, scaleSetChords } from "./chord/chord-scale-sets.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
@@ -65,6 +67,11 @@ let scaleSetFamily = "major";
 let scaleSetLevel = "seventh";
 let libraryOpen = false;
 let libraryName = "";
+let phraseOpen = false;
+let phraseStart = 0;
+let phraseBars = 4;
+let phraseContour = "auto";
+let phraseVariation = 0;
 let melodyChordOpen = false;
 let melodyChordBar = 0;
 let songCardOpen = false;
@@ -288,6 +295,8 @@ function chordScreen() {
       <p id="chord-message" class="status-message" aria-live="polite">${escapeHtml(chordMessage)}</p>
 
       ${melodyChordPanel(project)}
+
+      ${phraseMelodyHtml({ project, open: phraseOpen, startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation })}
 
       <h3>${project.chords.length ? "次のコード候補（3つ）" : "最初のコード候補（3つ）"}</h3>
       <div class="chord-next">
@@ -732,6 +741,55 @@ function bindChordControls() {
     commitChordUpdate(next, `${candidate.symbol} (${candidate.degree}) を追加しました。`);
   }
 
+  document.querySelector("#toggle-phrase")?.addEventListener("click", () => {
+    phraseOpen = !phraseOpen;
+    render("chord");
+  });
+  document.querySelector("#phrase-start")?.addEventListener("change", (event) => {
+    phraseStart = Number(event.target.value);
+    phraseVariation = 0;
+    render("chord");
+  });
+  document.querySelector("#phrase-bars")?.addEventListener("change", (event) => {
+    phraseBars = Number(event.target.value);
+    phraseVariation = 0;
+    render("chord");
+  });
+  document.querySelectorAll("[data-phrase-contour]").forEach((button) => {
+    button.addEventListener("click", () => {
+      phraseContour = button.dataset.phraseContour;
+      render("chord");
+    });
+  });
+  document.querySelector("#phrase-refresh")?.addEventListener("click", () => {
+    phraseVariation = (phraseVariation + 1) % 4;
+    render("chord");
+  });
+  const phraseCandidateFor = (formId) => phraseCandidates(projectStore.getSnapshot(), {
+    startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation
+  }).find((item) => item.id === formId);
+  document.querySelectorAll("[data-phrase-play]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const candidate = phraseCandidateFor(button.dataset.phrasePlay);
+      if (candidate) previewPhrase(candidate.startBar, candidate.endBar, candidate.notes);
+    });
+  });
+  document.querySelectorAll("[data-phrase-apply]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const candidate = phraseCandidateFor(button.dataset.phraseApply);
+      if (!candidate) return;
+      try {
+        const latest = projectStore.getSnapshot();
+        const current = latest.tracks.find((track) => track.role === "melody")?.notes ?? [];
+        projectStore.updateMelodyNotes(applyPhraseNotes(current, candidate.startBar, candidate.endBar, candidate.notes, { barTicks: latest.basic.ppq * 4 }));
+        chordMessage = `「${candidate.label}」を${candidate.startBar + 1}〜${candidate.endBar}小節に入れました。Melody画面で1音ずつ直せます（↶で戻せます）。`;
+      } catch (error) {
+        chordMessage = error instanceof Error ? error.message : "メロディを入れられませんでした。";
+      }
+      render("chord");
+    });
+  });
+
   document.querySelector("#toggle-melody-chords")?.addEventListener("click", () => {
     melodyChordOpen = !melodyChordOpen;
     render("chord");
@@ -971,6 +1029,22 @@ async function previewCounter(index, notes) {
     await demoPlayer.play(
       sliceProject(preview, range.startBar * barTicks, range.endBar * barTicks),
       { lengthTick: range.section.bars * barTicks }
+    );
+  } catch (error) {
+    demoPlayer.stop();
+    if (playerTime) playerTime.textContent = error instanceof Error ? error.message : "再生できません。";
+  }
+}
+
+// 4小節メロディの候補を、その範囲だけ仮に当てて聴く（Projectは変更しない）
+async function previewPhrase(startBar, endBar, notes) {
+  try {
+    const project = projectStore.getSnapshot();
+    const barTicks = project.basic.ppq * 4;
+    const preview = withPhraseNotes(project, startBar, endBar, notes);
+    await demoPlayer.play(
+      sliceProject(preview, startBar * barTicks, endBar * barTicks),
+      { lengthTick: (endBar - startBar) * barTicks }
     );
   } catch (error) {
     demoPlayer.stop();
