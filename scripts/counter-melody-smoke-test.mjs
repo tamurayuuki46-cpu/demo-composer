@@ -42,7 +42,7 @@ function sampleProject() {
 const project = sampleProject();
 assert.equal(hasCounter(project), false);
 assert.equal(COUNTER_ROLE, "counter");
-assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer", "arpeggio", "riff"]);
+assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer", "arpeggio", "riff", "pentaMinor", "pentaMajor"]);
 assert.match(COUNTER_STYLES[0].description, /米津/);
 assert.match(COUNTER_STYLES[1].description, /YOASOBI \/ Ayase/);
 assert.match(COUNTER_STYLES[1].description, /コードトーン型/);
@@ -56,7 +56,7 @@ assert.ok(COUNTER_STYLES.every((item) => item.description.includes("特定曲の
 // --- 候補は4つで、どれも範囲内・MIDI範囲内
 const candidates = counterCandidates(project, { startBar: 0, endBar: 4 });
 assert.deepEqual(candidates.map((item) => item.id), COUNTER_STYLES.map((style) => style.id));
-assert.equal(candidates.length, 6);
+assert.equal(candidates.length, 8);
 candidates.forEach((candidate) => {
   assert.ok(candidate.notes.length > 0, `${candidate.id} has notes`);
   assert.ok(candidate.notes.every((note) => note.startTick >= 0 && note.startTick < 4 * BAR), `${candidate.id} stays in range`);
@@ -91,6 +91,19 @@ for (let bar = 0; bar < 4; bar += 1) {
   assert.deepEqual(inBar.map((note) => note.startTick % BAR), [0, 480, 960]);
   assert.deepEqual(inBar.map((note) => note.durationTick), [480, 480, 960]);
 }
+
+// Pentatonic Hook: Keyのペンタトニックの音だけ。最後の小節の最後の音はコードトーン
+const pentaSets = { pentaMinor: [0, 3, 5, 7, 10], pentaMajor: [0, 2, 4, 7, 9] };
+Object.entries(pentaSets).forEach(([id, allowed]) => {
+  const penta = candidates.find((item) => item.id === id);
+  assert.ok(penta.notes.length >= 12, `${id} has a hook per bar`);
+  assert.ok(penta.notes.every((note) => allowed.includes(note.pitch % 12)), `${id} stays in its pentatonic`);
+  assert.ok(penta.notes.every((note) => note.pitch >= 48 && note.pitch <= 79), `${id} stays in a singable range`);
+  const finalNote = penta.notes[penta.notes.length - 1];
+  assert.ok(finalNote, `${id} ends on a note`);
+});
+assert.match(COUNTER_STYLES.find((item) => item.id === "pentaMinor").label, /マイナーペンタ/);
+assert.match(COUNTER_STYLES.find((item) => item.id === "pentaMajor").label, /メジャーペンタ/);
 
 // Answer: 語尾側（後半）を優先し、Sparseより長い2拍単位の返しを作る。
 // Arpeggio: 8分の細かい動きで、メロディの下に置かれ、半音でぶつからない

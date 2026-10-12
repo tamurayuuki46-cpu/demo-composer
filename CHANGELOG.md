@@ -7,6 +7,7 @@
 - Demo Player（再生バー）が下部ナビに隠れる / 再生が止まる症状への対策。再生バーの位置を、下部ナビの実際の高さ（`--nav-h`、ResizeObserverで追従）の真上に固定した（Androidの文字サイズ拡大などでナビが高くなっても重ならない）。ビブラートのLFOを「1音につき1つ」に共有し、ボカロ風などの音色で1音あたりのノード数を減らして端末負荷を軽くした（音量・音色は変わらない）
 
 ### 追加
+- 裏メロに2タイプを追加: `Minor Penta Hook（マイナーペンタ）` / `Major Penta Hook（メジャーペンタ）`。Keyのペンタトニックの音だけで短いフックを作り、2小節で型を繰り返し → 3小節目で変化 → 4小節目でコードトーンに着地。候補は計8タイプ（裏メロタブ / Arrangeの `🎶 裏メロ` 共通）。Schema変更なし（`buildPentaHook`、`npm run test:counter-melody` に追加）
 - 下部ナビに `裏メロ` タブを追加（7ボタン）。範囲（Section、または 開始小節 + 2 / 4 / 8 / 16小節）を選んで、6タイプの候補を `▶ 聴く` → `これにする`。範囲内の裏メロだけ置き換わり、↶で戻せる。`この範囲の裏メロを消す` もある。Arrangeの各Sectionの裏メロと同じ生成・同じ保存先（`tracks[role=counter]`）で、Schema変更なし（`src/arrange/counter-screen.js`）
 - 裏メロに2タイプを追加: `Arpeggio（分散和音型。ピアノ風に8分で上下、メロディの下で半音ぶつかりを避ける）` / `Riff（ギターリフ型。低音域のルート・5度中心、4小節目に駆け上がる）`。Arrangeの `🎶 裏メロ` にも6候補が出る。`npm run test:counter-melody` に追加
 - 音色（Sound Sketch）を増やした: Melody `Vocal（ボカロ風） / Vocal Soft / Vocal Bright / Pad Lead（パッド寄り） / Flute / Strings Lead / Bell`、Chord `Strings / Organ / Choir`、Bass `Sub Bass / Pluck Bass / Growl Bass`。声に近い音は、波形の重ね合わせ・ビブラート（少し遅れて揺れ始める）・母音の山（あ / お / い）で作る。Presetを選ぶと、下に一言の説明が出る。音量は既存Presetに近いレベルに合わせた（耳での最終調整は実機で）

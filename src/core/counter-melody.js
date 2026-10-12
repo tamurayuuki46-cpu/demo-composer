@@ -42,6 +42,16 @@ export const COUNTER_STYLES = Object.freeze([
     id: "riff",
     label: "Riff（ギターリフ型）",
     description: "低めの音域で、ルート・5度中心の短いリフを繰り返す。コードが変わっても形を保ち、4小節目に駆け上がる。※イメージ：ギターバンド系 / Oasis系（特定曲のコピーではありません）"
+  },
+  {
+    id: "pentaMinor",
+    label: "Minor Penta Hook（マイナーペンタ）",
+    description: "Keyのマイナーペンタ（ド・ミ♭・ファ・ソ・シ♭）だけで作る、ブルージーで歌えるフック。2小節で型を繰り返し、3小節目で少し変化、4小節目でコードトーンに着地する。メジャーKeyの上では少しブルース寄りの色になる。※イメージ：ロック / ギターバンド系（特定曲のコピーではありません）"
+  },
+  {
+    id: "pentaMajor",
+    label: "Major Penta Hook（メジャーペンタ）",
+    description: "Keyのメジャーペンタ（ド・レ・ミ・ソ・ラ）だけで作る、明るく素直なフック。半音のぶつかりがなく、どのコードの上でも歌いやすい。2小節で型を繰り返し、3小節目で上へ、4小節目でコードトーンに着地する。※イメージ：爽やかなバンド / J-POP系（特定曲のコピーではありません）"
   }
 ]);
 
@@ -479,6 +489,64 @@ function buildRiff(project, melody, startBar, endBar) {
   return notes;
 }
 
+// Pentatonic Hook: Keyのペンタトニック（マイナー or メジャー）の音だけで、短い型を繰り返すフック。
+// 2小節同じ型 → 3小節目で変化 → 4小節目でコードトーンに着地。ペンタの音を「はしご」にして上下に動く。
+const PENTATONIC = Object.freeze({
+  minor: [0, 3, 5, 7, 10],
+  major: [0, 2, 4, 7, 9]
+});
+const PENTA_MOTIFS = Object.freeze({
+  //            [はしごの動き]            [開始step] [長さstep]
+  minor: {
+    main: { offsets: [0, 2, 1, 0], steps: [0, 2, 3, 4], lengths: [2, 1, 1, 3] },
+    vary: { offsets: [0, 2, 3, 2], steps: [0, 2, 3, 4], lengths: [2, 1, 1, 3] }
+  },
+  major: {
+    main: { offsets: [0, 1, 2, 1], steps: [0, 2, 4, 6], lengths: [2, 2, 2, 2] },
+    vary: { offsets: [0, 2, 3, 2], steps: [0, 2, 4, 6], lengths: [2, 2, 2, 2] }
+  }
+});
+
+function buildPentaHook(project, melody, startBar, endBar, mode) {
+  const barTicks = barTicksOf(project);
+  const tonic = keyPitchClass(project);
+  const pcs = PENTATONIC[mode].map((interval) => (tonic + interval) % 12);
+  const target = Math.min(72, Math.max(57, averageMelodyPitch(melody) - 10));
+  const ladder = [];
+  for (let pitch = 48; pitch <= 79; pitch += 1) if (pcs.includes(pitch % 12)) ladder.push(pitch);
+  const nearest = (candidates, to) => candidates.reduce((best, pitch) => (
+    best === null || Math.abs(pitch - to) < Math.abs(best - to) ? pitch : best
+  ), null);
+  const clampIndex = (index) => Math.max(0, Math.min(ladder.length - 1, index));
+  const notes = [];
+  let previous = null;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const chordPcs = chordPitchClasses(project, bar);
+    const chordTones = ladder.filter((pitch) => chordPcs.includes(pitch % 12));
+    // 小節の出発点: 目標音域に近いペンタの音。コードトーンがペンタ内にあればそれを優先
+    const pool = chordTones.length > 0 ? chordTones : ladder;
+    const anchor = nearest(pool, previous === null ? target : Math.round((previous + target) / 2));
+    const anchorIndex = ladder.indexOf(anchor);
+    const inPhrase = (bar - startBar) % 4;
+    const last = inPhrase === 3 || bar === endBar - 1;
+    const motif = PENTA_MOTIFS[mode][inPhrase === 2 ? "vary" : "main"];
+
+    motif.offsets.forEach((offset, index) => {
+      let pitch = ladder[clampIndex(anchorIndex + offset)];
+      const isLastNote = index === motif.offsets.length - 1;
+      // 4小節目（と最後の小節）の最後の音は、コードトーンに着地する
+      if (last && isLastNote) pitch = nearest(chordTones.length > 0 ? chordTones : ladder, anchor) ?? pitch;
+      const velocity = index === 0 ? 70 : isLastNote ? 66 : 60;
+      const duration = Math.round(STEP * motif.lengths[index] * (isLastNote ? 0.95 : 0.9));
+      notes.push(makeNote(pitch, barStart + motif.steps[index] * STEP, duration, velocity));
+      previous = pitch;
+    });
+  }
+  return notes;
+}
+
 // Sectionの範囲（startBar〜endBar）に当てる候補を作る。土台（コードかメロディ）が無いときは例外
 export function counterCandidates(project, { startBar, endBar }) {
   const barTicks = barTicksOf(project);
@@ -492,7 +560,9 @@ export function counterCandidates(project, { startBar, endBar }) {
     throw new Error("このSectionにはコードもメロディもありません。先にどちらかを入れると、裏メロの候補を作れます。");
   }
 
-  const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer, arpeggio: buildArpeggio, riff: buildRiff };
+  const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer, arpeggio: buildArpeggio, riff: buildRiff,
+    pentaMinor: (...args) => buildPentaHook(...args, "minor"),
+    pentaMajor: (...args) => buildPentaHook(...args, "major") };
   return COUNTER_STYLES.map((style) => {
     const notes = builders[style.id](project, melody, startBar, endBar)
       .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
