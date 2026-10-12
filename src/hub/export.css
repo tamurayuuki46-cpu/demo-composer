@@ -93,3 +93,33 @@
   background: #2a2a31;
   color: #f5f5f5;
 }
+
+/* 作曲シートへのリンク（端末だけに保存） */
+.sheet-link {
+  margin-top: 16px;
+}
+.sheet-link-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin: 8px 0 12px;
+  border-radius: 12px;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+  text-decoration: none;
+}
+.sheet-link input {
+  width: 100%;
+  min-height: 44px;
+}
+.sheet-link-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.sheet-link-actions button {
+  flex: 1;
+  min-height: 44px;
+}
