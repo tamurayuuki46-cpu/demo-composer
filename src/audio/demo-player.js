@@ -345,7 +345,9 @@ export function createDemoPlayer({ onStateChange } = {}) {
         throw new Error("このブラウザではWeb Audioを利用できません。");
       }
 
-      context = new AudioContextClass({ latencyHint: "interactive" });
+      // "playback" は出力バッファが大きく、Androidの負荷が高い場面（和音の重なり・声/弦の重ね合わせ・Loop切り替え）でも音切れ・ざらつきが出にくい。
+      // 再生はもともと少し先から始めるので、遅れは気にならない
+      context = new AudioContextClass({ latencyHint: "playback" });
       masterGain = context.createGain();
       masterGain.gain.value = 1;
 
