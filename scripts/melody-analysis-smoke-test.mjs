@@ -157,3 +157,19 @@ assert.match(noChordRows.find((r) => r.id === "perspective-kusano").value, /2\(9
 assert.equal(noChordRows.find((r) => r.id === "harmony-role").value, "—");
 
 console.log("melody analysis smoke test passed");
+
+// 度数の役割内訳（構成音 / テンション / スケール内 / スケール外）
+{
+  const { chordDegreeBreakdown } = await import("../src/core/melody-analysis.js");
+  const p = { basic: { ppq: 480, key: "C", scale: "major" }, chords: [{ root: 0, quality: "major", startTick: 0, durationTick: 1920 }] };
+  const note = (pitch) => ({ pitch, startTick: 0, durationTick: 480 });
+  const b = chordDegreeBreakdown(p, [note(60), note(64), note(62), note(65), note(61), note(71)]);
+  assert.equal(b.counted, 6);
+  assert.equal(b.degrees[0].chord, 1, "R は構成音");
+  assert.equal(b.degrees[4].chord, 1, "3 は構成音");
+  assert.equal(b.degrees[2].tension, 1, "2(9th) はテンション");
+  assert.equal(b.degrees[5].tension, 1, "4(11th) はテンション");
+  assert.equal(b.degrees[1].outside, 1, "♭2 はスケール外");
+  assert.equal(b.degrees[11].other, 1, "7 はスケール内のその他");
+  assert.equal(chordDegreeBreakdown({ ...p, chords: [] }, [note(60)]).counted, 0);
+}

@@ -42,4 +42,20 @@ assert.ok(sameHints.advice.includes("差が小さめ"));
 assert.equal(contrastHints(compareSections(project([section("verse", "Aメロ", 2)], aNotes))), null);
 assert.equal(contrastHints(compareSections(project([section("chorus", "サビ", 2)], aNotes))), null);
 
+// コード度数: コードがある小節の音を、ルートから見た度数で数える。AメロはC(R=60)中心、サビは5度(67)中心
+{
+  const chords = [0, 1, 2, 3].map((bar) => ({ root: 0, quality: "major", startTick: bar * BAR, durationTick: BAR }));
+  const aN = [60, 60, 64, 60].map((pp, i) => n(pp, 0, i));
+  const cN = [67, 67, 64, 67].map((pp, i) => n(pp, 2, i));
+  const dp = { basic: { ppq: 480, key: "C", scale: "major" }, structure: { sections: [section("verse", "Aメロ", 2), section("chorus", "サビ", 2)] }, chords, tracks: [{ role: "melody", notes: [...aN, ...cN] }] };
+  const dr = compareSections(dp);
+  assert.equal(dr[0].chordDegrees.counted, 4);
+  assert.equal(dr[0].chordDegrees.rates[0], 0.75, "AメロはRが75%");
+  assert.equal(dr[1].chordDegrees.rates[7], 0.75, "サビは5度が75%");
+  assert.equal(dr[1].chordDegrees.degrees[7].chord, 3, "5度は構成音");
+  const line = contrastHints(dr).lines.find((l) => l.startsWith("コード度数"));
+  assert.ok(line.includes("5 +75%") && line.includes("R −75%"), line);
+  assert.equal(compareSections(project([section("verse", "A", 2)], aNotes))[0].chordDegrees, null, "コード無しは null");
+}
+
 console.log("section-compare smoke test passed");

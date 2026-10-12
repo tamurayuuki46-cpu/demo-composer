@@ -542,12 +542,30 @@
   min-width: 0;
 }
 .degree-bar em { font-style: normal; font-size: 9px; opacity: .8; }
-.degree-bar i {
+.degree-bar i,
+.degree-mini-col i {
   align-self: end;
   width: 100%;
   min-height: 2px;
   border-radius: 3px 3px 0 0;
   background: #7dd3fc;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+.degree-bar i u, .degree-mini-col i u { display: block; text-decoration: none; min-height: 1px; }
+u.role-chord { background: #3b82f6; }
+u.role-tension { background: #4ade80; }
+u.role-other { background: #7dd3fc; }
+u.role-outside { background: #facc15; }
+.degree-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 2px 0 6px; font-size: 11px; }
+.degree-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 4px; border-radius: 2px; vertical-align: -1px; }
+.degree-legend .role-chord::before { background: #3b82f6; }
+.degree-legend .role-tension::before { background: #4ade80; }
+.degree-legend .role-other::before { background: #7dd3fc; }
+.degree-legend .role-outside::before { background: #facc15; }
+.degree-mini { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; align-items: end; height: 36px; margin: 2px 0 6px; }
+.degree-mini-col { display: flex; align-items: flex-end; height: 100%; }
+.sc-degree-label { font-size: 10px; opacity: .7; }
 .degree-bar.zero i { background: #3a3a44; height: 2px !important; }
 .degree-bar b { font-size: 10px; font-weight: 700; }

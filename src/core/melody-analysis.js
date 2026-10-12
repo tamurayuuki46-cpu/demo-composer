@@ -27,6 +27,32 @@ function degreeIndex(pitchClass, rootPitchClass) {
   return ((pitchClass - rootPitchClass) % 12 + 12) % 12;
 }
 
+const TENSION_SEMITONES = [2, 5, 9];
+
+// コードがある小節の音だけ、コードのルートからの度数ごとに数える。
+// 役割: chord=構成音 / tension=9・11・13相当 / outside=Scale外 / other=Scale内のその他
+export function chordDegreeBreakdown(project, notes) {
+  const barTicks = project.basic.ppq * 4;
+  const keyRoot = NOTE_NAMES.indexOf(project.basic.key);
+  const scaleIntervals = SCALE_INTERVALS[project.basic.scale];
+  const degrees = Array.from({ length: 12 }, () => ({ chord: 0, tension: 0, outside: 0, other: 0 }));
+  let counted = 0;
+  notes.forEach((note) => {
+    const chord = project.chords[Math.floor(note.startTick / barTicks)];
+    if (!chord) return;
+    counted += 1;
+    const pc = note.pitch % 12;
+    const degree = degreeIndex(pc, chord.root);
+    const tones = chordIntervals(chord.quality).map((interval) => (chord.root + interval) % 12);
+    let role = "other";
+    if (tones.includes(pc)) role = "chord";
+    else if (TENSION_SEMITONES.includes(degree)) role = "tension";
+    else if (keyRoot >= 0 && scaleIntervals && !scaleIntervals.has(degreeIndex(pc, keyRoot))) role = "outside";
+    degrees[degree][role] += 1;
+  });
+  return { counted, degrees };
+}
+
 function degreeCounts(notes, rootPitchClass) {
   const counts = Array(12).fill(0);
   notes.forEach((note) => {
@@ -126,7 +152,7 @@ export function analyzeMelody(project) {
     range: { low, high, span: high - low },
     leaps: { count: leapCount, motions, ratio: motions > 0 ? leapCount / motions : 0, max: maxLeap },
     keyDegree,
-    chordDegree: { counted, counts: chordDegreeCounts },
+    chordDegree: { counted, counts: chordDegreeCounts, breakdown: chordDegreeBreakdown(project, notes).degrees },
     scaleFit,
     chordTone: { counted, hits, rate: counted > 0 ? hits / counted : null },
     density: { perBar: notes.length / bars.size },
@@ -158,9 +184,14 @@ function degreeSummary(counts, total, labels) {
     .join("・");
 }
 
-// 12度数ぶんの使用率（0も含める）。UIの棒グラフ用
-function degreeBars(counts, total, labels) {
-  return counts.map((count, index) => ({ label: labels[index], count, rate: total ? count / total : 0 }));
+// 12度数ぶんの使用率（0も含める）。UIの棒グラフ用。parts = 役割ごとの内訳（色分け用）
+function degreeBars(counts, total, labels, partsByIndex = null) {
+  return counts.map((count, index) => ({
+    label: labels[index],
+    count,
+    rate: total ? count / total : 0,
+    parts: partsByIndex?.[index] ?? null
+  }));
 }
 
 function scaleLabel(scale) {
@@ -242,8 +273,8 @@ export function describeMelody(analysis) {
 
   return [
     { id: "range", label: "音域", value: `${pitchLabel(range.low)}〜${pitchLabel(range.high)}（${spanLabel(range.span)}）`, comment: rangeComment },
-    { id: "key-degree", label: "Keyからの度数（使用率）", value: degreeSummary(keyDegree.counts, keyDegree.total, DEGREE_LABELS), bars: keyDegree.total ? degreeBars(keyDegree.counts, keyDegree.total, DEGREE_LABELS) : null, comment: keyDegreeComment },
-    { id: "chord-degree", label: "Chordからの度数（使用率）", value: degreeSummary(chordDegree.counts, chordDegree.counted, CHORD_DEGREE_LABELS), bars: chordDegree.counted ? degreeBars(chordDegree.counts, chordDegree.counted, CHORD_DEGREE_LABELS) : null, comment: chordDegreeComment },
+    { id: "key-degree", label: "Keyからの度数（使用率）", value: degreeSummary(keyDegree.counts, keyDegree.total, DEGREE_LABELS), bars: keyDegree.total ? degreeBars(keyDegree.counts, keyDegree.total, DEGREE_LABELS, keyDegree.counts.map((count, index) => (SCALE_INTERVALS[scaleFit.scale]?.has(index) ? { other: count } : { outside: count }))) : null, comment: keyDegreeComment },
+    { id: "chord-degree", label: "Chordからの度数（使用率）", value: degreeSummary(chordDegree.counts, chordDegree.counted, CHORD_DEGREE_LABELS), bars: chordDegree.counted ? degreeBars(chordDegree.counts, chordDegree.counted, CHORD_DEGREE_LABELS, chordDegree.breakdown) : null, comment: chordDegreeComment },
     { id: "scale-fit", label: "Scale内率", value: scaleFit.rate === null ? "—" : percent(scaleFit.rate), comment: scaleComment },
     { id: "leap", label: "跳躍", value: leaps.motions === 0 ? "音が1つだけ" : `${leaps.count}回 / ${leaps.motions}（${percent(leaps.ratio)}）・最大${leaps.max}半音`, comment: leaps.motions === 0 ? "" : leapComment },
     { id: "tone", label: "コードトーン率", value: chordTone.rate === null ? "—" : percent(chordTone.rate), comment: toneComment },
