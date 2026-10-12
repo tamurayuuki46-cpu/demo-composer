@@ -40,4 +40,22 @@ assert.doesNotMatch(
   "noise hit must not start at an arbitrary full-amplitude sample"
 );
 
-console.log("Audio playback anti-click smoke test passed");
+assert.match(source, /const loopLookaheadSeconds = 0\.08;/, "loop playback needs scheduling lookahead");
+assert.match(source, /let pendingLoop = null;/, "loop playback needs a pending cycle state");
+assert.match(
+  source,
+  /scheduleProject\(context, buses, nextSources, nextProject, nextStartTime\)/,
+  "next loop cycle must be scheduled directly on the AudioContext timeline"
+);
+assert.match(
+  source,
+  /const cycleEndTime = startTime \+ duration;/,
+  "next loop cycle must anchor to the current cycle end"
+);
+assert.doesNotMatch(
+  source,
+  /await play\(latest\?\.project \?\? currentProject/,
+  "loop playback must not stop and recursively restart play() at every boundary"
+);
+
+console.log("Audio playback anti-click / loop seam smoke test passed");
