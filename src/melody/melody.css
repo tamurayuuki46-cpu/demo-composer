@@ -102,27 +102,82 @@
   opacity: .4;
 }
 
-/* Chord Tone強調: コードの構成音の行を薄く色付け（見た目のみ） */
-.melody-row.chord-tone .note-cell:not(.active):not(.held) {
-  background: rgba(96, 165, 250, 0.16);
+/* 音の役割の色分け（見た目のみ・保存しない）。優先: アボイド(赤) > コード構成音(青) > テンション(緑) > スケール外(黄)
+   青 = コード構成音(1・3・5・7相当) / 緑 = テンション(9・11・13相当) / 黄 = 選択Scaleの7音以外 / 赤 = アボイドノート(光る) */
+.melody-row.role-chord .note-cell:not(.active):not(.held) {
+  background: rgba(96, 165, 250, 0.22);
 }
-.melody-row.chord-tone .piano-key {
+.melody-row.role-chord .piano-key {
   box-shadow: inset 4px 0 0 #60a5fa;
 }
-.chord-tone-legend {
+.melody-row.role-tension .note-cell:not(.active):not(.held) {
+  background: rgba(74, 222, 128, 0.20);
+}
+.melody-row.role-tension .piano-key {
+  box-shadow: inset 4px 0 0 #4ade80;
+}
+.melody-row.role-outside:not(.role-chord):not(.role-tension) .note-cell:not(.active):not(.held) {
+  background: rgba(250, 204, 21, 0.18);
+}
+.melody-row.role-outside .piano-key {
+  background-image: linear-gradient(#facc15, #facc15);
+  background-repeat: no-repeat;
+  background-position: right 0 top 0;
+  background-size: 5px 100%;
+}
+.melody-row.role-avoid .note-cell:not(.active):not(.held) {
+  background: rgba(248, 113, 113, 0.30);
+  animation: avoid-glow 1.6s ease-in-out infinite;
+}
+.melody-row.role-avoid .piano-key {
+  box-shadow: inset 4px 0 0 #f87171;
+  color: #fecaca;
+}
+/* 置いた音がアボイドのとき: 縁を赤く光らせる */
+.melody-row.role-avoid .note-cell.active,
+.melody-row.role-avoid .note-cell.held {
+  outline: 3px solid #f87171;
+  outline-offset: -3px;
+  animation: avoid-glow-outline 1.6s ease-in-out infinite;
+}
+@keyframes avoid-glow {
+  0%, 100% { background-color: rgba(248, 113, 113, 0.22); }
+  50% { background-color: rgba(248, 113, 113, 0.55); }
+}
+@keyframes avoid-glow-outline {
+  0%, 100% { outline-color: rgba(248, 113, 113, 0.65); }
+  50% { outline-color: #ff4d4d; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .melody-row.role-avoid .note-cell { animation: none !important; }
+  .melody-row.role-avoid .note-cell:not(.active):not(.held) { background: rgba(248, 113, 113, 0.42); }
+}
+
+.pitch-legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 4px 0 8px;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-size: 13px;
 }
-.chord-tone-dot {
+.pitch-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pitch-dot {
   width: 14px;
   height: 14px;
   border-radius: 4px;
-  background: rgba(96, 165, 250, 0.4);
   flex: none;
 }
+.pitch-dot.role-chord { background: #60a5fa; }
+.pitch-dot.role-tension { background: #4ade80; }
+.pitch-dot.role-outside { background: #facc15; }
+.pitch-dot.role-avoid { background: #f87171; box-shadow: 0 0 6px #ef4444; }
 
 /* 度数表示 */
 .melody-legend-row {
@@ -133,9 +188,6 @@
   margin: 4px 0 8px;
 }
 
-.melody-legend-row .chord-tone-legend {
-  margin: 0;
-}
 
 .degree-toggle {
   min-width: 92px;

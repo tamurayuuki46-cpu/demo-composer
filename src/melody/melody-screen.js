@@ -6,7 +6,8 @@ import { applyPeakGuide, buildPeakGuide, currentPeak, defaultPeakBar, PEAK_SHAPE
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar, MELODY_CANDIDATE_VARIATION_COUNT } from "./melody-candidates.js";
-import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, chordTonePitchClasses, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
+import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
+import { pitchClassRoles, pitchRoleText } from "./pitch-roles.js";
 
 const EIGHTH_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
 const SIXTEENTH_LABELS = ["1", "e", "&", "a", "2", "e", "&", "a", "3", "e", "&", "a", "4", "e", "&", "a"];
@@ -188,16 +189,22 @@ export function createMelodyController({ projectStore, rerender }) {
     const canCopy = (bars) => hasMelodyInBars(notes, { barIndex, bars, barTicks })
       && barIndex + bars * 2 <= MAX_TOTAL_BARS;
 
-    const chordTones = chordTonePitchClasses(chord);
+    const pitchRoles = pitchClassRoles({ key: project.basic.key, scale: project.basic.scale, chord });
     const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave, variation: candidateVariation });
 
     const gridRows = pitches.map((pitch) => {
       const name = pitchName(pitch);
       const keyClass = pianoKeyClass(pitch);
 
-      const toneClass = chordTones.has(pitch % 12) ? " chord-tone" : "";
+      const pitchRole = pitchRoles[pitch % 12];
+      const roleClass = [
+        pitchRole.avoid ? " role-avoid" : "",
+        pitchRole.tone ? ` role-${pitchRole.tone}` : "",
+        pitchRole.outside ? " role-outside" : ""
+      ].join("");
+      const roleText = pitchRoleText(pitchRole);
       return `
-        <div class="melody-row${toneClass}">
+        <div class="melody-row${roleClass}">
           <span class="piano-key ${keyClass}" aria-hidden="true">${escapeHtml(showDegrees ? degreeLabel(pitch, degreeRoot) : name)}</span>
           ${visibleSteps.map((step) => {
             const startTick = barStartTick + step * stepTicks;
@@ -207,7 +214,7 @@ export function createMelodyController({ projectStore, rerender }) {
             const held = !active && notes.some((note) => note.pitch === pitch && note.startTick < startTick && note.startTick + note.durationTick > startTick);
             const hasSub = resolution === 8 && notes.some((note) => note.startTick === startTick + stepTicks / 2 && note.pitch === pitch);
             const beatStartClass = isBeatStart(step) ? " beat-start" : "";
-            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}${held ? " held" : ""}${hasSub ? " has-sub" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${stepLabel(step)}"></button>`;
+            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}${held ? " held" : ""}${hasSub ? " has-sub" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${stepLabel(step)}${roleText ? `（${roleText}）` : ""}"></button>`;
           }).join("")}
         </div>
       `;
@@ -223,7 +230,12 @@ export function createMelodyController({ projectStore, rerender }) {
           <button id="clear-melody-bar" class="small-action">Clear Bar</button>
         </div>
         <div class="melody-legend-row">
-          ${chord ? `<p class="chord-tone-legend"><span class="chord-tone-dot" aria-hidden="true"></span>色付き ＝ コードの構成音</p>` : "<span></span>"}
+          <ul class="pitch-legend" aria-label="色の意味">
+            ${chord ? `<li><span class="pitch-dot role-chord" aria-hidden="true"></span>コード構成音</li>
+            <li><span class="pitch-dot role-tension" aria-hidden="true"></span>テンション</li>` : ""}
+            <li><span class="pitch-dot role-outside" aria-hidden="true"></span>スケール外</li>
+            ${chord ? `<li><span class="pitch-dot role-avoid" aria-hidden="true"></span>アボイド</li>` : ""}
+          </ul>
           <button id="melody-degree-toggle" class="degree-toggle${showDegrees ? " active" : ""}" aria-pressed="${showDegrees}">${showDegrees ? "度数 ON" : "度数 OFF"}</button>
         </div>
         ${showDegrees ? `<p class="hint degree-hint">鍵盤の文字は「${chord ? "このコードのルート" : "Keyの主音"}から何度か」です（R=ルート、3=3度、5=5度）。</p>` : ""}

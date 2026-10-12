@@ -19,7 +19,7 @@ v0.2-dev
 - Chord Preset 100種類（7カテゴリ。既存6種: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行）
 - Chord 次のコード候補3つ / ひとスパイス（借用和音3候補）
 - Chord Backing Pattern: Block / 8分刻み / Arpeggio / Syncopation。Demo PlayerとChord.mid / Song.midへ反映
-- Melody: 縦ピアノKeyboard、8分 / 16分切替、音の長さ指定、Bar / Octave切替、Chord Tone強調、度数表示、Copy Bar / Copy 2小節、Melody Analyzer
+- Melody: 縦ピアノKeyboard、8分 / 16分切替、音の長さ指定、Bar / Octave切替、音の役割の色分け（青=コード構成音 / 緑=テンション / 黄=スケール外 / 赤=アボイド。`src/melody/pitch-roles.js`）、度数表示、Copy Bar / Copy 2小節、Melody Analyzer
 - Melody Analyzer音程分析: `Keyからの度数` / `Chordからの度数` / `Scale内率` を表示。既存のコードトーン率と併用し、Projectを読むだけの派生分析として実装（Schema変更なし）
 - Melody Analyzer `旋律の3つの見方`: `歌心・浮遊型（草野マサムネ参考） / 輪郭・違和感型（米津玄師参考） / 推進・高密度型（Ayase / YOASOBI参考）`。既存の跳躍 / Chord度数 / Scale外 / 密度 / モチーフ反復を束ねた読み取り専用ガイドで、類似度採点・候補自動変更・Schema変更なし
 - Melody Analyzer `メロディの働き`: 和声役割を `Guide / Chord / Tension / Other` で表示し、経過音 / 刺繍音 / Approach / 倚音 / 逸音 / 先取音 / 係留音候補を前後関係が明確な場合だけ派生分析する。GuideはChord Toneの3rd / 7th系の内数、Tensionは初期版では9th / 11th / 13th相当。`src/core/melodic-functions.js` / `docs/MELODY_FUNCTIONS.md`（Schema変更なし）
@@ -145,6 +145,7 @@ v0.2-dev
 - 高度なSynth / Mix / Mastering / Audio Editing / Vocal Editing / Plugin HostingはCubasis / Cubase側へ任せる方針
 
 最近の重要な設計判断:
+- Melody Piano Rollの色分けは、現在Barのコードと選択Key / Scaleから毎回計算するだけで保存しない（Schema変更なし）。Tensionの定義はMelody Analyzerと同じ自然9 / 11 / 13（ルートから2 / 5 / 9半音）。アボイドは「構成音でなく、構成音の半音上にあるScale内の音」という初心者向けの簡易定義で、厳密なジャズ理論の全ケースは網羅しない。優先は 赤 > 青 > 緑 > 黄
 - `＋ 新規Project` は現在Projectの中身をClearするのではなく、新しいProject IDを作る。旧Projectを上書き・削除しない
 - reload時のvisibility AutoSaveとの競合を避けるため、新規Project要求はsessionStorageでreload境界へ渡し、`app-entry.js` が `main.js` のboot前にActive Projectを確定する。schemaVersionは変更しない
 - Melody AnalyzerのKey度数 / Chord度数 / Scale内率は保存データを増やさず、現在のProjectから毎回計算する読み取り専用分析とする。コードトーン率は別指標として残す

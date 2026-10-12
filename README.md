@@ -33,7 +33,7 @@ Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを五
 
 Chord画面の `Backing Pattern` では、コード進行自体を変えずに `Block / 8分刻み / Arpeggio / Syncopation` の4種類から伴奏の鳴らし方を選べます。選択はAutoSave / Undo / Redo対象で、Demo Playerと `Chord.mid / Song.mid` のChord Trackへ反映されます。既存ProjectはBacking未設定時にBlockへFallbackします。
 
-Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。左端に白鍵 / 黒鍵が分かる縦ピアノKeyboardを表示し、8分音符 / 16分音符を切り替えてタップ入力できます。16分音符はタップ幅を保つため半小節ずつ表示します。Bar / Octave切替、音の長さ指定、Chord Tone強調、度数表示、Copy Bar / Copy 2小節、Melody Analyzerに対応しています。さらに現在Barの `安定 / キャッチー / 浮遊感` の3つのルールベース候補を表示し、1つ選ぶと通常のMelody Noteとして展開します。候補適用後はPiano Rollで1音ずつ修正でき、Undo / AutoSave / Demo Player / MIDI Exportも通常のMelodyと同じ処理を使います。
+Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。左端に白鍵 / 黒鍵が分かる縦ピアノKeyboardを表示し、8分音符 / 16分音符を切り替えてタップ入力できます。16分音符はタップ幅を保つため半小節ずつ表示します。Bar / Octave切替、音の長さ指定、音の役割の色分け（コード構成音=青 / テンション=緑 / スケール外=黄 / アボイド=赤）、度数表示、Copy Bar / Copy 2小節、Melody Analyzerに対応しています。さらに現在Barの `安定 / キャッチー / 浮遊感` の3つのルールベース候補を表示し、1つ選ぶと通常のMelody Noteとして展開します。候補適用後はPiano Rollで1音ずつ修正でき、Undo / AutoSave / Demo Player / MIDI Exportも通常のMelodyと同じ処理を使います。
 
 Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを `1 e & a / 2 e & a / 3 e & a / 4 e & a` として1画面に同時表示し、Bassは現在Chordを基準にルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下などを選択できます。現在Beatを次Beatへ、現在Barを次BarへコピーするRhythm Copyにも対応しています。さらに `8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH` の6種類のDrum Presetを現在Barへ適用し、適用後に16 stepを手動修正できます。
 

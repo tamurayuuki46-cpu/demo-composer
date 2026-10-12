@@ -98,6 +98,8 @@ jobs:
 
       - name: MIDI import smoke test
         run: npm run test:midi-import
+      - name: Run Melody pitch role colors smoke test
+        run: npm run test:pitch-roles
 
       - name: Loop guide smoke test
         run: npm run test:loop-guide
