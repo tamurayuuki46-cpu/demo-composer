@@ -46,6 +46,7 @@
     "test:chord-scale-sets": "node scripts/chord-scale-sets-smoke-test.mjs",
     "test:phrase-melody": "node scripts/phrase-melody-smoke-test.mjs",
     "test:drive-export": "node scripts/drive-export-smoke-test.mjs",
+    "test:clear-all": "node scripts/clear-all-smoke-test.mjs",
     "test:sheet-link": "node scripts/sheet-link-smoke-test.mjs",
     "test:recipes": "node scripts/recipe-smoke-test.mjs",
     "test:why-ui": "node scripts/why-ui-smoke-test.mjs"

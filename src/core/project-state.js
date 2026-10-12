@@ -550,6 +550,18 @@ export function createProjectStore(initialProject = createDefaultProject()) {
       return clone(state);
     },
 
+    // 全部のMIDI（コード・メロディ・ベース・ドラム・裏メロ）を空にする。Key/BPM/構成/音色の方向性は残す。Undo 1手で戻せる
+    clearAllMusic() {
+      const next = clone(state);
+      next.chords = [];
+      next.tracks = next.tracks.map((track) => ({ ...track, notes: [] }));
+      validateChords(next.chords);
+      validateTracks(next.tracks);
+      next.revision = state.revision + 1;
+      commit(next);
+      return clone(state);
+    },
+
     updateRhythmNotes({ bassNotes = [], drumNotes = [] } = {}) {
       const next = clone(state);
       const nextBass = clone(bassNotes);

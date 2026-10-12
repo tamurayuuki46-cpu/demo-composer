@@ -1,0 +1,21 @@
+import assert from "node:assert/strict";
+import { createProjectStore } from "../src/core/project-state.js";
+
+const store = createProjectStore();
+store.updateChords([{ bar: 0, root: 0, quality: "maj", degree: "I" }].map((c) => ({ ...store.getSnapshot().chords[0], ...c })).filter(() => false));
+const note = (pitch, startTick) => ({ id: `n${pitch}${startTick}`, pitch, startTick, durationTick: 240, velocity: 80 });
+store.updateMelodyNotes([note(72, 0), note(74, 480)]);
+store.updateRhythmNotes({ bassNotes: [note(36, 0)], drumNotes: [note(36, 0)] });
+store.applyCounterMelody({ startBar: 0, endBar: 2, notes: [note(64, 0)] });
+const before = store.getSnapshot();
+store.clearAllMusic();
+const after = store.getSnapshot();
+assert.equal(after.chords.length, 0);
+assert.ok(after.tracks.every((track) => track.notes.length === 0));
+assert.equal(after.basic.bpm, before.basic.bpm);
+assert.equal(after.basic.key, before.basic.key);
+assert.deepEqual(after.structure, before.structure);
+assert.deepEqual(after.instruments, before.instruments);
+store.undo();
+assert.equal(store.getSnapshot().tracks.find((t) => t.role === "melody").notes.length, 2);
+console.log("clear all smoke test passed.");
