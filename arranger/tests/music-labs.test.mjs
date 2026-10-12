@@ -56,3 +56,12 @@ const counterOverride=by('c-rhythm');const legacyCounter=updateCandidateSection(
 assert.equal(arrangedNotes(source,legacyCounter,'counter').filter(n=>n.startTick>=7680&&n.startTick<15360).length,1);
 const pulse=by('d-density',0);const cleared=updateCandidateSection(pulse,'s1',{reharmonization:{chords:[{root:0,quality:'minor7',startTick:7680,durationTick:7680}]}});
 assert.equal(cleared.sections[1].partOverrides?.harmony,undefined);
+
+for(const quality of ['minorMajor7','diminished7','minor7flat5','dominant7flat9','major9']) {
+ const data=fixture();data.chords=data.chords.map(c=>({...c,quality}));const src=normalizeSourceProject(data),base=buildThreeCandidates(src)[2];
+ const choice=generateMusicLabCandidates(src,base,'s1','c-sustain')[1];assert.ok(choice.available);
+ const seventh=Q[quality].intervals.find(i=>i===10||i===11)??9;
+ for(const chord of src.chords.filter(c=>c.startTick>=7680&&c.startTick<15360)) {
+  const note=arrangedNotes(src,choice.candidate,'counter').find(n=>n.startTick===chord.startTick);assert.equal(note.pitch%12,(chord.root+seventh)%12,quality+' actual seventh');
+ }
+}

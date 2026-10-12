@@ -1,3 +1,4 @@
+import { CHORD_QUALITY_DEFINITIONS as Q } from './chord-qualities.js';
 import { pc,clamp,nearest,chordPC,readPart,putPart,scalePC,counterMaterial,chordAt,onlyGaps,clipNotes } from './music-lab-utils.js';
 function atMelody(melody,tick) {return melody.find(n=>n.startTick<=tick&&tick<n.startTick+n.durationTick)||[...melody].reverse().find(n=>n.startTick<=tick)||melody[0];}
 function repeats(ctx,motif,offset=0,factor=1) {
@@ -67,7 +68,7 @@ export function applyCounter(ctx,id,v) {
  if(id==='c-sustain') {
   notes=[];
   if(v===0)notes=[{pitch:72+ctx.tonic,startTick:ctx.section.startTick,durationTick:ctx.section.endTick-ctx.section.startTick,velocity:65}];
-  else if(v===1&&ctx.chords.length)notes=ctx.chords.map(c=>({pitch:nearest(72,[pc(c.root+(c.quality.startsWith('major')?11:10))]),startTick:c.startTick,durationTick:c.durationTick,velocity:68}));
+  else if(v===1&&ctx.chords.length)notes=ctx.chords.map(c=>({pitch:nearest(72,[pc(c.root+(c.quality==='diminished7'||c.quality==='diminished'?9:(Q[c.quality]?.intervals||[]).find(i=>i===10||i===11)??(c.quality.startsWith('minor')||c.quality.startsWith('dominant')?10:11)))]),startTick:c.startTick,durationTick:c.durationTick,velocity:68}));
   else for(let t=ctx.section.startTick,i=0;t<ctx.section.endTick;t+=ctx.bar*2,i++)notes.push({pitch:nearest(72+ctx.tonic+[0,7][i%2],scale),startTick:t,durationTick:Math.min(ctx.bar*2,ctx.section.endTick-t),velocity:68});
  }
  if(id==='c-register')notes=notes.map(n=>({...n,pitch:nearest(n.pitch,v===0?[pc(n.pitch)]:[pc(n.pitch)],...(v===0?[84,108]:v===1?[60,83]:[36,59]))}));

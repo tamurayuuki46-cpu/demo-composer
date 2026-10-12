@@ -20,6 +20,7 @@ Version: v0.4-dev
 【修正】
 ・旧7機能の採用結果が新Note Overrideに隠される競合を解消
 ・裏メロ分担解除後の古いA/Bラベルを除去
+・持続型裏メロでmMaj7/dim7/拡張コードの実7thを選択
 
 【未対応】
 ・Android実機とCubasis/Cubase実機の音質/取込確認
