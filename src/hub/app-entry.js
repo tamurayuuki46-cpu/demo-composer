@@ -4,6 +4,7 @@ import {
   rememberNewProjectError
 } from "./new-project.js";
 import { installNewProjectUi } from "./new-project-ui.js";
+import { installDriveExportUi } from "./drive-export.js";
 
 try {
   await completePendingNewProject();
@@ -16,3 +17,4 @@ try {
 
 await import("../main.js");
 installNewProjectUi();
+installDriveExportUi();
