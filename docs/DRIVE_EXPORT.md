@@ -28,21 +28,25 @@ Google Drive以外の共有先を選ぶこともできるため、UIの補足文
 
 ## AutoSaveとの整合
 
-Web Share APIはユーザーのタップ直後に呼び出す必要があるため、タップ後に長い非同期保存処理を挟まない。
+Drive Export UIはIndexedDBのActive Projectを事前に読み込み、Hubに表示されている `Revision` と保存済みProjectの `revision` が一致しているか確認する。
 
-Drive Export UIはIndexedDBのActive Projectを事前に読み込み、Hubに表示されている `Revision` と保存済みProjectの `revision` が一致した時だけボタンを有効にする。
+古いRevisionをDriveへ送らない方針は維持するが、Androidで「ボタンを押しても何も起きない」ように見えるのを避けるため、Driveボタン自体は常に押せる状態にする。
 
-一致しない間は:
+Revisionがまだ一致しない時に押した場合は:
 
-- ボタンを無効化
-- `AutoSaveの完了を待っています` と表示
-- 数秒待つか `Save Now` を押すよう案内
+- Hubメッセージに `Drive用の最新保存を確認中` と表示する
+- `Save Now` を押すか1〜2秒待つよう案内する
+- 裏では保存済みRevisionの再確認を続ける
+- 最新保存が確認できるまでは共有画面を開かない
 
-これにより、古いRevisionをDriveへ送る事故を避ける。
+これにより、古いRevisionの共有防止と、タップ時の明確な反応を両立する。
 
 ## 非対応環境
 
-`navigator.share` / File Shareに対応しないブラウザではDriveボタンを無効化し、従来の通常Exportを使うよう案内する。
+`navigator.share` / File Shareに対応しないブラウザでもDriveボタンは無効化しない。
+押した時に `Chromeで開くか、通常Exportを使ってください` とHubメッセージへ表示する。
+
+ChatGPTなどのアプリ内ブラウザでは、Web Share APIが制限される場合がある。その場合はAndroid ChromeでDemo Composerを開いて利用する。
 
 ## Data / Schema
 
@@ -51,6 +55,7 @@ Drive Export UIはIndexedDBのActive Projectを事前に読み込み、Hubに表
 - MIDI形式は変更しない
 - Googleアカウント情報、Drive file ID、OAuth tokenはProject Dataへ保存しない
 - Drive保存先フォルダはDemo Composer側で固定しない
+- 共有先にGoogle Driveを選んだ場合も、その端末で利用しているGoogleアカウント側のDriveへ保存する
 
 ## 実装
 
@@ -61,6 +66,10 @@ Drive Export UIはIndexedDBのActive Projectを事前に読み込み、Hubに表
 
 ## 復元点
 
-追加前:
+Drive Export追加前:
 
 `restore/v0.2-before-drive-share-export-latest`
+
+Driveボタン反応修正前:
+
+`restore/v0.2-before-drive-share-button-fix`
