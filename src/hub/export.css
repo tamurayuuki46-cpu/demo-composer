@@ -40,6 +40,31 @@
   }
 }
 
+.drive-export-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #303038;
+}
+
+.drive-export-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.drive-export-grid button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+.drive-export-grid button:disabled {
+  opacity: 0.48;
+}
+
 .import-heading {
   margin: 16px 0 8px;
 }
