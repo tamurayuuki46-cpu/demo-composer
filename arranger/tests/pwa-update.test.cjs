@@ -29,11 +29,18 @@ const server=http.createServer(async(req,res)=>{
   phase='current';
   // The old cache still owns the normal URL. A fresh entry must not reuse its core module.
   await page.goto(base+'?v=0.4.1');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
-  // First wait until the build-stamped worker is fully active. An already-open document can still
-  // report the legacy controller briefly, so reload once activation has completed and then assert
-  // that the new document is controlled by that exact build worker.
-  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated'&&r.active.scriptURL.includes('?build=')});
-  const buildWorkerUrl=await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.scriptURL||''});
+  // page.waitForFunction is intentionally not used for the async registration lookup. Poll inside
+  // page.evaluate so the Promise is awaited, then reload after the build-stamped worker is active.
+  const buildWorkerUrl=await page.evaluate(async()=>{
+   const deadline=Date.now()+30000;
+   while(Date.now()<deadline){
+    const r=await navigator.serviceWorker.getRegistration();
+    if(r?.active?.state==='activated'&&r.active.scriptURL.includes('?build='))return r.active.scriptURL;
+    await new Promise(resolve=>setTimeout(resolve,50));
+   }
+   const r=await navigator.serviceWorker.getRegistration();
+   throw new Error(`build worker did not activate: active=${r?.active?.scriptURL||'none'} waiting=${r?.waiting?.scriptURL||'none'} installing=${r?.installing?.scriptURL||'none'}`);
+  });
   assert.ok(buildWorkerUrl.includes('?build='));
   await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
   assert.equal(await page.evaluate(()=>localStorage.getItem('demo-composer-arranger-v0.3')),'old-data-kept');
