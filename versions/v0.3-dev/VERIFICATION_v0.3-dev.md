@@ -18,6 +18,11 @@
 - 公開確認で古いJSキャッシュの混在を発見し、Build ID付きの入口/依存URLで修正。
 - 新しい保存/操作ボタンは高さ44px以上に統一。採用/キャンセル時に古い試聴通知を閉じる。
 
+## GitHub Pages 再配信
+- PR #162でタッチ操作改善をdevelopへ統合したが、マージ直後のGitHub Pages push runが作成されず、公開Buildは453ac60のままだった。
+- 公開版へPR #162の変更を確実に反映するため、この記録更新をPages再配信トリガーとして使用する。
+- 再配信後は `build.json` のBuild ID更新と、公開画面の44pxボタン・採用/キャンセル時の試聴通知終了を再確認する。
+
 ## 未確認
 Android実機の描画・主観的な音質、Cubasis/Cubase実機への取込。
 クラウドChromeの確認をAndroid実機確認として扱わない。
@@ -26,4 +31,5 @@ Android実機の描画・主観的な音質、Cubasis/Cubase実機への取込�
 - 変更前: restore/v0.3-before-decision-support（Schema 2）
 - 機能統合: PR #160
 - キャッシュ修正: PR #161
+- タッチ操作改善: PR #162
 - 過去復元点とmainは維持。
