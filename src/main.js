@@ -196,7 +196,7 @@ function hubScreen() {
         <p class="status-message" id="export-status" aria-live="polite"></p>
         <h3 class="import-heading">読み込み</h3>
         <button id="import-project-json" class="import-button">project.jsonを読み込む</button>
-        <input id="import-project-file" type="file" accept=".json,application/json" hidden />
+        <input id="import-project-file" type="file" accept=".json,.txt,application/json,text/plain" hidden />
         <button id="import-midi" class="import-button">MIDIを読み込む（.mid）</button>
         <input id="import-midi-file" type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden />
         <p class="hint">MIDIを読み込むと、トラックごとの役割（Chord / Melody / Bass / Drums / 裏メロ）を確かめてから取り込めます。</p>

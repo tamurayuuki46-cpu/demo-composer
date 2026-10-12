@@ -19,8 +19,9 @@ const project = createDefaultProject();
 project.metadata.title = "Drive Test";
 
 const jsonFile = projectJsonShareFile(project, FakeFile);
-assert.equal(jsonFile.name, "project.json");
-assert.equal(jsonFile.type, "application/json");
+assert.equal(jsonFile.name, "project.json.txt");
+assert.equal(jsonFile.type, "text/plain");
+
 assert.match(String(jsonFile.parts[0]), /Drive Test/);
 
 const midiFiles = midiShareFiles(project, FakeFile);
@@ -45,7 +46,7 @@ const shared = await shareFiles([jsonFile], {
   title: "Drive Test"
 });
 assert.equal(shared.status, "shared");
-assert.equal(sharedPayload.files[0].name, "project.json");
+assert.equal(sharedPayload.files[0].name, "project.json.txt");
 
 const cancelled = await shareFiles([jsonFile], {
   navigatorObject: {
