@@ -64,6 +64,11 @@ let counterController;
 let soundController;
 let demoPlayer;
 
+function stopDecisionAudition() {
+  demoPlayer?.stop();
+  document.querySelector(".audition-toast")?.remove();
+}
+
 async function requestAuditionFor({ project, lengthTick, label }) {
   try {
     await demoPlayer.play(project, { lengthTick });
@@ -1256,7 +1261,7 @@ async function boot() {
     startupMessage = "保存データが現在のSchemaで不正なため、新しいProjectで開始しました。";
   }
 
-  decisionSupport = createDecisionSupport({ projectStore, rerender: render, onStop: () => demoPlayer?.stop(),
+  decisionSupport = createDecisionSupport({ projectStore, rerender: render, onStop: stopDecisionAudition,
     onBeginComparison: () => melodyController?.cancelComparison(),
     chordPresetCandidate: (project) => {
       const data = buildChordPreset(chordPresetSelection, { key: project.basic.key, scale: project.basic.scale, barTicks: project.basic.ppq * 4 });
@@ -1264,7 +1269,7 @@ async function boot() {
         data, label: `コード進行：${getChordPreset(chordPresetSelection).label}` };
     }
   });
-  melodyController = createMelodyController({ projectStore, rerender: render, onStop: () => demoPlayer?.stop(), onBeginComparison: () => decisionSupport.cancel() });
+  melodyController = createMelodyController({ projectStore, rerender: render, onStop: stopDecisionAudition, onBeginComparison: () => decisionSupport.cancel() });
   rhythmController = createRhythmController({ projectStore, rerender: render });
   soundController = createSoundController({ projectStore, rerender: render });
   demoPlayer = createDemoPlayer({ onStateChange: updatePlayerUi });
