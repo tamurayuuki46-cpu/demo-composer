@@ -7,6 +7,7 @@ import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar, MELODY_CANDIDATE_VARIATION_COUNT } from "./melody-candidates.js";
 import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
+import { counterNotes } from "../core/counter-melody.js";
 import { pitchClassRoles, pitchRoleText } from "./pitch-roles.js";
 
 const EIGHTH_LABELS = ["1", "&", "2", "&", "3", "&", "4", "&"];
@@ -44,7 +45,17 @@ export function createMelodyController({ projectStore, rerender }) {
   let peakShapeId = "rise";
   // Melody候補の別案番号。UI状態だけで、選んだ結果以外はproject.jsonへ保存しない
   let candidateVariation = 0;
+  // 編集するトラック（UI状態のみ）。"melody"=メイン / "counter"=裏メロ。同じPiano Rollで両方を手直しできる
+  let editTrack = "melody";
   let message = "セルをタップして8分音符を入力します。";
+
+  const isCounter = () => editTrack === "counter";
+  const readNotes = (project) => (isCounter() ? counterNotes(project) : getMelodyNotes(project));
+  // 裏メロは、全小節ぶんの範囲置き換えとして書く（Undoは1手・他のTrackには触れない）
+  const writeNotes = (notes) => (isCounter()
+    ? projectStore.applyCounterMelody({ startBar: 0, endBar: MAX_TOTAL_BARS + 1, notes })
+    : projectStore.updateMelodyNotes(notes));
+  const trackName = () => (isCounter() ? "裏メロ" : "メロディ");
 
   function stepTickSize(barTicks) {
     return barTicks / resolution;
@@ -175,7 +186,9 @@ export function createMelodyController({ projectStore, rerender }) {
     const { barTicks, stepTicks, barCount } = metrics(project);
     barIndex = Math.min(barIndex, barCount - 1);
 
-    const notes = getMelodyNotes(project);
+    const notes = readNotes(project);
+    // 裏メロを直すときは、メインのメロディを薄い目印として重ねて見せる（ぶつかりを目で確かめる）
+    const refNotes = isCounter() ? getMelodyNotes(project) : [];
     const pitches = getOctavePitches(octave);
     const visibleSteps = visibleStepNumbers();
     const barStartTick = barIndex * barTicks;
@@ -212,9 +225,10 @@ export function createMelodyController({ projectStore, rerender }) {
             // 8分表示のとき、このマスの後半(16分位置)にも同じ高さの音があれば印を付ける
             // 長い音の途中のマス（前のマスから伸びている部分）
             const held = !active && notes.some((note) => note.pitch === pitch && note.startTick < startTick && note.startTick + note.durationTick > startTick);
+            const ref = !active && !held && refNotes.some((note) => note.pitch === pitch && note.startTick <= startTick && note.startTick + note.durationTick > startTick);
             const hasSub = resolution === 8 && notes.some((note) => note.startTick === startTick + stepTicks / 2 && note.pitch === pitch);
             const beatStartClass = isBeatStart(step) ? " beat-start" : "";
-            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}${held ? " held" : ""}${hasSub ? " has-sub" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${stepLabel(step)}${roleText ? `（${roleText}）` : ""}"></button>`;
+            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}${held ? " held" : ""}${ref ? " ref" : ""}${hasSub ? " has-sub" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${stepLabel(step)}${roleText ? `（${roleText}）` : ""}"></button>`;
           }).join("")}
         </div>
       `;
@@ -224,11 +238,16 @@ export function createMelodyController({ projectStore, rerender }) {
       <section class="card melody-card">
         <div class="section-heading">
           <div>
-            <h2>Melody</h2>
+            <h2>${isCounter() ? "Melody ・ 裏メロ" : "Melody"}</h2>
             <p>Bar ${barIndex + 1} / ${barCount} ・ ${escapeHtml(chordLabel)}${sectionLabel(project, barIndex) ? ` ・ ${escapeHtml(sectionLabel(project, barIndex))}` : ""}</p>
           </div>
           <button id="clear-melody-bar" class="small-action">Clear Bar</button>
         </div>
+        <div class="melody-mode-switch melody-track-switch" role="group" aria-label="直すパート">
+          <button data-melody-track="melody" class="${isCounter() ? "" : "active"}" aria-pressed="${!isCounter()}">メイン</button>
+          <button data-melody-track="counter" class="${isCounter() ? "active" : ""}" aria-pressed="${isCounter()}">裏メロ</button>
+        </div>
+        ${isCounter() ? `<p class="hint counter-edit-hint">${notes.length > 0 ? "裏メロを直しています。薄い青のマスは、メインのメロディが鳴っている所です。重ならない高さ・休む場所を選ぶと聞き分けやすくなります。" : "裏メロはまだありません。Arrangeの「裏メロ」で候補を選ぶか、ここで1音ずつ入力できます。"}</p>` : ""}
         <div class="melody-legend-row">
           <ul class="pitch-legend" aria-label="色の意味">
             ${chord ? `<li><span class="pitch-dot role-chord" aria-hidden="true"></span>コード構成音</li>
@@ -240,7 +259,7 @@ export function createMelodyController({ projectStore, rerender }) {
         </div>
         ${showDegrees ? `<p class="hint degree-hint">鍵盤の文字は「${chord ? "このコードのルート" : "Keyの主音"}から何度か」です（R=ルート、3=3度、5=5度）。</p>` : ""}
 
-        <section class="melody-candidate-panel" aria-label="メロディ候補">
+        ${isCounter() ? "" : `<section class="melody-candidate-panel" aria-label="メロディ候補">
           <div class="melody-candidate-heading">
             <div>
               <strong>メロディ候補</strong>
@@ -261,7 +280,7 @@ export function createMelodyController({ projectStore, rerender }) {
             `).join("")}
           </div>
           <p class="hint">候補を選ぶと現在の1小節だけ置き換えます。「候補を更新」で別案に切り替えられます。選んだ後は下のPiano Rollで1音ずつ直せます（↶ で戻せます）。</p>
-        </section>
+        </section>`}
 
         <div class="melody-toolbar">
           <button id="melody-prev-bar"${barIndex === 0 ? " disabled" : ""}>← Bar</button>
@@ -306,9 +325,9 @@ export function createMelodyController({ projectStore, rerender }) {
           <button id="copy-melody-2bars"${canCopy(2) ? "" : " disabled"}>Copy 2小節 → Bar ${barIndex + 3}–${barIndex + 4}</button>
         </div>
 
-        ${peakPanelHtml(project, barCount)}
+        ${isCounter() ? "" : `${peakPanelHtml(project, barCount)}
         <button id="melody-analyzer-toggle" class="analyzer-toggle" aria-expanded="${analyzerOpen}">メロディの特徴${analyzerOpen ? " ▲" : " ▼"}</button>
-        ${analyzerOpen ? analyzerPanelHtml(project) : ""}
+        ${analyzerOpen ? analyzerPanelHtml(project) : ""}`}
 
         <p class="status-message" aria-live="polite">${escapeHtml(message)}</p>
         <p class="hint">${resolution === 8
@@ -323,6 +342,24 @@ export function createMelodyController({ projectStore, rerender }) {
     const { barTicks, stepTicks, barCount } = metrics(project);
     const barStartTick = barIndex * barTicks;
     const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave, variation: candidateVariation });
+
+    document.querySelectorAll("[data-melody-track]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const next = button.dataset.melodyTrack === "counter" ? "counter" : "melody";
+        if (next === editTrack) return;
+        editTrack = next;
+        // 裏メロに切り替えたら、その小節の裏メロが見える高さへOctaveを合わせる
+        const latest = projectStore.getSnapshot();
+        const inBar = readNotes(latest).filter((note) => note.startTick >= barStartTick && note.startTick < barStartTick + barTicks);
+        const base = inBar.length > 0 ? inBar : readNotes(latest);
+        if (base.length > 0) {
+          const mid = base.reduce((sum, note) => sum + note.pitch, 0) / base.length;
+          octave = Math.max(2, Math.min(6, Math.floor(mid / 12) - 1));
+        }
+        message = isCounter() ? "裏メロを直します。メインのメロディは薄く表示します。" : "メインのメロディを直します。";
+        rerender("melody");
+      });
+    });
 
     document.querySelector("#melody-candidate-refresh")?.addEventListener("click", () => {
       candidateVariation = (candidateVariation + 1) % MELODY_CANDIDATE_VARIATION_COUNT;
@@ -357,7 +394,7 @@ export function createMelodyController({ projectStore, rerender }) {
         const pitch = Number(button.dataset.melodyPitch);
         const step = Number(button.dataset.melodyStep);
         const latest = projectStore.getSnapshot();
-        const notes = getMelodyNotes(latest);
+        const notes = readNotes(latest);
         const startTick = barStartTick + step * stepTicks;
         const nextNotes = toggleMonophonicStep(notes, {
           pitch,
@@ -367,8 +404,8 @@ export function createMelodyController({ projectStore, rerender }) {
           resize: lengthSteps > 1
         });
 
-        projectStore.updateMelodyNotes(nextNotes);
-        message = `${pitchName(pitch)} / ${stepLabel(step)} を更新しました。（長さ: ${noteValueLabel(lengthSteps * stepTicks, latest.basic.ppq)}）`;
+        writeNotes(nextNotes);
+        message = `${isCounter() ? "【裏メロ】" : ""}${pitchName(pitch)} / ${stepLabel(step)} を更新しました。（長さ: ${noteValueLabel(lengthSteps * stepTicks, latest.basic.ppq)}）`;
         rerender("melody");
       });
     });
@@ -400,29 +437,29 @@ export function createMelodyController({ projectStore, rerender }) {
 
     document.querySelector("#clear-melody-bar")?.addEventListener("click", () => {
       const latest = projectStore.getSnapshot();
-      const nextNotes = clearBar(getMelodyNotes(latest), {
+      const nextNotes = clearBar(readNotes(latest), {
         barStartTick,
         barDurationTick: barTicks
       });
-      projectStore.updateMelodyNotes(nextNotes);
-      message = `Bar ${barIndex + 1} のメロディをクリアしました。`;
+      writeNotes(nextNotes);
+      message = `Bar ${barIndex + 1} の${trackName()}をクリアしました。`;
       rerender("melody");
     });
 
     // 現在の小節（bars=2なら現在と次の小節）を、すぐ後ろへコピーする。モチーフの繰り返し用
     const copyForward = (bars) => {
       const latest = projectStore.getSnapshot();
-      const notes = getMelodyNotes(latest);
+      const notes = readNotes(latest);
       const targetBarIndex = barIndex + bars;
 
       if (
         hasMelodyInBars(notes, { barIndex: targetBarIndex, bars, barTicks })
-        && !globalThis.confirm(`Bar ${targetBarIndex + 1}${bars > 1 ? `–${targetBarIndex + bars}` : ""} のメロディを上書きしますか？（↶ で戻せます）`)
+        && !globalThis.confirm(`Bar ${targetBarIndex + 1}${bars > 1 ? `–${targetBarIndex + bars}` : ""} の${trackName()}を上書きしますか？（↶ で戻せます）`)
       ) {
         return;
       }
 
-      projectStore.updateMelodyNotes(copyMelodyBars(notes, {
+      writeNotes(copyMelodyBars(notes, {
         sourceBarIndex: barIndex,
         targetBarIndex,
         bars,

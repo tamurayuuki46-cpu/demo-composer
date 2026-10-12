@@ -93,7 +93,7 @@ v0.2-dev
 - v0.2は機能が増えてきたため、追加機能より実制作での使いやすさ確認を優先する
 
 次に実装:
-000. Android実機で、`裏メロ` タブ（7ボタンの収まり）と新2タイプ（Arpeggio / Riff）の聞こえ方を確認。裏メロのPiano Rollでの手入力（Melody画面のPiano Rollを役割ごとに使い回す）は未実装
+000. Android実機で、`裏メロ` タブ（7ボタンの収まり）と新2タイプ（Arpeggio / Riff）の聞こえ方を確認。裏メロのPiano Roll手入力は実装済み（Melody画面の `メイン / 裏メロ` 切替）。実機で切替・薄い目印・入力のしやすさを確認
 00. Android実機で、Melodyの新しい初期音色（Vocal）と音量（-2dB）が合うか聴く。気になる音色は Sound画面で `Vocal Soft / Pad Lead` などに変えて比べる。音量が合わなければ `src/audio/demo-player.js` の `PART_LEVEL` を調整
 0. メロディ生成（味付け・スケールの色・盛り上がり）と裏メロ（ペンタ・Character・Motion）をAndroid実機で聴いて調整する。ブレスト案（`docs/MELODY_PHRASE_PLAN.md`）は実装済み
 1. Android公開版で Melody → 安定 / キャッチー / 浮遊感 の3候補と `↻ 候補を更新` が表示されることを確認

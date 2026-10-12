@@ -84,6 +84,16 @@
   border-color: #6a6a74;
 }
 
+/* 裏メロを直すときの、メインのメロディの目印（薄い青。入力済みの音ではない） */
+.note-cell.ref {
+  background: #cfe0f5;
+  border-color: #9db9dd;
+}
+
+.melody-track-switch {
+  margin-top: 8px;
+}
+
 .melody-secondary-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
