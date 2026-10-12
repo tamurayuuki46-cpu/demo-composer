@@ -1,8 +1,9 @@
 import { clearMusicPart, musicPartHasData } from "../core/music-clear.js";
 
-const PART_LABELS = Object.freeze({
+export const PART_LABELS = Object.freeze({
   chord: "コード",
   melody: "メロディ",
+  counter: "裏メロ",
   bass: "ベース",
   drums: "ドラム"
 });
@@ -20,6 +21,7 @@ export function partClearHtml() {
       <div class="export-grid" role="group" aria-label="消去するパート">
         <button class="danger" data-clear-music-part="chord">コードを消去</button>
         <button class="danger" data-clear-music-part="melody">メロディを消去</button>
+        <button class="danger" data-clear-music-part="counter">裏メロを消去</button>
         <button class="danger" data-clear-music-part="bass">ベースを消去</button>
         <button class="danger" data-clear-music-part="drums">ドラムを消去</button>
       </div>

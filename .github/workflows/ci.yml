@@ -51,6 +51,9 @@ jobs:
       - name: History (Undo / Redo) smoke test
         run: npm run test:history
 
+      - name: Project list / switch smoke test
+        run: npm run test:project-list
+
       - name: Section (Arrange) smoke test
         run: npm run test:section
 

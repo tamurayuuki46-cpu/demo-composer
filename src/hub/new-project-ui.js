@@ -6,7 +6,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function saveCurrentProjectThroughHub() {
+export async function saveCurrentProjectThroughHub() {
   const saveButton = document.querySelector("#save-project");
   const message = document.querySelector("#hub-message");
   if (!saveButton || !message) {
@@ -27,7 +27,7 @@ async function saveCurrentProjectThroughHub() {
     await sleep(60);
   }
 
-  throw new Error("現在のProjectの保存確認に時間がかかったため、新規Projectの作成を中止しました。");
+  throw new Error("現在のProjectの保存確認に時間がかかったため、操作を中止しました。");
 }
 
 function newProjectControls() {

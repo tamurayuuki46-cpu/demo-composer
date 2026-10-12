@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { clearMusicPart, musicPartHasData } from "../src/core/music-clear.js";
 import { createProjectStore } from "../src/core/project-state.js";
-import { partClearHtml } from "../src/hub/part-clear-ui.js";
+import { PART_LABELS, partClearHtml } from "../src/hub/part-clear-ui.js";
 
 const note = (pitch, startTick) => ({
   id: `n${pitch}-${startTick}`,
@@ -35,8 +35,9 @@ function trackNotes(project, role) {
 
 const hubHtml = partClearHtml();
 assert.match(hubHtml, /パートを消去/);
+assert.equal(PART_LABELS.counter, "裏メロ");
 
-for (const part of ["chord", "melody", "bass", "drums"]) {
+for (const part of ["chord", "melody", "counter", "bass", "drums"]) {
   const store = seededStore();
   const before = store.getSnapshot();
   assert.equal(musicPartHasData(before, part), true);
@@ -47,9 +48,9 @@ for (const part of ["chord", "melody", "bass", "drums"]) {
 
   if (part !== "chord") assert.equal(cleared.chords.length, before.chords.length);
   if (part !== "melody") assert.deepEqual(trackNotes(cleared, "melody"), trackNotes(before, "melody"));
+  if (part !== "counter") assert.deepEqual(trackNotes(cleared, "counter"), trackNotes(before, "counter"));
   if (part !== "bass") assert.deepEqual(trackNotes(cleared, "bass"), trackNotes(before, "bass"));
   if (part !== "drums") assert.deepEqual(trackNotes(cleared, "drums"), trackNotes(before, "drums"));
-  assert.deepEqual(trackNotes(cleared, "counter"), trackNotes(before, "counter"));
   assert.equal(before.chords.length, 1, "pure helper must not mutate the original project");
 
   store.replaceProject(cleared);
@@ -59,7 +60,7 @@ for (const part of ["chord", "melody", "bass", "drums"]) {
 }
 
 assert.throws(
-  () => clearMusicPart(seededStore().getSnapshot(), "counter"),
+  () => clearMusicPart(seededStore().getSnapshot(), "pad"),
   /消去できないパート/
 );
 
