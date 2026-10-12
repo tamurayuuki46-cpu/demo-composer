@@ -31,6 +31,9 @@ function tickToSeconds(project, tick) {
 // パートごとの基本の音量（ミュートでないときの値）。メインメロディは少し控えめにして、コード・ベースと混ざりやすくする
 const PART_LEVEL = Object.freeze({ chord: 1, melody: 0.8, bass: 1, drums: 1, counter: 1 });
 const partLevel = (role) => PART_LEVEL[role] ?? 1;
+// Noise系の打音を最大音量から突然始めると、Androidの小型スピーカーでは
+// 波形の不連続が「プツッ」というクリックとして聞こえやすい。数msだけ立ち上げる。
+const PERCUSSION_ATTACK_SECONDS = 0.003;
 
 function createGain(context, destination, amount) {
   const gain = context.createGain();
@@ -139,7 +142,8 @@ function scheduleKick(context, destination, activeSources, startTime) {
   oscillator.type = "sine";
   oscillator.frequency.setValueAtTime(150, startTime);
   oscillator.frequency.exponentialRampToValueAtTime(55, startTime + 0.12);
-  gain.gain.setValueAtTime(0.34, startTime);
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.linearRampToValueAtTime(0.34, startTime + PERCUSSION_ATTACK_SECONDS);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.14);
   oscillator.connect(gain);
   oscillator.start(startTime);
@@ -165,7 +169,12 @@ function scheduleNoiseHit(context, destination, activeSources, startTime, {
   filter.type = "highpass";
   filter.frequency.value = highpass;
   const gain = createGain(context, destination, gainAmount);
-  gain.gain.setValueAtTime(gainAmount, startTime);
+  const attackEnd = Math.min(
+    startTime + PERCUSSION_ATTACK_SECONDS,
+    startTime + duration * 0.35
+  );
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.linearRampToValueAtTime(gainAmount, attackEnd);
   gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
   source.connect(filter);
   filter.connect(gain);
