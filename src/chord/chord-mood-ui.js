@@ -29,7 +29,7 @@ const TAG_ALIAS = new Map([
 
 const selectedTags = new Set();
 // タブ（曲想/質感/場面）ごとに1つのタグを選んで一覧にする（UI状態のみ）。null = 未選択
-let listGroup = "emotion";
+let listGroup = null; // null = どのタブも開いていない（未選択）
 const listTags = { emotion: null, texture: null, scene: null };
 let listShowAll = false;
 const LIST_LIMIT = 10;
@@ -62,9 +62,9 @@ function currentKey() {
   return /^[A-G][#b]?$/.test(key) ? key : "C";
 }
 
-export function emotionListHtml({ group = listGroup, tag = listTags[listGroup], mode = "major", key = "C", showAll = listShowAll } = {}) {
-  const groupId = CHORD_MOOD_TAG_GROUPS[group] ? group : "emotion";
-  const groupTags = CHORD_MOOD_TAG_GROUPS[groupId];
+export function emotionListHtml({ group = listGroup, tag = group ? listTags[group] : null, mode = "major", key = "C", showAll = listShowAll } = {}) {
+  const groupId = CHORD_MOOD_TAG_GROUPS[group] ? group : null;
+  const groupTags = groupId ? CHORD_MOOD_TAG_GROUPS[groupId] : [];
   const rows = tag ? chordPresetsForTag(tag, { mode }) : [];
   const shown = showAll ? rows : rows.slice(0, LIST_LIMIT);
   const label = groupTags.find((item) => item.id === tag)?.label ?? "";
@@ -75,12 +75,13 @@ export function emotionListHtml({ group = listGroup, tag = listTags[listGroup], 
           <button type="button" role="tab" class="chord-mood-tab${id === groupId ? " active" : ""}" data-chord-tab="${escapeHtml(id)}" aria-selected="${id === groupId}">${escapeHtml(GROUP_LABELS[id] ?? id)}</button>
         `).join("")}
       </div>
-      <div class="chord-mood-chips" role="radiogroup" aria-label="${escapeHtml(GROUP_LABELS[groupId])}を1つ選ぶ">
+      ${groupId ? `<div class="chord-mood-chips" role="radiogroup" aria-label="${escapeHtml(GROUP_LABELS[groupId])}を1つ選ぶ">
+        <button type="button" role="radio" class="chord-mood-chip none${tag ? "" : " active"}" data-chord-emotion="" aria-checked="${!tag}">未選択</button>
         ${groupTags.map((item) => `
           <button type="button" role="radio" class="chord-mood-chip${item.id === tag ? " active" : ""}" data-chord-emotion="${escapeHtml(item.id)}" aria-checked="${item.id === tag}">${escapeHtml(item.label)}</button>
         `).join("")}
-      </div>
-      ${tag ? (rows.length === 0
+      </div>` : ""}
+      ${groupId && tag ? (rows.length === 0
         ? `<p class="chord-mood-empty">「${escapeHtml(label)}」に合う進行は、このScaleでは見つかりません。</p>`
         : `<p class="hint">「${escapeHtml(label)}」が強い順に ${shown.length} / ${rows.length} 件（${key} ${mode === "minor" ? "Minor" : "Major"} のコード名）</p>
           <ol class="chord-emotion-rows">
@@ -96,7 +97,8 @@ export function emotionListHtml({ group = listGroup, tag = listTags[listGroup], 
             `).join("")}
           </ol>
           ${rows.length > LIST_LIMIT ? `<button type="button" class="chord-emotion-more" data-chord-emotion-more>${showAll ? "上位だけ表示" : `全${rows.length}件を表示`}</button>` : ""}`)
-        : `<p class="chord-mood-empty">${escapeHtml(GROUP_LABELS[groupId])}を1つ選ぶと、その印象が強い進行を一覧にします。</p>`}
+        : groupId ? `<p class="chord-mood-empty">${escapeHtml(GROUP_LABELS[groupId])}を1つ選ぶと、その印象が強い進行を一覧にします。</p>`
+          : `<p class="chord-mood-empty">感情・質感・場面のタブを開くと、タグを1つ選んで進行を一覧にできます。</p>`}
     </div>`;
 }
 
@@ -151,9 +153,13 @@ export function chordMoodPanelHtml({
   const fromHub = inheritedLabels(intentValues);
 
   const groupsHtml = Object.entries(CHORD_MOOD_TAG_GROUPS).map(([groupId, groupTags]) => `
-    <div class="chord-mood-group">
-      <strong>${escapeHtml(GROUP_LABELS[groupId] ?? groupId)}</strong>
+    <details class="chord-mood-group"${groupTags.some((tag) => selected.has(tag.id)) ? " open" : ""}>
+      <summary>${escapeHtml(GROUP_LABELS[groupId] ?? groupId)}${(() => {
+        const picked = groupTags.filter((tag) => selected.has(tag.id)).map((tag) => tag.label);
+        return picked.length ? `<small>${escapeHtml(picked.join("・"))}</small>` : "<small>未選択</small>";
+      })()}</summary>
       <div class="chord-mood-chips" role="group" aria-label="${escapeHtml(GROUP_LABELS[groupId] ?? groupId)}タグ">
+        <button type="button" class="chord-mood-chip none${groupTags.some((tag) => selected.has(tag.id)) ? "" : " active"}" data-chord-mood-group-clear="${escapeHtml(groupId)}">未選択</button>
         ${groupTags.map((tag) => `
           <button
             type="button"
@@ -163,7 +169,7 @@ export function chordMoodPanelHtml({
           >${escapeHtml(tag.label)}</button>
         `).join("")}
       </div>
-    </div>
+    </details>
   `).join("");
 
   const resultsHtml = selected.size === 0
@@ -228,7 +234,7 @@ function renderPanel() {
 function bindPanelEvents() {
   document.querySelectorAll("[data-chord-emotion]").forEach((button) => {
     button.addEventListener("click", () => {
-      const id = button.dataset.chordEmotion;
+      const id = button.dataset.chordEmotion || null;
       listTags[listGroup] = listTags[listGroup] === id ? null : id;
       listShowAll = false;
       renderPanel();
@@ -236,7 +242,7 @@ function bindPanelEvents() {
   });
   document.querySelectorAll("[data-chord-tab]").forEach((button) => {
     button.addEventListener("click", () => {
-      listGroup = button.dataset.chordTab;
+      listGroup = listGroup === button.dataset.chordTab ? null : button.dataset.chordTab;
       listShowAll = false;
       renderPanel();
     });
@@ -252,6 +258,14 @@ function bindPanelEvents() {
       if (!tagId) return;
       if (selectedTags.has(tagId)) selectedTags.delete(tagId);
       else if (selectedTags.size < 3) selectedTags.add(tagId);
+      manualAdjusted = true;
+      renderPanel();
+    });
+  });
+
+  document.querySelectorAll("[data-chord-mood-group-clear]").forEach((button) => {
+    button.addEventListener("click", () => {
+      CHORD_MOOD_TAG_GROUPS[button.dataset.chordMoodGroupClear]?.forEach((tag) => selectedTags.delete(tag.id));
       manualAdjusted = true;
       renderPanel();
     });
