@@ -1,5 +1,6 @@
 import { syncCompositionIntentFromProject } from "../core/composition-intent.js";
 import { applyStartingPointConfirmText, buildStartingPointPatch, describeStartingPoint, GENRES, MOODS, progressionNames, QUESTIONS, suggestByAnswers, suggestStartingPoints } from "./starting-point.js";
+import { bindPartClear, partClearHtml } from "./part-clear-ui.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -91,7 +92,8 @@ function currentPoints() {
 
 export function startingPointHtml() {
   const toggle = `<button id="toggle-starting-point" class="song-card-toggle" aria-expanded="${open}">🧭 出発点を選ぶ（ジャンル × ムード / 質問）${open ? " ▲" : " ▼"}</button>`;
-  if (!open) return toggle;
+  const partClear = partClearHtml();
+  if (!open) return `${toggle}${partClear}`;
 
   return `
     ${toggle}
@@ -102,6 +104,7 @@ export function startingPointHtml() {
       </div>
       ${mode === "wizard" ? wizardBody() : pickBody()}
     </section>
+    ${partClear}
   `;
 }
 
@@ -113,6 +116,7 @@ function activeMood() {
 export function bindStartingPoint({ projectStore, setMessage, rerender, onPreview }) {
   // HubがProjectの曲想を持つ。起動時 / Hub再描画時に共有Intentへ同期する。
   syncCompositionIntentFromProject(projectStore.getSnapshot());
+  bindPartClear({ projectStore, setMessage, rerender });
 
   document.querySelector("#toggle-starting-point")?.addEventListener("click", () => {
     open = !open;
