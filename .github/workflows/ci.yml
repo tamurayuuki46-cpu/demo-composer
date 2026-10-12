@@ -21,6 +21,9 @@ jobs:
       - name: JavaScript syntax check
         run: npm run test:syntax
 
+      - name: Audio playback anti-click smoke test
+        run: node scripts/audio-playback-smoke-test.mjs
+
       - name: MIDI smoke test
         run: npm run test:midi
 
