@@ -1,3 +1,4 @@
+import { CHORD_QUALITY_GROUPS, chordIntervals } from "../core/chord-qualities.js";
 import { chordSymbol, degreeFromBase, rootToPitchClass } from "./chord-theory.js";
 
 // スケール系ごとの「7つのコード」一覧。3和音 / 7th / テンション の3段階。
@@ -78,5 +79,31 @@ export function scaleSetChords({ key, familyId, level }) {
       degree: degreeFromBase(ROMAN_BASES[index], quality),
       symbol: chordSymbol(root, quality)
     };
+  });
+}
+
+// テンション段階用: 各度ごとに、構成音が すべてそのスケールの音 に収まるテンション系コードを全部返す。
+// 対象は 6th・add9 / 9th・11th・13th / 変化音 のグループ（スケール外の音を含むものは出さない）。
+const TENSION_GROUP_IDS = Object.freeze(["sixth", "tension", "altered"]);
+
+export function scaleTensionChords({ key, familyId }) {
+  const family = getScaleFamily(familyId);
+  const tonic = rootToPitchClass(key);
+  const scalePcs = new Set(family.intervals.map((interval) => (tonic + interval) % 12));
+  const qualities = CHORD_QUALITY_GROUPS
+    .filter((group) => TENSION_GROUP_IDS.includes(group.id))
+    .flatMap((group) => group.qualities);
+
+  return family.intervals.map((interval, index) => {
+    const root = (tonic + interval) % 12;
+    const chords = qualities
+      .filter((quality) => chordIntervals(quality).every((tone) => scalePcs.has((root + tone) % 12)))
+      .map((quality) => ({
+        root,
+        quality,
+        degree: degreeFromBase(ROMAN_BASES[index], quality),
+        symbol: chordSymbol(root, quality)
+      }));
+    return { index, root, base: ROMAN_BASES[index], chords };
   });
 }

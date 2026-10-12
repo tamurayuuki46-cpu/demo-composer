@@ -49,3 +49,13 @@
 .chord-variant-group[open] > summary {
   margin-bottom: 4px;
 }
+
+/* テンション段階: 度ごとの一覧 */
+.scale-tension-row {
+  margin: 10px 0;
+}
+
+.scale-tension-row h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}

@@ -18,7 +18,7 @@ import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordsWithBarChord, draftChordsFromMelody, melodyBarCount, suggestChordsForBar } from "./chord/chord-for-melody.js";
 import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicChords, NOTE_NAMES, rootDegreeName, rootToPitchClass } from "./chord/chord-theory.js";
 import { chordScaleSetsHtml, resolveScaleFamilyId } from "./chord/chord-scale-sets-ui.js";
-import { scaleSetChords } from "./chord/chord-scale-sets.js";
+import { scaleSetChords, scaleTensionChords } from "./chord/chord-scale-sets.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
@@ -896,6 +896,19 @@ function bindChordControls() {
         level: scaleSetLevel
       });
       appendCandidate(chords[Number(button.dataset.scaleChord)]);
+    });
+  });
+
+  document.querySelectorAll("[data-scale-tension]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const latest = projectStore.getSnapshot();
+      const [rowIndex, quality] = button.dataset.scaleTension.split(":");
+      const row = scaleTensionChords({
+        key: latest.basic.key,
+        familyId: resolveScaleFamilyId(latest.basic.scale, scaleSetFamily)
+      })[Number(rowIndex)];
+      const chord = row?.chords.find((item) => item.quality === quality);
+      if (chord) appendCandidate(chord);
     });
   });
 
