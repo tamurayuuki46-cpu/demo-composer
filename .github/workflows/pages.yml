@@ -34,7 +34,9 @@ jobs:
         run: npm run build
 
       - name: Verify build output
-        run: test -f dist/index.html
+        run: |
+          test -f dist/index.html
+          test -f dist/arranger/index.html
 
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'
