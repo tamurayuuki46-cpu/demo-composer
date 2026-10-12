@@ -11,6 +11,7 @@ import {
   hasCounter,
   withCounterNotes
 } from "../src/core/counter-melody.js";
+import { CHARACTER_IDIOMS } from "../src/core/character-phrases.js";
 import { buildMidiExports } from "../src/midi/midi-export.js";
 import { appendSectionCopy, getSections, sliceProject } from "../src/core/section-ops.js";
 
@@ -126,6 +127,31 @@ assert.match(phrygianCandidate.description, /♭2/);
 assert.ok(phrygianCandidate.notes.every((note) => note.startTick + note.durationTick <= 4 * BAR));
 const defaultCharacter = counterCandidates(project, { startBar: 0, endBar: 4 }).find((item) => item.id === "character");
 assert.match(defaultCharacter.label, /Lydian|Dorian/);
+
+// スケール別の型: すべてそのスケールの音だけ / 小節内 / 特性音が長い音に入る / 型ごとに4小節が違う
+const idiomScales = {
+  dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10], lydian: [0, 2, 4, 6, 7, 9, 11],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10], locrian: [0, 1, 3, 5, 6, 8, 10], "harmonic-minor": [0, 2, 3, 5, 7, 8, 11],
+  "melodic-minor": [0, 2, 3, 5, 7, 9, 11], "phrygian-dominant": [0, 1, 4, 5, 7, 8, 10], "double-harmonic": [0, 1, 4, 5, 7, 8, 11],
+  "hungarian-minor": [0, 2, 3, 6, 7, 8, 11], "whole-tone": [0, 2, 4, 6, 8, 10], "diminished-wh": [0, 2, 3, 5, 6, 8, 9, 11],
+  "diminished-hw": [0, 1, 3, 4, 6, 7, 9, 10], blues: [0, 3, 5, 6, 7, 10], "lydian-dominant": [0, 2, 4, 6, 7, 9, 10],
+  altered: [0, 1, 3, 4, 6, 8, 10], "miyako-bushi": [0, 1, 5, 7, 8], "in-sen": [0, 1, 5, 7, 10], ritsu: [0, 2, 5, 7, 9], ryukyu: [0, 4, 5, 7, 11]
+};
+Object.entries(idiomScales).forEach(([id, intervals]) => {
+  assert.ok(CHARACTER_IDIOMS[id], `${id} has an idiom`);
+  const picked = characterOf({ id, label: id, intervals });
+  assert.ok(picked.notes.length >= 12, `${id} has enough notes`);
+  assert.ok(picked.notes.every((note) => intervals.includes(note.pitch % 12)), `${id} stays in the scale`);
+  assert.ok(picked.notes.every((note) => note.startTick + note.durationTick <= 4 * BAR && note.durationTick > 0), `${id} stays in range`);
+  assert.ok(picked.notes.every((note) => note.pitch >= 45 && note.pitch <= 84), `${id} stays singable`);
+  const special = characterIntervals(intervals);
+  assert.ok(picked.notes.some((note) => special.includes(note.pitch % 12) && note.durationTick >= STEP * 1.8), `${id} holds a characteristic tone`);
+  const perBar = [0, 1, 2, 3].map((bar) => picked.notes.filter((note) => Math.floor(note.startTick / BAR) === bar).map((note) => `${note.pitch}:${note.startTick % BAR}`).join(","));
+  assert.equal(new Set(perBar).size, 4, `${id} bars are all different`);
+  assert.match(picked.description, new RegExp(CHARACTER_IDIOMS[id].feel.slice(0, 6)));
+});
+// 型の無いスケール（例: Dorian♭2）は従来の共通型
+assert.ok(characterOf({ id: "dorian-flat2", label: "Dorian ♭2", intervals: [0, 1, 3, 5, 7, 9, 10] }).notes.length >= 12);
 
 // Answer: 語尾側（後半）を優先し、Sparseより長い2拍単位の返しを作る。
 // Arpeggio: 8分の細かい動きで、メロディの下に置かれ、半音でぶつからない
