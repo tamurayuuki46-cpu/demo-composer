@@ -37,6 +37,7 @@
     "test:section-compare": "node scripts/section-compare-smoke-test.mjs",
     "test:peak-guide": "node scripts/peak-guide-smoke-test.mjs",
     "test:counter-melody": "node scripts/counter-melody-smoke-test.mjs",
+    "test:counter-edit": "node scripts/counter-edit-smoke-test.mjs",
     "test:skeleton-check": "node scripts/skeleton-check-smoke-test.mjs",
     "test:guide": "node scripts/guide-smoke-test.mjs",
     "test:midi-import": "node scripts/midi-import-smoke-test.mjs",

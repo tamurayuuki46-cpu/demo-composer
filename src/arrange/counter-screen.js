@@ -135,7 +135,7 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
         `}
 
         ${filled > 0 ? `<button type="button" class="danger" id="counter-clear">この範囲の裏メロを消す</button>` : ""}
-        <p class="hint">裏メロは ${counterNotes(project).length} 音あります。Demo Playerの「パート」で裏メロだけミュートして聴き比べられます。Piano Rollでの手入力は、今後の追加候補です。</p>
+        <p class="hint">裏メロは ${counterNotes(project).length} 音あります。Demo Playerの「パート」で裏メロだけミュートして聴き比べられます。選んだあとの手直しは、Melody画面の「裏メロ」ボタンでPiano Rollから1音ずつできます。</p>
       </section>
     `;
   }
