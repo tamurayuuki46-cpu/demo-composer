@@ -120,7 +120,7 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
 
         ${error ? `<p class="hint">${escapeHtml(error)}</p>` : `
           <div class="counter-candidates">
-            ${candidates.map((candidate) => `
+            ${[...candidates].sort((x, y) => (y.id === "character") - (x.id === "character")).map((candidate) => `
               <div class="counter-pick">
                 <strong>${escapeHtml(candidate.label)}</strong>
                 ${whyHtml(candidate.description)}
