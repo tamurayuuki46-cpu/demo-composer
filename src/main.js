@@ -285,6 +285,8 @@ function chordScreen() {
         </div>
         <button id="clear-chords" class="small-action"${project.chords.length ? "" : " disabled"}>Clear</button>
       </div>
+      <button id="clear-all-music" class="danger"${hasAnyMusic(project) ? "" : " disabled"}>全てのMIDIをクリア</button>
+      <p class="hint">コード・メロディ・ベース・ドラム・裏メロをすべて空にします（Key・BPM・構成・音色は残ります。↶ で戻せます）。</p>
 
       <div class="chord-preset-panel">
         <label for="chord-preset-select">Chord Preset（${CHORD_PRESETS.length}種類）</label>
@@ -531,6 +533,10 @@ function exportMidiFile(filename) {
 
   downloadBytes(bytes, filename);
   setExportMessage(`${filename}を書き出しました。`);
+}
+
+function hasAnyMusic(project) {
+  return project.chords.length > 0 || project.tracks.some((track) => track.notes.length > 0);
 }
 
 function bindHubControls() {
@@ -1057,6 +1063,15 @@ function bindChordControls() {
 
       commitChordUpdate(next, "コードを削除しました。");
     });
+  });
+
+  document.querySelector("#clear-all-music")?.addEventListener("click", () => {
+    if (!globalThis.confirm("コード・メロディ・ベース・ドラム・裏メロをすべて消します。Key・BPM・構成・音色は残ります。よろしいですか？（↶ で戻せます）")) return;
+    demoPlayer.stop();
+    chordRootSelection = null;
+    projectStore.clearAllMusic();
+    chordMessage = "全てのMIDI（コード・メロディ・ベース・ドラム・裏メロ）をクリアしました。↶ で戻せます。";
+    render("chord");
   });
 
   document.querySelector("#clear-chords")?.addEventListener("click", () => {
