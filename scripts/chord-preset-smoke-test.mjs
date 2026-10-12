@@ -9,6 +9,7 @@ import {
   chordPresetNames,
   getChordPreset
 } from "../src/chord/chord-presets.js";
+import { chordPresetMoodText } from "../src/chord/chord-mood-tags.js";
 import { CHORD_SONG_REFERENCES } from "../src/chord/chord-song-references.js";
 
 const barTicks = 1920;
@@ -106,4 +107,16 @@ console.log("Chord preset smoke test passed.");
   assert.ok(withoutNames.every((preset) => !preset.label.includes("｜C–") || preset.label.includes("｜C–")));
   const first = CHORD_PRESETS[0];
   assert.match(chordPresetOptionLabel(first, { key: "G", scale: "major" }), /｜G/);
+}
+
+// 選択肢に 曲想 / 質感 / 場面 のタグを添える
+{
+  const text = chordPresetMoodText("pop-6415");
+  assert.match(text, /^曲想 .+｜質感 .+｜場面 .+$/);
+  const label = chordPresetOptionLabel(getChordPreset("pop-6415"), { key: "C", scale: "major", tagsFor: (preset) => chordPresetMoodText(preset) });
+  assert.ok(label.includes(text) && label.includes("｜Am–F–C–G"));
+  assert.equal(chordPresetMoodText("no-such-preset"), "");
+  chordPresetsByCategory({ key: "C", scale: "major", tagsFor: (preset) => chordPresetMoodText(preset) })
+    .flatMap((category) => category.presets)
+    .forEach((preset) => assert.ok(/曲想 /.test(preset.label)));
 }

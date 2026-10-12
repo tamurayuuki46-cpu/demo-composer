@@ -95,10 +95,12 @@ function presetNumber(preset) {
 }
 
 // 選択肢の文字。key/scaleを渡すと、いまのKeyでのコード名（C–Em–Am–F…）も添える（度数だけだと、実際に何のコードか分かりにくいため）
-export function chordPresetOptionLabel(preset, { key = null, scale = null } = {}) {
+// tagsFor(preset) は「切ない・哀愁・別れ」のような曲想・感情の文字を返す関数（循環importを避けるため、呼ぶ側から渡す）
+export function chordPresetOptionLabel(preset, { key = null, scale = null, tagsFor = null } = {}) {
   const number = presetNumber(preset);
   const base = preset.label.includes(number) ? preset.label : `${number} ${preset.label}`;
-  const names = key && scale ? `｜${chordPresetNames(preset, { key, scale })}` : "";
+  const tags = tagsFor ? tagsFor(preset) : "";
+  const names = `${key && scale ? `｜${chordPresetNames(preset, { key, scale })}` : ""}${tags ? `｜${tags}` : ""}`;
   const reference = chordSongReference(preset.id);
   return reference ? `${base}${names}｜${reference.song} / ${reference.artist}` : `${base}${names}`;
 }

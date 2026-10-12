@@ -224,3 +224,24 @@ export function recommendChordPresetsByMood(selectedTags, { mode = "any", limit 
 export function chordMoodTagLabel(tagId) {
   return tagInfo(tagId).label;
 }
+
+// 選択肢に添える「曲想 / 質感 / 場面」の文字。各グループで1つずつ。
+// カテゴリ共通のタグだけだと同じ文字が並ぶので、その進行ならではの特徴（終わり方・出だし・長さ・dim）から来たタグを少し優先する
+const MOOD_GROUP_LABELS = Object.freeze({ emotion: "曲想", texture: "質感", scene: "場面" });
+const SEQUENCE_BONUS = 2;
+export function chordPresetMoodText(presetOrId) {
+  const preset = typeof presetOrId === "string" ? CHORD_PRESETS.find((item) => item.id === presetOrId) : presetOrId;
+  const profile = chordMoodProfile(preset);
+  if (!profile) return "";
+  const own = sequenceWeights(preset);
+  return Object.entries(MOOD_GROUP_LABELS)
+    .map(([group, label]) => {
+      const top = profile.tags
+        .filter((tag) => tag.group === group)
+        .map((tag) => ({ tag, score: tag.weight + (own[tag.id] ? SEQUENCE_BONUS : 0) }))
+        .sort((a, b) => (b.score - a.score) || (b.tag.weight - a.tag.weight))[0]?.tag;
+      return top ? `${label} ${top.label}` : null;
+    })
+    .filter(Boolean)
+    .join("｜");
+}
