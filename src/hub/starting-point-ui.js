@@ -1,3 +1,4 @@
+import { syncCompositionIntentFromProject } from "../core/composition-intent.js";
 import { applyStartingPointConfirmText, buildStartingPointPatch, describeStartingPoint, GENRES, MOODS, progressionNames, QUESTIONS, suggestByAnswers, suggestStartingPoints } from "./starting-point.js";
 
 function escapeHtml(value) {
@@ -110,6 +111,9 @@ function activeMood() {
 }
 
 export function bindStartingPoint({ projectStore, setMessage, rerender, onPreview }) {
+  // HubがProjectの曲想を持つ。起動時 / Hub再描画時に共有Intentへ同期する。
+  syncCompositionIntentFromProject(projectStore.getSnapshot());
+
   document.querySelector("#toggle-starting-point")?.addEventListener("click", () => {
     open = !open;
     rerender();
@@ -171,6 +175,7 @@ export function bindStartingPoint({ projectStore, setMessage, rerender, onPrevie
       if (ask && !globalThis.confirm(ask)) return;
       try {
         projectStore.applyStartingPoint(buildStartingPointPatch(project, point, { mood: activeMood() }));
+        syncCompositionIntentFromProject(projectStore.getSnapshot());
         open = false;
         rerender();
         setMessage(`「${point.label}」を入れました。Chordで進行、Rhythmでドラムを確認して、メロディを乗せてみましょう。`);
