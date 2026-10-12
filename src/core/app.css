@@ -766,3 +766,4 @@ h1 {
   color: #111;
   font-weight: 700;
 }
+.audition-toast { width: max-content; max-width: calc(100vw - 32px); text-align: center; border-radius: 16px; font-size: 13px; line-height: 1.4; }

@@ -200,3 +200,11 @@
   color: #f5f5f5;
   font: inherit;
 }
+
+/* ▶ 聴く を select の下に置く（select + 適用 の2列は崩さない） */
+.chord-preset-controls #audition-chord-preset {
+  grid-column: 1 / -1;
+  background: #26262d;
+  color: #f5f5f5;
+  border: 1px solid #4a4a58;
+}
