@@ -292,7 +292,7 @@ function chordScreen() {
         <label for="chord-preset-select">Chord Preset（${CHORD_PRESETS.length}種類）</label>
         <div class="chord-preset-controls">
           <select id="chord-preset-select" aria-label="Chord Preset">
-            ${chordPresetsByCategory().map((category) => `<optgroup label="${escapeHtml(category.label)}（${category.presets.length}）">${category.presets.map((preset) => `<option value="${preset.id}"${preset.id === chordPresetSelection ? " selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}</optgroup>`).join("")}
+            ${chordPresetsByCategory({ key: project.basic.key, scale: project.basic.scale }).map((category) => `<optgroup label="${escapeHtml(category.label)}（${category.presets.length}）">${category.presets.map((preset) => `<option value="${preset.id}"${preset.id === chordPresetSelection ? " selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}</optgroup>`).join("")}
           </select>
           <button id="apply-chord-preset">適用</button>
         </div>

@@ -94,11 +94,23 @@ function presetNumber(preset) {
   return preset.degreeIndexes.map((degreeIndex) => degreeIndex + 1).join("");
 }
 
-export function chordPresetOptionLabel(preset) {
+// 選択肢の文字。key/scaleを渡すと、いまのKeyでのコード名（C–Em–Am–F…）も添える（度数だけだと、実際に何のコードか分かりにくいため）
+export function chordPresetOptionLabel(preset, { key = null, scale = null } = {}) {
   const number = presetNumber(preset);
   const base = preset.label.includes(number) ? preset.label : `${number} ${preset.label}`;
+  const names = key && scale ? `｜${chordPresetNames(preset, { key, scale })}` : "";
   const reference = chordSongReference(preset.id);
-  return reference ? `${base}｜${reference.song} / ${reference.artist}` : base;
+  return reference ? `${base}${names}｜${reference.song} / ${reference.artist}` : `${base}${names}`;
+}
+
+// いまのKey / Scaleでのコード名だけをつないだ文字（例: C–Em–Am–F）
+export function chordPresetNames(presetOrId, { key, scale }) {
+  const preset = typeof presetOrId === "string" ? getChordPreset(presetOrId) : presetOrId;
+  const diatonic = getDiatonicChords(key, scale);
+  return preset.degreeIndexes.map((degreeIndex) => {
+    const chord = diatonic[degreeIndex];
+    return chordSymbol(chord.root, chord.quality);
+  }).join("–");
 }
 
 function withLearningReference(preset) {
@@ -135,12 +147,12 @@ export const CHORD_PRESETS = Object.freeze(
   [...BASE_PRESETS, ...buildExtraPresets()].map(withLearningReference)
 );
 
-export function chordPresetsByCategory() {
+export function chordPresetsByCategory(options = {}) {
   return CHORD_PRESET_CATEGORIES.map((category) => ({
     ...category,
     presets: CHORD_PRESETS.filter((preset) => preset.category === category.id).map((preset) => ({
       ...preset,
-      label: chordPresetOptionLabel(preset)
+      label: chordPresetOptionLabel(preset, options)
     }))
   }));
 }

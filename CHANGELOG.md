@@ -21,6 +21,7 @@
 - Melody画面に `メイン / 裏メロ` の切替。同じPiano Rollで裏メロを1音ずつ手直しできる（タップで入力・削除、音の長さ、8/16分、Clear Bar、Copy Bar、Octave）。裏メロ編集中はメインのメロディを薄い青の目印で重ねて表示し、ぶつかりを確かめやすくした。メロディ候補・山の位置・特徴パネルはメイン専用（裏メロ編集中は隠す）。書き込みは `applyCounterMelody` で全範囲置き換え（Undo 1手、他Trackは不変）。Schema変更なし（`npm run test:counter-edit`）
 
 ### 変更
+- Chord Presetの選択肢に、いまのKey / Scaleでのコード名を表示（例: `Pop 1564｜C–G–Am–F｜曲名 / アーティスト`）。度数だけでは実際に何のコードか分かりにくかったため。Keyを変えると、次にChord画面を開いたときに選択肢のコード名も変わる。Schema変更なし
 - 裏メロ画面で `Character（特性音型）` を候補の一番上に表示（他の並びは従来どおり。生成側の順序・テストは変更なし）
 - 裏メロ `Character（特性音型）` を、スケールごとの「らしい動き」で作るようにした（`src/core/character-phrases.js`）。Dorian（♮6を伸ばして下りる）/ Phrygian（♭2↔主音のため息）/ Lydian（♯4から5度へ浮かぶ）/ Mixolydian（♭7）/ Locrian（解決せず♭5で止まる）/ ハーモニックマイナー（♭6→♮7の増2度）/ メロディックマイナー（♮6→♮7の駆け上がり）/ Phrygian Dominant（4→3→♭2→1のアンダルシア）/ Double Harmonic / Hungarian Minor / ホールトーン（全音で浮遊、解決しない）/ ディミニッシュ（減七のジグザグ）/ ブルース（♭5の経過）/ Lydian Dominant / Altered / 都節音階・陰旋法・律・琉球音階。小節ごとに ①提示 ②返し ③高まり ④解決 が違い、範囲の最後は必ず④。型の無いスケールは従来の共通型。主旋律が鳴っている所は少し弱める。Schema変更なし
 
