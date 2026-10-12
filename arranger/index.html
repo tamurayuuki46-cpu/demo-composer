@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>Arrangement Lab</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Demo Composer companion</p>
+      <h1>Arrangement Lab</h1>
+      <p class="subtitle">同じ曲を3つの編曲方向で比べて、採用する。</p>
+    </div>
+    <span id="version" class="version"></span>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panel-title"><span class="step">1</span><div><h2>曲を読み込む</h2><p>Demo Composerのproject.jsonを使用します。元データは変更しません。</p></div></div>
+      <label id="drop-zone" class="drop-zone">
+        <input id="project-file" type="file" accept="application/json,.json,.txt">
+        <strong>project.jsonを選ぶ</strong>
+        <span>またはここへドロップ</span>
+      </label>
+      <div id="source-summary" class="source-summary"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><span class="step">2</span><div><h2>編曲の方向</h2><p>まず大枠だけ選びます。細かい音作りやMixはCubasis / Cubase側です。</p></div></div>
+      <div class="controls-row">
+        <label class="field"><span>Style</span><select id="style-select"></select></label>
+        <button id="generate-btn" class="secondary">3案を作り直す</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><span class="step">3</span><div><h2>3案を比較</h2><p>A=余白、B=標準、C=展開強め。Sectionごとの役割を見比べます。</p></div></div>
+      <div id="candidate-tabs" class="candidate-tabs"></div>
+      <div id="candidate-meta" class="candidate-meta"></div>
+      <div id="sections" class="sections"></div>
+      <div class="sticky-actions">
+        <button id="adopt-btn" class="primary">この案を採用</button>
+        <button id="export-btn" class="secondary" disabled>編曲プランJSONを書き出す</button>
+      </div>
+    </section>
+
+    <section class="panel danger-zone">
+      <h2>端末内データ</h2>
+      <p>採用した編曲プランだけを消去します。Demo Composerの曲は消しません。</p>
+      <button id="clear-btn" class="danger">編曲プランを消去</button>
+    </section>
+  </main>
+
+  <div id="message" class="toast" hidden></div>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>

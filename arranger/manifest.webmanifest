@@ -1,0 +1,10 @@
+{
+  "name": "Arrangement Lab",
+  "short_name": "Arranger",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#111827",
+  "lang": "ja",
+  "description": "Demo Composerのproject.jsonから3つの編曲方向を比較するAndroid向けPWA"
+}
