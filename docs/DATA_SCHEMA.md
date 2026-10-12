@@ -315,3 +315,6 @@ Schema変更時は必ず:
 5. project.json Importも同じMigrationで変換する。読み込んだ元ファイルは上書きしない。現行Projectとの置換はUndo可。
 6. Schema 3は旧アプリでは拒否される。ロールバックは旧コード＋退避した旧schemaのJSONを使う。新しいJSONのschema番号だけを書き換えない。
 7. MIDIは言葉の意図を運ばない。MIDI Importでは現行のcompositionとmetadata.memoを保持する。新しいコードやSectionに旧目的タグを自動対応させない。JSON Importは読み込んだファイルの意図を使用。
+
+## Companion Arrangement Lab (v0.3)
+Demo ComposerのSchemaを変更せず、独立Arrangement Plan Schema 3をarranger側で管理する。Counterの採用Note/休み、Harmony pattern、リハモと理由はPlanのSection内へ保存。正本: arranger/docs/PRODUCT_SPEC.md。Demo ComposerのIndexedDBには書き戻さない。

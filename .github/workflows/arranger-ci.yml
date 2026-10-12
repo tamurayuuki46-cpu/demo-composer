@@ -27,11 +27,15 @@ jobs:
           node --check arranger/src/app.js
           node --check arranger/sw.js
           node --check arranger/src/preview.js
+          node --check arranger/src/reharm-theory.js
+          node --check arranger/src/arrangement-tools.js
+          node --check arranger/src/feature-ui.js
 
       - name: Arrangement Lab core regression
         run: |
           node arranger/tests/core.test.mjs
           node arranger/tests/regression.test.mjs
+          node arranger/tests/features.test.mjs
 
       - name: Static build includes Arrangement Lab
         run: |
