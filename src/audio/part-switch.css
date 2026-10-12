@@ -13,7 +13,7 @@
 }
 .part-buttons {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 5px;
 }
 .demo-player .part-buttons button {
@@ -29,6 +29,21 @@
 .demo-player .part-buttons .part-solo {
   background: #3a3a44;
 }
+.part-quick {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.demo-player .part-quick button {
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0;
+  background: #3a3a44;
+}
+.demo-player .part-quick button.active {
+  background: #f1f1f1;
+  color: #111;
+}
 .part-hint {
   margin: 0;
   font-size: 11px;
@@ -36,5 +51,5 @@
 }
 
 body.parts-open #app {
-  padding-bottom: 240px;
+  padding-bottom: 280px;
 }

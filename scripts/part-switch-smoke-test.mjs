@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { isPartAudible, toggleMute, toggleSolo } from "../src/audio/part-switch-ui.js";
+import { isPartAudible, setAllParts, toggleMute, toggleSolo } from "../src/audio/part-switch-ui.js";
 
 const roles = ["chord", "melody", "bass", "drums"];
 const audible = (s) => roles.filter((r) => isPartAudible(s, r));
@@ -32,3 +32,13 @@ const before = { muted: new Set(["bass"]), solo: null };
 toggleMute(before, "chord");
 assert.deepEqual([...before.muted], ["bass"]);
 console.log("part switch smoke test passed");
+
+{
+  const roles = ["chord", "melody", "bass", "drums", "counter"];
+  let state = setAllParts(roles, false);
+  assert.equal(roles.some((role) => isPartAudible(state, role)), false);
+  state = toggleMute(state, "chord");
+  state = toggleMute(state, "counter");
+  assert.deepEqual(roles.filter((role) => isPartAudible(state, role)), ["chord", "counter"]);
+  assert.equal(roles.every((role) => isPartAudible(setAllParts(roles, true), role)), true);
+}
