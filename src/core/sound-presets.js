@@ -30,7 +30,7 @@ export const SOUND_PARTS = Object.freeze([
         layers: VOCAL_SAW_LAYERS, vibrato: { rate: 4.8, depth: 10, delay: 0.3 }, formants: VOWEL_A
       }
     ]),
-    defaultPreset: "keys"
+    defaultPreset: "pad"
   },
   {
     id: "melody",
@@ -80,7 +80,7 @@ export const SOUND_PARTS = Object.freeze([
         layers: [{ type: "sine", ratio: 1, gain: 0.7 }, { type: "sine", ratio: 2.76, gain: 0.3 }]
       }
     ]),
-    defaultPreset: "vocal"
+    defaultPreset: "strings-lead"
   },
   {
     id: "bass",
@@ -98,7 +98,7 @@ export const SOUND_PARTS = Object.freeze([
         layers: [{ type: "sawtooth", detune: -12, gain: 0.5 }, { type: "square", detune: 12, gain: 0.5 }]
       }
     ]),
-    defaultPreset: "soft-bass"
+    defaultPreset: "deep-bass"
   }
 ]);
 

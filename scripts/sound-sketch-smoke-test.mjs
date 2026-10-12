@@ -25,7 +25,7 @@ assert.equal(DEFAULT_SOUND_SELECTIONS.length, 3);
 const project = createDefaultProject();
 assert.deepEqual(getSoundSelection(project.instruments, "chord"), {
   part: "chord",
-  preset: "keys",
+  preset: "pad",
   tone: "natural"
 });
 
@@ -64,8 +64,10 @@ for (const part of SOUND_PARTS) {
 }
 
 // ---- ボカロ風などの声に近い音色
-assert.equal(SOUND_PARTS[1].defaultPreset, "vocal", "Melodyの初期音色はボカロ風");
-assert.equal(getSoundSelection([], "melody").preset, "vocal");
+assert.equal(SOUND_PARTS[1].defaultPreset, "strings-lead", "Melodyの初期音色はStrings Lead");
+assert.equal(SOUND_PARTS[0].defaultPreset, "pad", "Chordの初期音色はPad");
+assert.equal(SOUND_PARTS[2].defaultPreset, "deep-bass", "Bassの初期音色はDeep Bass");
+assert.equal(getSoundSelection([], "melody").preset, "strings-lead");
 const vocal = resolveSoundProfile([{ part: "melody", preset: "vocal", tone: "natural" }], "melody");
 assert.ok(vocal.layers.length >= 2 && vocal.vibrato.rate > 0 && vocal.formants.length >= 2, "声の重ね合わせ / ビブラート / 母音");
 const plain = resolveSoundProfile([{ part: "melody", preset: "lead", tone: "natural" }], "melody");
@@ -78,6 +80,6 @@ for (const part of SOUND_PARTS) for (const preset of part.presets) {
   assert.ok(sum > 0.9 && sum < 1.1, `${part.id}/${preset.id}: layer gains sum to about 1`);
 }
 // 知らないPreset（将来のアプリで保存したもの）は、初期音色に戻るだけで壊れない
-assert.equal(getSoundSelection([{ part: "melody", preset: "future-voice", tone: "natural" }], "melody").preset, "vocal");
+assert.equal(getSoundSelection([{ part: "melody", preset: "future-voice", tone: "natural" }], "melody").preset, "strings-lead");
 
 console.log("Sound Sketch smoke test passed.");
