@@ -27,6 +27,10 @@ function tickToSeconds(project, tick) {
   return tick * (60 / project.basic.bpm) / project.basic.ppq;
 }
 
+// パートごとの基本の音量（ミュートでないときの値）。メインメロディは少し控えめにして、コード・ベースと混ざりやすくする
+const PART_LEVEL = Object.freeze({ chord: 1, melody: 0.8, bass: 1, drums: 1, counter: 1 });
+const partLevel = (role) => PART_LEVEL[role] ?? 1;
+
 function createGain(context, destination, amount) {
   const gain = context.createGain();
   gain.gain.value = amount;
@@ -34,7 +38,8 @@ function createGain(context, destination, amount) {
   return gain;
 }
 
-function scheduleTone(context, destination, activeSources, {
+// 声・弦などの重ね合わせ / ビブラート / 母音は、Presetが持っているときだけ使う（無ければ従来どおり波形1つ）
+export function scheduleTone(context, destination, activeSources, {
   pitch,
   startTime,
   duration,
@@ -42,31 +47,86 @@ function scheduleTone(context, destination, activeSources, {
   gain = 0.08,
   filter = 12000,
   attack = 0.004,
-  release = 0.03
+  release = 0.03,
+  layers = null,
+  vibrato = null,
+  formants = null
 }) {
-  const oscillator = context.createOscillator();
   const voiceGain = context.createGain();
   const toneFilter = context.createBiquadFilter();
-  oscillator.type = type;
-  oscillator.frequency.value = midiToFrequency(pitch);
   toneFilter.type = "lowpass";
   toneFilter.frequency.value = filter;
   toneFilter.Q.value = 0.45;
-  oscillator.connect(toneFilter);
+  const safeDuration = Math.max(0.03, duration);
+  const stopTime = startTime + safeDuration + 0.02;
+  const baseFrequency = midiToFrequency(pitch);
+
+  // 入口（oscillatorの合流点）→ 母音の山 → ローパス → 音量
+  let input;
+  if (!layers && !vibrato && !formants) {
+    const oscillator = context.createOscillator();
+    oscillator.type = type;
+    oscillator.frequency.value = baseFrequency;
+    oscillator.connect(toneFilter);
+    oscillator.start(startTime);
+    oscillator.stop(stopTime);
+    activeSources.add(oscillator);
+    input = null;
+  } else {
+    input = context.createGain();
+    const parts = layers?.length ? layers : [{ type, gain: 1 }];
+    parts.forEach((part) => {
+      const oscillator = context.createOscillator();
+      const layerGain = context.createGain();
+      oscillator.type = part.type ?? type;
+      oscillator.frequency.value = baseFrequency * (part.ratio ?? 1);
+      oscillator.detune.value = part.detune ?? 0;
+      layerGain.gain.value = part.gain ?? 1 / parts.length;
+      oscillator.connect(layerGain);
+      layerGain.connect(input);
+
+      if (vibrato) {
+        // 少し遅れてから揺れ始める（声のビブラートのように）
+        const lfo = context.createOscillator();
+        const lfoGain = context.createGain();
+        lfo.frequency.value = vibrato.rate;
+        lfoGain.gain.setValueAtTime(0, startTime);
+        lfoGain.gain.setValueAtTime(0, startTime + (vibrato.delay ?? 0.2));
+        lfoGain.gain.linearRampToValueAtTime(vibrato.depth, startTime + (vibrato.delay ?? 0.2) + 0.25);
+        lfo.connect(lfoGain);
+        lfoGain.connect(oscillator.detune);
+        lfo.start(startTime);
+        lfo.stop(stopTime);
+        activeSources.add(lfo);
+      }
+
+      oscillator.start(startTime);
+      oscillator.stop(stopTime);
+      activeSources.add(oscillator);
+    });
+
+    let node = input;
+    (formants ?? []).forEach((formant) => {
+      const peak = context.createBiquadFilter();
+      peak.type = "peaking";
+      peak.frequency.value = formant.freq;
+      peak.Q.value = formant.q;
+      peak.gain.value = formant.gain;
+      node.connect(peak);
+      node = peak;
+    });
+    node.connect(toneFilter);
+  }
+
   toneFilter.connect(voiceGain);
   voiceGain.connect(destination);
 
-  const safeDuration = Math.max(0.03, duration);
   const attackEnd = Math.min(startTime + safeDuration * 0.45, startTime + attack);
   const releaseStart = Math.max(attackEnd, startTime + safeDuration - Math.min(release, safeDuration * 0.55));
   voiceGain.gain.setValueAtTime(0.0001, startTime);
   voiceGain.gain.linearRampToValueAtTime(gain, attackEnd);
   voiceGain.gain.setValueAtTime(gain, releaseStart);
   voiceGain.gain.linearRampToValueAtTime(0.0001, startTime + safeDuration);
-
-  oscillator.start(startTime);
-  oscillator.stop(startTime + safeDuration + 0.02);
-  activeSources.add(oscillator);
 }
 
 function scheduleKick(context, destination, activeSources, startTime) {
@@ -138,7 +198,10 @@ function scheduleProject(context, buses, activeSources, project, startTime) {
           gain: Math.min(0.35, chordSound.gain * event.accent),
           filter: chordSound.filter,
           attack: chordSound.attack,
-          release: chordSound.release
+          release: chordSound.release,
+          layers: chordSound.layers,
+          vibrato: chordSound.vibrato,
+          formants: chordSound.formants
         });
       });
     });
@@ -158,7 +221,10 @@ function scheduleProject(context, buses, activeSources, project, startTime) {
           gain: melodySound.gain,
           filter: melodySound.filter,
           attack: melodySound.attack,
-          release: melodySound.release
+          release: melodySound.release,
+          layers: melodySound.layers,
+          vibrato: melodySound.vibrato,
+          formants: melodySound.formants
         });
         return;
       }
@@ -173,7 +239,10 @@ function scheduleProject(context, buses, activeSources, project, startTime) {
           gain: melodySound.gain * 0.7,
           filter: melodySound.filter,
           attack: melodySound.attack,
-          release: melodySound.release
+          release: melodySound.release,
+          layers: melodySound.layers,
+          vibrato: melodySound.vibrato,
+          formants: melodySound.formants
         });
         return;
       }
@@ -187,7 +256,8 @@ function scheduleProject(context, buses, activeSources, project, startTime) {
           gain: bassSound.gain,
           filter: bassSound.filter,
           attack: bassSound.attack,
-          release: bassSound.release
+          release: bassSound.release,
+          layers: bassSound.layers
         });
         return;
       }
@@ -279,7 +349,7 @@ export function createDemoPlayer({ onStateChange } = {}) {
       buses = {};
       PART_ROLES.forEach((role) => {
         buses[role] = context.createGain();
-        buses[role].gain.value = mutedParts[role] ? 0 : 1;
+        buses[role].gain.value = mutedParts[role] ? 0 : partLevel(role);
         buses[role].connect(masterGain);
       });
 
@@ -388,7 +458,7 @@ export function createDemoPlayer({ onStateChange } = {}) {
       if (!PART_ROLES.includes(role)) return;
       mutedParts[role] = Boolean(muted);
       if (buses?.[role] && context) {
-        buses[role].gain.setTargetAtTime(mutedParts[role] ? 0 : 1, context.currentTime, 0.01);
+        buses[role].gain.setTargetAtTime(mutedParts[role] ? 0 : partLevel(role), context.currentTime, 0.01);
       }
     },
     getState() {
