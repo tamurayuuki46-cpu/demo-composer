@@ -18,11 +18,29 @@ function hubRevision() {
   return Number.isInteger(value) ? value : null;
 }
 
+// 結果は、押したボタンのすぐ下（画面の見える位置）にも出す。Hub上部のメッセージだけだと、下へスクロール中は見えず「反応しない」ように見える
 function setHubMessage(message, isError = false) {
   const target = document.querySelector("#hub-message");
-  if (!target) return;
-  target.textContent = message;
-  target.classList.toggle("error", isError);
+  if (target) {
+    target.textContent = message;
+    target.classList.toggle("error", isError);
+  }
+  const inline = document.querySelector("[data-drive-export-status]");
+  if (inline) {
+    inline.textContent = message;
+    inline.classList.toggle("error", isError);
+  }
+}
+
+function downloadFile(file) {
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = file.name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 function safeTitle(project) {
@@ -141,18 +159,35 @@ async function syncSavedProject(section) {
   }
 }
 
-function readyProject() {
-  return isCurrentSavedProject() ? cachedProject : null;
+// 画面のRevision表示に頼らず、保存済み（AutoSave）の最新をその場で読む。押した直後なので共有のユーザー操作の有効時間内に収まる
+async function readyProject() {
+  try {
+    const saved = await loadActiveProject();
+    if (saved) cachedProject = saved;
+  } catch {
+    // 読めなければ、前回読めたものを使う
+  }
+  return cachedProject;
 }
 
-async function handleShareResult(result, successMessage) {
+async function handleShareResult(result, successMessage, files = []) {
   if (result.status === "shared") {
     setHubMessage(successMessage);
   } else if (result.status === "cancelled") {
     setHubMessage("Driveへの保存をキャンセルしました。");
   } else {
-    setHubMessage("このブラウザではファイル共有できません。Chromeで開くか、通常Exportを使ってください。", true);
+    if (Array.isArray(files) && files.length > 0) {
+      files.forEach(downloadFile);
+      setHubMessage("共有画面を開けなかったため、端末にダウンロードしました。ダウンロードしたファイルをDriveアプリから保存してください。", true);
+    } else {
+      setHubMessage("このブラウザではファイル共有できません。通常Exportを使ってください。", true);
+    }
   }
+}
+
+function fallbackDownload(files, error) {
+  files.forEach(downloadFile);
+  setHubMessage(`共有を開始できませんでした（${error?.name ?? "error"}）。端末にダウンロードしたので、Driveアプリから保存してください。`, true);
 }
 
 function bindDriveSection(section) {
@@ -160,10 +195,10 @@ function bindDriveSection(section) {
   section.dataset.driveBound = "true";
 
   section.querySelector("[data-drive-export=project]")?.addEventListener("click", async () => {
-    const project = readyProject();
+    setHubMessage("Drive共有を準備しています…");
+    const project = await readyProject();
     if (!project) {
-      setHubMessage("Drive用の最新保存を確認中です。上の「Save Now」を押すか、1〜2秒待ってもう一度押してください。", true);
-      void syncSavedProject(section);
+      setHubMessage("保存済みのProjectが見つかりません。「Save Now」を押してから、もう一度押してください。", true);
       return;
     }
 
@@ -175,26 +210,26 @@ function bindDriveSection(section) {
 
     try {
       const result = await shareFiles([file], { title: `${safeTitle(project)} - project.json` });
-      await handleShareResult(result, "project.jsonを共有しました。Google Driveを選んだ場合はDriveへ保存されています。");
+      await handleShareResult(result, "project.jsonを共有しました。Google Driveを選んだ場合はDriveへ保存されています。", [file]);
     } catch (error) {
-      setHubMessage(error instanceof Error ? error.message : "Drive共有に失敗しました。", true);
+      fallbackDownload([file], error);
     }
   });
 
   section.querySelector("[data-drive-export=midi]")?.addEventListener("click", async () => {
-    const project = readyProject();
+    setHubMessage("Drive共有を準備しています…");
+    const project = await readyProject();
     if (!project) {
-      setHubMessage("Drive用の最新保存を確認中です。上の「Save Now」を押すか、1〜2秒待ってもう一度押してください。", true);
-      void syncSavedProject(section);
+      setHubMessage("保存済みのProjectが見つかりません。「Save Now」を押してから、もう一度押してください。", true);
       return;
     }
 
     const files = midiShareFiles(project);
     try {
       const result = await shareFiles(files, { title: `${safeTitle(project)} - MIDI` });
-      await handleShareResult(result, "MIDI一式を共有しました。Google Driveを選んだ場合はDriveへ保存されています。");
+      await handleShareResult(result, "MIDI一式を共有しました。Google Driveを選んだ場合はDriveへ保存されています。", files);
     } catch (error) {
-      setHubMessage(error instanceof Error ? error.message : "MIDIのDrive共有に失敗しました。", true);
+      fallbackDownload(files, error);
     }
   });
 
@@ -217,6 +252,7 @@ function ensureDriveExportUi() {
         <button type="button" data-drive-export="midi">MIDI一式をDriveへ</button>
       </div>
       <p class="hint" data-drive-export-hint>AutoSaveの状態を確認しています…</p>
+      <p class="status-message" data-drive-export-status aria-live="polite"></p>
     `;
 
     const importHeading = panel.querySelector(".import-heading");
