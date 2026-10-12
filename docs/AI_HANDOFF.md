@@ -167,7 +167,7 @@ v0.2-dev
 - Melody AnalyzerのMelodic FunctionもProjectへ保存せず、Chord / Melody Noteから毎回派生計算する。GuideはChord Toneの内数、Tensionは初期版では自然9th / 11th / 13th相当。複雑な文脈を無理に断定せず、係留は候補、リック / リフは学習ガイドのみとする。Melody候補生成には自動反映しない
 - Melody自動生成は「完成させる」機能ではなく、1小節につき3候補 → ユーザーが選ぶ → Piano Rollで修正する方式にする
 - Melody候補は外部AI / APIを使わず、説明可能なルールベースから開始する
-- `安定` はChord Tone中心、`キャッチー` は8分中心 + 短い反復、`浮遊感` は2度 / 6度等のScale Tone + 長めの音を使う
+- `安定` はChord Tone中心、`キャッチー` は8分中心 + 短い反復、`浮遊感` は2度 / 6度等のScale Toneを混ぜ、余白（休み・長い音）を作らず切れ目なく動く
 - 同じ条件で候補が固定される問題への対応は、完全ランダムではなく4つの有限Variation Setを循環する方式にする
 - Melody候補のVariation番号はUI状態だけに持ち、Project Data / MIDI / Schemaへ追加しない
 - Melody候補自体はProject Dataへ保存せず、適用結果だけ通常の `tracks[role=melody].notes[]` へ保存する
