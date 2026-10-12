@@ -20,7 +20,7 @@ function chordAt(project, tick, barTicks) {
 function chordRole(note, chord) {
   if (!chord) return { chordTone: false, guideTone: false, tension: false };
   const relative = degreeIndex(note.pitch % 12, chord.root);
-  const intervals = chordIntervals(chord.quality);
+  const intervals = chordIntervals(chord.quality).map(interval => interval % 12);
   const chordTone = intervals.includes(relative);
   return {
     chordTone,

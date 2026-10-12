@@ -55,8 +55,8 @@ const legacyProject = {
 };
 
 const migrated = migrateProject(legacyProject);
-assert.equal(migrated.schemaVersion, 2);
-assert.equal(migrated.appVersion, "v0.2-dev");
+assert.equal(migrated.schemaVersion, 3);
+assert.equal(migrated.appVersion, "v0.3-dev");
 assert.deepEqual(migrated.chords, legacyProject.chords);
 assert.equal(legacyProject.schemaVersion, 1, "migration must not mutate source data");
 

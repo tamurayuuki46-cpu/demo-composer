@@ -1,3 +1,4 @@
+import { chordVoicingOffset } from "../core/chord-voicing.js";
 import { buildBackingEvents, getBackingPatternSelection } from "../core/backing-patterns.js";
 import { chordIntervals } from "../core/chord-qualities.js";
 import { getSections, sectionRanges } from "../core/section-ops.js";
@@ -78,7 +79,7 @@ function chordTrackEvents(project) {
       backingEvent.intervals.forEach((interval) => {
         events.push(...noteEvents({
           channel: 0,
-          pitch: 60 + chord.root + interval,
+          pitch: Math.max(0, Math.min(127, 60 + chord.root + interval + chordVoicingOffset(project))),
           velocity,
           startTick,
           durationTick

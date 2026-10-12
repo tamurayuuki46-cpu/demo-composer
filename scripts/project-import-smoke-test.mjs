@@ -15,7 +15,7 @@ assert.equal(parsed.metadata.title, "Backup曲");
 
 // schemaVersion 1も現行へ移行して読める
 const v1 = JSON.parse(json); v1.schemaVersion = 1;
-assert.equal(parseProjectJson(JSON.stringify(v1)).schemaVersion, 2);
+assert.equal(parseProjectJson(JSON.stringify(v1)).schemaVersion, 3);
 
 // 不正データは日本語のErrorで拒否
 assert.throws(() => parseProjectJson("not json"), /project\.json/);

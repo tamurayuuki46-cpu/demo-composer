@@ -1,3 +1,6 @@
+import { defaultDesign, validateDesign, appendDecision } from "./decision-design.js";
+import { withDecisionCandidate } from "./decision-candidates.js";
+import { assertCurrentComparison } from "./decision-comparison.js";
 import { isChordQuality } from "./chord-qualities.js";
 import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
 import { applySectionVariation } from "./section-variation.js";
@@ -86,7 +89,8 @@ export function createDefaultProject() {
       title: "Untitled Project",
       genre: "",
       mood: [],
-      memo: ""
+      memo: "",
+      composition: defaultDesign()
     },
     basic: {
       bpm: 120,
@@ -138,11 +142,11 @@ function validateBasic(basic) {
   }
 
   if (basic.timeSignature !== "4/4") {
-    throw new Error("v0.2では拍子は4/4固定です。");
+    throw new Error("v0.3では拍子は4/4固定です。");
   }
 
   if (basic.ppq !== 480) {
-    throw new Error("v0.2ではPPQは480固定です。");
+    throw new Error("v0.3ではPPQは480固定です。");
   }
 }
 
@@ -171,6 +175,8 @@ function validateChords(chords) {
     if (!Number.isInteger(chord.durationTick) || chord.durationTick <= 0) {
       throw new Error(`Chord ${index + 1} durationTick is invalid.`);
     }
+
+    if (chord.purposes !== undefined && (!Array.isArray(chord.purposes) || chord.purposes.length > 8 || new Set(chord.purposes).size !== chord.purposes.length || chord.purposes.some(p => !['安定','緊張','浮遊','切なさ','明るさ','意外性','転調感','解決感'].includes(p)))) throw new Error("コードの目的タグが不正です。");
 
     if (typeof chord.degree !== "string" || !chord.degree) {
       throw new Error(`Chord ${index + 1} degree is invalid.`);
@@ -320,6 +326,7 @@ export function validateProject(project) {
   }
 
   validateMetadata(project.metadata);
+  validateDesign(project.metadata.composition);
   validateBasic(project.basic);
   validateChords(project.chords);
   validateTracks(project.tracks);
@@ -380,6 +387,48 @@ export function createProjectStore(initialProject = createDefaultProject()) {
 
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+
+    updateDesign(design) {
+      const next = clone(state);
+      validateDesign(design);
+      next.metadata.composition = clone(design);
+      return applySectionOp(next);
+    },
+
+    updateDecisionAnnotations({ sections, chords } = {}) {
+      const next = clone(state);
+      if (sections) {
+        if (sections.length !== next.structure.sections.length) throw new Error("Sectionの数は変更できません。");
+        sections.forEach((section, i) => {
+          if (section.id !== next.structure.sections[i].id || typeof section.purpose !== "string" || section.purpose.length > 100) throw new Error("Sectionの役割が不正です。");
+          next.structure.sections[i].purpose = section.purpose;
+        });
+      }
+      if (chords) {
+        chords.forEach(({index, purposes}) => {
+          if(!Number.isInteger(index) || !next.chords[index] || !Array.isArray(purposes) || purposes.length > 8 || new Set(purposes).size !== purposes.length || purposes.some(p=>!['安定','緊張','浮遊','切なさ','明るさ','意外性','転調感','解決感'].includes(p))) throw new Error("コードの目的が不正です。");
+          next.chords[index].purposes = clone(purposes);
+        });
+      }
+      return applySectionOp(next);
+    },
+
+    keepDecision(session, reason = "") {
+      assertCurrentComparison(session, state);
+      if (!reason.trim()) return clone(state);
+      const next = clone(state);
+      next.metadata.composition = appendDecision(next, { ...session, label: `Aを保持：${session.label}`.slice(0, 160), summary: "現在案を保持。音符・音色は変更なし。" }, reason);
+      return applySectionOp(next);
+    },
+
+    adoptDecision(session, reason = "") {
+      assertCurrentComparison(session, state);
+      if(!session.changed) return clone(state);
+      if(session.kind === "chord" && getTrackNotes(state, "bass").length > 0) throw new Error("Bassがある間はコードを採用できません。現在案とBassを保持しています。");
+      const next = withDecisionCandidate(state, session);
+      next.metadata.composition = appendDecision(next, session, reason);
+      return applySectionOp(next);
     },
 
     updateHub({ metadata = {}, basic = {} } = {}) {

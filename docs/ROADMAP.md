@@ -60,6 +60,8 @@ Melody候補も曲全体を自動完成させず、現在Barの3候補 → 選�
 
 ## v0.3
 
+実装済み（2026-10-12）: 設計メモ / 5軸 / A/B比較 / 1要素候補 / Section役割 / メロディ分析タグ / コード目的 / 未決定項目 / 採用理由。Schema 3・旧Project退避Migration。詳細 DECISION_SUPPORT.md。実機の制作検証は継続。
+
 - Arrange / Song Structureの正式整理
   - v0.2で先行したSection機能を実制作で検証・改善
 - Section Energy（Low / Mid / High）の検討

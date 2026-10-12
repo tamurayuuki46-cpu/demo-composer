@@ -1,3 +1,4 @@
+import { chordVoicingOffset } from "../core/chord-voicing.js";
 import { buildBackingEvents, getBackingPatternSelection } from "../core/backing-patterns.js";
 import { chordIntervals } from "../core/chord-qualities.js";
 import { resolveSoundProfile } from "../core/sound-presets.js";
@@ -194,7 +195,7 @@ function scheduleProject(context, buses, activeSources, project, startTime) {
         scheduleTone(context, buses.chord, activeSources, {
           // Demo Player only: use a phone-speaker-friendly voicing one octave above
           // the original preview. Project/MIDI pitch data is not changed.
-          pitch: 60 + chord.root + interval,
+          pitch: Math.max(0, Math.min(127, 60 + chord.root + interval + chordVoicingOffset(project))),
           startTime: eventStart,
           duration: eventDuration,
           type: chordSound.waveform,
