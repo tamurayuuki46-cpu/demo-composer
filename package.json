@@ -12,7 +12,7 @@
     "test:rhythm-presets": "node scripts/rhythm-preset-smoke-test.mjs",
     "test:melody": "node scripts/melody-grid-smoke-test.mjs && node scripts/note-length-smoke-test.mjs && node scripts/melody-candidates-smoke-test.mjs",
     "test:chord": "node scripts/chord-types-smoke-test.mjs",
-    "test:chord-presets": "node scripts/chord-preset-smoke-test.mjs",
+    "test:chord-presets": "node scripts/chord-preset-smoke-test.mjs && node scripts/chord-mood-tags-smoke-test.mjs && node scripts/chord-mood-ui-smoke-test.mjs",
     "test:chord-mood": "node scripts/chord-mood-tags-smoke-test.mjs && node scripts/chord-mood-ui-smoke-test.mjs",
     "test:backing": "node scripts/backing-pattern-smoke-test.mjs",
     "test:key-change": "node scripts/key-change-smoke-test.mjs",
