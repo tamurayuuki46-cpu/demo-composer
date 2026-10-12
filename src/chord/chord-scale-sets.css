@@ -1,0 +1,51 @@
+/* スケール系のコード（ダイアトニック / ハーモニックマイナー / メロディックマイナー × 3和音・7th・テンション） */
+.chord-scale-sets {
+  margin: 0 0 12px;
+}
+
+.scale-set-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.scale-set-tabs button {
+  flex: 1 1 0;
+  min-width: 96px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid #383842;
+  border-radius: 10px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.scale-set-tabs button.active {
+  background: #f1f1f1;
+  color: #15151a;
+  border-color: #f1f1f1;
+}
+
+/* 基準音からコード種類を選ぶ: グループごとに開閉 */
+.chord-variant-group {
+  margin: 8px 0;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  padding: 0 10px;
+}
+
+.chord-variant-group > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chord-variant-group[open] > summary {
+  margin-bottom: 4px;
+}

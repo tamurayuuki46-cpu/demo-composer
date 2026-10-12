@@ -16,7 +16,9 @@ import { addEntry, chordsFromProgression, loadLibrary, progressionDegreeText, pr
 import { chordRole } from "./chord/chord-role.js";
 import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordsWithBarChord, draftChordsFromMelody, melodyBarCount, suggestChordsForBar } from "./chord/chord-for-melody.js";
-import { chordSymbol, getChordVariants, getDiatonicChords, NOTE_NAMES, rootDegreeName, rootToPitchClass } from "./chord/chord-theory.js";
+import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicChords, NOTE_NAMES, rootDegreeName, rootToPitchClass } from "./chord/chord-theory.js";
+import { chordScaleSetsHtml, resolveScaleFamilyId } from "./chord/chord-scale-sets-ui.js";
+import { scaleSetChords } from "./chord/chord-scale-sets.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
@@ -58,6 +60,9 @@ let startupMessage = "AutoSaveが有効です。変更は端末へ自動保存�
 let chordMessage = "下の候補をタップしてコードを追加します。";
 let chordRootSelection = null;
 let spiceOpen = false;
+let scaleSetsOpen = false;
+let scaleSetFamily = "major";
+let scaleSetLevel = "seventh";
 let libraryOpen = false;
 let libraryName = "";
 let melodyChordOpen = false;
@@ -221,7 +226,7 @@ function chordScreen() {
   const selectedRoot = Number.isInteger(chordRootSelection)
     ? chordRootSelection
     : rootToPitchClass(project.basic.key);
-  const variants = getChordVariants(selectedRoot, project.basic.key);
+  const variantGroups = getChordVariantGroups(selectedRoot, project.basic.key);
   const selectedPreset = getChordPreset(chordPresetSelection);
   const presetPreview = chordPresetPreview(chordPresetSelection, {
     key: project.basic.key,
@@ -344,6 +349,8 @@ function chordScreen() {
         `).join("")}
       </div>
 
+      ${chordScaleSetsHtml({ project, open: scaleSetsOpen, familyId: resolveScaleFamilyId(project.basic.scale, scaleSetFamily), level: scaleSetLevel })}
+
       <h3>基準音からコード種類を選ぶ</h3>
       <div class="form-stack">
         <label class="field">
@@ -353,14 +360,19 @@ function chordScreen() {
           </select>
         </label>
       </div>
-      <div class="chord-candidates">
-        ${variants.map((candidate, index) => `
-          <button class="candidate-chord" data-add-variant="${index}">
-            <strong>${escapeHtml(candidate.symbol)}</strong>
-            <span>${escapeHtml(candidate.label)} · ${escapeHtml(candidate.degree)}</span>
-          </button>
-        `).join("")}
-      </div>
+      ${variantGroups.map((group, groupIndex) => `
+        <details class="chord-variant-group"${groupIndex === 0 ? " open" : ""}>
+          <summary>${escapeHtml(group.label)}（${group.variants.length}）</summary>
+          <div class="chord-candidates">
+            ${group.variants.map((candidate) => `
+              <button class="candidate-chord" data-add-variant="${candidate.index}">
+                <strong>${escapeHtml(candidate.symbol)}</strong>
+                <span>${escapeHtml(candidate.label)} · ${escapeHtml(candidate.degree)}</span>
+              </button>
+            `).join("")}
+          </div>
+        </details>
+      `).join("")}
 
       <p class="hint">Presetは現在のKey / Scaleに合わせて通常のChordデータへ展開します。適用後は個別に追加・削除できます。Bassがある場合は先にRhythmでClear Bassしてください。</p>
     </section>
@@ -699,7 +711,7 @@ function bindChordControls() {
   const selectedRoot = Number.isInteger(chordRootSelection)
     ? chordRootSelection
     : rootToPitchClass(project.basic.key);
-  const variants = getChordVariants(selectedRoot, project.basic.key);
+  const variants = getAllChordVariants(selectedRoot, project.basic.key);
   const barTicks = project.basic.ppq * 4;
 
   function appendCandidate(candidate) {
@@ -857,6 +869,34 @@ function bindChordControls() {
       chordMessage = error instanceof Error ? error.message : "Backing Patternの変更に失敗しました。";
     }
     render("chord");
+  });
+
+  document.querySelector("#toggle-scale-sets")?.addEventListener("click", () => {
+    scaleSetsOpen = !scaleSetsOpen;
+    render("chord");
+  });
+  document.querySelectorAll("[data-scale-family]").forEach((button) => {
+    button.addEventListener("click", () => {
+      scaleSetFamily = button.dataset.scaleFamily;
+      render("chord");
+    });
+  });
+  document.querySelectorAll("[data-scale-level]").forEach((button) => {
+    button.addEventListener("click", () => {
+      scaleSetLevel = button.dataset.scaleLevel;
+      render("chord");
+    });
+  });
+  document.querySelectorAll("[data-scale-chord]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const latest = projectStore.getSnapshot();
+      const chords = scaleSetChords({
+        key: latest.basic.key,
+        familyId: resolveScaleFamilyId(latest.basic.scale, scaleSetFamily),
+        level: scaleSetLevel
+      });
+      appendCandidate(chords[Number(button.dataset.scaleChord)]);
+    });
   });
 
   document.querySelectorAll("[data-add-chord]").forEach((button) => {

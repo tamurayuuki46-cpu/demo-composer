@@ -101,6 +101,9 @@ jobs:
       - name: Run Melody pitch role colors smoke test
         run: npm run test:pitch-roles
 
+      - name: Chord scale sets smoke test
+        run: npm run test:chord-scale-sets
+
       - name: Loop guide smoke test
         run: npm run test:loop-guide
 
