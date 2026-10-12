@@ -97,7 +97,7 @@ export function chordMoodPanelHtml({ mode = "major", tags = [...selectedTags] } 
 }
 
 function renderPanel() {
-  if (rendering) return;
+  if (rendering || typeof document === "undefined") return;
   const presetPanel = document.querySelector("#screen .chord-preset-panel");
   if (!presetPanel) return;
 
@@ -143,7 +143,7 @@ function bindPanelEvents() {
 }
 
 export function initChordMoodUi() {
-  if (observer) return;
+  if (observer || typeof document === "undefined" || typeof MutationObserver === "undefined") return;
   const screen = document.querySelector("#screen");
   if (!screen) return;
 
@@ -156,8 +156,10 @@ export function initChordMoodUi() {
   renderPanel();
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initChordMoodUi, { once: true });
-} else {
-  initChordMoodUi();
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initChordMoodUi, { once: true });
+  } else {
+    initChordMoodUi();
+  }
 }
