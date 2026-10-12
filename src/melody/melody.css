@@ -573,3 +573,21 @@ u.role-outside { background: #facc15; }
 button.degree-bar { padding: 0; border: 0; background: none; color: inherit; font: inherit; touch-action: manipulation; cursor: pointer; }
 button.degree-bar:disabled { opacity: .5; cursor: default; }
 button.degree-bar:not(:disabled):active { transform: scale(.94); }
+
+/* メロディ候補: 適用ボタンの横に ▶ 聴く */
+.melody-candidate-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: stretch;
+}
+.melody-candidate-list .melody-candidate-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-template-columns: none;
+  min-width: 64px;
+  padding: 0 10px;
+  text-align: center;
+  font-size: 13px;
+}

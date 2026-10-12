@@ -39,6 +39,8 @@ import { bindEditHistory } from "./core/edit-history-ui.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createArrangeController } from "./arrange/arrange-screen.js";
 import { createCounterController } from "./arrange/counter-screen.js";
+import { AUDITION_EVENT, showAuditionToast } from "./audio/audition.js";
+import { chordPresetAudition } from "./chord/chord-audition.js";
 import { getSections, sectionAtBar, sectionEnergy, sectionRanges, sliceProject } from "./core/section-ops.js";
 import { counterNotes, withCounterNotes } from "./core/counter-melody.js";
 import { createMelodyController } from "./melody/melody-screen.js";
@@ -59,6 +61,16 @@ let arrangeController;
 let counterController;
 let soundController;
 let demoPlayer;
+
+async function requestAuditionFor({ project, lengthTick, label }) {
+  try {
+    await demoPlayer.play(project, { lengthTick });
+    showAuditionToast(`「${label}」を試聴中（まだ曲には入っていません）`);
+  } catch (error) {
+    demoPlayer.stop();
+    showAuditionToast(error instanceof Error ? error.message : "試聴できませんでした。");
+  }
+}
 let autosave;
 let playerState = { playing: false, loop: false, position: 0, duration: 0 };
 let currentScreen = "hub";
@@ -296,6 +308,7 @@ function chordScreen() {
             ${chordPresetsByCategory({ key: project.basic.key, scale: project.basic.scale, tagsFor: (preset) => chordPresetMoodText(preset) }).map((category) => `<optgroup label="${escapeHtml(category.label)}（${category.presets.length}）">${category.presets.map((preset) => `<option value="${preset.id}"${preset.id === chordPresetSelection ? " selected" : ""}>${escapeHtml(preset.label)}</option>`).join("")}</optgroup>`).join("")}
           </select>
           <button id="apply-chord-preset">適用</button>
+          <button id="audition-chord-preset" type="button" class="audition-btn">▶ 聴く</button>
         </div>
         <small>${escapeHtml(selectedPreset.description)}</small>
         <p class="chord-preset-preview">${escapeHtml(presetPreview)}</p>
@@ -964,6 +977,10 @@ function bindChordControls() {
     render("chord");
   });
 
+  document.querySelector("#audition-chord-preset")?.addEventListener("click", () => {
+    requestAuditionFor(chordPresetAudition(projectStore.getSnapshot(), chordPresetSelection));
+  });
+
   document.querySelector("#apply-chord-preset")?.addEventListener("click", () => {
     const latest = projectStore.getSnapshot();
     const preset = getChordPreset(chordPresetSelection);
@@ -1236,6 +1253,16 @@ async function boot() {
   rhythmController = createRhythmController({ projectStore, rerender: render });
   soundController = createSoundController({ projectStore, rerender: render });
   demoPlayer = createDemoPlayer({ onStateChange: updatePlayerUi });
+  // 候補の「▶ 聴く」: 仮のProjectを鳴らすだけ（保存も履歴もしない）
+  document.addEventListener(AUDITION_EVENT, (event) => {
+    const { label, build } = event.detail ?? {};
+    try {
+      const built = build(projectStore.getSnapshot());
+      requestAuditionFor({ label, ...built });
+    } catch (error) {
+      showAuditionToast(error instanceof Error ? error.message : "試聴できませんでした。");
+    }
+  });
   arrangeController = createArrangeController({
     projectStore,
     rerender: render,

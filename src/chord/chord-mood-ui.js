@@ -5,6 +5,8 @@ import {
   chordPresetsForTags
 } from "./chord-mood-tags.js";
 import { chordPresetNames } from "./chord-presets.js";
+import { chordPresetAudition } from "./chord-audition.js";
+import { requestAudition } from "../audio/audition.js";
 import { addMoodFavorite, favoriteKey, isMoodFavorite, loadMoodFavorites, removeMoodFavorite } from "./mood-favorites.js";
 
 const GROUP_LABELS = Object.freeze({
@@ -121,7 +123,10 @@ export function moodPickerHtml({ tags = [...selectedTags], group = listGroup, mo
               <small>${escapeHtml(degreeText(row))}　${escapeHtml(DIFFICULTY_LABELS[row.difficulty] ?? "")}</small>
               <small>${escapeHtml(chordPresetMoodText(row.presetId))}</small>
             </div>
-            <button type="button" data-chord-mood-preset="${escapeHtml(row.presetId)}">使う</button>
+            <div class="chord-emotion-actions">
+              <button type="button" class="audition-btn" data-chord-mood-audition="${escapeHtml(row.presetId)}" aria-label="${escapeHtml(chordPresetNames(row.presetId, { key, scale: mode }))}を聴く">▶ 聴く</button>
+              <button type="button" data-chord-mood-preset="${escapeHtml(row.presetId)}">使う</button>
+            </div>
           </li>
         `).join("")}
       </ol>
@@ -274,6 +279,14 @@ function bindPanelEvents() {
     listShowAll = false;
     manualAdjusted = true;
     renderPanel();
+  });
+
+  document.querySelectorAll("[data-chord-mood-audition]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const presetId = button.dataset.chordMoodAudition;
+      if (!presetId) return;
+      requestAudition({ label: chordPresetNames(presetId, { key: currentKey(), scale: currentMode() }), build: (project) => chordPresetAudition(project, presetId) });
+    });
   });
 
   document.querySelectorAll("[data-chord-mood-preset]").forEach((button) => {

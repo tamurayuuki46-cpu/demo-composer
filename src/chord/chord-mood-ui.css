@@ -289,3 +289,19 @@
 .mood-selected-actions { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .mood-fav-save { min-height: 36px; padding: 0 12px; font-size: 12px; font-weight: 700; border-radius: 999px; background: transparent; color: #f9d5ff; border: 1px solid #7c5a99; touch-action: manipulation; }
 .mood-fav-save.on { background: linear-gradient(135deg, #f472b6, #a78bfa); color: #0b0b10; border-color: transparent; }
+
+/* ▶ 聴く（試聴） */
+.audition-btn {
+  min-height: 44px;
+  min-width: 64px;
+  padding: 0 12px;
+  border: 1px solid #4b6a8a;
+  border-radius: 12px;
+  background: #1c2733;
+  color: #cfe8ff;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+.audition-btn:active { transform: scale(.95); }
+.chord-emotion-actions { display: grid; gap: 6px; flex: none; }
+.chord-emotion-actions button { min-height: 44px; min-width: 72px; }

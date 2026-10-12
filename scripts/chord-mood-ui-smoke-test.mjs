@@ -94,3 +94,23 @@ assert.ok(!/data-chord-mood-clear/.test(moodPickerHtml({ tags: [], group: null }
 }
 
 console.log("Chord mood UI smoke test passed.");
+
+// ▶ 聴く（試聴）: 一覧の各行に出る。試聴用の仮Projectは元を変えず、Bassを外して、そのPresetの長さで返す
+{
+  const { chordPresetAudition } = await import("../src/chord/chord-audition.js");
+  const { createDefaultProject } = await import("../src/core/project-state.js");
+  const html = moodPickerHtml({ tags: ["sad"], group: null, mode: "major", key: "C", favorites: [] });
+  assert.equal(count(html, /data-chord-mood-audition=/g), count(html, /data-chord-mood-preset=/g), "各行に聴く");
+  assert.ok(count(html, /data-chord-mood-audition=/g) >= 1);
+
+  const project = createDefaultProject();
+  project.chords = [{ root: 0, quality: "major", degree: "I", startTick: 0, durationTick: 1920 }];
+  const bass = project.tracks.find((t) => t.role === "bass");
+  if (bass) bass.notes = [{ id: "b1", pitch: 36, startTick: 0, durationTick: 480, velocity: 96 }];
+  const before = JSON.stringify(project);
+  const result = chordPresetAudition(project, html.match(/data-chord-mood-audition="([^"]+)"/)[1]);
+  assert.equal(JSON.stringify(project), before, "元のProjectは変えない");
+  assert.ok(result.project.chords.length >= 2, "Presetのコードに置き換わる");
+  assert.equal(result.lengthTick, result.project.chords.length * 1920);
+  assert.equal(result.project.tracks.find((t) => t.role === "bass")?.notes.length ?? 0, 0, "Bassは外す");
+}

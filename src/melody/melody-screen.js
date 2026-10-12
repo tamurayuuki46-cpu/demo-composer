@@ -5,6 +5,8 @@ import { compareSections, contrastHints } from "../core/section-compare.js";
 import { applyPeakGuide, buildPeakGuide, currentPeak, defaultPeakBar, PEAK_SHAPES } from "./peak-guide.js";
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
+import { requestAudition } from "../audio/audition.js";
+import { sliceProject } from "../core/section-ops.js";
 import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar, MELODY_CANDIDATE_VARIATION_COUNT } from "./melody-candidates.js";
 import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, degreeLabel, keyDegreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 import { counterNotes } from "../core/counter-melody.js";
@@ -306,11 +308,14 @@ export function createMelodyController({ projectStore, rerender }) {
           </div>
           <div class="melody-candidate-list">
             ${melodyCandidates.map((candidate) => `
-              <button type="button" data-melody-candidate="${candidate.id}" aria-label="${escapeHtml(candidate.label)}をBar ${barIndex + 1}へ適用">
-                <strong>${escapeHtml(candidate.label)}</strong>
-                <small>${escapeHtml(candidate.description)}</small>
-                <span class="melody-candidate-dots" aria-hidden="true">${escapeHtml(melodyCandidateDots(candidate))}</span>
-              </button>
+              <div class="melody-candidate-item">
+                <button type="button" data-melody-candidate="${candidate.id}" aria-label="${escapeHtml(candidate.label)}をBar ${barIndex + 1}へ適用">
+                  <strong>${escapeHtml(candidate.label)}</strong>
+                  <small>${escapeHtml(candidate.description)}</small>
+                  <span class="melody-candidate-dots" aria-hidden="true">${escapeHtml(melodyCandidateDots(candidate))}</span>
+                </button>
+                <button type="button" class="melody-candidate-play audition-btn" data-melody-candidate-play="${candidate.id}" aria-label="${escapeHtml(candidate.label)}を聴く">▶ 聴く</button>
+              </div>
             `).join("")}
           </div>
           <p class="hint">候補を選ぶと現在の1小節だけ置き換えます。「候補を更新」で別案に切り替えられます。選んだ後は下のPiano Rollで1音ずつ直せます（↶ で戻せます）。</p>
@@ -399,6 +404,29 @@ export function createMelodyController({ projectStore, rerender }) {
       candidateVariation = (candidateVariation + 1) % MELODY_CANDIDATE_VARIATION_COUNT;
       message = `Bar ${barIndex + 1} の候補を更新しました（${candidateVariation + 1}/${MELODY_CANDIDATE_VARIATION_COUNT}）。`;
       rerender("melody");
+    });
+
+    document.querySelectorAll("[data-melody-candidate-play]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const candidate = melodyCandidates.find((item) => item.id === button.dataset.melodyCandidatePlay);
+        if (!candidate) return;
+        const bar = barIndex;
+        requestAudition({
+          label: `Bar ${bar + 1} ${candidate.label}`,
+          build: (project) => {
+            const ticks = project.basic.ppq * 4;
+            const temp = structuredClone(project);
+            let track = temp.tracks.find((item) => item.role === "melody");
+            if (!track) {
+              // まだ音を1つも入れていないProject: 仮のコピーにだけトラックを足す
+              track = { id: "audition-melody", role: "melody", name: "Melody", notes: [] };
+              temp.tracks.push(track);
+            }
+            track.notes = applyMelodyCandidate(track.notes ?? [], bar, candidate, { barTicks: ticks });
+            return { project: sliceProject(temp, bar * ticks, (bar + 1) * ticks), lengthTick: ticks };
+          }
+        });
+      });
     });
 
     document.querySelectorAll("[data-melody-candidate]").forEach((button) => {
