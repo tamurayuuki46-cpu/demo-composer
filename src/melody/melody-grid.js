@@ -9,9 +9,10 @@ export function pitchName(pitch) {
   return `${note}${octave}`;
 }
 
-export function getOctavePitches(octave) {
-  const cPitch = (octave + 1) * 12;
-  return Array.from({ length: 12 }, (_, index) => cPitch + (11 - index));
+// 12段の高さ（上→下）。tonic（0-11）を渡すと、Keyの主音が一番下の段になる（既定0 = C が一番下）
+export function getOctavePitches(octave, tonic = 0) {
+  const lowest = (octave + 1) * 12 + (((tonic % 12) + 12) % 12);
+  return Array.from({ length: 12 }, (_, index) => lowest + (11 - index));
 }
 
 export function getMelodyNotes(project) {

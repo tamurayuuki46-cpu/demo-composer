@@ -35,9 +35,10 @@ function positiveMod(value, modulo) {
   return ((value % modulo) + modulo) % modulo;
 }
 
-function pitchForClass(pitchClass, octave = 4) {
-  const baseC = (octave + 1) * 12;
-  return Math.max(0, Math.min(127, baseC + positiveMod(pitchClass, 12)));
+// 主音(tonic)を一番下にした12半音の窓の中に置く（tonic=0なら従来どおり C〜B）
+function pitchForClass(pitchClass, octave = 4, tonic = 0) {
+  const lowest = (octave + 1) * 12 + positiveMod(tonic, 12);
+  return Math.max(0, Math.min(127, lowest + positiveMod(pitchClass - tonic, 12)));
 }
 
 function scalePitchClasses(key, scale) {
@@ -56,10 +57,10 @@ function unique(values) {
   return [...new Set(values)];
 }
 
-function makeSteps(stepIndexes, pitchClasses, lengths, octave) {
+function makeSteps(stepIndexes, pitchClasses, lengths, octave, tonic = 0) {
   return stepIndexes.map((step, index) => ({
     step,
-    pitch: pitchForClass(pitchClasses[index % pitchClasses.length], octave),
+    pitch: pitchForClass(pitchClasses[index % pitchClasses.length], octave, tonic),
     length: Math.max(1, Math.min(lengths[index % lengths.length], EIGHTH_STEPS - step))
   }));
 }
@@ -114,7 +115,8 @@ export function melodyCandidatesForBar(project, barIndex, { octave = 4, variatio
         stableVariant.steps,
         orderedPitchClasses(rotatedStable, stableVariant.order, chordRoot),
         stableVariant.lengths,
-        octave
+        octave,
+        tonic
       )
     },
     {
@@ -125,7 +127,8 @@ export function melodyCandidatesForBar(project, barIndex, { octave = 4, variatio
         catchyVariant.steps,
         orderedPitchClasses(catchyPool, catchyVariant.order, chordRoot),
         catchyVariant.lengths,
-        octave
+        octave,
+        tonic
       )
     },
     {
@@ -136,7 +139,8 @@ export function melodyCandidatesForBar(project, barIndex, { octave = 4, variatio
         floatingVariant.steps,
         orderedPitchClasses(floatingPool, floatingVariant.order, second),
         floatingVariant.lengths,
-        octave
+        octave,
+        tonic
       )
     }
   ];

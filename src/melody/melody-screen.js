@@ -189,7 +189,9 @@ export function createMelodyController({ projectStore, rerender }) {
     const notes = readNotes(project);
     // 裏メロを直すときは、メインのメロディを薄い目印として重ねて見せる（ぶつかりを目で確かめる）
     const refNotes = isCounter() ? getMelodyNotes(project) : [];
-    const pitches = getOctavePitches(octave);
+    const tonicPcForGrid = rootToPitchClass(project.basic.key);
+    const pitches = getOctavePitches(octave, tonicPcForGrid);
+    const rangeLabel = `${pitchName(pitches[pitches.length - 1])}–${pitchName(pitches[0])}`;
     const visibleSteps = visibleStepNumbers();
     const barStartTick = barIndex * barTicks;
     const chord = project.chords[barIndex];
@@ -268,7 +270,7 @@ export function createMelodyController({ projectStore, rerender }) {
               <small>Bar ${barIndex + 1} の叩き台を3つ</small>
             </div>
             <div>
-              <small>C${octave}–B${octave} ・ ${candidateVariation + 1}/${MELODY_CANDIDATE_VARIATION_COUNT}</small>
+              <small>${rangeLabel} ・ ${candidateVariation + 1}/${MELODY_CANDIDATE_VARIATION_COUNT}</small>
               <button type="button" id="melody-candidate-refresh" class="small-action" aria-label="Bar ${barIndex + 1} のメロディ候補を更新">↻ 候補を更新</button>
             </div>
           </div>
@@ -292,7 +294,7 @@ export function createMelodyController({ projectStore, rerender }) {
 
         <div class="melody-toolbar">
           <button id="melody-octave-down"${octave <= 2 ? " disabled" : ""}>Oct −</button>
-          <span>C${octave}–B${octave}</span>
+          <span>${rangeLabel}</span>
           <button id="melody-octave-up"${octave >= 6 ? " disabled" : ""}>Oct +</button>
         </div>
 
@@ -356,7 +358,7 @@ export function createMelodyController({ projectStore, rerender }) {
         const base = inBar.length > 0 ? inBar : readNotes(latest);
         if (base.length > 0) {
           const mid = base.reduce((sum, note) => sum + note.pitch, 0) / base.length;
-          octave = Math.max(2, Math.min(6, Math.floor(mid / 12) - 1));
+          octave = Math.max(2, Math.min(6, Math.floor((mid - rootToPitchClass(latest.basic.key)) / 12) - 1));
         }
         message = isCounter() ? "裏メロを直します。メインのメロディは薄く表示します。" : "メインのメロディを直します。";
         rerender("melody");
