@@ -144,6 +144,9 @@ jobs:
       - name: Sheet link smoke test
         run: npm run test:sheet-link
 
+      - name: Update notice smoke test
+        run: npm run test:update-notice
+
       - name: Clear all MIDI smoke test
         run: npm run test:clear-all
 
