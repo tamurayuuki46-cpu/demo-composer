@@ -1,4 +1,4 @@
-export const ARRANGER_VERSION = 'v0.1-dev';
+export const ARRANGER_VERSION = 'v0.1.1-dev';
 export const ARRANGER_SCHEMA_VERSION = 1;
 
 export const STYLE_PROFILES = {
