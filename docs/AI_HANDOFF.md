@@ -19,6 +19,7 @@ v0.2-dev
 - Chord Preset 100種類（7カテゴリ。既存6種: Pop 1564 / J-POP 4536 / Pop 1645 / Pop 6415 / 2-5-1 / カノン進行）
 - Chord 次のコード候補3つ / ひとスパイス（借用和音3候補）
 - Chord Backing Pattern: Block / 8分刻み / Arpeggio / Syncopation。Demo PlayerとChord.mid / Song.midへ反映
+- Chord 曲想 / 感情タグ: 既存100 Presetを感情 / 質感 / 場面から3候補へ絞る `曲想から選ぶ`。Hub / 将来の作曲シートの曲想は `metadata.mood[]` → `src/core/composition-intent.js` → Chord Tagへ最大3個自動反映。日本語Label / Tag ID両対応。同じIntent中はChordの手動Tag調整を維持し、Hub Intentが変わった時だけ再同期する。PR #132 merged / CI success（Schema / MIDI変更なし）。詳細は `docs/COMPOSITION_INTENT.md` / `docs/CHORD_MOOD_TAGS.md`
 - Melody: 縦ピアノKeyboard、8分 / 16分切替、音の長さ指定、Bar / Octave切替、音の役割の色分け（青=コード構成音 / 緑=テンション / 黄=スケール外 / 赤=アボイド。`src/melody/pitch-roles.js`）、度数表示、Copy Bar / Copy 2小節、Melody Analyzer
 - Melody Analyzer音程分析: `Keyからの度数` / `Chordからの度数` / `Scale内率` を表示。既存のコードトーン率と併用し、Projectを読むだけの派生分析として実装（Schema変更なし）
 - Melody Analyzer `旋律の3つの見方`: `歌心・浮遊型（草野マサムネ参考） / 輪郭・違和感型（米津玄師参考） / 推進・高密度型（Ayase / YOASOBI参考）`。既存の跳躍 / Chord度数 / Scale外 / 密度 / モチーフ反復を束ねた読み取り専用ガイドで、類似度採点・候補自動変更・Schema変更なし
@@ -64,6 +65,7 @@ v0.2-dev
 - PR #93 Rhythm Bass候補5タイプ: CI success。`ルート / リフ / ファンク / シンセウェーブ / 裏メロ` を1 Bar候補として提示（Schema変更なし）
 - PR #95 Counter Melody Answer（応答型）: merged。現行developへ載せ直し、4候補化。Schema / MIDI形式は変更なし
 - PR #97 Melody Analyzer `メロディの働き`: merged / CI success。Guide / Chord / Tension / Other、非和声音の働き、フレーズ語彙ガイドを追加（Schema変更なし）
+- PR #132 Hub / 作曲シートの曲想をChordへ自動引き継ぎ: merged / CI success。復元点 `restore/v0.2-before-hub-chord-intent-link` / `restore/v0.2-before-composition-intent-core`
 - 旧PR #90 Counter Melody Answer初期版: PR #95で置き換えたためclosed（履歴保持）
 - 旧PR #94 Melody Analyzer Melodic Function初期版: develop先行更新と競合したため、最新developから作り直したPR #97で置き換えてclosed（履歴保持）
 - Melody候補統合merge commit: `6a7f1ce482af9a21eaa30fd6e3b91fd896b4f821`
@@ -114,8 +116,10 @@ v0.2-dev
 16. Hubの `作編曲の手引き` を開き、✓が再読み込み後も残ること、移動ボタンが働くことを確認
 17. Melody Analyzerで3つの参考モデルが表示され、Chord未設定時の2(9th)/6thが `—`、Chord設定時は割合表示になることをAndroid実機で確認
 18. Melody Analyzerで `メロディの働き` が表示され、C Major等でGuide / Chord / Tension / Otherと、経過 / 刺繍 / Approach / 倚音 / 逸音 / 先取の代表例が想定どおり読めることをAndroid実機で確認。係留は「候補」として過剰断定しないこと、リック / リフが自動判定されないことも確認
+19. Android実機で Hubの出発点から `切ない / 夜 / やさしい` 等を選択 → Chordの `曲想から選ぶ` へ自動反映 → Chord側でTagを調整 → Hub往復後も調整保持 → Hub Moodを変えた時だけ再同期、を確認する
 
 既知の問題:
+- 外部の独立PWA `作曲シート` からDemo ComposerへIntentを実際にImportするUI / transportは未実装。内部契約は `docs/COMPOSITION_INTENT.md` に定義済みで、Hub → Chord連携は実装済み
 - メロディ生成のブレスト案（MELODY_PHRASE_PLAN.md の B / C / D / エネルギー連動）はすべて実装済み。耳での調整は実機で
 - Characterの型は20スケール分。耳での調整は実機で。型の無いスケールは共通型。型は音程のデータなので `character-phrases.js` の数字を直すだけで調整できる
 - 裏メロの `Character（特性音型）` は選んだスケールの色を優先し、コードやメロディとのぶつかり回避はしない。Arrange画面からはスケールを選べない（未選択のDorian / Lydian）
@@ -154,6 +158,7 @@ v0.2-dev
 - 高度なSynth / Mix / Mastering / Audio Editing / Vocal Editing / Plugin HostingはCubasis / Cubase側へ任せる方針
 
 最近の重要な設計判断:
+- 作曲シート / Hub → Chord の曲想連携は新しい保存Schemaを作らず、正本 `metadata.mood[]` → Core Composition Intent（メモリBridge）→ Chord派生Tag の一方向参照とする。ChordはHubのMoodを直接書き換えない。同じIntent中のChord手動Tag調整は維持し、Hub Intentが変わった時だけ再同期する。外部作曲シートも最終的に同じ `metadata.mood[]` 契約へ寄せる
 - Melody Piano Rollの色分けは、現在Barのコードと選択Key / Scaleから毎回計算するだけで保存しない（Schema変更なし）。Tensionの定義はMelody Analyzerと同じ自然9 / 11 / 13（ルートから2 / 5 / 9半音）。アボイドは「構成音でなく、構成音の半音上にあるScale内の音」という初心者向けの簡易定義で、厳密なジャズ理論の全ケースは網羅しない。優先は 赤 > 青 > 緑 > 黄
 - `＋ 新規Project` は現在Projectの中身をClearするのではなく、新しいProject IDを作る。旧Projectを上書き・削除しない
 - reload時のvisibility AutoSaveとの競合を避けるため、新規Project要求はsessionStorageでreload境界へ渡し、`app-entry.js` が `main.js` のboot前にActive Projectを確定する。schemaVersionは変更しない
@@ -178,7 +183,7 @@ v0.2-dev
 - GitHub Pagesを現在の公開確認先とし、Vercel自動配信は停止状態を維持する
 
 現在のデータSchema:
-schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Bass候補名 / 候補IDも保存せず、適用結果だけ既存 `tracks[role=bass].notes[]` として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。Melody AnalyzerのKey度数 / Chord度数 / Scale内率 / 3参考モデル / Melodic Functionも保存せずProjectから派生計算するため、schemaVersion 2のまま。
+schemaVersion 2 / PPQ 480 / 4/4固定。Chord Qualityは `major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented`。Arrangeは既存 `structure.sections[]`、Sound / Backingは既存 `instruments[]` を利用。Melody候補そのものとVariation番号は保存せず、適用結果だけ通常の `tracks[role=melody].notes[]`（`id / pitch / startTick / durationTick / velocity`）として保存する。Bass候補名 / 候補IDも保存せず、適用結果だけ既存 `tracks[role=bass].notes[]` として保存する。Counter Melody候補名 / 候補IDも保存せず、選んだ結果だけ `tracks[role=counter].notes[]` として保存する。Melody AnalyzerのKey度数 / Chord度数 / Scale内率 / 3参考モデル / Melodic Functionも保存せずProjectから派生計算するため、schemaVersion 2のまま。Composition Intentは保存せず、`metadata.mood[]` を正本としてメモリ上で共有するためschemaVersion 2を維持する。
 
 最終更新:
-2026-10-11
+2026-10-12
