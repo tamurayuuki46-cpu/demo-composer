@@ -16,6 +16,13 @@ Chord Moduleは `project.chords[]` の責任Module。
   - 追加分は `src/chord/chord-presets.js` の度数文字列表（例 `1451`）から生成。idは `<カテゴリ>-<度数>`
 - Presetは現在Key / Scaleのダイアトニックコードへ自動変換
 - Preset適用時は現在進行を置き換え、適用後は個別追加 / 削除で修正可能
+- 既存100 Presetを曲想 / 感情タグへ紐付ける派生Profile
+  - 感情: 明るい / 切ない / 希望 / 高揚 / 優しい / 哀愁 / 緊張 / 安心 / 力強い
+  - 質感: 浮遊感 / 透明 / 暖かい / ダーク / 壮大 / 開放感 / 都会的 / 幻想的 / 疾走感
+  - 場面: 夜 / 青春 / 雨 / ドライブ / 別れ / 旅立ち / 回想
+  - `src/chord/chord-mood-tags.js` でPreset CategoryとDegree列から重み1〜5を派生計算
+  - 複数タグからMajor / Minorを絞り、最大3つのPreset候補を返せる
+  - 保存Schemaは変更せず、Project Dataへタグ評価値を保存しない
 - 追加済みコード削除
 - Clearで全削除
 - 削除後のstartTick再配置
@@ -27,6 +34,8 @@ Chord Moduleは `project.chords[]` の責任Module。
 `src/chord/chord-presets.js` はDegree Indexの並びだけをPresetとして持つ。
 
 Preset追加はこの表へ度数文字列を足すだけ（重複はSmoke Testで検出）。
+
+曲想 / 感情タグはPreset本体へ重複保存せず、`chord-mood-tags.js` が派生Profileとして付与する。コード進行だけで感情が決まるとは扱わず、BPM / Melody / Rhythm / Voicing / Soundで印象が変わる前提とする。
 
 Preset選択状態はProject Dataへ保存しない。適用すると通常の `project.chords[]` へ展開するため、Schema変更は不要。
 
@@ -50,6 +59,7 @@ Schema v2でQualityを拡張。旧Schema v1の major / minor / diminished はそ
 
 ## Later
 
+- 曲想 / 感情タグをChord画面のPreset絞り込みUIへ接続
 - 並べ替え
 - コード長変更
 - 借用和音を目的別に整理した候補
