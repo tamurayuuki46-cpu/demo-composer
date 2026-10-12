@@ -84,6 +84,7 @@ v0.2-dev
 - `milestone/v0.1-feature-complete` は復元点として保持
 
 開発中:
+- 【Claude作業中・競合注意】Chord品質の拡張（6 / add9 / 7th・9th・11th・13th系 / m7♭5 / dim7 / mMaj7 / 変化音付きなど）と、ダイアトニック / ハーモニックマイナー / メロディックマイナー系のコード一覧（7th版・テンション版）。`src/core/chord-qualities.js`、`src/chord/chord-theory.js`、新規 `src/chord/chord-scale-sets.js`、Chord画面（`src/main.js` のChord部分）、`docs/DATA_SCHEMA.md` の quality 許可値を触る。ChatGPTは完了するまでこれらを編集しないこと（`chord-presets.js` / `chord-song-references.js` は触ってよい）。schemaVersionは2のまま（許可値の追記のみ）。復元ポイント: `restore/v0.2-before-chord-quality-ext`
 - Melody候補の4 Variation Set / Refreshはdevelop統合済み
 - Rhythm Bass候補5タイプはPR #93でCI success。Android実機で候補の差・縦スクロール量・Kick有無のファンク型を確認する段階
 - Counter Melody 4候補はPR #95でdevelop統合済み。Android実機でSparse / Active / Hook / Answerの差、特にSparseとAnswerの聞き分けを確認する段階
