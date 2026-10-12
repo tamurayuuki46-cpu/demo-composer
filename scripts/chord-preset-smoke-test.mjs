@@ -6,6 +6,7 @@ import {
   chordPresetsByCategory,
   chordPresetOptionLabel,
   chordPresetPreview,
+  chordPresetNames,
   getChordPreset
 } from "../src/chord/chord-presets.js";
 import { CHORD_SONG_REFERENCES } from "../src/chord/chord-song-references.js";
@@ -95,3 +96,14 @@ const royal = chordPresetPreview("bright-1451", { key: "G", scale: "major" });
 assert.deepEqual(royal, ["G (I)", "C (IV)", "D (V)", "G (I)"]);
 
 console.log("Chord preset smoke test passed.");
+
+// 選択肢にいまのKeyでのコード名を添える
+{
+  assert.equal(chordPresetNames("pop-1564", { key: "C", scale: "major" }), "C–G–Am–F");
+  const withNames = chordPresetsByCategory({ key: "C", scale: "major" }).flatMap((category) => category.presets);
+  assert.ok(withNames.every((preset) => /｜[A-G]/.test(preset.label)));
+  const withoutNames = chordPresetsByCategory().flatMap((category) => category.presets);
+  assert.ok(withoutNames.every((preset) => !preset.label.includes("｜C–") || preset.label.includes("｜C–")));
+  const first = CHORD_PRESETS[0];
+  assert.match(chordPresetOptionLabel(first, { key: "G", scale: "major" }), /｜G/);
+}
