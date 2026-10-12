@@ -581,6 +581,27 @@ button.degree-bar:not(:disabled):active { transform: scale(.94); }
   gap: 6px;
   align-items: stretch;
 }
+.melody-candidate-list .melody-compare-start {
+  grid-column: 1 / -1;
+  display: block;
+  min-height: 44px;
+  text-align: center;
+}
+.melody-ab-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--accent, #7195ff);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.melody-ab-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.melody-ab-actions button { min-height: 44px; white-space: normal; }
+.melody-ab-actions button[aria-pressed="true"] { outline: 2px solid #7195ff; }
 .melody-candidate-list .melody-candidate-play {
   display: flex;
   align-items: center;

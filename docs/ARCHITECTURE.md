@@ -288,3 +288,7 @@ Sound Sketch Liteの選択はDemo Player用であり、Program ChangeとCCは現
 - `src/core/skeleton-check.js`: `item.later`（今は後でOK）を表示用に追加。`next` の決まり方は変えない
 - `src/rhythm/bass-candidates.js`: `kickRelation` / 候補の `kickRelation`（Kickとの関係の文）
 - Module同士は直接依存しない。ArrangeはCoreの `copySection` / `setSections` / `applySectionVariation` を呼ぶだけ
+
+## 主旋律A/B比較
+
+`core/melody-comparison.js` は固定したProjectと候補から差分・仮Projectを作る純粋関数。Melody Controllerが比較をメモリに保持し、ID/revision照合とStore通知で古い比較を破棄する。再生は既存auditionイベント、採用はupdateMelodyNotes。保存形式変更なし。

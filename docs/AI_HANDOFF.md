@@ -7,6 +7,7 @@ v0.2-dev
 なし。`main` はstable専用。v0.1機能完成地点は復元可能。
 
 現在実装済み:
+- 主旋律1小節A/B比較: 既存候補と現在案を仮Projectで比較、差分表示、B採用はUndo1手。候補はメモリのみ、Project編集で破棄。詳細 `docs/MELODY_AB_COMPARE.md`。Android実機確認は未実施。
 - Android Chrome向け作曲支援PWA。Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite / 裏メロタブ
 - 共通Project State: schemaVersion 2 / PPQ 480 / 4/4固定 / project.json正本
 - IndexedDB保存、起動時Restore、1.5秒AutoSave、hidden時即時Save、Save Now、Persistent Storage要求

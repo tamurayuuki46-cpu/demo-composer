@@ -1200,6 +1200,7 @@ function bindPlayerControls() {
 }
 
 function render(name) {
+  if (name !== "melody") melodyController?.cancelComparison();
   currentScreen = name;
   screen.innerHTML = screens[name]();
 
@@ -1249,7 +1250,7 @@ async function boot() {
     startupMessage = "保存データが現在のSchemaで不正なため、新しいProjectで開始しました。";
   }
 
-  melodyController = createMelodyController({ projectStore, rerender: render });
+  melodyController = createMelodyController({ projectStore, rerender: render, onStop: () => demoPlayer?.stop() });
   rhythmController = createRhythmController({ projectStore, rerender: render });
   soundController = createSoundController({ projectStore, rerender: render });
   demoPlayer = createDemoPlayer({ onStateChange: updatePlayerUi });

@@ -6,6 +6,7 @@ import { applyPeakGuide, buildPeakGuide, currentPeak, defaultPeakBar, PEAK_SHAPE
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import { requestAudition } from "../audio/audition.js";
+import { createMelodyComparison, comparisonIsCurrent, comparisonNotes, comparisonPreview } from "../core/melody-comparison.js";
 import { sliceProject } from "../core/section-ops.js";
 import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar, MELODY_CANDIDATE_VARIATION_COUNT } from "./melody-candidates.js";
 import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, degreeLabel, keyDegreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
@@ -29,7 +30,20 @@ function pianoKeyClass(pitch) {
   return BLACK_PITCH_CLASSES.has(pitch % 12) ? "black" : "white";
 }
 
-export function createMelodyController({ projectStore, rerender }) {
+export function createMelodyController({ projectStore, rerender, onStop = () => {} }) {
+  let comparison = null;
+  let lastHeard = "";
+  function cancelComparison() {
+    if (comparison) onStop();
+    comparison = null;
+    lastHeard = "";
+  }
+  projectStore.subscribe((project) => {
+    if (comparison && !comparisonIsCurrent(comparison, project)) {
+      cancelComparison();
+      message = "曲が変更されたためA/B比較を閉じました。候補から比較をやり直せます。";
+    }
+  });
   let barIndex = 0;
   let octave = 4;
   // 入力単位はUI状態のみ。project.jsonには保存しない（Noteはtickで保持するためSchema変更なし）
@@ -217,6 +231,7 @@ export function createMelodyController({ projectStore, rerender }) {
     const project = projectStore.getSnapshot();
     const { barTicks, stepTicks, barCount } = metrics(project);
     barIndex = Math.min(barIndex, barCount - 1);
+    if (comparison && (isCounter() || comparison.barIndex !== barIndex)) cancelComparison();
 
     const notes = readNotes(project);
     // 裏メロを直すときは、メインのメロディを薄い目印として重ねて見せる（ぶつかりを目で確かめる）
@@ -315,10 +330,24 @@ export function createMelodyController({ projectStore, rerender }) {
                   <span class="melody-candidate-dots" aria-hidden="true">${escapeHtml(melodyCandidateDots(candidate))}</span>
                 </button>
                 <button type="button" class="melody-candidate-play audition-btn" data-melody-candidate-play="${candidate.id}" aria-label="${escapeHtml(candidate.label)}を聴く">▶ 聴く</button>
+                <button type="button" class="melody-compare-start" data-melody-compare="${candidate.id}">現在案とA/B比較</button>
               </div>
             `).join("")}
           </div>
           <p class="hint">候補を選ぶと現在の1小節だけ置き換えます。「候補を更新」で別案に切り替えられます。選んだ後は下のPiano Rollで1音ずつ直せます（↶ で戻せます）。</p>
+          ${comparison ? `<section class="melody-ab-panel" aria-label="主旋律のA/B比較">
+            <strong>Bar ${comparison.barIndex + 1} のA/B比較</strong>
+            <p>A: 現在案（${comparison.diff.a}音） / B: ${escapeHtml(comparison.label)}（${comparison.diff.b}音）</p>
+            <p class="hint">同じ音 ${comparison.diff.unchanged}個・取り除く音 ${comparison.diff.removed}個・加える音 ${comparison.diff.added}個（音高・位置・長さ・強さで比較）。他の小節・伴奏・音色は変えません。</p>
+            <div class="melody-ab-actions">
+              <button data-melody-ab-play="A" aria-pressed="${lastHeard === "A"}">▶ Aを聴く</button>
+              <button data-melody-ab-play="B" aria-pressed="${lastHeard === "B"}">▶ Bを聴く</button>
+              <button id="melody-ab-keep">Aを採用（現在案を保持）</button>
+              <button id="melody-ab-adopt" ${comparison.diff.added + comparison.diff.removed === 0 ? "disabled" : ""}>Bを採用</button>
+            </div>
+            <button id="melody-ab-cancel" class="small-action">比較を閉じる</button>
+            <p class="hint">試聴だけでは保存しません。Bの採用は↶で1回戻せます。${lastHeard ? `最後に聴いた案: ${lastHeard}。` : ""}比較は再読み込みで消えます。</p>
+          </section>` : ""}
         </section>`}
 
         <div class="melody-toolbar">
@@ -381,6 +410,51 @@ export function createMelodyController({ projectStore, rerender }) {
     const { barTicks, stepTicks, barCount } = metrics(project);
     const barStartTick = barIndex * barTicks;
     const melodyCandidates = melodyCandidatesForBar(project, barIndex, { octave, variation: candidateVariation });
+
+    document.querySelectorAll("[data-melody-compare]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const candidate = melodyCandidates.find((item) => item.id === button.dataset.melodyCompare);
+        if (!candidate) return;
+        cancelComparison();
+        const latest = projectStore.getSnapshot();
+        comparison = createMelodyComparison(latest, barIndex,
+          applyMelodyCandidate(getMelodyNotes(latest), barIndex, candidate, { barTicks }), candidate.label);
+        message = "Aは現在案、Bは候補です。聴き比べてから採用できます。";
+        rerender("melody");
+        document.querySelector(".melody-ab-panel")?.scrollIntoView({ block: "nearest" });
+      });
+    });
+    document.querySelectorAll("[data-melody-ab-play]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const session = comparison;
+        if (!session) return;
+        const choice = button.dataset.melodyAbPlay;
+        requestAudition({ label: `${choice}: Bar ${session.barIndex + 1} ${choice === "A" ? "現在案" : session.label}`,
+          build: (latest) => comparisonPreview(session, latest, choice) });
+        lastHeard = choice;
+        rerender("melody");
+      });
+    });
+    const finishComparison = () => {
+      cancelComparison();
+      message = "現在案を保持しました。曲は変更していません。";
+      rerender("melody");
+    };
+    document.querySelector("#melody-ab-keep")?.addEventListener("click", finishComparison);
+    document.querySelector("#melody-ab-cancel")?.addEventListener("click", finishComparison);
+    document.querySelector("#melody-ab-adopt")?.addEventListener("click", () => {
+      if (!comparison) return;
+      try {
+        const notes = comparisonNotes(comparison, projectStore.getSnapshot());
+        cancelComparison();
+        projectStore.updateMelodyNotes(notes);
+        message = "Bを採用しました。↶で現在案へ1回で戻せます。";
+      } catch (error) {
+        cancelComparison();
+        message = error instanceof Error ? error.message : "採用できませんでした。";
+      }
+      rerender("melody");
+    });
 
     document.querySelectorAll("[data-melody-track]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -619,5 +693,5 @@ export function createMelodyController({ projectStore, rerender }) {
     });
   }
 
-  return { render, bind };
+  return { render, bind, cancelComparison };
 }

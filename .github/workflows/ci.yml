@@ -153,5 +153,8 @@ jobs:
       - name: Clear all MIDI smoke test
         run: npm run test:clear-all
 
+      - name: Melody A/B comparison smoke test
+        run: npm run test:melody-ab
+
       - name: Static build
         run: npm run build
