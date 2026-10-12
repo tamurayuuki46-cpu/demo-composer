@@ -135,6 +135,14 @@ assert.ok(rows.every((r) => r.label && r.value));
 assert.equal(rows[0].value, "C4〜C5（1オクターブ）");
 assert.equal(rows.find((r) => r.id === "key-degree").value, "1 50%・3 33%・5 17%");
 assert.equal(rows.find((r) => r.id === "chord-degree").value, "5 50%・3 33%・R 17%");
+{
+  const bars = rows.find((r) => r.id === "chord-degree").bars;
+  assert.equal(bars.length, 12, "コード度数は12本");
+  assert.equal(bars[0].label, "R");
+  assert.ok(Math.abs(bars.reduce((sum, bar) => sum + bar.rate, 0) - 1) < 1e-9, "使用率の合計は100%");
+  assert.equal(bars[7].count > 0, true, "5度を使っている");
+  assert.equal(rows.find((r) => r.id === "key-degree").bars[0].label, "1");
+}
 assert.equal(rows.find((r) => r.id === "scale-fit").value, "100%");
 assert.match(rows.find((r) => r.id === "same").comment, /同じ音が続く/);
 assert.equal(rows.find((r) => r.id === "harmony-role").value, "Guide 4・Chord 12・Tension 0・Other 0");

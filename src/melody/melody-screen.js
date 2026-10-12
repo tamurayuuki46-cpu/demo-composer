@@ -91,6 +91,17 @@ export function createMelodyController({ projectStore, rerender }) {
   }
 
   // Melody Analyzer: 評価ではなく、自分のメロディの特徴を知るためのパネル（Melody Moduleの内部）
+  // 度数ごとの使用率を12本の棒で見せる（棒の下に度数、上に%）
+  function degreeBarsHtml(bars) {
+    const max = Math.max(...bars.map((bar) => bar.rate), 0.01);
+    return `<div class="degree-bars" role="img" aria-label="度数ごとの使用率">${bars.map((bar) => `
+      <div class="degree-bar${bar.count ? "" : " zero"}">
+        <em>${bar.count ? Math.round(bar.rate * 100) : ""}</em>
+        <i style="height:${Math.round((bar.rate / max) * 100)}%"></i>
+        <b>${escapeHtml(bar.label)}</b>
+      </div>`).join("")}</div>`;
+  }
+
   function analyzerPanelHtml(project) {
     const rows = describeMelody(analyzeMelody(project));
     if (rows.length === 0) return `<div class="analyzer-panel"><p class="hint">メロディを入力すると、特徴が表示されます。</p></div>`;
@@ -100,6 +111,7 @@ export function createMelodyController({ projectStore, rerender }) {
           <div class="analyzer-row">
             <strong>${escapeHtml(row.label)}</strong>
             <span>${escapeHtml(row.value)}</span>
+            ${row.bars ? degreeBarsHtml(row.bars) : ""}
             ${row.comment ? `<small>${escapeHtml(row.comment)}</small>` : ""}
           </div>
         `).join("")}
@@ -232,7 +244,7 @@ export function createMelodyController({ projectStore, rerender }) {
             const ref = !active && !held && refNotes.some((note) => note.pitch === pitch && note.startTick <= startTick && note.startTick + note.durationTick > startTick);
             const hasSub = resolution === 8 && notes.some((note) => note.startTick === startTick + stepTicks / 2 && note.pitch === pitch);
             const beatStartClass = isBeatStart(step) ? " beat-start" : "";
-            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}${held ? " held" : ""}${ref ? " ref" : ""}${hasSub ? " has-sub" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${stepLabel(step)}${roleText ? `（${roleText}）` : ""}"></button>`;
+            return `<button class="note-cell${beatStartClass}${active ? " active" : ""}${held ? " held" : ""}${ref ? " ref" : ""}${hasSub ? " has-sub" : ""}" data-melody-pitch="${pitch}" data-melody-step="${step}" aria-label="${escapeHtml(name)} ${stepLabel(step)}${roleText ? `（${roleText}）` : ""}">${active && showDegrees && chord ? `<span class="note-degree">${escapeHtml(degreeLabel(pitch, chord.root))}</span>` : ""}</button>`;
           }).join("")}
         </div>
       `;
