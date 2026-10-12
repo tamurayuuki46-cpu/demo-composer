@@ -52,6 +52,7 @@ jobs:
           npx playwright install --with-deps chromium
           python3 -m http.server 8080 --directory dist > /tmp/arranger-server.log 2>&1 &
           node arranger/tests/browser.test.cjs
+          node arranger/tests/pwa-update.test.cjs
 
       - name: Upload mobile evidence
         if: always()

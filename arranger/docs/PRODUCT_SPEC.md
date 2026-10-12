@@ -1,4 +1,4 @@
-# Arrangement Lab v0.4-dev
+# Arrangement Lab v0.4.1-dev
 
 ## 目的
 Demo Composerで作った曲の骨格を、Cubasis / Cubaseへ渡す前に「複数の編曲候補を鳴らして比べ、Section単位で混ぜ、必要ならリハモして、MIDIへ渡せる状態」にする。
@@ -125,3 +125,6 @@ SectionにpartOverrides:{melody?,counter?,bass?,drums?,harmony?}、musicLab、to
 - Voice leading: https://online.berklee.edu/takenote/voice-leading-paradigms-for-harmony-in-music-composition/
 - Pedal / II–V / melodic identity: https://college.berklee.edu/bt/204/lesson.html
 本実装は短いルールベースの比較候補を作る。教材文章や譜例を転載しない。
+
+## v0.4.1 PWA update contract
+Build時にarrangerのHTML/CSS/Module入口と全相対依存を同じbuild queryで固定。appがsw.js?build=同IDをupdateViaCache:noneで登録。SWはbuild別cacheにreloadで取得し、オンラインnavigationはnetwork-first、offlineは同build cache。異なるbuildのModule queryは旧cacheへフォールバックしない。旧v0.3が残る場合はバージョン付き入口URLで旧HTML cacheを避け、以後通常URLの更新も新SWが管理する。localStorageと別PWA cacheは保持。

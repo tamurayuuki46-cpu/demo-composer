@@ -46,7 +46,7 @@ const sourceJson = {
   instruments: [], progress: {}, exportSettings: {},
 };
 
-assert.equal(ARRANGER_VERSION, 'v0.4-dev');
+assert.equal(ARRANGER_VERSION, 'v0.4.1-dev');
 assert.equal(ARRANGER_SCHEMA_VERSION, 4);
 
 const source = normalizeSourceProject(sourceJson);

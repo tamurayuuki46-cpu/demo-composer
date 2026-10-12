@@ -1,0 +1,52 @@
+const assert=require('node:assert/strict');
+const http=require('node:http');
+const fs=require('node:fs/promises');
+const path=require('node:path');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+let phase='legacy';
+const legacyHtml='<!doctype html><html><head><link rel="icon" href="data:,"></head><body><span id="version">v0.3-dev</span><script>navigator.serviceWorker.register("./sw.js")</script></body></html>';
+const legacyWorker=`const CACHE='arrangement-lab-legacy-test';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','./src/core.js'])).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request))));`;
+const types={'.js':'text/javascript','.css':'text/css','.html':'text/html','.png':'image/png','.webmanifest':'application/manifest+json'};
+const server=http.createServer(async(req,res)=>{
+ try{
+  const url=new URL(req.url,'http://localhost'),p=url.pathname;
+  if(p==='/favicon.ico'){res.writeHead(204);return res.end();}
+  if(phase==='legacy'&&(p==='/arranger/'||p==='/arranger/index.html')){res.setHeader('Content-Type','text/html');return res.end(legacyHtml)}
+  if(phase==='legacy'&&p==='/arranger/sw.js'){res.setHeader('Content-Type','text/javascript');return res.end(legacyWorker)}
+  if(phase==='legacy'&&p==='/arranger/src/core.js'){res.setHeader('Content-Type','text/javascript');return res.end("export const ARRANGER_VERSION='v0.3-dev';")}
+  if(!p.startsWith('/arranger/')||p.includes('..')){res.writeHead(404);return res.end()}
+  const file=path.resolve('dist',p.slice(1)+(p.endsWith('/')?'index.html':''));res.setHeader('Content-Type',types[path.extname(file)]||'text/plain');res.setHeader('Cache-Control','no-store');res.end(await fs.readFile(file));
+ }catch{res.writeHead(404);res.end()}
+});
+(async()=>{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const base=`http://127.0.0.1:${server.address().port}/arranger/`,browser=await chromium.launch({headless:true});
+ try{
+  const context=await browser.newContext(),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base);await page.evaluate(()=>navigator.serviceWorker.ready);await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+  assert.equal(await page.locator('#version').textContent(),'v0.3-dev');
+  await page.evaluate(async()=>{localStorage.setItem('demo-composer-arranger-v0.3','old-data-kept');await caches.open('another-pwa-sentinel')});
+  phase='current';
+  // The old cache still owns the normal URL. A fresh entry must not reuse its core module.
+  await page.goto(base+'?v=0.4.1');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
+  // page.waitForFunction is intentionally not used for the async registration lookup. Poll inside
+  // page.evaluate so the Promise is awaited, then reload after the build-stamped worker is active.
+  const buildWorkerUrl=await page.evaluate(async()=>{
+   const deadline=Date.now()+30000;
+   while(Date.now()<deadline){
+    const r=await navigator.serviceWorker.getRegistration();
+    if(r?.active?.state==='activated'&&r.active.scriptURL.includes('?build='))return r.active.scriptURL;
+    await new Promise(resolve=>setTimeout(resolve,50));
+   }
+   const r=await navigator.serviceWorker.getRegistration();
+   throw new Error(`build worker did not activate: active=${r?.active?.scriptURL||'none'} waiting=${r?.waiting?.scriptURL||'none'} installing=${r?.installing?.scriptURL||'none'}`);
+  });
+  assert.ok(buildWorkerUrl.includes('?build='));
+  await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('demo-composer-arranger-v0.3')),'old-data-kept');
+  assert.ok((await page.evaluate(()=>caches.keys())).includes('another-pwa-sentinel'));
+  await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
+  await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
+  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.4.1 -> normal URL -> offline; saved data and other caches preserved');
+ }finally{await browser.close();await new Promise(r=>server.close(r))}
+})().catch(e=>{console.error(e);server.close();process.exitCode=1});

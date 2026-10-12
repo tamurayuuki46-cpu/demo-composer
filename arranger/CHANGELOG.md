@@ -1,5 +1,19 @@
 # CHANGELOG
 
+Version: v0.4.1-dev
+更新日: 2026-10-13
+
+【修正】
+・公開後も旧PWA画面が残る更新問題を修正
+・HTML/CSS/全Moduleを同じbuild URLへ固定
+・Service Workerをbuild別登録/cacheへ分離し、更新をHTTP cache任せにしない
+・Service Workerの事前キャッシュ取得にもbuild IDを付け、旧Workerが新cacheへ旧HTML/Moduleを混入させる更新経路を遮断
+・オンラインの画面は新HTMLを取得、オフラインは同build cacheで復元
+・旧保存データを消去せず更新。別PWAのcacheは保持
+
+【未対応】
+・Android/Cubasis/Cubase実機の音質・取込確認
+
 Version: v0.4-dev
 更新日: 2026-10-13
 
