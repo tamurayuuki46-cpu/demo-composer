@@ -95,7 +95,7 @@ v0.2-dev
 次に実装:
 000. Android実機で、`裏メロ` タブ（7ボタンの収まり）と新2タイプ（Arpeggio / Riff）の聞こえ方を確認。裏メロのPiano Rollでの手入力（Melody画面のPiano Rollを役割ごとに使い回す）は未実装
 00. Android実機で、Melodyの新しい初期音色（Vocal）と音量（-2dB）が合うか聴く。気になる音色は Sound画面で `Vocal Soft / Pad Lead` などに変えて比べる。音量が合わなければ `src/audio/demo-player.js` の `PART_LEVEL` を調整
-0. 4小節メロディ生成（Chord画面）をAndroid実機で確認し、拡張（B 味付け: 2度・6度 / YOASOBI風、C 裏メロの分散和音・ギターリフ、D スケール色違い）を `docs/MELODY_PHRASE_PLAN.md` の順で進める
+0. メロディ生成（味付け・スケールの色・盛り上がり）と裏メロ（ペンタ・Character・Motion）をAndroid実機で聴いて調整する。ブレスト案（`docs/MELODY_PHRASE_PLAN.md`）は実装済み
 1. Android公開版で Melody → 安定 / キャッチー / 浮遊感 の3候補と `↻ 候補を更新` が表示されることを確認
 2. `候補を更新` を押すたびに 1/4 → 2/4 → 3/4 → 4/4 → 1/4 と切り替わり、3候補の音型が変わることを確認
 3. C MajorなどでChordを入力し、どのSetでも安定案がChord Tone中心であることを確認
