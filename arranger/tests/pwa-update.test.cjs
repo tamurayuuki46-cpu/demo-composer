@@ -29,7 +29,7 @@ const server=http.createServer(async(req,res)=>{
   phase='current';
   // The old cache still owns the normal URL. A fresh entry must not reuse its core module.
   await page.goto(base+'?v=0.4.1');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
-  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.scriptURL.includes('?build=')});
+  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated' && r.active.scriptURL.includes('?build=') && navigator.serviceWorker.controller?.scriptURL===r.active.scriptURL});
   assert.equal(await page.evaluate(()=>localStorage.getItem('demo-composer-arranger-v0.3')),'old-data-kept');
   assert.ok((await page.evaluate(()=>caches.keys())).includes('another-pwa-sentinel'));
   await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
