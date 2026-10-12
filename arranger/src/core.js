@@ -1,6 +1,6 @@
 import { CHORD_QUALITY_DEFINITIONS as QUALITIES } from './chord-qualities.js';
-export const ARRANGER_VERSION = 'v0.3-dev';
-export const ARRANGER_SCHEMA_VERSION = 3;
+export const ARRANGER_VERSION = 'v0.4-dev';
+export const ARRANGER_SCHEMA_VERSION = 4;
 
 export const STYLE_PROFILES = {
   'jpop-band': {
@@ -84,6 +84,7 @@ export function normalizeSourceProject(input) {
 function normalizeChord(chord) {
   if (!chord || !Number.isFinite(Number(chord.startTick))) return null;
   return {
+    voicing: Array.isArray(chord.voicing) ? [...new Set(chord.voicing.filter(v=>Number.isFinite(Number(v))).map(v=>clampInt(v,0,127,60)))].slice(0,8) : null,
     root: mod12(chord.root), quality: Object.hasOwn(QUALITIES, chord.quality) ? chord.quality : 'major', degree: chord.degree || '',
     startTick: clampInt(chord.startTick, 0, 0x0fffffff, 0),
     durationTick: clampInt(chord.durationTick, 1, 0x0fffffff, 1),
@@ -94,7 +95,7 @@ function normalizeTrack(track) {
   return {
     role: track.role, name: track.name || track.role, midiChannel: clampInt(track.midiChannel, 1, 16, track.role === 'drums' ? 10 : 1),
     notes: Array.isArray(track.notes) ? track.notes.filter(Boolean).map((note) => ({
-      id: note.id || makeId(), pitch: clampInt(note.pitch, 0, 127, 60),
+      id: note.id || makeId(), ...(typeof note.voice === 'string' ? {voice:note.voice.slice(0,24)} : {}), pitch: clampInt(note.pitch, 0, 127, 60),
       startTick: clampInt(note.startTick, 0, 0x0fffffff, 0), durationTick: clampInt(note.durationTick, 1, 0x0fffffff, 1),
       velocity: clampInt(note.velocity, 1, 127, 96),
     })) : [],
@@ -194,7 +195,7 @@ export function updateCandidateSection(candidate, sectionId, patch = {}) {
   if (!section) return next;
   if (patch.density && DENSITY_SCORE[patch.density]) section.density = patch.density;
   if (patch.enabled) section.enabled = { ...section.enabled, ...patch.enabled };
-  for (const key of ['harmonyPattern','chorusDirection','counterArrangement','restPolicy','leadRole','reason','decisionNote']) {
+  for (const key of ['harmonyPattern','chorusDirection','counterArrangement','restPolicy','leadRole','reason','decisionNote','partOverrides','musicLab','tonalTarget','voiceRoles']) {
     if (key in patch) section[key] = structuredCloneSafe(patch[key]);
   }
   if ('reharmonization' in patch) section.reharmonization = patch.reharmonization ? structuredCloneSafe(patch.reharmonization) : null;
@@ -308,7 +309,7 @@ export function createPartMidi(source, candidate, part) {
   const ppq = source.basic.ppq || 480;
   const notes = arrangedNotes(source, candidate, part);
   const track = source.tracks.find((item) => item.role === part);
-  const channel = part === 'drums' ? 9 : Math.max(0, Math.min(15, (track?.midiChannel || ({ melody: 2, bass: 3, counter: 4, harmony: 5 }[part] || 1)) - 1));
+  const channel = part === 'drums' ? 9 : Math.max(0, Math.min(15, (track?.midiChannel || ({ melody: 2, bass: 3, counter: 4, harmony: 5, 'counter-a':6, 'counter-b':7 }[part] || 1)) - 1));
   if (!notes.length) return null;
   const events = [{ tick: 0, order: 0, bytes: [0xff, 0x58, 4, 4, 2, 24, 8] }];
   const bpm = source.basic.bpm || 120;
@@ -335,6 +336,7 @@ export function createPartMidi(source, candidate, part) {
 }
 // Shared event source for MIDI and preview. OFF boundaries cut sustained notes.
 export function arrangedNotes(source, candidate, part) {
+  if (part === 'counter-a' || part === 'counter-b') return arrangedNotes(source,candidate,'counter').filter(n=>n.voice === (part === 'counter-a' ? 'A' : 'B'));
   if (part === 'harmony') return harmonyNotes(source, candidate);
   const base = source.tracks.filter((track) => track.role === part).flatMap((track) => track.notes);
   const melody = source.tracks.filter((track) => track.role === 'melody').flatMap((track) => track.notes);
@@ -342,8 +344,9 @@ export function arrangedNotes(source, candidate, part) {
   for (const section of source.sections) {
     const plan = candidate.sections.find((item) => item.sectionId === section.id);
     if (plan?.enabled?.[part] === false) continue;
-    const overridden = part === 'counter' && Array.isArray(plan?.counterArrangement?.notes);
-    const notes = overridden ? normalizeTrack({ role: part, notes: plan.counterArrangement.notes }).notes : base;
+    const override = Array.isArray(plan?.partOverrides?.[part]) ? plan.partOverrides[part] : part === 'counter' && Array.isArray(plan?.counterArrangement?.notes) ? plan.counterArrangement.notes : null;
+    const overridden = override !== null;
+    const notes = overridden ? normalizeTrack({ role: part, notes: override }).notes : base;
     notes.forEach((note,index) => {
       const start = Math.max(note.startTick, section.startTick), end = Math.min(note.startTick + note.durationTick, section.endTick);
       if (end <= start) return;
@@ -373,6 +376,11 @@ export function harmonyNotes(source, candidate) {
   for (const section of source.sections) {
     const plan = candidate.sections.find((item) => item.sectionId === section.id);
     if (plan?.enabled?.harmony === false) continue;
+    if (Array.isArray(plan?.partOverrides?.harmony)) {
+      const notes=normalizeTrack({role:'harmony',notes:plan.partOverrides.harmony}).notes;
+      for(const n of notes) { const startTick=Math.max(n.startTick,section.startTick), endTick=Math.min(n.startTick+n.durationTick,section.endTick); if(endTick>startTick)output.push({...n,startTick,durationTick:endTick-startTick}); }
+      continue;
+    }
     const chords = plan?.reharmonization?.chords?.length ? plan.reharmonization.chords : source.chords;
     const density = DENSITY_SCORE[plan?.density] || 2;
     for (const raw of chords) {
@@ -383,18 +391,19 @@ export function harmonyNotes(source, candidate) {
       const chosen = density === 3 ? intervals : intervals.length > 3
         ? (density === 1 ? [intervals[1], intervals.at(-1)] : [0, intervals[1], intervals.at(-1)])
         : intervals.slice(0, density === 1 ? 2 : 3);
+      const pitches = chord.voicing?.length ? chord.voicing : chosen.map(interval=>48 + mod12(chord.root) + interval);
       const startTick = Math.max(chord.startTick, section.startTick);
       const durationTick = Math.min(chord.startTick + chord.durationTick, section.endTick) - startTick;
       const velocity = Math.round((64 + density * 8) * (plan?.leadRole === 'counter' ? .75 : 1));
       const pattern = plan?.harmonyPattern || 'sustain';
       if (pattern === 'sustain') {
-        for (const interval of chosen) output.push({ pitch: 48 + mod12(chord.root) + interval, startTick, durationTick, velocity });
+        for (const pitch of pitches) output.push({ pitch, startTick, durationTick, velocity });
       } else {
         const step = Math.max(1,Math.round(source.basic.ppq/2));
         for (let tick=startTick,index=0; tick<startTick+durationTick; tick+=step,index++) {
           if (pattern === 'offbeat' && Math.floor((tick-section.startTick)/step)%2===0) continue;
-          const voices = pattern === 'arpeggio' ? [chosen[index%chosen.length]] : chosen;
-          for (const interval of voices) output.push({ pitch: 48 + mod12(chord.root) + interval, startTick:tick, durationTick:Math.min(Math.round(step*.7),startTick+durationTick-tick), velocity });
+          const voices = pattern === 'arpeggio' ? [pitches[index%pitches.length]] : pitches;
+          for (const pitch of voices) output.push({ pitch, startTick:tick, durationTick:Math.min(Math.round(step*.7),startTick+durationTick-tick), velocity });
         }
       }
     }
@@ -403,7 +412,7 @@ export function harmonyNotes(source, candidate) {
 }
 
 export function restoreArrangerProject(saved, sourceOverride = null) {
-  if (![1, 2, 3].includes(saved?.arrangerSchemaVersion) || !saved.source || !Array.isArray(saved.arrangement?.sections)) throw new Error('編曲プランの形式が正しくありません。');
+  if (![1, 2, 3, 4].includes(saved?.arrangerSchemaVersion) || !saved.source || !Array.isArray(saved.arrangement?.sections)) throw new Error('編曲プランの形式が正しくありません。');
   const source = sourceOverride || (saved.sourceSnapshot ? normalizeSourceProject(saved.sourceSnapshot) : null);
   if (!source) return { source: null, candidate: null };
   if (saved.source.projectId !== source.sourceProjectId || saved.source.revision !== source.sourceRevision) throw new Error('元のProject ID / revisionが一致しません。');
