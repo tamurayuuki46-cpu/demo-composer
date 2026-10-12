@@ -1,6 +1,12 @@
 # CHANGELOG
 
 ## v0.2-dev
+
+### 追加（2026-10-12: 主旋律1小節A/B比較）
+- 既存Melody候補から現在案Aと候補Bを仮Projectで比較。差分を表示し、B採用のみUndo1手・AutoSave対象。Project編集時は比較を破棄。Schema/DB/MIDI形式変更なし。
+- 復元点 `restore/v0.2-before-melody-ab-20261012`（24e4ffe）。詳細 `docs/MELODY_AB_COMPARE.md`。
+- `npm run test:melody-ab` とCIを追加。
+
 更新日: 2026-10-11
 
 ### 変更
