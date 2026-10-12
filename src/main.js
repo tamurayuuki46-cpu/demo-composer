@@ -18,7 +18,7 @@ import { suggestNextChords, suggestSpiceChords } from "./chord/chord-next.js";
 import { chordsWithBarChord, draftChordsFromMelody, melodyBarCount, suggestChordsForBar } from "./chord/chord-for-melody.js";
 import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicChords, NOTE_NAMES, rootDegreeName, rootToPitchClass } from "./chord/chord-theory.js";
 import { chordScaleSetsHtml, resolveScaleFamilyId } from "./chord/chord-scale-sets-ui.js";
-import { scaleSetChords, scaleTensionChords } from "./chord/chord-scale-sets.js";
+import { scaleLevelRows, scaleSetChords } from "./chord/chord-scale-sets.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
@@ -875,11 +875,9 @@ function bindChordControls() {
     scaleSetsOpen = !scaleSetsOpen;
     render("chord");
   });
-  document.querySelectorAll("[data-scale-family]").forEach((button) => {
-    button.addEventListener("click", () => {
-      scaleSetFamily = button.dataset.scaleFamily;
-      render("chord");
-    });
+  document.querySelector("#scale-family-select")?.addEventListener("change", (event) => {
+    scaleSetFamily = event.target.value;
+    render("chord");
   });
   document.querySelectorAll("[data-scale-level]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -899,13 +897,14 @@ function bindChordControls() {
     });
   });
 
-  document.querySelectorAll("[data-scale-tension]").forEach((button) => {
+  document.querySelectorAll("[data-scale-row]").forEach((button) => {
     button.addEventListener("click", () => {
       const latest = projectStore.getSnapshot();
-      const [rowIndex, quality] = button.dataset.scaleTension.split(":");
-      const row = scaleTensionChords({
+      const [rowIndex, quality] = button.dataset.scaleRow.split(":");
+      const row = scaleLevelRows({
         key: latest.basic.key,
-        familyId: resolveScaleFamilyId(latest.basic.scale, scaleSetFamily)
+        familyId: resolveScaleFamilyId(latest.basic.scale, scaleSetFamily),
+        level: scaleSetLevel
       })[Number(rowIndex)];
       const chord = row?.chords.find((item) => item.quality === quality);
       if (chord) appendCandidate(chord);

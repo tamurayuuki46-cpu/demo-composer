@@ -4,6 +4,9 @@
 更新日: 2026-10-11
 
 ### 追加
+- Chord `スケール系のコード` を大幅拡張: スケールをセレクトで選べるようにした（C Dorian / Phrygian / Lydian / Mixolydian / Locrian、ハーモニックマイナー系のモード＝Phrygian Dominant（スパニッシュ）など、メロディックマイナー系のモード＝Lydian Dominant・Altered など、Double Harmonic / Hungarian Minor / Spanish 8-Note、Whole Tone、ディミニッシュ（全半・半全）、メジャー・マイナーペンタ、ブルース、都節音階 / 陰旋法 / 律・陽旋法 / 琉球音階）。スケール名はKeyを頭にしたコード表記（例: `C Phrygian Dominant（スパニッシュ）`）。固定表を持たないスケールは「そのスケールの音だけで作れるコード」を度ごとに全部表示する（3和音 / 7th / テンション / 特殊和音）
+- Quality を35→44種類へ追加: 7♭5 / 7♯5 / 9♭5 / 9♯5（全音音階向け）、4度堆積（3音・4音）/ 5度堆積 / So What / 神秘和音。許可値の追記のみでschemaVersionは2のまま
+- 追加前復元点は develop の 4f7378a 以降（PR #104 時点）
 - Chord `スケール系のコード` のテンション段階: 固定の1コードではなく、選んだスケール（Major / ハーモニックマイナー系 / メロディックマイナー系）の音だけで作れるテンション系コード（6th・add9 / 9th・11th・13th / 変化音）を、度ごとにすべて表示するようにした。スケール外の音を含むコードは出さない（例: Cメジャーの I に C7♭9 は出ない）。Schema変更なし（`scaleTensionChords`、`npm run test:chord-scale-sets` に追加）
 - Chord: Quality を9種類から35種類へ拡張（6 / m6 / add9 / madd9 / m7♭5 / dim7 / mMaj7 / maj7♯5 / 7sus4 / 9th・11th・13th系 / ♭9・♯9・♭13・♯11 などの変化音）。「基準音からコード種類を選ぶ」は基本 / 6th・add / 7th / テンション / 変化音のグループ表示にした。許可値の追記のみでschemaVersionは2のまま
 - Chord: `スケール系のコード` パネルを追加。ダイアトニック（選択Scale）/ ハーモニックマイナー系 / メロディックマイナー系を、3和音 / 7th / テンションの3段階で7コードずつ表示し、1タップで進行へ追加できる（`src/chord/chord-scale-sets.js` / `chord-scale-sets-ui.js`）

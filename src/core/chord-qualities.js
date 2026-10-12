@@ -41,7 +41,18 @@ export const CHORD_QUALITY_DEFINITIONS = Object.freeze({
   dominant7flat13: ext("7♭13", "7b13", [0, 4, 7, 10, 20], { suffix: "7♭13" }),
   dominant7sharp11: ext("7♯11", "7#11", [0, 4, 7, 10, 18], { suffix: "7♯11" }),
   major7sharp11: ext("maj7♯11", "maj7#11", [0, 4, 7, 11, 18], { suffix: "maj7♯11" }),
-  minor7flat9: ext("m7♭9", "m7b9", [0, 3, 7, 10, 13], { minor: true, suffix: "7♭9" })
+  minor7flat9: ext("m7♭9", "m7b9", [0, 3, 7, 10, 13], { minor: true, suffix: "7♭9" }),
+
+  // ---- 全音音階・4度堆積などの特殊和音（追記のみ）----
+  dominant7flat5: ext("7♭5", "7b5", [0, 4, 6, 10], { suffix: "7♭5" }),
+  dominant7sharp5: ext("7♯5", "7#5", [0, 4, 8, 10], { suffix: "7♯5" }),
+  dominant9flat5: ext("9♭5", "9b5", [0, 4, 6, 10, 14], { suffix: "9♭5" }),
+  dominant9sharp5: ext("9♯5", "9#5", [0, 4, 8, 10, 14], { suffix: "9♯5" }),
+  quartal3: ext("4度堆積(3音)", "q3", [0, 5, 10], { suffix: "q3" }),
+  quartal4: ext("4度堆積(4音)", "q4", [0, 5, 10, 15], { suffix: "q4" }),
+  quintal3: ext("5度堆積(3音)", "q5", [0, 7, 14], { suffix: "q5" }),
+  soWhat: ext("So What", "SoWhat", [0, 5, 10, 15, 19], { suffix: "SoWhat" }),
+  mystic: ext("神秘和音", "mystic", [0, 6, 10, 16, 21], { suffix: "mystic" })
 });
 
 // 基本の9種類。MIDI読み込みのコード判定など、「ふつうのコード」に絞りたい処理が使う（拡張Qualityは含まない）
@@ -61,9 +72,10 @@ export const CHORD_QUALITY_ORDER = Object.freeze([
 export const CHORD_QUALITY_GROUPS = Object.freeze([
   { id: "basic", label: "基本", qualities: CHORD_QUALITY_ORDER },
   { id: "sixth", label: "6th・add9", qualities: Object.freeze(["major6", "minor6", "add9", "minorAdd9"]) },
-  { id: "seventh", label: "7th いろいろ", qualities: Object.freeze(["minor7flat5", "diminished7", "minorMajor7", "major7sharp5", "dominant7sus4"]) },
+  { id: "seventh", label: "7th いろいろ", qualities: Object.freeze(["minor7flat5", "diminished7", "minorMajor7", "major7sharp5", "dominant7sus4", "dominant7flat5", "dominant7sharp5"]) },
   { id: "tension", label: "9th・11th・13th", qualities: Object.freeze(["major9", "dominant9", "minor9", "minor11", "minor7add11", "dominant13", "major13", "minorMajor9", "major9sharp5", "minor9flat5", "minor7flat5add11"]) },
-  { id: "altered", label: "変化音（♭9・♯9・♯11・♭13）", qualities: Object.freeze(["dominant7flat9", "dominant7sharp9", "dominant7flat13", "dominant7sharp11", "major7sharp11", "minor7flat9"]) }
+  { id: "altered", label: "変化音（♭9・♯9・♯11・♭13）", qualities: Object.freeze(["dominant7flat9", "dominant7sharp9", "dominant7flat13", "dominant7sharp11", "major7sharp11", "minor7flat9", "dominant9flat5", "dominant9sharp5"]) },
+  { id: "special", label: "4度堆積・特殊和音", qualities: Object.freeze(["quartal3", "quartal4", "quintal3", "soWhat", "mystic"]) }
 ]);
 
 export const ALL_CHORD_QUALITY_ORDER = Object.freeze(CHORD_QUALITY_GROUPS.flatMap((group) => group.qualities));
