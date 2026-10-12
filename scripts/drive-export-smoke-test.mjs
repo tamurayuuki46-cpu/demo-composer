@@ -3,6 +3,7 @@ import { createDefaultProject } from "../src/core/project-state.js";
 import {
   canShareFiles,
   midiShareFiles,
+  midiShareFilesAsText,
   projectJsonShareFile,
   shareFiles
 } from "../src/hub/drive-export.js";
@@ -60,3 +61,9 @@ const unsupported = await shareFiles([jsonFile], { navigatorObject: {} });
 assert.equal(unsupported.status, "unsupported");
 
 console.log("Drive export smoke test passed.");
+
+{
+  const txt = midiShareFilesAsText(project, FakeFile);
+  assert.ok(txt.some((file) => file.name === "Song.mid.txt"));
+  assert.ok(txt.every((file) => file.type === "text/plain"));
+}

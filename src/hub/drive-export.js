@@ -70,6 +70,16 @@ export function midiShareFiles(project, FileCtor = globalThis.File) {
   ));
 }
 
+// Androidの共有は .mid を送れないため、同じ中身を「Song.mid.txt」（text/plain）にして共有する。
+// Drive側で名前の末尾「.txt」を消せば、そのまま .mid として使える（中身は変えていない）
+export const MIDI_TXT_SUFFIX = ".txt";
+export function midiShareFilesAsText(project, FileCtor = globalThis.File) {
+  if (typeof FileCtor !== "function") return [];
+  return Object.entries(buildMidiExports(project)).map(([filename, bytes]) => (
+    new FileCtor([bytes], `${filename}${MIDI_TXT_SUFFIX}`, { type: "text/plain" })
+  ));
+}
+
 export function canShareFiles(files, navigatorObject = globalThis.navigator) {
   if (!navigatorObject || typeof navigatorObject.share !== "function" || files.length === 0) return false;
   if (typeof navigatorObject.canShare !== "function") return true;
@@ -117,7 +127,7 @@ function setReadyState(section, ready) {
   }
 
   hint.textContent = ready
-    ? "「Driveへバックアップ」は共有画面からGoogle Driveを選びます（project.json.txt として保存）。MIDIは端末に保存されるので、Driveアプリの「＋ → アップロード」で入れてください。"
+    ? "「Driveへバックアップ」は共有画面からGoogle Driveを選びます（project.json.txt として保存）。MIDIは「○○.mid.txt」として共有されます。Driveで末尾の「.txt」を消すと .mid として使えます。"
     : "AutoSaveの完了を確認中です。ボタンは押せます。まだ保存前なら理由を表示します。";
 }
 
@@ -191,11 +201,29 @@ function fallbackDownload(files, error) {
   setHubMessage(`共有を開始できませんでした（${error?.name ?? "error"}）。端末にダウンロードしたので、Driveアプリから保存してください。`, true);
 }
 
-// .mid はAndroid Chromeの共有で送れないため、端末に保存してDriveアプリからアップロードしてもらう
-function saveMidiForDrive(files, label) {
-  if (files.length === 0) return;
-  files.forEach(downloadFile);
-  setHubMessage(`${label}を端末の「ダウンロード」に保存しました。Driveアプリ →「＋」→「アップロード」→「ダウンロード」から選ぶとDriveに入ります（Androidの共有はMIDIファイルに対応していないため）。`);
+// MIDIをDriveへ: 共有画面（.mid.txt）→ だめなら端末へ .mid をダウンロード
+async function shareMidiForDrive(project, names, label) {
+  const textFiles = midiShareFilesAsText(project).filter((file) => names === null || names.includes(file.name.slice(0, -MIDI_TXT_SUFFIX.length)));
+  const realFiles = midiShareFiles(project).filter((file) => names === null || names.includes(file.name));
+  if (textFiles.length === 0) {
+    setHubMessage(`${label}を作れませんでした。`, true);
+    return;
+  }
+  try {
+    const result = await shareFiles(textFiles, { title: `${safeTitle(project)} - ${label}` });
+    if (result.status === "shared") {
+      setHubMessage(`${label}を共有しました。Driveに「○○.mid.txt」で入ります。Driveで名前の末尾「.txt」を消すと、そのまま .mid として使えます（中身は同じです）。`);
+      return;
+    }
+    if (result.status === "cancelled") {
+      setHubMessage("Driveへの保存をキャンセルしました。");
+      return;
+    }
+  } catch {
+    // 共有が使えない端末では、下の「端末へ保存」へ進む
+  }
+  realFiles.forEach(downloadFile);
+  setHubMessage(`共有画面を開けなかったため、${label}を端末の「ダウンロード」に保存しました。Driveアプリの「＋ → アップロード」から選んでください。`, true);
 }
 
 function bindDriveSection(section) {
@@ -234,7 +262,7 @@ function bindDriveSection(section) {
       return;
     }
 
-    saveMidiForDrive(midiShareFiles(project), "MIDI一式");
+    await shareMidiForDrive(project, null, "MIDI一式");
   });
 
   section.querySelectorAll("[data-drive-file]").forEach((button) => {
@@ -251,7 +279,7 @@ function bindDriveSection(section) {
         setHubMessage(name === "CounterMelody.mid" ? "裏メロがまだないため、CounterMelody.midはありません。" : `${name}を作れませんでした。`, true);
         return;
       }
-      saveMidiForDrive(files, name);
+      await shareMidiForDrive(project, [name], name);
     });
   });
 
@@ -271,9 +299,9 @@ function ensureDriveExportUi() {
       <h3>Google Drive</h3>
       <div class="drive-export-grid">
         <button type="button" data-drive-export="project">Driveへバックアップ</button>
-        <button type="button" data-drive-export="midi">MIDI一式を保存（Drive用）</button>
+        <button type="button" data-drive-export="midi">MIDI一式をDriveへ</button>
       </div>
-      <p class="hint drive-single-label">1ファイルずつ保存（Drive用）</p>
+      <p class="hint drive-single-label">1ファイルずつDriveへ</p>
       <div class="drive-export-grid drive-single-grid">
         ${["Song.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid", "CounterMelody.mid"].map((name) => `<button type="button" data-drive-file="${name}">${name}</button>`).join("")}
       </div>
