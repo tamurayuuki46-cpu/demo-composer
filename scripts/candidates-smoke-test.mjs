@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { suggestNextChords, suggestSpiceChords } from "../src/chord/chord-next.js";
 import { getDiatonicChords } from "../src/chord/chord-theory.js";
 import { chordRole } from "../src/chord/chord-role.js";
-import { degreeLabel } from "../src/melody/melody-grid.js";
+import { degreeLabel, keyDegreeLabel } from "../src/melody/melody-grid.js";
 import { applyBassCandidate, bassCandidatesForBar, bassPatternDots, kickRelation } from "../src/rhythm/bass-candidates.js";
 
 const BAR = 1920;
@@ -59,6 +59,8 @@ assert.equal(chordRole(undefined, { key: "C", scale: "major" }), null);
 
 // --- 度数ラベル（Cをルートにした C4=R / E4=3 / G4=5、Gをルートにした B=3 / F=♭7）
 assert.deepEqual([60, 64, 67, 70, 71].map((p) => degreeLabel(p, 0)), ["R", "3", "5", "♭7", "7"]);
+assert.deepEqual([60, 64, 67, 71].map((p) => keyDegreeLabel(p, 0)), ["1", "3", "5", "7"]);
+assert.deepEqual([57, 60, 64].map((p) => keyDegreeLabel(p, 9)), ["1", "♭3", "5"]);
 assert.deepEqual([71, 65, 67].map((p) => degreeLabel(p, 7)), ["3", "♭7", "R"]);
 assert.equal(degreeLabel(48, 7), "4", "octave independent, below root pc");
 

@@ -485,3 +485,26 @@
 .peak-panel .primary {
   min-height: 48px;
 }
+
+/* 鍵盤の度数表示: 音名 + コード度数（水色）+ Key度数（金色） */
+.melody-grid.degrees-on .melody-row { grid-template-columns: 66px repeat(8, minmax(0, 1fr)); }
+.melody-grid.degrees-on .piano-key {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 5px;
+}
+.melody-grid.degrees-on .piano-key.black { width: 92%; }
+.piano-key .pk-name { font-size: 10px; }
+.piano-key .pk-deg { display: flex; gap: 6px; font-size: 11px; line-height: 1; }
+.pk-chord { color: #0369a1; }
+.pk-key { color: #a16207; }
+.piano-key.black .pk-chord { color: #7dd3fc; }
+.piano-key.black .pk-key { color: #fcd34d; }
+.degree-hint .pk-chord { color: #7dd3fc; }
+.degree-hint .pk-key { color: #fcd34d; }
+@media (max-width: 420px) {
+  .melody-grid.degrees-on .melody-row { grid-template-columns: 62px repeat(8, minmax(0, 1fr)); }
+  .piano-key .pk-deg { font-size: 10px; gap: 5px; }
+}

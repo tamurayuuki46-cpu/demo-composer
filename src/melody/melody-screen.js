@@ -6,7 +6,7 @@ import { applyPeakGuide, buildPeakGuide, currentPeak, defaultPeakBar, PEAK_SHAPE
 import { chordRole } from "../chord/chord-role.js";
 import { LENGTH_STEPS, noteValueLabel } from "../core/note-placement.js";
 import { applyMelodyCandidate, melodyCandidateDots, melodyCandidatesForBar, MELODY_CANDIDATE_VARIATION_COUNT } from "./melody-candidates.js";
-import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, degreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
+import { clearBar, copyMelodyBars, getMelodyNotes, getOctavePitches, degreeLabel, keyDegreeLabel, hasMelodyInBars, pitchName, toggleMonophonicStep } from "./melody-grid.js";
 import { counterNotes } from "../core/counter-melody.js";
 import { pitchClassRoles, pitchRoleText } from "./pitch-roles.js";
 
@@ -36,7 +36,7 @@ export function createMelodyController({ projectStore, rerender }) {
   // 次に置く音の長さ（マス数）。UI状態のみで、project.jsonには保存しない
   let lengthSteps = 1;
   // 度数表示（UI状態のみ）。鍵盤の文字を、音名ではなく「コードのルートから何度か」にする
-  let showDegrees = false;
+  let showDegrees = true;
   // 特徴パネルの開閉（UI状態のみ）
   let analyzerOpen = false;
   // 山の位置パネルの開閉・山の小節（nullなら既定値）・形（UI状態のみ）
@@ -196,7 +196,7 @@ export function createMelodyController({ projectStore, rerender }) {
     const role = chordRole(chord, { key: project.basic.key, scale: project.basic.scale });
     const chordLabel = chord ? `${chordSymbol(chord.root, chord.quality)} (${chord.degree}・${role.label})` : "コード未設定";
     // 度数の基準: コードがあればそのルート、なければKeyの主音
-    const degreeRoot = chord ? chord.root : rootToPitchClass(project.basic.key);
+    const tonicPc = rootToPitchClass(project.basic.key);
 
     // コピーできるか: コピー元にメロディがあり、コピー先が最大小節数(128)に収まる
     const canCopy = (bars) => hasMelodyInBars(notes, { barIndex, bars, barTicks })
@@ -218,7 +218,9 @@ export function createMelodyController({ projectStore, rerender }) {
       const roleText = pitchRoleText(pitchRole);
       return `
         <div class="melody-row${roleClass}">
-          <span class="piano-key ${keyClass}" aria-hidden="true">${escapeHtml(showDegrees ? degreeLabel(pitch, degreeRoot) : name)}</span>
+          <span class="piano-key ${keyClass}" aria-hidden="true">${showDegrees
+            ? `<span class="pk-name">${escapeHtml(name)}</span><span class="pk-deg"><b class="pk-chord">${chord ? escapeHtml(degreeLabel(pitch, chord.root)) : "–"}</b><b class="pk-key">${escapeHtml(keyDegreeLabel(pitch, tonicPc))}</b></span>`
+            : escapeHtml(name)}</span>
           ${visibleSteps.map((step) => {
             const startTick = barStartTick + step * stepTicks;
             const active = notes.some((note) => note.startTick === startTick && note.pitch === pitch);
@@ -257,7 +259,7 @@ export function createMelodyController({ projectStore, rerender }) {
           </ul>
           <button id="melody-degree-toggle" class="degree-toggle${showDegrees ? " active" : ""}" aria-pressed="${showDegrees}">${showDegrees ? "度数 ON" : "度数 OFF"}</button>
         </div>
-        ${showDegrees ? `<p class="hint degree-hint">鍵盤の文字は「${chord ? "このコードのルート" : "Keyの主音"}から何度か」です（R=ルート、3=3度、5=5度）。</p>` : ""}
+        ${showDegrees ? `<p class="hint degree-hint">鍵盤は「音名」の下に、<b class="pk-chord">${chord ? "コード度数" : "コード未設定（–）"}</b>（コードのルートから。R=ルート、3=3度、5=5度）と <b class="pk-key">Key度数</b>（${escapeHtml(project.basic.key)}の主音から。1=主音）を並べて表示します。</p>` : ""}
 
         ${isCounter() ? "" : `<section class="melody-candidate-panel" aria-label="メロディ候補">
           <div class="melody-candidate-heading">
@@ -312,7 +314,7 @@ export function createMelodyController({ projectStore, rerender }) {
           <button data-melody-half="1" class="${half === 1 ? "active" : ""}">後半 3–4拍</button>
         </div>` : ""}
 
-        <div class="melody-grid" aria-label="縦ピアノ付き${resolution === 8 ? "8" : "16"}分音符メロディグリッド">
+        <div class="melody-grid${showDegrees ? " degrees-on" : ""}" aria-label="縦ピアノ付き${resolution === 8 ? "8" : "16"}分音符メロディグリッド">
           <div class="melody-row melody-header">
             <span class="piano-key-spacer" aria-hidden="true"></span>
             ${visibleSteps.map((step) => `<span class="${isBeatStart(step) ? "beat-start" : ""}">${stepLabel(step)}</span>`).join("")}

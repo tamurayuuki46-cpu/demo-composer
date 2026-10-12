@@ -72,6 +72,12 @@ export function chordTonePitchClasses(chord) {
 // コードのルートから見た度数ラベル（R, ♭3, 3, 4, ♭5, 5, ♭6, 6, ♭7, 7 ...）。
 const DEGREE_LABELS = ["R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
 
+// Keyの主音から見た度数（1, ♭2, 2, ♭3, 3, 4, ♭5, 5, ♭6, 6, ♭7, 7）。「R」の代わりに「1」を使う
+export function keyDegreeLabel(pitch, tonicPitchClass) {
+  const label = degreeLabel(pitch, tonicPitchClass);
+  return label === "R" ? "1" : label;
+}
+
 export function degreeLabel(pitch, rootPitchClass) {
   return DEGREE_LABELS[(((pitch - rootPitchClass) % 12) + 12) % 12];
 }
