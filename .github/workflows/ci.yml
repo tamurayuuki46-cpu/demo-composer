@@ -161,3 +161,6 @@ jobs:
 
       - name: Static build
         run: npm run build
+
+      - name: Versioned assets and dependency cache check
+        run: npm run test:build-cache
