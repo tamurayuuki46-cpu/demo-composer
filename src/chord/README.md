@@ -21,8 +21,11 @@ Chord Moduleは `project.chords[]` の責任Module。
   - 質感: 浮遊感 / 透明 / 暖かい / ダーク / 壮大 / 開放感 / 都会的 / 幻想的 / 疾走感
   - 場面: 夜 / 青春 / 雨 / ドライブ / 別れ / 旅立ち / 回想
   - `src/chord/chord-mood-tags.js` でPreset CategoryとDegree列から重み1〜5を派生計算
-  - 複数タグからMajor / Minorを絞り、最大3つのPreset候補を返せる
-  - 保存Schemaは変更せず、Project Dataへタグ評価値を保存しない
+  - 複数タグからMajor / Minorを絞り、最大3つのPreset候補を返す
+  - `src/chord/chord-mood-ui.js` でChord Preset欄の前に「曲想から選ぶ」を表示
+  - タグは最大3個。候補にDegree進行 / 合致タグ / 王道・少し個性的・挑戦的を表示
+  - `この進行を使う` は既存Preset適用処理へ渡すため、Bass保護など既存安全策を維持
+  - 保存Schemaは変更せず、タグ選択 / 評価値はProject Dataへ保存しない
 - 追加済みコード削除
 - Clearで全削除
 - 削除後のstartTick再配置
@@ -37,7 +40,7 @@ Preset追加はこの表へ度数文字列を足すだけ（重複はSmoke Test�
 
 曲想 / 感情タグはPreset本体へ重複保存せず、`chord-mood-tags.js` が派生Profileとして付与する。コード進行だけで感情が決まるとは扱わず、BPM / Melody / Rhythm / Voicing / Soundで印象が変わる前提とする。
 
-Preset選択状態はProject Dataへ保存しない。適用すると通常の `project.chords[]` へ展開するため、Schema変更は不要。
+Preset選択状態と曲想タグ選択はProject Dataへ保存しない。Presetを適用すると通常の `project.chords[]` へ展開するため、Schema変更は不要。
 
 Bass Noteがある場合は従来どおりChord変更を拒否する。Presetを適用したい場合はRhythmで `Clear Bass` を先に行う。
 
@@ -59,7 +62,8 @@ Schema v2でQualityを拡張。旧Schema v1の major / minor / diminished はそ
 
 ## Later
 
-- 曲想 / 感情タグをChord画面のPreset絞り込みUIへ接続
+- Hub / 作曲シートで決めたMoodタグをChordの「曲想から選ぶ」初期選択へ渡す
+- 実制作テストからタグWeightを調整
 - 並べ替え
 - コード長変更
 - 借用和音を目的別に整理した候補

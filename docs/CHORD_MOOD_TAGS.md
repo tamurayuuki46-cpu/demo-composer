@@ -8,11 +8,12 @@
 
 ## 実装
 
-- Source: `src/chord/chord-mood-tags.js`
+- Tag / Recommendation: `src/chord/chord-mood-tags.js`
+- UI: `src/chord/chord-mood-ui.js` / `src/chord/chord-mood-ui.css`
 - Preset正本: `src/chord/chord-presets.js`
 - Project Schema: 変更なし（schemaVersion 2のまま）
 - MIDI: 変更なし
-- 保存: タグProfile / 推薦ScoreはProject Dataへ保存しない
+- 保存: タグ選択 / Profile / 推薦ScoreはProject Dataへ保存しない
 
 ## タグ体系
 
@@ -91,21 +92,31 @@ Preset本体へ100件分のタグを直接書き込まず、以下から重み1�
 - expressive: 4小節の追加Preset
 - adventurous: 8小節Preset
 
-## UI方針（次段階）
+## UI
 
-Chord Preset欄の上に「曲想から選ぶ」を置き、タグChipを2〜3個選ぶと3候補を表示する。
+Chord Preset欄の直前に `曲想から選ぶ` パネルを表示する。
 
-候補Cardは以下だけにする。
+- 感情 / 質感 / 場面をChipで選択
+- 同時選択は最大3タグ
+- 現在のMajor / Minorに合わせて最大3候補を表示
+- 候補にはDegree進行、合致タグ、`王道 / 少し個性的 / 挑戦的` を表示
+- `この進行を使う` で既存Chord Preset選択 / 適用処理へ渡す
+- Bass保護など既存Preset適用時の安全チェックをそのまま利用
+- タグ選択状態はUI状態のみでProject Dataへ保存しない
 
-- Degree進行
-- 現在Keyでのコード名
-- 合致タグ2〜3個
-- 王道 / 少し個性的 / 挑戦的
-- 試聴
-- 適用
+UIは `main.js` へ大規模に組み込まず、`#screen` を監視する独立Moduleとして追加する。既存Chord画面への依存箇所を最小化し、並行開発時の競合を避ける。
 
-Androidスマホで選択肢を増やしすぎないため、初期表示タグは主要なものに絞り、詳細タグは必要なときだけ開く。
+Androidスマホ向けにChip / 適用ボタンのタップ領域を広めにし、横スクロールを必須にしない。
+
+## テスト
+
+- `scripts/chord-mood-tags-smoke-test.mjs`
+- `scripts/chord-mood-ui-smoke-test.mjs`
+- `npm run test:chord-presets` から既存Preset Testと一緒に実行する
+- `npm run test:syntax` にTag / UI Moduleを含める
 
 ## 注意
 
 タグ重みは音楽的な絶対評価ではなく初期ヒューリスティック。実制作テストで違和感がある紐付けを調整する。
+
+今後、BPM / Melody / Rhythm / Soundまで含む推薦へ拡張する場合も、コード進行単体のタグ値を「感情の正解」として扱わない。
