@@ -11,8 +11,8 @@ v0.2-dev
 - 共通Project State: schemaVersion 2 / PPQ 480 / 4/4固定 / project.json正本
 - IndexedDB保存、起動時Restore、1.5秒AutoSave、hidden時即時Save、Save Now、Persistent Storage要求
 - Hub `＋ 新規Project`: 現在Projectを保存してから別IDの空ProjectをActiveにする。旧Projectは端末内に保持
-- Hub `📂 Project一覧`: IndexedDBに残っているProjectを一覧表示し、`開く / 複製 / 削除`。現在Projectは削除不可。詳細 `docs/PROJECT_LIBRARY.md`
-- Hub `🧹 パートを消去`: コード / メロディ / 裏メロ / ベース / ドラムを1パートずつ消去。確認あり、他パートを保持、↶で1手で戻せる。詳細 `docs/HUB_PART_CLEAR.md`
+- Hub `📂 Project一覧`: IndexedDBに残っているProjectを一覧表示し、`開く / 複製 / 削除`。現在Projectは削除不可。PR #155でdevelop統合済み。詳細 `docs/PROJECT_LIBRARY.md`
+- Hub `🧹 パートを消去`: コード / メロディ / 裏メロ / ベース / ドラムを1パートずつ消去。確認あり、他パートを保持、↶で1手で戻せる。PR #155で裏メロ対応まで統合済み。詳細 `docs/HUB_PART_CLEAR.md`
 - Project全体Undo / Redo（最大50操作、メモリのみ）
 - Hub: Project名 / BPM / Key / Scale、Key変更時のChord / Melody / Bass / Counter Melody Atomic移調、文字サイズ、出発点、骨子チェック、作編曲の手引き、曲の特徴カード、AI相談、Cubaseメモ
 - Chord: ダイアトニック扇形、44 Quality、100 Preset、次コード候補、借用和音、曲想タグ、Backing Pattern、好きな進行ライブラリ、メロディからコード候補、2/4/8小節メロディ候補
@@ -28,7 +28,8 @@ v0.2-dev
 - GitHub Pages公開: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
 開発中:
-- `chatgpt/v0.2-project-list-counter-clear`: Project一覧 / 過去Project管理と、Hub個別消去への裏メロ追加。develop統合前は `restore/v0.2-before-project-list` へ復元可能
+- Project一覧 / 過去Project管理はdevelopへ統合済み。次はAndroid実機で `開く / 複製 / 削除 / reload切替` を確認する段階
+- v0.2は追加機能より実制作と保存・Exportの回帰確認を優先する
 
 次に実装:
 - PWA Service Worker
@@ -58,6 +59,7 @@ v0.2-dev
 - 現在開いているProjectは削除不可。削除はUndo対象外
 - Hub個別消去は Chord / Melody / Counter / Bass / Drums を対象にし、選択パートだけを空にする。Schema / MIDI形式は変更しない
 - Project一覧と個別消去のためのSchema Migrationは不要
+- 大規模保存UI変更前の復元点は `restore/v0.2-before-project-list`。重複作業用の `restore/v0.2-before-project-library` も保持する
 
 現在のデータSchema:
 schemaVersion 2。PPQ 480、4/4固定。`metadata / basic / structure.sections / chords / tracks / instruments / progress / exportSettings`。Counter Melodyは任意の `tracks[role=counter]`。Project一覧はproject.json内に追加フィールドを持たず、IndexedDB `projects` storeの複数recordと `meta.activeProjectId` で管理する。
