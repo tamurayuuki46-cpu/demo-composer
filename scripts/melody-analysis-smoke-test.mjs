@@ -173,3 +173,12 @@ console.log("melody analysis smoke test passed");
   assert.equal(b.degrees[11].other, 1, "7 はスケール内のその他");
   assert.equal(chordDegreeBreakdown({ ...p, chords: [] }, [note(60)]).counted, 0);
 }
+
+{
+  const { barsUsingChordDegree } = await import("../src/core/melody-analysis.js");
+  const p = { basic: { ppq: 480, key: "C", scale: "major" }, chords: [0, 1, 2].map((b) => ({ root: 0, quality: "major", startTick: b * 1920, durationTick: 1920 })),
+    tracks: [{ role: "melody", notes: [{ pitch: 60, startTick: 0, durationTick: 480 }, { pitch: 67, startTick: 1920, durationTick: 480 }, { pitch: 67, startTick: 3840 + 480, durationTick: 480 }] }] };
+  assert.deepEqual(barsUsingChordDegree(p, 7), [1, 2], "5度は Bar2, Bar3");
+  assert.deepEqual(barsUsingChordDegree(p, 0), [0]);
+  assert.deepEqual(barsUsingChordDegree(p, 3), []);
+}

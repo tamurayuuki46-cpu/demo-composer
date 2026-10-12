@@ -1,6 +1,6 @@
 import { getSections, MAX_TOTAL_BARS, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol, rootToPitchClass } from "../chord/chord-theory.js";
-import { analyzeMelody, describeMelody, pitchLabel } from "../core/melody-analysis.js";
+import { analyzeMelody, barsUsingChordDegree, describeMelody, pitchLabel } from "../core/melody-analysis.js";
 import { compareSections, contrastHints } from "../core/section-compare.js";
 import { applyPeakGuide, buildPeakGuide, currentPeak, defaultPeakBar, PEAK_SHAPES } from "./peak-guide.js";
 import { chordRole } from "../chord/chord-role.js";
@@ -97,15 +97,17 @@ export function createMelodyController({ projectStore, rerender }) {
     return ROLE_ORDER.filter((role) => parts?.[role] > 0)
       .map((role) => `<u class="role-${role}" style="flex:${parts[role]}"></u>`).join("") || (total ? "" : "");
   }
-  function degreeBarsHtml(bars, { legend = true } = {}) {
+  function degreeBarsHtml(bars, { legend = true, jump = false } = {}) {
     const max = Math.max(...bars.map((bar) => bar.rate), 0.01);
     const hasParts = bars.some((bar) => bar.parts);
-    return `<div class="degree-bars" role="img" aria-label="度数ごとの使用率">${bars.map((bar) => `
-      <div class="degree-bar${bar.count ? "" : " zero"}">
+    const tag = jump ? "button" : "div";
+    return `<div class="degree-bars"${jump ? "" : ' role="img"'} aria-label="度数ごとの使用率">${bars.map((bar, index) => `
+      <${tag}${jump ? ` type="button" data-degree-jump="${index}"${bar.count ? "" : " disabled"} aria-label="${escapeHtml(bar.label)}を使う小節へ移動"` : ""} class="degree-bar${bar.count ? "" : " zero"}">
         <em>${bar.count ? Math.round(bar.rate * 100) : ""}</em>
         <i style="height:${Math.round((bar.rate / max) * 100)}%">${bar.parts ? stackedParts(bar.parts, bar.count) : ""}</i>
         <b>${escapeHtml(bar.label)}</b>
-      </div>`).join("")}</div>
+      </${tag}>`).join("")}</div>
+      ${jump ? `<p class="hint">棒をタップすると、その度数を使っている小節へ移動します（Chordからの度数のみ）。</p>` : ""}
       ${hasParts && legend ? `<p class="degree-legend"><span class="role-chord">構成音</span><span class="role-tension">テンション</span><span class="role-other">スケール内</span><span class="role-outside">スケール外</span></p>` : ""}`;
   }
   // Sectionごとの小さな度数バー（ラベル・%なし）
@@ -126,7 +128,7 @@ export function createMelodyController({ projectStore, rerender }) {
           <div class="analyzer-row">
             <strong>${escapeHtml(row.label)}</strong>
             <span>${escapeHtml(row.value)}</span>
-            ${row.bars ? degreeBarsHtml(row.bars) : ""}
+            ${row.bars ? degreeBarsHtml(row.bars, { jump: row.id === "chord-degree" }) : ""}
             ${row.comment ? `<small>${escapeHtml(row.comment)}</small>` : ""}
           </div>
         `).join("")}
@@ -542,6 +544,20 @@ export function createMelodyController({ projectStore, rerender }) {
     document.querySelector("#melody-analyzer-toggle")?.addEventListener("click", () => {
       analyzerOpen = !analyzerOpen;
       rerender("melody");
+    });
+
+    document.querySelectorAll("[data-degree-jump]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const degree = Number(button.dataset.degreeJump);
+        const latest = projectStore.getSnapshot();
+        const bars = barsUsingChordDegree(latest, degree);
+        if (bars.length === 0) return;
+        const next = bars.find((bar) => bar > barIndex) ?? bars[0];
+        const labels = ["R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+        barIndex = next;
+        message = `コード度数 ${labels[degree]} を使う小節 ${bars.indexOf(next) + 1}/${bars.length}（Bar ${next + 1}）へ移動しました。もう一度押すと次の小節へ。`;
+        rerender("melody");
+      });
     });
 
     document.querySelector("#melody-degree-toggle")?.addEventListener("click", () => {

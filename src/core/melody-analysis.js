@@ -53,6 +53,18 @@ export function chordDegreeBreakdown(project, notes) {
   return { counted, degrees };
 }
 
+// そのコード度数の音がある小節（0始まり、昇順）。メインのMelodyを見る
+export function barsUsingChordDegree(project, degree) {
+  const barTicks = project.basic.ppq * 4;
+  const bars = new Set();
+  melodyNotes(project).forEach((note) => {
+    const bar = Math.floor(note.startTick / barTicks);
+    const chord = project.chords[bar];
+    if (chord && degreeIndex(note.pitch % 12, chord.root) === degree) bars.add(bar);
+  });
+  return [...bars].sort((a, b) => a - b);
+}
+
 function degreeCounts(notes, rootPitchClass) {
   const counts = Array(12).fill(0);
   notes.forEach((note) => {

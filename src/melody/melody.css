@@ -569,3 +569,7 @@ u.role-outside { background: #facc15; }
 .sc-degree-label { font-size: 10px; opacity: .7; }
 .degree-bar.zero i { background: #3a3a44; height: 2px !important; }
 .degree-bar b { font-size: 10px; font-weight: 700; }
+
+button.degree-bar { padding: 0; border: 0; background: none; color: inherit; font: inherit; touch-action: manipulation; cursor: pointer; }
+button.degree-bar:disabled { opacity: .5; cursor: default; }
+button.degree-bar:not(:disabled):active { transform: scale(.94); }
