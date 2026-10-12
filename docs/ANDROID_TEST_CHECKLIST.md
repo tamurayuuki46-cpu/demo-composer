@@ -413,7 +413,7 @@ Stable判定後:
 ## 16. 音色の追加・Melody音量（v0.2-dev）
 
 - [ ] Sound画面のMelody Presetに `Vocal（ボカロ風）` ほか7種類があり、選ぶと下に説明が出る（Chord / Bassも増えている）
-- [ ] 新規Projectで、Melodyが `Vocal（ボカロ風）` の音で鳴る（Chordのパッドに近い、やわらかい立ち上がり）
+- [ ] 新規Projectで、Sound画面が Chord=Pad / Bass=Deep Bass / Melody=Strings Lead（Tone Natural）になっている
 - [ ] `Vocal Soft / Vocal Bright / Pad Lead / Flute / Strings Lead / Bell` を聴き比べ、好みの方向を決められる
 - [ ] 以前より、メロディが少しだけ控えめで、コードやベースと混ざりやすい（大きすぎ / 小さすぎなら教える）
 - [ ] 保存済みのProjectは、以前選んだMelody音色のまま鳴る

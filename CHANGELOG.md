@@ -3,6 +3,9 @@
 ## v0.2-dev
 更新日: 2026-10-11
 
+### 変更
+- Sound初期設定を変更。instrumentsに保存が無いProject（新規Projectなど）は、Chord = Pad / Bass = Deep Bass / Melody = Strings Lead（Tone はすべて Natural）で鳴る。保存済みの選択は変わらない（Schema変更なし）
+
 ### 修正
 - Hub Drive: MIDI（一式 / 1ファイルずつ）が端末へのダウンロード頼みで保存できなかった件を修正。project.json と同じく共有画面から送れるよう、中身はそのままで `Song.mid.txt` のように `.txt`（text/plain）名にして共有する（Android Chromeは .mid の共有を拒否するため）。Drive側で末尾の `.txt` を消せば .mid として使える。共有できない場合は従来どおり `.mid` を端末にダウンロードする。ボタン名は「Driveへ」に戻した
 - 再生の音が「ざらざら」することがある件への対策。Web Audioの出力バッファを `playback`（大きめ）にして、Androidで負荷が高い場面の音切れ・ざらつきを出にくくした。ヘッドレスで全パートをオフライン描画して、コンプレッサー/リミッターでの歪み（クリップ0%・ピーク0.85）は無いことを確認済み。音量・音色は変えていない

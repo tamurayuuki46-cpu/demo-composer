@@ -199,7 +199,7 @@ Sound entry例:
 - Bass: `soft-bass / synth-bass / deep-bass`、追加: `sub-bass / pluck-bass / growl-bass`
 
 Presetは文字列なので、Preset追加でSchemaは変わらない。知らないPreset idを持つProject（将来のアプリで保存したもの）は、そのPartの初期Presetに戻るだけで壊れない。
-Melodyの初期Presetは `vocal`（ボカロ風）。`instruments[]` にMelodyのentryが無いProjectは、これで鳴る（以前は `keys`）。保存済みの選択は変わらない。
+初期Presetは Chord=`pad` / Melody=`strings-lead` / Bass=`deep-bass`、Toneは `natural`。`instruments[]` にそのPartのentryが無いProjectは、これで鳴る（以前は keys / vocal / soft-bass）。保存済みの選択は変わらない。
 
 Tone:
 
