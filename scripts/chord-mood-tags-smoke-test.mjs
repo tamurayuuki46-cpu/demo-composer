@@ -49,4 +49,13 @@ console.log(`Chord mood tags OK: ${CHORD_MOOD_PROFILES.length} presets linked.`)
   assert.ok(minorSad.every((row) => row.mode === "minor"));
   const all = chordPresetsForEmotion("bright", { mode: "any", minWeight: 0 });
   assert.equal(all.length, 100);
+
+  // 質感・場面もタブごとに1つ選んで一覧にできる
+  const { chordPresetsForTag, CHORD_MOOD_TAG_GROUPS: groups } = await import("../src/chord/chord-mood-tags.js");
+  for (const group of ["texture", "scene"]) {
+    const withRows = groups[group].filter((tag) => chordPresetsForTag(tag.id, { mode: "major" }).length > 0);
+    assert.ok(withRows.length >= 3, `${group}: 一覧が出るタグが複数ある`);
+  }
+  assert.ok(chordPresetsForTag("floating", { mode: "major" }).length > 0);
+  assert.deepEqual(chordPresetsForTag("nope"), []);
 }

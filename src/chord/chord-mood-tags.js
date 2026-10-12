@@ -249,8 +249,16 @@ export function chordPresetMoodText(presetOrId) {
 // 曲想（感情）タグを1つ選んで、そのタグが強い順に並べた一覧。minWeight 未満（そのタグが弱い進行）は出さない。
 // 同じ重みなら、王道 → 少し個性的 → 挑戦的 の順（まず定番から見られるように）
 const DIFFICULTY_ORDER = Object.freeze({ standard: 0, expressive: 1, adventurous: 2 });
-export function chordPresetsForEmotion(tagId, { mode = "any", minWeight = 3 } = {}) {
-  if (!CHORD_MOOD_TAG_GROUPS.emotion.some((tag) => tag.id === tagId)) return [];
+export function chordPresetsForTag(tagId, { mode = "any", minWeight } = {}) {
+  if (!Object.values(CHORD_MOOD_TAG_GROUPS).some((tags) => tags.some((tag) => tag.id === tagId))) return [];
+  // minWeight 未指定: 強い（3以上）から探し、無ければ2、1と下げる（浮遊感など、強い進行が少ないタグ用）
+  if (minWeight === undefined) {
+    for (const weight of [3, 2, 1]) {
+      const rows = chordPresetsForTag(tagId, { mode, minWeight: weight });
+      if (rows.length > 0) return rows;
+    }
+    return [];
+  }
   return CHORD_MOOD_PROFILES
     .filter((profile) => mode === "any" || profile.mode === mode)
     .map((profile) => ({ profile, weight: profile.tags.find((tag) => tag.id === tagId)?.weight ?? 0 }))
@@ -269,4 +277,10 @@ export function chordPresetsForEmotion(tagId, { mode = "any", minWeight = 3 } = 
         degreeIndexes: [...(preset?.degreeIndexes ?? [])]
       };
     });
+}
+
+// 感情（曲想）タグ専用。質感・場面のタグは空を返す（chordPresetsForTag は3種すべて）
+export function chordPresetsForEmotion(tagId, options = {}) {
+  if (!CHORD_MOOD_TAG_GROUPS.emotion.some((tag) => tag.id === tagId)) return [];
+  return chordPresetsForTag(tagId, options);
 }
