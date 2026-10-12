@@ -4,7 +4,7 @@ import { rootToPitchClass } from "../src/chord/chord-theory.js";
 import { createDefaultProject, createProjectStore, validateProject } from "../src/core/project-state.js";
 import { buildMidiExports } from "../src/midi/midi-export.js";
 import {
-  PHRASE_BAR_CHOICES, PHRASE_CONTOURS, PHRASE_FORMS, PHRASE_VARIATION_COUNT,
+  PHRASE_BAR_CHOICES, PHRASE_CONTOURS, PHRASE_FLAVORS, PHRASE_FORMS, PHRASE_VARIATION_COUNT,
   applyPhraseNotes, melodyNoteCountIn, phraseCandidates, phraseDots, phraseRange, withPhraseNotes
 } from "../src/melody/phrase-generator.js";
 
@@ -128,3 +128,58 @@ assert.equal(phraseDots(chosen).length, 4);
 assert.ok(phraseDots(chosen).every((row) => row.length === 8));
 
 console.log("Phrase melody smoke test passed.");
+
+// ---- 味付け（2度・6度 / 高密度）とスケールの色 ----
+assert.deepEqual(PHRASE_FLAVORS.map((f) => f.id), ["plain", "twoSix", "dense"]);
+for (const [key, scale] of [["C", "major"], ["A", "minor"], ["F#", "major"]]) {
+  const project = makeProject(key, scale);
+  const barTicks = project.basic.ppq * 4;
+  const tonic = rootToPitchClass(key);
+  const intervals = SCALES[scale];
+  const scalePcs = new Set(intervals.map((i) => (tonic + i) % 12));
+  const favor = new Set([(tonic + 2) % 12, (tonic + intervals[5]) % 12]);
+
+  for (const bars of [2, 4, 8]) {
+    for (let variation = 0; variation < PHRASE_VARIATION_COUNT; variation += 1) {
+      const plain = phraseCandidates(project, { startBar: 0, bars, variation, flavor: "plain" });
+      const twoSix = phraseCandidates(project, { startBar: 0, bars, variation, flavor: "twoSix" });
+      const dense = phraseCandidates(project, { startBar: 0, bars, variation, flavor: "dense" });
+      twoSix.forEach((candidate, index) => {
+        assert.ok(candidate.notes.every((n) => scalePcs.has(n.pitch % 12)), "twoSix stays in key");
+        const share = (list) => list.filter((n) => favor.has(n.pitch % 12)).length / list.length;
+        assert.ok(share(candidate.notes) >= share(plain[index].notes), `${candidate.id}: 2度・6度が増える`);
+        // 小節頭と最後の着地はコードトーンのまま
+        for (let bar = 0; bar < candidate.endBar - candidate.startBar; bar += 1) {
+          const head = candidate.notes.find((n) => n.startTick === (candidate.startBar + bar) * barTicks);
+          const chord = project.chords[candidate.startBar + bar];
+          assert.ok(head && new Set(chordIntervals(chord.quality).map((i) => (chord.root + i) % 12)).has(head.pitch % 12), "bar head is a chord tone");
+        }
+      });
+      dense.forEach((candidate, index) => {
+        assert.ok(candidate.notes.every((n) => scalePcs.has(n.pitch % 12)), "dense stays in key");
+        assert.ok(candidate.notes.some((n) => n.startTick % 240 === 120), "dense uses 16th positions");
+        assert.ok(candidate.notes.length > plain[index].notes.length, `${candidate.id}: denser than plain`);
+        assert.ok(candidate.notes.every((n) => n.durationTick > 0 && n.startTick >= candidate.startBar * barTicks && n.startTick + n.durationTick <= candidate.endBar * barTicks), "dense stays inside the range");
+        // 同時に2音は鳴らない
+        const sorted = [...candidate.notes].sort((a, b) => a.startTick - b.startTick);
+        sorted.slice(1).forEach((n, i) => assert.ok(sorted[i].startTick + sorted[i].durationTick <= n.startTick, "monophonic"));
+        const last = sorted[sorted.length - 1];
+        const lastChord = project.chords[candidate.endBar - 1];
+        assert.ok(new Set(chordIntervals(lastChord.quality).map((i) => (lastChord.root + i) % 12)).has(last.pitch % 12), "dense lands on a chord tone");
+      });
+    }
+  }
+}
+
+// スケールの色: 選んだスケールの音だけで作る（C Phrygian Dominant / 都節音階）
+const colorProject = makeProject("C", "major");
+for (const intervals of [[0, 1, 4, 5, 7, 8, 10], [0, 1, 5, 7, 8], [0, 2, 3, 5, 7, 9, 10]]) {
+  const pcs = new Set(intervals);
+  ["plain", "twoSix", "dense"].forEach((flavor) => {
+    phraseCandidates(colorProject, { startBar: 0, bars: 4, flavor, scaleIntervals: intervals }).forEach((candidate) => {
+      assert.ok(candidate.notes.length > 0);
+      assert.ok(candidate.notes.every((n) => pcs.has(n.pitch % 12)), `${flavor}: stays in the chosen scale ${intervals.join(",")}`);
+    });
+  });
+}
+console.log("Phrase flavor / scale tests passed.");

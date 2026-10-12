@@ -29,6 +29,29 @@ const MOTIFS = Object.freeze([
 ]);
 const DENSE_MOTIF = MOTIFS[1];
 
+// 味付け（フレーバー）。plain=従来 / twoSix=2度・6度を多用 / dense=16分を含む高密度（YOASOBI系の“参考イメージ”。特定曲のコピーではない）
+export const PHRASE_FLAVORS = Object.freeze([
+  { id: "plain", label: "ふつう", note: "味付けなし。コードトーン中心の素直な形。" },
+  { id: "twoSix", label: "2度・6度", note: "キーの2度と6度を、弱い拍で多く使います。浮遊感・ペンタ寄りの空気。小節頭と着地はコードトーンのまま。" },
+  { id: "dense", label: "高密度", note: "16分を含む細かいリズム、同音連打 → 跳躍、拍の裏から入る先取り、後ろから2小節目で音域を上げる。※YOASOBI系のイメージ（特定曲のコピーではありません）" }
+]);
+
+// 16分(0.5step)を含む高密度モチーフ。小節頭は必ず off 0（コードトーン）
+const DENSE_MOTIFS = Object.freeze([
+  // 同音連打 → 跳躍 → 細かく下りて、また連打 → 駆け上がり
+  [
+    { step: 0, len: 0.5, off: 0 }, { step: 0.5, len: 0.5, off: 0 }, { step: 1, len: 0.5, off: 0 }, { step: 1.5, len: 1, off: 3 },
+    { step: 2.5, len: 0.5, off: 2 }, { step: 3, len: 1, off: 1 }, { step: 4, len: 0.5, off: 2 }, { step: 4.5, len: 0.5, off: 2 },
+    { step: 5, len: 0.5, off: 2 }, { step: 5.5, len: 0.5, off: 4 }, { step: 6, len: 1, off: 3 }, { step: 7, len: 1, off: 1 }
+  ],
+  // 先取り: 3.5 から入って次の強拍をまたぐ。スケール音で細かく上下
+  [
+    { step: 0, len: 1, off: 0 }, { step: 1, len: 0.5, off: 1 }, { step: 1.5, len: 0.5, off: 2 }, { step: 2, len: 0.5, off: 1 },
+    { step: 2.5, len: 1, off: 3 }, { step: 3.5, len: 1, off: 2 }, { step: 4.5, len: 0.5, off: 1 }, { step: 5, len: 0.5, off: 2 },
+    { step: 5.5, len: 0.5, off: 3 }, { step: 6, len: 0.5, off: 4 }, { step: 6.5, len: 0.5, off: 3 }, { step: 7, len: 1, off: 2 }
+  ]
+]);
+
 export const PHRASE_FORMS = Object.freeze([
   { id: "motif", label: "モチーフ反復型", description: "短い音型を作り、高さをずらして繰り返す。最後はコードトーンで着地" },
   { id: "qa", label: "問いと答え型", description: "前半は“問い”で少し浮いたまま止まり、後半で答えて着地する" },
@@ -54,9 +77,14 @@ function clone(value) {
 
 // ---- 音の材料 ----
 
-function scaleList(project, octave) {
+function scaleIntervalsOf(project, scaleIntervals) {
+  if (Array.isArray(scaleIntervals) && scaleIntervals.length >= 5) return scaleIntervals;
+  return SCALE_INTERVALS[project.basic.scale] ?? SCALE_INTERVALS.major;
+}
+
+function scaleList(project, octave, scaleIntervals) {
   const tonic = rootToPitchClass(project.basic.key);
-  const intervals = SCALE_INTERVALS[project.basic.scale] ?? SCALE_INTERVALS.major;
+  const intervals = scaleIntervalsOf(project, scaleIntervals);
   const pcs = new Set(intervals.map((interval) => (tonic + interval) % 12));
   const lo = (octave + 1) * 12;
   const pitches = [];
@@ -67,10 +95,10 @@ function scaleList(project, octave) {
 }
 
 // 小節ごとのコード情報。コードが無い小節は、Keyの主和音（1・3・5度）を使う
-function barInfo(project, bar, scale) {
+function barInfo(project, bar, scale, scaleIntervals) {
   const chord = project.chords[bar];
-  const intervals = SCALE_INTERVALS[project.basic.scale] ?? SCALE_INTERVALS.major;
-  const fallback = [0, intervals[2], intervals[4]].map((interval) => (scale.tonic + interval) % 12);
+  const intervals = scaleIntervalsOf(project, scaleIntervals);
+  const fallback = [0, intervals[2] ?? 4, intervals[4] ?? 7].map((interval) => (scale.tonic + interval) % 12);
   const chordPcs = chord
     ? new Set(chordIntervals(chord.quality).map((interval) => (chord.root + interval) % 12))
     : new Set(fallback);
@@ -146,13 +174,19 @@ function trendFor(contour, form, bar, bars) {
 
 // ---- 1候補 ----
 
-function buildCandidate(project, { form, startBar, bars, contour, variation, octave }) {
-  const scale = scaleList(project, octave);
+function buildCandidate(project, { form, startBar, bars, contour, variation, octave, flavor = "plain", scaleIntervals = null }) {
+  const scale = scaleList(project, octave, scaleIntervals);
+  const intervalsUsed = scaleIntervalsOf(project, scaleIntervals);
+  // 2度・6度: キーの2度と6度のpitch class（無いスケールは近い度数）
+  const favorPcs = new Set([
+    (scale.tonic + (intervalsUsed.includes(2) ? 2 : intervalsUsed[1])) % 12,
+    (scale.tonic + (intervalsUsed[5] ?? intervalsUsed[intervalsUsed.length - 1])) % 12
+  ]);
   const barTicks = project.basic.ppq * 4;
   const stepTicks = barTicks / STEPS;
   const last = scale.pitches.length - 1;
   const roles = roleSequence(form, bars);
-  const infos = Array.from({ length: bars }, (_, offset) => barInfo(project, startBar + offset, scale));
+  const infos = Array.from({ length: bars }, (_, offset) => barInfo(project, startBar + offset, scale, scaleIntervals));
 
   // 基準位置: 1小節目のコードトーンで、音域の中ほど
   const center = scale.pitches.findIndex((pitch) => pitch >= scale.pitches[0] + 7);
@@ -163,7 +197,9 @@ function buildCandidate(project, { form, startBar, bars, contour, variation, oct
   const anchors = [];
   const direction = contour === "rise" ? 1 : contour === "fall" ? -1 : 0;
   infos.forEach((info, offset) => {
-    const target = clamp(base + trendFor(contour, form, offset, bars), 0, last - 2);
+    // 高密度: 後ろから2小節目で音域を上げる（サビ前の持ち上げ）
+    const lift = flavor === "dense" && bars >= 3 && offset === bars - 2 ? 2 : 0;
+    const target = clamp(base + trendFor(contour, form, offset, bars) + lift, 0, last - 2);
     const previous = anchors[offset - 1];
     // コードトーンの中で目標にいちばん近いもの。上行 / 下降は、前の小節より必ず先へ進める（余地が無いときだけ同じ高さ）
     const allowed = [];
@@ -187,7 +223,9 @@ function buildCandidate(project, { form, startBar, bars, contour, variation, oct
     const nextInfo = infos[offset + 1];
     const anchor = anchors[offset];
     const barStart = (startBar + offset) * barTicks;
-    const motif = role === "peak" ? DENSE_MOTIF : MOTIFS[motifIndex];
+    const motif = flavor === "dense"
+      ? DENSE_MOTIFS[role === "peak" ? 1 : positiveMod(variation, DENSE_MOTIFS.length)]
+      : (role === "peak" ? DENSE_MOTIF : MOTIFS[motifIndex]);
     let shape;
 
     if (role === "land") {
@@ -204,6 +242,13 @@ function buildCandidate(project, { form, startBar, bars, contour, variation, oct
       let idx = item.fixed ?? clamp(anchor + item.off, 0, last);
       const strong = item.step === 0 || item.step === 4 || item.len >= 3;
       if (strong && item.fixed === undefined) idx = snapStrong(scale, idx, info);
+      // 2度・6度: 弱い拍の音は、近くの2度 / 6度の音へ寄せる（小節頭・長い音はコードトーンのまま）
+      if (flavor === "twoSix" && !strong && item.fixed === undefined) {
+        for (const delta of [0, 1, -1, 2, -2]) {
+          const candidate = idx + delta;
+          if (candidate >= 0 && candidate <= last && favorPcs.has(scale.pitches[candidate] % 12)) { idx = candidate; break; }
+        }
+      }
       return { ...item, idx, index };
     });
 
@@ -233,7 +278,7 @@ function buildCandidate(project, { form, startBar, bars, contour, variation, oct
         pitch: scale.pitches[item.idx],
         startTick,
         durationTick,
-        velocity: item.step === 0 || role === "peak" ? 102 : 94
+        velocity: item.step === 0 ? 104 : (flavor === "dense" && item.step % 1 !== 0 ? 88 : role === "peak" ? 102 : 94)
       });
     });
   });
@@ -255,7 +300,7 @@ export function phraseRange(project, startBar, bars) {
   return { startBar: start, endBar: end, bars: end - start };
 }
 
-export function phraseCandidates(project, { startBar = 0, bars = 4, contour = "auto", variation = 0, octave = 4 } = {}) {
+export function phraseCandidates(project, { startBar = 0, bars = 4, contour = "auto", variation = 0, octave = 4, flavor = "plain", scaleIntervals = null } = {}) {
   const range = phraseRange(project, startBar, bars);
   if (!range) return [];
   const variationIndex = positiveMod(Math.trunc(variation), PHRASE_VARIATION_COUNT);
@@ -268,7 +313,9 @@ export function phraseCandidates(project, { startBar = 0, bars = 4, contour = "a
       bars: range.bars,
       contour: contourId,
       variation: variationIndex,
-      octave
+      octave,
+      flavor: PHRASE_FLAVORS.some((item) => item.id === flavor) ? flavor : "plain",
+      scaleIntervals
     });
     return {
       id: form.id,
@@ -306,13 +353,22 @@ export function melodyNoteCountIn(project, startBar, endBar) {
   return notes.filter((note) => note.startTick >= startBar * barTicks && note.startTick < endBar * barTicks).length;
 }
 
-// 16文字ではなく8分×小節数の見た目（● = 音の始まり）
+// 8分×小節数の見た目: ● = 8分の頭から始まる音、○ = 8分の裏（16分位置）から始まる音、・ = 始まりなし
 export function phraseDots(candidate) {
   const barTicks = 1920;
   const stepTicks = barTicks / STEPS;
   const bars = candidate.endBar - candidate.startBar;
-  const starts = new Set(candidate.notes.map((note) => Math.round((note.startTick - candidate.startBar * barTicks) / stepTicks)));
+  const onBeat = new Set();
+  const offBeat = new Set();
+  candidate.notes.forEach((note) => {
+    const position = (note.startTick - candidate.startBar * barTicks) / stepTicks;
+    if (Number.isInteger(position)) onBeat.add(position);
+    else offBeat.add(Math.floor(position));
+  });
   return Array.from({ length: bars }, (_, bar) => (
-    Array.from({ length: STEPS }, (_, step) => (starts.has(bar * STEPS + step) ? "●" : "・")).join("")
+    Array.from({ length: STEPS }, (_, step) => {
+      const cell = bar * STEPS + step;
+      return onBeat.has(cell) ? "●" : offBeat.has(cell) ? "○" : "・";
+    }).join("")
   ));
 }
