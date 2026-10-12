@@ -28,6 +28,11 @@ export function toggleSolo(state, role) {
   return { muted: new Set(state.muted), solo: state.solo === role ? null : role };
 }
 
+// まとめて切り替え: 全部鳴らす（on=true）/ 全部OFF（on=false。そこから鳴らしたいパートだけ選ぶ）
+export function setAllParts(roles, on) {
+  return { muted: on ? new Set() : new Set(roles), solo: null };
+}
+
 export function bindPartSwitch({ demoPlayer, roles = Object.keys(PART_LABELS) }) {
   const toggle = document.querySelector("#player-parts");
   const panel = document.querySelector("#part-panel");
@@ -42,6 +47,8 @@ export function bindPartSwitch({ demoPlayer, roles = Object.keys(PART_LABELS) })
 
     panel.querySelectorAll("[data-part]").forEach((button) => {
       const audible = isPartAudible(state, button.dataset.part);
+      // 色だけに頼らず、鳴る / 鳴らないを文字でも示す
+      button.textContent = `${audible ? "✓ " : ""}${PART_LABELS[button.dataset.part] ?? button.dataset.part}`;
       button.classList.toggle("off", !audible);
       button.setAttribute("aria-pressed", String(audible));
     });
@@ -53,7 +60,7 @@ export function bindPartSwitch({ demoPlayer, roles = Object.keys(PART_LABELS) })
     if (hint) {
       hint.textContent = soloMode
         ? "ソロ: 押したパートだけ鳴ります。もう一度押すと全部に戻ります。"
-        : "押したパートを消して聴き比べます。保存や書き出しには影響しません。";
+        : "✓ のパートが鳴ります。タップで鳴らす / 消すを切り替え。「全部OFF」から、聴きたいパートだけ選べます（保存や書き出しには影響しません）。";
     }
   }
 
@@ -72,6 +79,18 @@ export function bindPartSwitch({ demoPlayer, roles = Object.keys(PART_LABELS) })
       state = soloMode ? toggleSolo(state, role) : toggleMute(state, role);
       apply();
     });
+  });
+
+  document.querySelector("#part-all")?.addEventListener("click", () => {
+    soloMode = false;
+    state = setAllParts(roles, true);
+    apply();
+  });
+
+  document.querySelector("#part-none")?.addEventListener("click", () => {
+    soloMode = false;
+    state = setAllParts(roles, false);
+    apply();
   });
 
   soloButton?.addEventListener("click", () => {
