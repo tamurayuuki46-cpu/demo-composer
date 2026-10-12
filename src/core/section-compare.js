@@ -22,7 +22,15 @@ export function compareSections(project) {
     // コードのルートから見た度数の使用率（コードがある小節の音のみ）
     const breakdown = chordDegreeBreakdown(project, notes);
     const chordDegrees = breakdown.counted
-      ? { counted: breakdown.counted, rates: breakdown.degrees.map((d) => (d.chord + d.tension + d.outside + d.other) / breakdown.counted), degrees: breakdown.degrees }
+      ? {
+        counted: breakdown.counted,
+        // 構成音率（安定感）/ スケール外率（緊張・個性）
+        toneRate: breakdown.degrees.reduce((sum, d) => sum + d.chord, 0) / breakdown.counted,
+        tensionRate: breakdown.degrees.reduce((sum, d) => sum + d.tension, 0) / breakdown.counted,
+        outsideRate: breakdown.degrees.reduce((sum, d) => sum + d.outside, 0) / breakdown.counted,
+        rates: breakdown.degrees.map((d) => (d.chord + d.tension + d.outside + d.other) / breakdown.counted),
+        degrees: breakdown.degrees
+      }
       : null;
 
     const pitches = notes.map((note) => note.pitch);
@@ -83,6 +91,13 @@ export function contrastHints(rows) {
       : "コード度数: 大きな差なし（使う度数が似ています）";
   }
   if (degreeLine) lines.push(degreeLine);
+  if (chorus.chordDegrees && ref.chordDegrees) {
+    const pct = (value) => Math.round(value * 100);
+    const toneDiff = pct(chorus.chordDegrees.toneRate) - pct(ref.chordDegrees.toneRate);
+    const outDiff = pct(chorus.chordDegrees.outsideRate) - pct(ref.chordDegrees.outsideRate);
+    const mood = toneDiff >= 10 ? "安定感が増えています" : toneDiff <= -10 ? "コード構成音が減り、動きや緊張が増えています" : "安定感は近いです";
+    lines.push(`構成音率: ${pct(chorus.chordDegrees.toneRate)}%（${ref.name} ${pct(ref.chordDegrees.toneRate)}%）・スケール外 ${pct(chorus.chordDegrees.outsideRate)}%（${ref.name} ${pct(ref.chordDegrees.outsideRate)}%）→ ${outDiff >= 10 && toneDiff > -10 ? "スケール外が増え、緊張が強まっています" : mood}`);
+  }
   const advice = lacking
     ? `${chorus.name}と${ref.name}の差が小さめです。サビの音域をひろげる・高めに置く・音の数を変えると、盛り上がりの差が出ます。`
     : `${chorus.name}と${ref.name}に差があります。意図した盛り上がり方か、聴いて確かめてみましょう。`;

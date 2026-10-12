@@ -55,6 +55,8 @@ assert.equal(contrastHints(compareSections(project([section("chorus", "サビ", 
   assert.equal(dr[1].chordDegrees.degrees[7].chord, 3, "5度は構成音");
   const line = contrastHints(dr).lines.find((l) => l.startsWith("コード度数"));
   assert.ok(line.includes("5 +75%") && line.includes("R −75%"), line);
+  assert.equal(dr[0].chordDegrees.toneRate, 1, "Aメロは全部構成音");
+  assert.ok(contrastHints(dr).lines.some((l) => l.startsWith("構成音率")));
   assert.equal(compareSections(project([section("verse", "A", 2)], aNotes))[0].chordDegrees, null, "コード無しは null");
 }
 
