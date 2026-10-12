@@ -2,7 +2,7 @@ import { getCompositionIntent, subscribeCompositionIntent } from "../core/compos
 import {
   CHORD_MOOD_TAG_GROUPS,
   chordPresetMoodText,
-  chordPresetsForEmotion,
+  chordPresetsForTag,
   recommendChordPresetsByMood
 } from "./chord-mood-tags.js";
 import { chordPresetNames } from "./chord-presets.js";
@@ -28,8 +28,9 @@ const TAG_ALIAS = new Map([
 ]);
 
 const selectedTags = new Set();
-// 曲想を1つ選んで一覧にする（UI状態のみ）。null = 未選択
-let listEmotion = null;
+// タブ（曲想/質感/場面）ごとに1つのタグを選んで一覧にする（UI状態のみ）。null = 未選択
+let listGroup = "emotion";
+const listTags = { emotion: null, texture: null, scene: null };
 let listShowAll = false;
 const LIST_LIMIT = 10;
 let observer = null;
@@ -61,20 +62,25 @@ function currentKey() {
   return /^[A-G][#b]?$/.test(key) ? key : "C";
 }
 
-export function emotionListHtml({ emotion = listEmotion, mode = "major", key = "C", showAll = listShowAll } = {}) {
-  const emotionTags = CHORD_MOOD_TAG_GROUPS.emotion;
-  const rows = emotion ? chordPresetsForEmotion(emotion, { mode }) : [];
+export function emotionListHtml({ group = listGroup, tag = listTags[listGroup], mode = "major", key = "C", showAll = listShowAll } = {}) {
+  const groupId = CHORD_MOOD_TAG_GROUPS[group] ? group : "emotion";
+  const groupTags = CHORD_MOOD_TAG_GROUPS[groupId];
+  const rows = tag ? chordPresetsForTag(tag, { mode }) : [];
   const shown = showAll ? rows : rows.slice(0, LIST_LIMIT);
-  const label = emotionTags.find((tag) => tag.id === emotion)?.label ?? "";
+  const label = groupTags.find((item) => item.id === tag)?.label ?? "";
   return `
     <div class="chord-emotion-list">
-      <strong>曲想を1つ選んで一覧</strong>
-      <div class="chord-mood-chips" role="radiogroup" aria-label="曲想を1つ選ぶ">
-        ${emotionTags.map((tag) => `
-          <button type="button" role="radio" class="chord-mood-chip${tag.id === emotion ? " active" : ""}" data-chord-emotion="${escapeHtml(tag.id)}" aria-checked="${tag.id === emotion}">${escapeHtml(tag.label)}</button>
+      <div class="chord-mood-tabs" role="tablist" aria-label="タグの種類">
+        ${Object.keys(CHORD_MOOD_TAG_GROUPS).map((id) => `
+          <button type="button" role="tab" class="chord-mood-tab${id === groupId ? " active" : ""}" data-chord-tab="${escapeHtml(id)}" aria-selected="${id === groupId}">${escapeHtml(GROUP_LABELS[id] ?? id)}</button>
         `).join("")}
       </div>
-      ${emotion ? (rows.length === 0
+      <div class="chord-mood-chips" role="radiogroup" aria-label="${escapeHtml(GROUP_LABELS[groupId])}を1つ選ぶ">
+        ${groupTags.map((item) => `
+          <button type="button" role="radio" class="chord-mood-chip${item.id === tag ? " active" : ""}" data-chord-emotion="${escapeHtml(item.id)}" aria-checked="${item.id === tag}">${escapeHtml(item.label)}</button>
+        `).join("")}
+      </div>
+      ${tag ? (rows.length === 0
         ? `<p class="chord-mood-empty">「${escapeHtml(label)}」に合う進行は、このScaleでは見つかりません。</p>`
         : `<p class="hint">「${escapeHtml(label)}」が強い順に ${shown.length} / ${rows.length} 件（${key} ${mode === "minor" ? "Minor" : "Major"} のコード名）</p>
           <ol class="chord-emotion-rows">
@@ -90,7 +96,7 @@ export function emotionListHtml({ emotion = listEmotion, mode = "major", key = "
             `).join("")}
           </ol>
           ${rows.length > LIST_LIMIT ? `<button type="button" class="chord-emotion-more" data-chord-emotion-more>${showAll ? "上位だけ表示" : `全${rows.length}件を表示`}</button>` : ""}`)
-        : `<p class="chord-mood-empty">曲想を1つ選ぶと、その印象が強い進行を一覧にします。</p>`}
+        : `<p class="chord-mood-empty">${escapeHtml(GROUP_LABELS[groupId])}を1つ選ぶと、その印象が強い進行を一覧にします。</p>`}
     </div>`;
 }
 
@@ -194,9 +200,11 @@ export function chordMoodPanelHtml({
       </div>
       ${sourceHtml}
       ${emotionListHtml({ mode, key: currentKey() })}
-      <strong class="chord-mood-combine">組み合わせて3案に絞る（最大3つ）</strong>
-      ${groupsHtml}
-      ${resultsHtml}
+      <details class="chord-mood-combine"${selected.size ? " open" : ""}>
+        <summary>組み合わせて3案に絞る（最大3つ）</summary>
+        ${groupsHtml}
+        ${resultsHtml}
+      </details>
       <p class="hint">※ コード進行だけで感情は決まりません。BPM・メロディ・リズム・ボイシング・音色でも印象は変わります。</p>
     </section>
   `;
@@ -221,7 +229,14 @@ function bindPanelEvents() {
   document.querySelectorAll("[data-chord-emotion]").forEach((button) => {
     button.addEventListener("click", () => {
       const id = button.dataset.chordEmotion;
-      listEmotion = listEmotion === id ? null : id;
+      listTags[listGroup] = listTags[listGroup] === id ? null : id;
+      listShowAll = false;
+      renderPanel();
+    });
+  });
+  document.querySelectorAll("[data-chord-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      listGroup = button.dataset.chordTab;
       listShowAll = false;
       renderPanel();
     });
