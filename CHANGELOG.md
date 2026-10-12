@@ -419,3 +419,6 @@
 
 ## Companion Arrangement Lab v0.3-dev — 2026-10-13
 理論リハモとメロディ関係、裏メロスケール案、Section採用、サビ5案、引き算、主役交代を追加。独立Plan Schema 3、旧Plan 1/2互換。本体Version/Schemaは維持。詳細 arranger/CHANGELOG.md / docs/VERIFICATION_v0.3.md。
+
+## Companion Arrangement Lab v0.4-dev — 2026-10-13
+Harmony14/Counter16/Development15/連動5の実音楽変換を追加。実Voicing/Note Override、対象Section採用、MIDI A/B、Plan Schema4/旧互換。本体Version/Schemaは維持。詳細 arranger/CHANGELOG.md。

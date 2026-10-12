@@ -10,7 +10,7 @@ on:
       - '.github/workflows/arranger-ci.yml'
 
 jobs:
-  arranger-v02:
+  arranger-v04:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,12 +30,14 @@ jobs:
           node --check arranger/src/reharm-theory.js
           node --check arranger/src/arrangement-tools.js
           node --check arranger/src/feature-ui.js
+          for file in arranger/src/*lab*.js; do node --check "$file"; done
 
       - name: Arrangement Lab core regression
         run: |
           node arranger/tests/core.test.mjs
           node arranger/tests/regression.test.mjs
           node arranger/tests/features.test.mjs
+          node arranger/tests/music-labs.test.mjs
 
       - name: Static build includes Arrangement Lab
         run: |

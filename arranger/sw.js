@@ -1,5 +1,5 @@
-const CACHE = 'arrangement-lab-v0.3-dev';
-const ASSETS = ['./', './index.html', './styles.css', './manifest.webmanifest', './src/app.js', './src/core.js', './src/reharm-theory.js', './src/arrangement-tools.js', './src/feature-ui.js', './src/preview.js', './src/chord-qualities.js', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'arrangement-lab-v0.4-dev';
+const ASSETS = ['./', './index.html', './styles.css', './manifest.webmanifest', './src/app.js', './src/core.js', './src/music-lab-catalog.js', './src/music-lab-utils.js', './src/harmony-lab.js', './src/counter-lab.js', './src/development-lab.js', './src/music-lab.js', './src/music-lab-ui.js', './src/reharm-theory.js', './src/arrangement-tools.js', './src/feature-ui.js', './src/preview.js', './src/chord-qualities.js', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

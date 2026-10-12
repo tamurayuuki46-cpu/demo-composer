@@ -31,7 +31,7 @@ for(const n of arrangedNotes(source,response,'counter').filter(n=>n.startTick>=B
 for(const mode of ['melody','counter','harmony']){const c=leadHandoffCandidate(response,'chorus',mode);assert.deepEqual(arrangedNotes(source,c,'melody'),arrangedNotes(source,a,'melody'));assert.deepEqual(c.sections[0],a.sections[0]);}
 const empty=normalizeSourceProject({...json,tracks:json.tracks.filter(t=>t.role!=='counter')});assert.ok(buildCounterScaleCandidates(empty,a,'chorus').every(c=>c.notes.length>0));
 const adopted=updateCandidateSection(response,'chorus',{reharmonization:theory[3],harmonyPattern:'arpeggio',decisionNote:'歌の隙間だけ'});
-const saved=createArrangerProject(source,adopted);assert.equal(saved.arrangerSchemaVersion,3);const restored=restoreArrangerProject(JSON.parse(JSON.stringify(saved)));
+const saved=createArrangerProject(source,adopted);assert.equal(saved.arrangerSchemaVersion,4);const restored=restoreArrangerProject(JSON.parse(JSON.stringify(saved)));
 for(const part of ['counter','harmony','melody','bass']){assert.deepEqual(createPartMidi(source,adopted,part),createPartMidi(restored.source,restored.candidate,part));const midi=createPartMidi(source,adopted,part);if(midi)assert.ok(parseMidi(midi).tracks[0].notes.length);}
 assert.equal(JSON.stringify(source),before,'no source mutation');
 assert.deepEqual(a,buildThreeCandidates(source)[1],'no preview/generator mutation');
