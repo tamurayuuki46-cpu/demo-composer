@@ -1,3 +1,4 @@
+import { defaultDesign } from "./decision-design.js";
 import { APP_VERSION, SCHEMA_VERSION } from "./project-schema.js";
 
 function clone(value) {
@@ -13,7 +14,9 @@ export function migrateProject(project) {
 
   const next = clone(project);
 
-  if (next.schemaVersion === 1) {
+  if (next.schemaVersion === 1 || next.schemaVersion === 2) {
+    if (!next.metadata || typeof next.metadata !== "object") throw new Error("Project metadata is invalid.");
+    next.metadata.composition = next.metadata.composition ?? defaultDesign();
     next.schemaVersion = SCHEMA_VERSION;
     next.appVersion = APP_VERSION;
     return next;

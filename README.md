@@ -21,11 +21,11 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 ## Current Version
 
-`v0.2-dev`
+`v0.3-dev`
 
 ## Status
 
-現在は、Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite、Undo / Redo、project.json読み込み、schemaVersion 2準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
+現在は、Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite、Undo / Redo、project.json読み込み、schemaVersion 3準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
 
 HubではProject名 / BPM / Key / Scaleを編集できます。Key変更時はChord / Melody / Bassを同じ最短半音幅で自動移調し、Drumsは変更しません。Scale変更はChord / Melody / Bassがある場合は安全のため拒否します。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。Hubの `＋ 新規Project` では現在のProjectを保存してから、別IDの空ProjectをActiveにして新しい曲を始められます。旧Project自体は端末内に残します。
 
@@ -47,13 +47,19 @@ Exportでは `Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `pro
 
 HubのAI相談は、現在のProject情報を相談用テキストへまとめてコピーする方式です。APIへ自動送信せず、ChatGPT / Claudeへユーザーが貼り付けて相談できます。
 
-schemaVersion 1の保存Projectは、v0.2起動時に移行前データをIndexedDB内へ退避した上でschemaVersion 2へ自動Migrationします。Arrange / Sound Sketch Lite / Backing Pattern / Melody候補は既存Data領域を利用するため追加Migrationはありません。
+schemaVersion 1 / 2の保存Projectは、v0.3起動時に移行前データをIndexedDB内へ退避した上でschemaVersion 3へ自動Migrationします。音符・コード・Key・BPM・PPQ・拍子は変えず、作曲判断の保存領域だけを追加します。v0.3のproject.jsonはv0.2では読み込めないため、復元時は移行前バックアップを使います。詳細は docs/DECISION_SUPPORT.md。
 
 Hubの Export から、`project.json` に加えて MIDI（.mid）も読み込めます（役割を確かめてから取り込みます）。
 
 Hubの「作編曲の手引き」から、出発点からCubasis / Cubaseへ渡すまでの手順をスマホで確認できます。Android実機で1曲を通して作るテスト手順は `docs/REAL_SONG_TEST.md` にあります。
 
 未実装の主要項目は、Snapshot履歴、PWA Service Worker、Drums音色変更、本格Sound Sketch整理です。
+
+## v0.3 作曲判断
+
+Hub: 曲の設計メモ、主旋律・裏メロ・ハーモニー・リズム・音色の5軸、未決定項目、採用理由ログ。
+Arrange: 編集可能なSection役割。Chord: 感情タグとは別の「コードを置く目的」。Melody / 裏メロ: 同じAnalyzerから分析・手動タグを表示。
+各画面の「作曲の判断」は折りたたみ。現在案 → 1要素だけ変える候補 → A/B試聴 → 選択 → 修正を支援します。コード進行 / 主旋律 / 裏メロ / 音色の比較、最後の2音・リズム・音高・コード1個・裏メロ・コード音域の別案に対応。候補自体はメモリのみ。採用結果と任意の1行理由はUndo1手で戻せます。
 
 ## AI共同開発
 

@@ -1,3 +1,4 @@
+import { createDecisionComparison } from "../core/decision-comparison.js";
 import { getSections, MAX_TOTAL_BARS, sectionLabel, totalSectionBars } from "../core/section-ops.js";
 import { chordSymbol, rootToPitchClass } from "../chord/chord-theory.js";
 import { analyzeMelody, barsUsingChordDegree, describeMelody, pitchLabel } from "../core/melody-analysis.js";
@@ -30,12 +31,14 @@ function pianoKeyClass(pitch) {
   return BLACK_PITCH_CLASSES.has(pitch % 12) ? "black" : "white";
 }
 
-export function createMelodyController({ projectStore, rerender, onStop = () => {} }) {
+export function createMelodyController({ projectStore, rerender, onStop = () => {}, onBeginComparison = () => {} }) {
   let comparison = null;
   let lastHeard = "";
+  let adoptionReason = "";
   function cancelComparison() {
     if (comparison) onStop();
     comparison = null;
+    adoptionReason = "";
     lastHeard = "";
   }
   projectStore.subscribe((project) => {
@@ -345,6 +348,7 @@ export function createMelodyController({ projectStore, rerender, onStop = () => 
               <button id="melody-ab-keep">Aを採用（現在案を保持）</button>
               <button id="melody-ab-adopt" ${comparison.diff.added + comparison.diff.removed === 0 ? "disabled" : ""}>Bを採用</button>
             </div>
+            <label class="field"><span>採用理由（任意の1行）</span><input id="melody-ab-reason" maxlength="200" value="${escapeHtml(adoptionReason)}"></label>
             <button id="melody-ab-cancel" class="small-action">比較を閉じる</button>
             <p class="hint">試聴だけでは保存しません。Bの採用は↶で1回戻せます。${lastHeard ? `最後に聴いた案: ${lastHeard}。` : ""}比較は再読み込みで消えます。</p>
           </section>` : ""}
@@ -415,6 +419,7 @@ export function createMelodyController({ projectStore, rerender, onStop = () => 
       button.addEventListener("click", () => {
         const candidate = melodyCandidates.find((item) => item.id === button.dataset.melodyCompare);
         if (!candidate) return;
+        onBeginComparison();
         cancelComparison();
         const latest = projectStore.getSnapshot();
         comparison = createMelodyComparison(latest, barIndex,
@@ -440,14 +445,29 @@ export function createMelodyController({ projectStore, rerender, onStop = () => 
       message = "現在案を保持しました。曲は変更していません。";
       rerender("melody");
     };
-    document.querySelector("#melody-ab-keep")?.addEventListener("click", finishComparison);
+    document.querySelector("#melody-ab-keep")?.addEventListener("click", () => {
+      if (comparison && adoptionReason.trim()) {
+        const latest = projectStore.getSnapshot();
+        const { barIndex: from, barTicks: ticks, label } = comparison;
+        const session = createDecisionComparison(latest, { kind: "melody", startBar: from, endBar: from + 1, label,
+          data: comparisonNotes(comparison, latest).filter(note => note.startTick >= from * ticks && note.startTick < (from + 1) * ticks) });
+        projectStore.keepDecision(session, adoptionReason);
+      }
+      finishComparison();
+    });
     document.querySelector("#melody-ab-cancel")?.addEventListener("click", finishComparison);
+    document.querySelector("#melody-ab-reason")?.addEventListener("input", event => { adoptionReason = event.target.value; });
     document.querySelector("#melody-ab-adopt")?.addEventListener("click", () => {
       if (!comparison) return;
       try {
-        const notes = comparisonNotes(comparison, projectStore.getSnapshot());
+        const latest = projectStore.getSnapshot();
+        const notes = comparisonNotes(comparison, latest);
+        const { barIndex: from, barTicks: ticks, label } = comparison;
+        const session = createDecisionComparison(latest, { kind: "melody", startBar: from, endBar: from + 1, label,
+          data: notes.filter(note => note.startTick >= from * ticks && note.startTick < (from + 1) * ticks) });
+        const reason = adoptionReason;
         cancelComparison();
-        projectStore.updateMelodyNotes(notes);
+        projectStore.adoptDecision(session, reason);
         message = "Bを採用しました。↶で現在案へ1回で戻せます。";
       } catch (error) {
         cancelComparison();

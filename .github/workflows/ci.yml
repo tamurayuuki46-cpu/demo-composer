@@ -156,5 +156,8 @@ jobs:
       - name: Melody A/B comparison smoke test
         run: npm run test:melody-ab
 
+      - name: Decision support and migration smoke test
+        run: npm run test:decision-support
+
       - name: Static build
         run: npm run build

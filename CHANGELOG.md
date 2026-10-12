@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## v0.3-dev
+更新日: 2026-10-12
+
+### 追加
+- 曲の設計メモ5項目と個性の5軸、Sectionの自由な役割、感情タグと分けたコード目的タグ。
+- 主旋律/裏メロの派生分析と手動タグ、点数を使わない未決定項目、任意の1行採用理由。
+- コード進行 / 主旋律 / 裏メロ / 音色A/B、末尾2音・リズム・音高・コード1個・裏メロ・コード音域・音色だけの候補。
+- 採用結果と理由をAtomicに保存しUndo1手。候補/試聴は保存しない。
+- Schema 1/2→3 Migration、revision別退避（既存バックアップを上書きしない）。DB_VERSION / PPQ / 拍子は維持。
+- 設計意図と採用理由をAI相談/Cubaseメモへ反映。MIDI Importでは言葉の設計意図を保持。
+
+### 修正
+- 拡張和音のGuide Tone判定をpitch classへ正規化。
+
+### 復元
+- restore/v0.3-before-decision-support / 6e69333。Schema 3のJSONは旧アプリでは読めないため、復元は旧schema退避データを使用。
+
+### 未確認
+- Android実機の表示/音、Cubasis/Cubase実機取込。全自動作曲・DAW詳細編集・Mixing/Mastering/Plugin Hostingは対象外。
+
 ## v0.2-dev
 
 ### 追加（2026-10-12: 主旋律1小節A/B比較）

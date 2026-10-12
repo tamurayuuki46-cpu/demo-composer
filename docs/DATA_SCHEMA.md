@@ -4,19 +4,26 @@
 
 Demo Composer内の正本は `project.json`。
 
-現在Schema:
+現在Schema: **3（v0.3-dev）**。PPQ 480 / 4/4 / project.json正本は維持。以下のv0.2導入機能にある「schemaVersion 2」は導入当時の説明で、現行の音楽フィールドも同じ形を維持してSchema 3へ含めます。
 
 ```json
 {
-  "schemaVersion": 2,
-  "appVersion": "v0.2-dev",
+  "schemaVersion": 3,
+  "appVersion": "v0.3-dev",
   "id": "uuid",
   "revision": 1,
   "metadata": {
     "title": "Untitled",
     "genre": "",
     "mood": [],
-    "memo": ""
+    "memo": "",
+    "composition": {
+      "hook": "", "highlight": "", "tension": "", "chorus": "", "reference": "",
+      "axes": {"melody":"", "counter":"", "harmony":"", "rhythm":"", "sound":""},
+      "tags": {"melody":[], "counter":[]},
+      "checks": {"counter":"undecided", "sound":"undecided", "contrast":"undecided"},
+      "decisions": []
+    }
   },
   "basic": {
     "bpm": 120,
@@ -285,3 +292,26 @@ Schema変更時は必ず:
 3. Migration関数を追加
 4. 変換前データを退避
 5. AI_HANDOFF.mdへ設計判断を記録
+
+## Schema 3: 作曲判断の保存
+
+- `metadata.composition`: 必須。`decision-design.js`のdefaultDesign / validateDesignが契約の正本。
+- hook / highlight / tension / chorus / reference: 各400文字以内の文字列。
+- axes: melody / counter / harmony / rhythm / sound、各200文字以内。
+- tags: melody / counterそれぞれ、MELODY_TAGS内の重複なし配列。人の分析タグで、自動分析結果は保存しない。
+- checks: counter / sound / contrast。それぞれ undecided / decided / unnecessary。音符の有無だけで決定済みにしない。
+- decisions: 採用履歴。id / date（ISO日時）/ kind / label / startBar / endBar / summary / reason。labelは160文字、summary400文字、reason200文字まで。小節範囲は当時の記録で、Section移動に追従させない。最大1000件。超過は操作全体を拒否し、古い履歴を勝手に削除しない。UIは最新30件、JSONは全件保存。
+- `structure.sections[].purpose`: 任意の100文字以内の編集可能な役割。未設定は未決定。プレースホルダーの例を自動採用しない。
+- `chords[].purposes`: 任意。安定 / 緊張 / 浮遊 / 切なさ / 明るさ / 意外性 / 転調感 / 解決感。音楽データとは独立しBassがあっても注釈だけ変更できる。
+- `instruments[part=chord-voicing]`: preset=lower / center / upper、tone=natural。欠損はcenter。コードの仮再生とChord/Song MIDIを±12半音の音域で鳴らす。コードのroot/quality/tickは変えない。
+- 未採用候補と比較セッションは保存しない。
+
+## 明示的Migration: v1 / v2 → v3
+
+1. 起動時、Storageが元Projectをmetaへ退避。キーは `migrationBackup:<id>:schema<version>:revision<revision>`。既存同一キーは上書きしない。以前のbackupキーも削除しない。
+2. migrateProjectは元オブジェクトをcloneし、schemaVersion=3 / appVersion=v0.3-devとcomposition既定値を追加する。既存の自由メモ、音楽情報、Section、ID、revisionを保持。
+3. validateProjectで全体検証してからActiveへ保存。IndexedDB DB_VERSION=1、Object Store追加なし。
+4. 旧Projectの複製・一覧はそのまま。初めて開いた時だけ退避・移行する。
+5. project.json Importも同じMigrationで変換する。読み込んだ元ファイルは上書きしない。現行Projectとの置換はUndo可。
+6. Schema 3は旧アプリでは拒否される。ロールバックは旧コード＋退避した旧schemaのJSONを使う。新しいJSONのschema番号だけを書き換えない。
+7. MIDIは言葉の意図を運ばない。MIDI Importでは現行のcompositionとmetadata.memoを保持する。新しいコードやSectionに旧目的タグを自動対応させない。JSON Importは読み込んだファイルの意図を使用。

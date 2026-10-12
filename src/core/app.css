@@ -767,3 +767,21 @@ h1 {
   font-weight: 700;
 }
 .audition-toast { width: max-content; max-width: calc(100vw - 32px); text-align: center; border-radius: 16px; font-size: 13px; line-height: 1.4; }
+
+/* 作曲判断: 既存画面内で開く。モバイルでは2列を超えない。 */
+.decision-support { overflow-wrap: anywhere; }
+.decision-details { margin-top: 12px; border: 1px solid #45465e; border-radius: 12px; padding: 12px; }
+.decision-details summary { cursor: pointer; min-height: 44px; display: list-item; font-weight: 600; }
+.decision-details[open] > summary { margin-bottom: 12px; }
+.decision-details .field { margin: 10px 0; }
+.decision-details textarea, .decision-details input:not([type=checkbox]), .decision-details select { width: 100%; min-width: 0; box-sizing: border-box; }
+.decision-details textarea { background: #161927; color: inherit; border: 1px solid #545a77; padding: 10px; border-radius: 8px; font: inherit; resize: vertical; }
+.decision-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin: 10px 0; }
+.decision-grid button, .decision-candidates button { min-height: 44px; white-space: normal; }
+.decision-grid button[aria-pressed=true] { outline: 2px solid #7397ff; }
+.decision-candidates { display: grid; gap: 8px; margin: 12px 0; }
+.decision-candidates button small, .decision-log small, .decision-details p small { display: block; font-size: .85em; opacity: .85; margin-top: 5px; }
+.decision-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.decision-tags label { min-height: 44px; display: flex; gap: 6px; align-items: center; border: 1px solid #45465e; border-radius: 8px; padding: 6px; }
+.decision-comparison, .decision-log { border-top: 1px solid #45465e; padding-top: 10px; margin-top: 12px; }
+.decision-comparison li { font-size: .9em; }

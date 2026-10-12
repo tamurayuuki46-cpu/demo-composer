@@ -1,3 +1,4 @@
+import { createDecisionSupport } from "./core/decision-support-ui.js";
 import { createDemoPlayer } from "./audio/demo-player.js";
 import {
   BACKING_PATTERNS,
@@ -55,6 +56,7 @@ import { createAutosave } from "./storage/autosave.js";
 import { backupProjectForMigration, loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
 
 let projectStore;
+let decisionSupport;
 let melodyController;
 let rhythmController;
 let arrangeController;
@@ -729,9 +731,12 @@ function applyMidiImport() {
   if (!midiImport) return;
   try {
     const { project, report } = midiImportConvert(midiImport);
-    if (!globalThis.confirm(`「${project.metadata.title}」を取り込みます。いまの曲は置き換わります（↶ で戻せます）。よろしいですか？`)) return;
+    if (!globalThis.confirm(`「${project.metadata.title}」を取り込みます。音符・構成は置き換わります。設計メモ・採用履歴は保持します（↶で戻せます）。よろしいですか？`)) return;
     demoPlayer.stop();
     chordRootSelection = null;
+    const previous = projectStore.getSnapshot();
+    project.metadata.memo = previous.metadata.memo;
+    project.metadata.composition = structuredClone(previous.metadata.composition);
     projectStore.replaceProject(project);
     midiImport = null;
     render(currentScreen);
@@ -1202,12 +1207,13 @@ function bindPlayerControls() {
 function render(name) {
   if (name !== "melody") melodyController?.cancelComparison();
   currentScreen = name;
-  screen.innerHTML = screens[name]();
+  screen.innerHTML = screens[name]() + (decisionSupport?.render(name) ?? "");
 
   buttons.forEach((button) => {
     button.classList.toggle("active", button.dataset.screen === name);
   });
 
+  decisionSupport?.bind();
   if (name === "hub") bindHubControls();
   if (name === "chord") bindChordControls();
   if (name === "melody") melodyController.bind();
@@ -1250,7 +1256,15 @@ async function boot() {
     startupMessage = "保存データが現在のSchemaで不正なため、新しいProjectで開始しました。";
   }
 
-  melodyController = createMelodyController({ projectStore, rerender: render, onStop: () => demoPlayer?.stop() });
+  decisionSupport = createDecisionSupport({ projectStore, rerender: render, onStop: () => demoPlayer?.stop(),
+    onBeginComparison: () => melodyController?.cancelComparison(),
+    chordPresetCandidate: (project) => {
+      const data = buildChordPreset(chordPresetSelection, { key: project.basic.key, scale: project.basic.scale, barTicks: project.basic.ppq * 4 });
+      return { kind: "chord", replaceAll: true, startBar: 0, endBar: Math.max(1, data.length, project.chords.length),
+        data, label: `コード進行：${getChordPreset(chordPresetSelection).label}` };
+    }
+  });
+  melodyController = createMelodyController({ projectStore, rerender: render, onStop: () => demoPlayer?.stop(), onBeginComparison: () => decisionSupport.cancel() });
   rhythmController = createRhythmController({ projectStore, rerender: render });
   soundController = createSoundController({ projectStore, rerender: render });
   demoPlayer = createDemoPlayer({ onStateChange: updatePlayerUi });

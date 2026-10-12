@@ -32,9 +32,9 @@ Module同士は直接呼び合わない。
 
 `src/core/project-state.js` が、Demo Composer内の共通Project Dataをメモリ上で管理する。
 
-v0.2-dev時点:
+v0.3-dev時点:
 
-- DATA_SCHEMA.mdのschemaVersion 2に沿ったDefault Project生成
+- DATA_SCHEMA.mdのschemaVersion 3に沿ったDefault Project生成
 - Project全体のValidation
 - Snapshot取得
 - State変更通知（subscribe）
@@ -292,3 +292,9 @@ Sound Sketch Liteの選択はDemo Player用であり、Program ChangeとCCは現
 ## 主旋律A/B比較
 
 `core/melody-comparison.js` は固定したProjectと候補から差分・仮Projectを作る純粋関数。Melody Controllerが比較をメモリに保持し、ID/revision照合とStore通知で古い比較を破棄する。再生は既存auditionイベント、採用はupdateMelodyNotes。保存形式変更なし。
+
+## v0.3 作曲判断
+
+純粋Core: decision-design（保存契約・未決定項目）、decision-candidates（1要素候補）、decision-comparison（固定した現在案との差分/試聴）、decision-analysis（既存Analyzer再利用）、chord-voicing（音域オフセット）。UIはdecision-support-uiに分離し、既存画面内の折りたたみをmainが組み込む。Chord Presetの取得はmainの注入関数で行い、CoreがChord Moduleを直接呼ばない。
+
+StoreのupdateDesign / updateDecisionAnnotations / adoptDecision / keepDecisionはvalidation後に一回commit。adoptDecisionはID/revision一致を要求し、コード更新時のBass保護を維持。音と採用理由を同時にUndoできる。候補はProject/IndexedDBへ保存しない。現行schemaは3、明示Migrationの退避はStorageの責任。

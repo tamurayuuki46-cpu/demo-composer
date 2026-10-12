@@ -1,3 +1,4 @@
+import { DESIGN_FIELDS, DESIGN_AXES, designOf, undecidedItems } from "../core/decision-design.js";
 // AI相談用テキスト。ChatGPT / Claudeへそのまま貼れる形で、曲の骨子をまとめる。
 // Hubの責務。Projectを読むだけで、書き換えない（純粋関数）。
 
@@ -198,5 +199,14 @@ export function buildConsultText(project, question = "") {
 
   lines.push("", "■ 相談したいこと", question.trim() || CONSULT_PLACEHOLDER);
 
+  const design = designOf(project);
+  lines.push("", "■ 曲の設計意図・5軸");
+  Object.entries(DESIGN_FIELDS).forEach(([key, label]) => { if (design[key]) lines.push(`${label}: ${design[key]}`); });
+  Object.entries(DESIGN_AXES).forEach(([key, label]) => { if (design.axes[key]) lines.push(`${label}: ${design.axes[key]}`); });
+  (project.structure?.sections ?? []).forEach(section => { if (section.purpose) lines.push(`${section.name}の役割: ${section.purpose}`); });
+  project.chords.forEach((chord, index) => { if (chord.purposes?.length) lines.push(`Bar ${index + 1}のコード目的: ${chord.purposes.join(" / ")}`); });
+  for (const role of ["melody", "counter"]) if (design.tags[role].length) lines.push(`${role === "melody" ? "主旋律" : "裏メロ"}の自分の分析タグ: ${design.tags[role].join(" / ")}`);
+  lines.push("", "■ 未決定項目", ...undecidedItems(project).map(item => item.label));
+  lines.push("", "■ 最近の採用理由", ...design.decisions.slice(-5).map(log => `${log.label}: ${log.reason || "未記入"}`));
   return lines.join("\n");
 }

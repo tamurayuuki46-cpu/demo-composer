@@ -154,6 +154,8 @@ export function validateStructure(structure) {
       throw new Error(`${label}のつなぎ（Transition）が不正です。`);
     }
 
+    if (section.purpose !== undefined && (typeof section.purpose !== "string" || section.purpose.length > 100)) throw new Error("Sectionの役割が不正です。");
+
     if (typeof section.name !== "string" || !section.name.trim() || section.name.length > 20) {
       throw new Error(`${label}の名前は1〜20文字にしてください。`);
     }

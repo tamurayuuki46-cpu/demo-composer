@@ -68,11 +68,10 @@ export async function backupProjectForMigration(project) {
 
   try {
     const transaction = database.transaction(META_STORE, "readwrite");
-    const backupKey = `migrationBackup:${project.id}:schema${project.schemaVersion}`;
-    transaction.objectStore(META_STORE).put({
-      key: backupKey,
-      value: project
-    });
+    const backupKey = `migrationBackup:${project.id}:schema${project.schemaVersion}:revision${project.revision}`;
+    const store = transaction.objectStore(META_STORE);
+    const existing = await requestToPromise(store.get(backupKey));
+    if (!existing) store.add({ key: backupKey, value: project });
     await transactionToPromise(transaction);
     return backupKey;
   } finally {

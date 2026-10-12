@@ -1,15 +1,18 @@
 # AI_HANDOFF
 
 現在Version:
-v0.2-dev
+v0.3-dev
 
 最新安定版:
 なし。`main` はstable専用。v0.1機能完成地点は復元可能。
 
 現在実装済み:
+- v0.3作曲判断: 設計メモ5項目、個性の5軸、編集可能なSection役割、コード目的タグ、主旋律/裏メロ分析と手動タグ、未決定項目、採用理由ログ。
+- 各画面の折りたたみから1要素候補（末尾2音/リズム/音高/コード1個/裏メロ/コード音域/音色）→A/B比較→採用。Chord Preset進行全体も比較可。Bass保護あり。理由も同時にUndo1手。
+- Schema 1/2→3は明示Migration。起動前に元ProjectをIndexedDB metaへrevision別に退避して上書きしない。PPQ/拍子/音楽データは保持。詳細 docs/DECISION_SUPPORT.md / DATA_SCHEMA.md。
 - 主旋律1小節A/B比較: 既存候補と現在案を仮Projectで比較、差分表示、B採用はUndo1手。候補はメモリのみ、Project編集で破棄。詳細 `docs/MELODY_AB_COMPARE.md`。Android実機確認は未実施。
 - Android Chrome向け作曲支援PWA。Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite / 裏メロタブ
-- 共通Project State: schemaVersion 2 / PPQ 480 / 4/4固定 / project.json正本
+- 共通Project State: schemaVersion 3 / PPQ 480 / 4/4固定 / project.json正本
 - IndexedDB保存、起動時Restore、1.5秒AutoSave、hidden時即時Save、Save Now、Persistent Storage要求
 - Hub `＋ 新規Project`: 現在Projectを保存してから別IDの空ProjectをActiveにする。旧Projectは端末内に保持
 - Hub `📂 Project一覧`: IndexedDBに残っているProjectを一覧表示し、`開く / 複製 / 削除`。現在Projectは削除不可。PR #155でdevelop統合済み。詳細 `docs/PROJECT_LIBRARY.md`
@@ -29,6 +32,7 @@ v0.2-dev
 - GitHub Pages公開: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
 開発中:
+- v0.3の8項目は実装済み。Android実機の表示・音の主観確認、Cubasis/Cubase実機確認は継続課題。
 - Project一覧 / 過去Project管理はdevelopへ統合済み。次はAndroid実機で `開く / 複製 / 削除 / reload切替` を確認する段階
 - v0.2は追加機能より実制作と保存・Exportの回帰確認を優先する
 
@@ -47,7 +51,7 @@ v0.2-dev
 
 触らない部分:
 - `main` は動作確認済みstable専用。開発機能はまず `develop` へ
-- schemaVersion 2 / PPQ 480 / 4/4固定を、明確なSchema変更手順なしに変えない
+- schemaVersion 3 / PPQ 480 / 4/4固定を、明確なSchema変更手順なしに変えない
 - project.jsonをDemo Composer内の正本とする
 - Module間を直接強依存させない。複数Moduleにまたがる変更はCore / Storageの責務として扱う
 - Mixing / Mastering / Plugin Hosting等、Cubasis / Cubaseが担当すべきDAW機能を追加しない
@@ -63,7 +67,10 @@ v0.2-dev
 - 大規模保存UI変更前の復元点は `restore/v0.2-before-project-list`。重複作業用の `restore/v0.2-before-project-library` も保持する
 
 現在のデータSchema:
-schemaVersion 2。PPQ 480、4/4固定。`metadata / basic / structure.sections / chords / tracks / instruments / progress / exportSettings`。Counter Melodyは任意の `tracks[role=counter]`。Project一覧はproject.json内に追加フィールドを持たず、IndexedDB `projects` storeの複数recordと `meta.activeProjectId` で管理する。
+追加: metadata.composition / sections[].purpose / chords[].purposes / instruments[part=chord-voicing]。Schema 3のJSONはv0.2で読めない。復元は旧schemaバックアップを使用。
+schemaVersion 3。PPQ 480、4/4固定。`metadata / basic / structure.sections / chords / tracks / instruments / progress / exportSettings`。Counter Melodyは任意の `tracks[role=counter]`。Project一覧はproject.json内に追加フィールドを持たず、IndexedDB `projects` storeの複数recordと `meta.activeProjectId` で管理する。
 
 最終更新:
 2026-10-12
+
+大規模変更前の復元点: `restore/v0.3-before-decision-support` / Commit `6e6933329020d06d75fccadb8637bcc5b3392969`。mainへのstable統合は行っていない。
