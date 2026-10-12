@@ -1,3 +1,5 @@
+import { generateMusicLabCandidates, adoptMusicLabCandidate } from './music-lab.js';
+import { MUSIC_LAB_CATALOG } from './music-lab-catalog.js';
 import { THEORY_METHODS, buildTheorySuggestions, theoryAudition } from './reharm-theory.js';
 import { adoptSectionFrom, buildChorusCandidates, buildSubtractionCandidates, buildCounterScaleCandidates, leadHandoffCandidate } from './arrangement-tools.js';
 import { sectionFeatures } from './feature-ui.js';
@@ -18,7 +20,8 @@ import {
   restoreArrangerProject,
 } from './core.js';
 
-const STORAGE_KEY = 'demo-composer-arranger-v0.3';
+const STORAGE_KEY = 'demo-composer-arranger-v0.4';
+const V03_STORAGE_KEY = 'demo-composer-arranger-v0.3';
 const PREVIOUS_STORAGE_KEY = 'demo-composer-arranger-v0.2';
 const LEGACY_STORAGE_KEY = 'demo-composer-arranger-v0.1';
 
@@ -303,6 +306,12 @@ function handleSectionChange(event) {
   const candidate = currentCandidate();
   if (!candidate || !sectionId) return;
   stopPreview();
+  if (target.dataset.action === 'music-category' || target.dataset.action === 'music-method') {
+    const features=state.features[sectionId] ||= {}; features.open=true; features.musicChoices=[];
+    if(target.dataset.action === 'music-category') { features.musicCategory=target.value; features.musicMethod=MUSIC_LAB_CATALOG.find(m=>m.category===target.value)?.id; }
+    else features.musicMethod=target.value;
+    renderCandidates(); return;
+  }
   if (target.dataset.sectionField === 'method') { state.features[sectionId] = { ...state.features[sectionId], method: target.value }; return; }
   if (target.dataset.action === 'decision-note') {
     state.candidates[state.selectedIndex] = updateCandidateSection(candidate,sectionId,{decisionNote:target.value.slice(0,400)}); return;
@@ -347,7 +356,7 @@ function handleSectionClick(event) {
 
 function handleFeatureAction(button) {
   const action = button.dataset.action, sectionId = button.dataset.section;
-  if (!/^(section-adopt|chorus-|subtract-|theory-|counter-|lead-|rest-)/.test(action)) return false;
+  if (!/^(music-|section-adopt|chorus-|subtract-|theory-|counter-|lead-|rest-)/.test(action)) return false;
   const current = currentCandidate();
   if (!current) return true;
   const section = state.source.sections.find(s=>s.id===sectionId);
@@ -358,7 +367,24 @@ function handleFeatureAction(button) {
   const install = candidate => { state.candidates[state.selectedIndex] = adoptSectionFrom(current,candidate,sectionId); renderCandidates(); };
   const preview = (candidate,label,parts) => playSketch({source:state.source,candidate,startTick:section.startTick,endTick:section.endTick,parts},label);
   try {
-    if (action === 'section-adopt') {
+    if (action.startsWith('music-')) {
+      if(action === 'music-generate') {
+        const select=els.sections.querySelector(`[data-action="music-method"][data-section="${CSS.escape(sectionId)}"]`);
+        features.musicMethod=select.value;features.musicChoices=generateMusicLabCandidates(state.source,current,sectionId,select.value); renderCandidates();
+      } else {
+        const choice=features.musicChoices?.[index]; if(!choice?.available)return true;
+        const candidate=adoptMusicLabCandidate(current,choice);
+        if(action === 'music-apply') { state.candidates[state.selectedIndex]=candidate;renderCandidates();flash('対象Sectionへ採用しました。保存するには下の「この案を採用」を押してください。'); }
+        else if(action === 'music-original' || action === 'music-preview') {
+          const target=state.source.sections.find(s=>s.id===choice.auditionSectionId);
+          playSketch({source:state.source,candidate:action === 'music-original'?current:candidate,startTick:target.startTick,endTick:target.endTick},action === 'music-original'?'現在の案':choice.label);
+        } else if(action === 'music-midi') {
+          const select=els.sections.querySelector(`[data-music-part="${index}"][data-section="${CSS.escape(sectionId)}"]`),part=select.value;
+          const midi=createPartMidi(state.source,candidate,part);
+          if(midi)downloadBlob(new Blob([midi],{type:'audio/midi'}),`${safeFileName(choice.label)}_${part}_${ARRANGER_VERSION}.mid`);else flash('このパートには出力するNoteがありません。',true);
+        }
+      }
+    } else if (action === 'section-adopt') {
       const select = els.sections.querySelector(`[data-section-field="donor"][data-section="${CSS.escape(sectionId)}"]`);
       install(state.candidates[Number(select.value)]); flash('このSectionだけ採用しました。');
     } else if (action === 'chorus-show') { features.chorus = buildChorusCandidates(state.source,current,sectionId); renderCandidates(); }
@@ -487,6 +513,7 @@ function clearAll() {
   if (!window.confirm('保存した編曲プランを消去しますか？必要なら先にJSONを書き出してください。')) return;
   stopPreview();
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(V03_STORAGE_KEY);
   localStorage.removeItem(PREVIOUS_STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
   state.source = null;
@@ -522,7 +549,7 @@ function restorePlan(saved) {
 }
 function restoreSavedPlan() {
   try {
-    const text = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(PREVIOUS_STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const text = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(V03_STORAGE_KEY) || localStorage.getItem(PREVIOUS_STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!text) return;
     restorePlan(JSON.parse(text));
     flash(state.source ? '前回の採用プランを復元しました。' : '旧プランを保持しています。同じrevisionの元project.jsonで編集を再開できます。');

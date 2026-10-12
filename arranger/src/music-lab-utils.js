@@ -26,7 +26,7 @@ export function readPart(ctx,part,section=ctx.section) {return clipNotes(arrange
 export function putPart(ctx,part,notes,section=ctx.section) {
  const target=ctx.candidate.sections.find(s=>s.sectionId===section.id);
  target.partOverrides={...target.partOverrides,[part]:clipNotes(notes,section)};
- if(part==='counter'){target.counterArrangement=null;target.restPolicy='none';}
+ if(part==='counter'){target.counterArrangement=null;target.restPolicy='none';if(!notes.some(n=>n.voice==='A'||n.voice==='B'))delete target.voiceRoles;}
  if(part!=='melody')target.enabled={...target.enabled,[part]:true};
 }
 export function putChords(ctx,chords,label) {
@@ -57,5 +57,5 @@ export function onlyGaps(notes,melody) {let result=notes;for(const n of melody)r
 export function noteStats(source,candidate,ids) {
  const sections=source.sections.filter(s=>ids.includes(s.id));
  const notes=PARTS.flatMap(part=>arrangedNotes(source,candidate,part).filter(n=>sections.some(s=>n.startTick<s.endTick&&n.startTick+n.durationTick>s.startTick)).map(n=>({part,pitch:n.pitch,startTick:n.startTick,durationTick:n.durationTick,velocity:n.velocity,voice:n.voice||''})));
- return {notes,count:notes.length,range:notes.length?[Math.min(...notes.map(n=>n.pitch)),Math.max(...notes.map(n=>n.pitch))]:null};
+ return {notes,count:notes.length,range:notes.length?notes.reduce((r,n)=>[Math.min(r[0],n.pitch),Math.max(r[1],n.pitch)],[127,0]):null};
 }

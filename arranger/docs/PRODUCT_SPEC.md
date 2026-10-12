@@ -1,4 +1,4 @@
-# Arrangement Lab v0.3-dev
+# Arrangement Lab v0.4-dev
 
 ## 目的
 Demo Composerで作った曲の骨格を、Cubasis / Cubaseへ渡す前に「複数の編曲候補を鳴らして比べ、Section単位で混ぜ、必要ならリハモして、MIDIへ渡せる状態」にする。
@@ -98,3 +98,30 @@ Web Audioを使う比較用スケッチ。Demo ComposerのMelody / Counter Note�
 ### Arrangement Plan Schema 3
 追加フィールド（いずれもSection内）：harmonyPattern、chorusDirection、counterArrangement:{id,label,notes,generated}、restPolicy、leadRole、reason、decisionNote、adoptedFrom。
 旧Schema 1/2は受理し、元snapshotがあれば再開、なければ同じProject ID/revisionの元JSONを選択する。v0.3保存はdemo-composer-arranger-v0.3、v0.2/v0.1は起動時fallbackのみで自動削除しない。Demo Composer Schema 3とは別の形式。
+
+## v0.4 musical transformation labs
+50手法の正本は `music-lab-catalog.js`。実装は harmony-lab / counter-lab / development-lab と music-lab の連動処理。各Sectionの編曲ラボ上部でカテゴリ→手法→複数案を生成する。14/16/15/5の機能一覧とVariantは MUSIC_LAB_METHODS_v0.4.md。
+
+- 変換は現在のArrangement候補の実発音を読む。元Project Snapshotは変更しない。
+- Chord変換はreharmonization.chords、実配置はchord.voicing、Note変換はSection.partOverridesへ保存する。
+- 候補のaffectedSectionIdsを表示。採用はこのIDだけ現在案へコピーし、他Sectionの後続編集を保持。
+- サビ前引き算は直前Section、ラスサビは最後のchorus、終わり方は末尾、サビ反復差は複数chorusが対象。素材がなければ理由付きで不適用。
+- 元を聴く/候補を聴くは最初の対象Sectionから最大16秒。長い案は通常の試聴開始Sectionから各区間を確認する。
+- 変換の発音区間数とMIDI音域を表示。少ない/多いを良さの点数として扱わない。
+- MIDIは候補を採用せず書き出せる。対象外Sectionは現在の案を維持。Counter A/Bはvoice=A/Bを個別channel6/7へ出力。
+- 主旋律はハーモニー/裏メロの変換で保持。全休符/停止/減衰など明示的な展開操作では主旋律の発音区間/Velocityも変わる。
+- 転調候補はSection内のii–V–I等を実Chordへ展開しtonalTargetとして記録。主旋律固定のため不一致は確認対象。新調の成立を自動断定しない。
+- 内声の半音装飾はコード記号外の音を含み得る。コード記号は骨格、voicingが実発音。
+- 輪郭保持は元の上下方向、リズム保持は開始/長さを基準にする。音域端では変更できない候補もある。
+- 既存Density/Backing/リハモ/裏メロ再採用時は、競合するHarmony/Counter Overrideを解除して新しい選択を優先する。
+- PWAは新Moduleを同じv0.4 cacheへ保存。別PWAのcacheは変更しない。
+
+### Schema 4 and restoration
+SectionにpartOverrides:{melody?,counter?,bass?,drums?,harmony?}、musicLab、tonalTarget、voiceRolesを追加。Chordのvoicingは0〜127整数の配列、NoteのvoiceはA/Bの役割ラベル。Demo ComposerのSchemaは変更しない。
+旧Plan Schema1/2/3を受理し、追加fieldなしを既定動作にする。旧キーを上書きせず、v0.4採用時に新キーへ保存。旧アプリにSchema4を戻す場合はv0.3復元branch/archiveと旧キー/旧JSONを使用する。
+
+### Theory references
+- Voicing: https://online.berklee.edu/takenote/basic-piano-voicing-techniques/
+- Voice leading: https://online.berklee.edu/takenote/voice-leading-paradigms-for-harmony-in-music-composition/
+- Pedal / II–V / melodic identity: https://college.berklee.edu/bt/204/lesson.html
+本実装は短いルールベースの比較候補を作る。教材文章や譜例を転載しない。

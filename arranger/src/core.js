@@ -198,6 +198,10 @@ export function updateCandidateSection(candidate, sectionId, patch = {}) {
   for (const key of ['harmonyPattern','chorusDirection','counterArrangement','restPolicy','leadRole','reason','decisionNote','partOverrides','musicLab','tonalTarget','voiceRoles']) {
     if (key in patch) section[key] = structuredCloneSafe(patch[key]);
   }
+  if (section.partOverrides && !('partOverrides' in patch)) {
+    if ('reharmonization' in patch || 'harmonyPattern' in patch || 'density' in patch) delete section.partOverrides.harmony;
+    if ('counterArrangement' in patch) delete section.partOverrides.counter;
+  }
   if ('reharmonization' in patch) section.reharmonization = patch.reharmonization ? structuredCloneSafe(patch.reharmonization) : null;
   const profile = STYLE_PROFILES[next.styleId] || STYLE_PROFILES['jpop-band'];
   section.roles = { drums: drumsRole(section, section.density, profile.id), bass: bassRole(section, section.density, profile.id), harmony: harmonyRole(section, section.density, profile), counter: counterRole(section, section.density), color: colorRole(section, section.density, profile) };

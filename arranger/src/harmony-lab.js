@@ -78,7 +78,7 @@ export function applyHarmony(ctx,id,v) {
   ctx.target.tonalTarget={root:target,scale:minor?'minor':'major',status:'proposal',label:names[target]};
   ctx.warnings.push('主旋律を固定した転調候補です。新しいKeyとメロディの関係を確認し、必要ならDAW側で調整してください。転調成立の自動判定はしません。');
  }
- if(id==='h-common') {const note=melodyAnchor(ctx,chords[0]),offset=[0,4,14][v];chords=chords.map((c,i)=>({...c,root:pc(note-offset+(i%2===1?0:0)),quality:v===2?'major9':i%2?'dominant7':'major7',voicing:null}));ctx.target.commonTone=pc(note);}
+ if(id==='h-common') {const note=melodyAnchor(ctx,chords[0]),offset=[0,4,14][v];chords=chords.map((c,i)=>({...c,root:pc(note-offset),quality:v===2?'major9':i%2?'dominant7':'major7',voicing:null}));ctx.target.commonTone=pc(note);}
  if(id==='h-voicing')chords=chords.map((c,i)=>chordShape(c,['close','open','low','high','rootless'][v],i));
  if(id==='h-topline') {
   const top=72+pc(melodyAnchor(ctx,chords[0]));
@@ -86,7 +86,9 @@ export function applyHarmony(ctx,id,v) {
  }
  if(id==='h-inner') {
   chords=chords.map((c,i)=>{
-   const shape=chordShape(c,'close'),notes=shape.voicing;
+   const rendered=readPart(ctx,'harmony').filter(n=>n.startTick===c.startTick).map(n=>n.pitch);
+   const notes=[...new Set(c.voicing?.length?c.voicing:rendered.length?rendered:chordShape(c,'close').voicing)].sort((a,b)=>a-b);
+   if(notes.length<3)throw new Error('内声を動かすには同時発音する3音以上のVoicingが必要です。');
    const step=v===0?1:v===1?-1:i%2?1:-1;
    return {...c,voicing:notes.map((p,j)=>j===0||j===notes.length-1?p:clamp(p+step,notes[0]+1,notes.at(-1)-1))};
   });ctx.warnings.push('内声の半音装飾はコード記号の構成音から外れる場合があります。記号は骨格、Voicingは実際の発音として保存。');

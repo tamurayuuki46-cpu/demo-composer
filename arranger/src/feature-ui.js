@@ -1,3 +1,4 @@
+import { musicLabControls } from './music-lab-ui.js';
 import { THEORY_METHODS, analyzeReharm } from './reharm-theory.js';
 const esc=x=>String(x??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
 const names=x=>x.length?x.map(esc).join('・'):'なし';
@@ -19,7 +20,8 @@ function action(label,action,id,extra='',disabled=false) {return `<button class=
 export function sectionFeatures(source,candidate,candidates,section,features={}) {
  const id=section.sectionId,original=source.sections.find(s=>s.id===id);
  const theory=features.theory||[],counter=features.counter||[],chorus=features.chorus||[],subtract=features.subtract||[];
- return `<details class="section-workshop" ${features.open?'open':''}><summary>Sectionの編曲ラボ・7つの機能</summary>
+ return `<details class="section-workshop" ${features.open?'open':''}><summary>Sectionの編曲ラボ・音楽50手法</summary>
+ ${musicLabControls(source,section,features)}
  <div class="feature-block"><h4>Section別の候補採用</h4><p class="hint">このSectionだけ、別案の密度・楽器・リハモ・裏メロ設定をコピーします。</p>
  <label class="field"><span>採用元</span><select data-section-field="donor" data-section="${esc(id)}">${candidates.map((c,index)=>`<option value="${index}">${esc(c.label)}</option>`).join('')}</select></label>${action('このSectionだけ採用','section-adopt',id)}
  ${section.adoptedFrom?`<p>採用元：${esc(section.adoptedFrom)}</p>`:''}</div>

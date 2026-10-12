@@ -140,3 +140,7 @@ p.attention { color: #fcd34d; }
 .table-scroll table { border-collapse: collapse; width: 100%; font-size: .72rem; }
 .table-scroll th, .table-scroll td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #334155; overflow-wrap: anywhere; }
 .field input[type=text] { width: 100%; min-height: 44px; border: 1px solid #334155; border-radius: 10px; padding: 10px; color: inherit; background: #0b1220; }
+
+.music-lab select { width: 100%; max-width: 100%; }
+.music-lab .music-choice { border-color: #495388; }
+.music-lab p { overflow-wrap: anywhere; }

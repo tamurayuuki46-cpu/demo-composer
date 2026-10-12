@@ -82,3 +82,6 @@ schemaVersion 3。PPQ 480、4/4固定。`metadata / basic / structure.sections /
 
 ## Arrangement Lab v0.3-dev — seven features
 理論リハモ/相性分析、裏メロスケール案、Section採用、サビ5案、引き算、主役交代をarranger/へ追加。独立Plan Schema 3、旧1/2互換。正本 arranger/docs/PRODUCT_SPEC.md。restore/arranger-v0.2.1-before-seven-features を変更前復元点とする。
+
+## Arrangement Lab v0.4-dev
+50の音楽変換手法を実装。独立Plan Schema4/旧1〜3互換。正本 arranger/docs/AI_HANDOFF_v0.4-dev.md / PRODUCT_SPEC.md / MUSIC_LAB_METHODS_v0.4.md。本体Schema/Version変更なし。復元点 restore/arranger-v0.3-before-music-labs。

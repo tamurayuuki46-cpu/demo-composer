@@ -318,3 +318,6 @@ Schema変更時は必ず:
 
 ## Companion Arrangement Lab (v0.3)
 Demo ComposerのSchemaを変更せず、独立Arrangement Plan Schema 3をarranger側で管理する。Counterの採用Note/休み、Harmony pattern、リハモと理由はPlanのSection内へ保存。正本: arranger/docs/PRODUCT_SPEC.md。Demo ComposerのIndexedDBには書き戻さない。
+
+## Arrangement Lab Plan Schema 4
+独立Plan SectionにpartOverrides/musicLab/tonalTarget/voiceRoles、Chordに実voicing、Counter Noteにvoice=A/Bを追加。Demo Composer Projectには書込まない。旧Plan1〜3と旧localStorageキーを保持して復元。正本 arranger/docs/PRODUCT_SPEC.md。

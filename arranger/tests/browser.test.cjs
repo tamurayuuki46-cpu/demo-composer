@@ -42,7 +42,7 @@ const fixture = {
    await page.locator('[data-reharm=bold]').click();
    assert.equal(await page.locator('.curve-row').count(),2);
    await page.click('#adopt-btn');
-   const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.3')));
+   const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.4')));
    assert.equal(before.arrangement.sections[0].reharmonization.id,'bold');
    await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===2);
    assert.equal(await page.locator('[data-action=density]').first().inputValue(),'full');
@@ -83,27 +83,59 @@ const fixture = {
    await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='running');await page.locator('#stop-btn').click();
    await page.locator('[data-action=chorus-apply]').nth(4).click();
    await page.locator('#adopt-btn').click();
-   const all=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.3')));
-   assert.equal(all.arrangerSchemaVersion,3);
+   const all=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.4')));
+   assert.equal(all.arrangerSchemaVersion,4);
    assert.equal(all.arrangement.sections[0].counterArrangement.id,'color');
    assert.equal(all.arrangement.sections[0].restPolicy,'melody-gaps');
    assert.equal(all.arrangement.sections[0].decisionNote,'裏メロは隙間で受け渡す');
    assert.equal(all.arrangement.sections[1].harmonyPattern,'offbeat');
    assert.deepEqual(all.sourceSnapshot,fixture);
    await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===2);
-   const reloaded=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.3')));
+   const reloaded=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.4')));
    assert.deepEqual(reloaded.arrangement,all.arrangement);
+   const {fixture:labFixture}=await import('./music-lab-fixture.mjs');
+   await page.locator('#project-file').setInputFiles({name:'labs.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(labFixture()))});
+   await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===6);
+   await page.locator('.candidate-tab').nth(2).click();
+   await page.locator('.section-workshop').nth(1).locator('summary').first().click();
+   const setCategory=async category=>page.locator('[data-action=music-category]').nth(1).selectOption(category);
+   const setMethod=async method=>page.locator('[data-action=music-method]').nth(1).selectOption(method);
+   const generate=async()=>{await page.locator('[data-action=music-generate]').nth(1).click();assert.ok(await page.locator('.music-choice').count())};
+   const expectedCounts={harmony:14,counter:16,development:15,linked:5};
+   for(const [category,count] of Object.entries(expectedCounts)) {
+    await setCategory(category);
+    const ids=await page.locator('[data-action=music-method]').nth(1).locator('option').evaluateAll(options=>options.map(o=>o.value));
+    assert.equal(ids.length,count);
+    for(const id of (width===360?ids:[ids[0]])){await setMethod(id);await generate();assert.ok(await page.locator('[data-action=music-apply]').count(),id+' should have applicable result');}
+   }
+   await setCategory('harmony');await setMethod('h-bridge');await generate();
+   await page.locator('[data-action=music-preview]').first().click();await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='running');await page.locator('#stop-btn').click();
+   await page.locator('[data-action=music-apply]').first().click();
+   await setCategory('counter');await setMethod('c-voices');await generate();await page.locator('[data-action=music-apply]').first().click();
+   await page.locator('[data-music-part]').first().selectOption('counter-a');
+   downloadP=page.waitForEvent('download');await page.locator('[data-action=music-midi]').first().click();download=await downloadP;
+   assert.equal((await fs.readFile(await download.path())).subarray(0,4).toString(),'MThd');
+   await setCategory('development');await setMethod('d-transition');await generate();await page.locator('[data-action=music-apply]').first().click();
+   await setCategory('linked');await setMethod('x-float');await generate();await page.locator('[data-action=music-apply]').first().click();
+   await page.locator('#adopt-btn').click();
+   const labPlan=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.4')));
+   assert.equal(labPlan.arrangerSchemaVersion,4);assert.equal(labPlan.arrangement.sections[1].musicLab.methodId,'x-float');
+   assert.ok(labPlan.arrangement.sections[1].partOverrides.counter.length);assert.ok(labPlan.arrangement.sections[1].partOverrides.drums.length);
+   await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===6);
+   assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.4')).arrangement),labPlan.arrangement);
+   await page.locator('.section-workshop').nth(1).locator('summary').first().click();
+   await setCategory('harmony');await setMethod('h-voicing');await generate();
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'horizontal overflow');
    await page.screenshot({path:`test-results/arranger-${width}.png`,fullPage:true});
    await page.evaluate(()=>navigator.serviceWorker.ready);await page.reload();
    await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
    assert.ok((await page.evaluate(()=>caches.keys())).includes('demo-composer-sentinel'));
-   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===2);
-   await page.selectOption('#preview-section','1920');await page.click('#preview-btn');
+   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===6);
+   await page.selectOption('#preview-section','7680');await page.click('#preview-btn');
    await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='running');
-   await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='closed',{},{timeout:12000});
+   await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='closed',{},{timeout:20000});
    assert.deepEqual(errors,[],`console errors ${width}`);
-   await context.close();console.log(`PASS ${width}px: seven features + ABC/styles/play-stop/end/mix/MIDI/JSON/reload/offline/cache`);
+   await context.close();console.log(`PASS ${width}px: 50 music methods + seven legacy features, audio/MIDI/JSON/offline`);
   }
  } finally {await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
