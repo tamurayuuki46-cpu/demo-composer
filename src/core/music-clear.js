@@ -1,4 +1,4 @@
-const CLEARABLE_PARTS = new Set(["chord", "melody", "bass", "drums"]);
+const CLEARABLE_PARTS = new Set(["chord", "melody", "counter", "bass", "drums"]);
 
 function clone(value) {
   return typeof structuredClone === "function"
