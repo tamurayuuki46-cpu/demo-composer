@@ -74,3 +74,5 @@ schemaVersion 3。PPQ 480、4/4固定。`metadata / basic / structure.sections /
 2026-10-12
 
 大規模変更前の復元点: `restore/v0.3-before-decision-support` / Commit `6e6933329020d06d75fccadb8637bcc5b3392969`。mainへのstable統合は行っていない。
+
+公開検証で旧JSキャッシュと新HTMLが混在する問題を発見。build-static.mjsで全JS/CSS入口と相対Module依存を同じBuild IDのURLへ固定する。test:build-cacheで94 Module / 221依存を検証。

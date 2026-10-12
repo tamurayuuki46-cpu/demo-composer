@@ -53,6 +53,7 @@
     "test:recipes": "node scripts/recipe-smoke-test.mjs",
     "test:why-ui": "node scripts/why-ui-smoke-test.mjs",
     "test:melody-ab": "node scripts/melody-comparison-smoke-test.mjs",
-    "test:decision-support": "node scripts/decision-support-smoke-test.mjs"
+    "test:decision-support": "node scripts/decision-support-smoke-test.mjs",
+    "test:build-cache": "node scripts/build-cache-smoke-test.mjs"
   }
 }

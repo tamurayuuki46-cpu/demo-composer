@@ -1,4 +1,4 @@
-import { copyFile, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { copyFile, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 
 const outputDir = 'dist';
@@ -20,4 +20,23 @@ const builtAt = new Date().toISOString();
 await writeFile(`${outputDir}/build.json`, JSON.stringify({ id: commit, version, builtAt }) + '\n');
 await writeFile(`${outputDir}/src/core/build-info.js`, `export const BUILD_ID = ${JSON.stringify(commit)};\nexport const BUILD_TIME = ${JSON.stringify(builtAt)};\n`);
 
+// HTMLだけが新しく、古いModuleが残る混在を避ける。全依存を同じBuild IDで固定。
+const stamp = (path) => `${path}${path.includes('?') ? '&' : '?'}build=${encodeURIComponent(commit)}`;
+const htmlPath = `${outputDir}/index.html`;
+const html = await readFile(htmlPath, 'utf8');
+await writeFile(htmlPath, html.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
+  (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
+async function stampModules(directory) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = `${directory}/${entry.name}`;
+    if (entry.isDirectory()) await stampModules(path);
+    else if (entry.name.endsWith('.js')) {
+      const source = await readFile(path, 'utf8');
+      const stamped = source.replace(/(\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)(['"])(\.{1,2}\/[^'"]+\.js)\2/g,
+        (_match, prefix, quote, dependency) => `${prefix}${quote}${stamp(dependency)}${quote}`);
+      await writeFile(path, stamped);
+    }
+  }
+}
+await stampModules(`${outputDir}/src`);
 console.log('Built Demo Composer static site into dist/');

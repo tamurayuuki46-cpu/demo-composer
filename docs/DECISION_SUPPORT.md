@@ -55,3 +55,5 @@ AI相談とCubase用メモへ設計意図・5軸・最近の理由を含める�
 
 `test:decision-support`で旧Schemaの非破壊移行、各候補の変更範囲、採用+理由のAtomic Undo、古い候補拒否、Bass保護、JSON/複製互換、分析の非破壊、ボイシングMIDIを確認する。
 既存全テストとbuildも確認する。ブラウザでの操作検証とAndroid/Cubasis/Cubase実機の確認は分けて記録する。
+
+ブラウザ公開検証で見つけた旧JSキャッシュの残留は、全入口・依存ModuleのBuild ID付きURLで修正。build-cache-smoke-testで依存すべての同一バージョン固定を確認。

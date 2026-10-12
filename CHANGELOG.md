@@ -12,6 +12,7 @@
 - 設計意図と採用理由をAI相談/Cubaseメモへ反映。MIDI Importでは言葉の設計意図を保持。
 
 ### 修正
+- 配信HTMLだけが新しく、JavaScript/CSSが旧キャッシュに残る問題を修正。全入口・全Module依存をBuild ID付きURLで配信。
 - 拡張和音のGuide Tone判定をpitch classへ正規化。
 
 ### 復元
