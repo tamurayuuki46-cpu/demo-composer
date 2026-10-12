@@ -115,7 +115,25 @@ Guide Toneはコードトーンのうち3rd / 7th系として扱い、Chord Tone
 
 Hubから `＋ 新規Project` を選ぶと、現在のProjectを端末へ保存した上で、別IDの空Projectへ切り替える。旧Projectは削除しない。目的は、起動時に最後のActive Projectが復元される保存仕様を維持しつつ、ユーザーが明示的に別の曲を開始できるようにすること。
 
-切替時はDemo Playerを停止し、旧Projectの保存完了を確認してからreloadする。reload境界では旧ページのvisibility AutoSaveと競合しないよう、次回bootで `main.js` より先に新ProjectをActiveとして保存する。Project一覧・過去Projectを選んで開くUIはこの初期実装には含めない。schemaVersionは2のまま。
+切替時はDemo Playerを停止し、旧Projectの保存完了を確認してからreloadする。reload境界では旧ページのvisibility AutoSaveと競合しないよう、次回bootで `main.js` より先に新ProjectをActiveとして保存する。schemaVersionは2のまま。
+
+## v0.2 Project Library
+
+Hubに `📁 Project一覧` を追加し、IndexedDBの `projects` storeに残っている曲を一覧から管理できるようにする。
+
+- 保存済みProjectを縦1列で表示する
+- Project名 / Key / Scale / BPM / Revisionを表示する
+- `開く`: 現在Projectを保存してから対象ProjectをActiveにし、reloadして開く
+- `複製`: 別ID・別タイトルのコピーを作る。元Projectは残す
+- `削除`: 確認後に端末から削除する。現在開いているProjectは誤削除防止のため削除不可
+
+Project切替は `＋ 新規Project` と同じく、reload直前のAutoSave競合を避けるためsessionStorageに切替要求を一時保持し、`main.js` 起動前にActive Project IDを確定する。
+
+この機能はProject Data Schemaを変更しない。既存のIndexedDB `projects` / `meta.activeProjectId` を利用し、DB versionとschemaVersion 2を維持する。詳細は `docs/PROJECT_LIBRARY.md`。
+
+## v0.2 Hub Part Clear
+
+Hubの `🧹 パートを消去` から、Chord / Melody / Bass / Drums / Counter Melody（裏メロ）を1パートずつ消去できる。選んだパート以外、Key / BPM / Scale / 構成 / 音色は保持し、1回のUndoで戻せる。Schema変更なし。詳細は `docs/HUB_PART_CLEAR.md`。
 
 ## v0.2 Early Sound Sketch Lite
 
