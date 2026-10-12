@@ -24,6 +24,9 @@ Chord Moduleは `project.chords[]` の責任Module。
   - 複数タグからMajor / Minorを絞り、最大3つのPreset候補を返す
   - `src/chord/chord-mood-ui.js` でChord Preset欄の前に「曲想から選ぶ」を表示
   - タグは最大3個。候補にDegree進行 / 合致タグ / 王道・少し個性的・挑戦的を表示
+  - Hub / 作曲シート由来の `metadata.mood[]` を `src/core/composition-intent.js` 経由で初期Tagへ自動反映
+  - Hubの日本語Label（`切ない` / `夜` / `やさしい` 等）とChord Tag IDの両方を受け取れる
+  - 同じHub Intentの間はChord側の手動Tag調整を維持し、Hub Intentが変わった時だけ再同期
   - `この進行を使う` は既存Preset適用処理へ渡すため、Bass保護など既存安全策を維持
   - 保存Schemaは変更せず、タグ選択 / 評価値はProject Dataへ保存しない
 - 追加済みコード削除
@@ -40,7 +43,7 @@ Preset追加はこの表へ度数文字列を足すだけ（重複はSmoke Test�
 
 曲想 / 感情タグはPreset本体へ重複保存せず、`chord-mood-tags.js` が派生Profileとして付与する。コード進行だけで感情が決まるとは扱わず、BPM / Melody / Rhythm / Voicing / Soundで印象が変わる前提とする。
 
-Preset選択状態と曲想タグ選択はProject Dataへ保存しない。Presetを適用すると通常の `project.chords[]` へ展開するため、Schema変更は不要。
+Preset選択状態とChord側の曲想タグ選択はProject Dataへ保存しない。Hub / 作曲シート側の曲想の正本は `metadata.mood[]` とし、ChordはComposition Intent経由で読み取るだけ。Presetを適用すると通常の `project.chords[]` へ展開するため、Schema変更は不要。
 
 Bass Noteがある場合は従来どおりChord変更を拒否する。Presetを適用したい場合はRhythmで `Clear Bass` を先に行う。
 
@@ -53,7 +56,7 @@ Bass Noteがある場合は従来どおりChord変更を拒否する。Presetを
 主なフィールド:
 
 - root: 0〜11
-- quality: major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / diminished / augmented
+- quality: major / minor / dominant7 / major7 / minor7 / sus2 / sus4 / dim / aug
 - degree
 - startTick
 - durationTick
@@ -62,8 +65,8 @@ Schema v2でQualityを拡張。旧Schema v1の major / minor / diminished はそ
 
 ## Later
 
-- Hub / 作曲シートで決めたMoodタグをChordの「曲想から選ぶ」初期選択へ渡す
 - 実制作テストからタグWeightを調整
+- 作曲シートからDemo ComposerへIntentをImportする入口を追加
 - 並べ替え
 - コード長変更
 - 借用和音を目的別に整理した候補
