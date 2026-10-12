@@ -4,6 +4,8 @@
 更新日: 2026-10-11
 
 ### 追加
+- 下部ナビに `裏メロ` タブを追加（7ボタン）。範囲（Section、または 開始小節 + 2 / 4 / 8 / 16小節）を選んで、6タイプの候補を `▶ 聴く` → `これにする`。範囲内の裏メロだけ置き換わり、↶で戻せる。`この範囲の裏メロを消す` もある。Arrangeの各Sectionの裏メロと同じ生成・同じ保存先（`tracks[role=counter]`）で、Schema変更なし（`src/arrange/counter-screen.js`）
+- 裏メロに2タイプを追加: `Arpeggio（分散和音型。ピアノ風に8分で上下、メロディの下で半音ぶつかりを避ける）` / `Riff（ギターリフ型。低音域のルート・5度中心、4小節目に駆け上がる）`。Arrangeの `🎶 裏メロ` にも6候補が出る。`npm run test:counter-melody` に追加
 - 音色（Sound Sketch）を増やした: Melody `Vocal（ボカロ風） / Vocal Soft / Vocal Bright / Pad Lead（パッド寄り） / Flute / Strings Lead / Bell`、Chord `Strings / Organ / Choir`、Bass `Sub Bass / Pluck Bass / Growl Bass`。声に近い音は、波形の重ね合わせ・ビブラート（少し遅れて揺れ始める）・母音の山（あ / お / い）で作る。Presetを選ぶと、下に一言の説明が出る。音量は既存Presetに近いレベルに合わせた（耳での最終調整は実機で）
 - Melodyの初期音色を `Vocal（ボカロ風）` に変更（Chordのパッドに近い、やわらかい立ち上がり）。保存済みの音色選択は変わらず、Presetはいつでも `Keys` などへ戻せる。Schema変更なし（Preset idの追加のみ）
 - メインメロディの音量を少し下げた（Demo Playerのパート音量 0.8倍 ≒ -2dB。ミュート / ソロの動作は従来どおり）。裏メロの音量は変えていない

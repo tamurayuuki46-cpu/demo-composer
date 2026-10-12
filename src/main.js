@@ -38,6 +38,7 @@ import { bindPartSwitch } from "./audio/part-switch-ui.js";
 import { bindEditHistory } from "./core/edit-history-ui.js";
 import { createDefaultProject, createProjectStore } from "./core/project-state.js";
 import { createArrangeController } from "./arrange/arrange-screen.js";
+import { createCounterController } from "./arrange/counter-screen.js";
 import { getSections, sectionRanges, sliceProject } from "./core/section-ops.js";
 import { withCounterNotes } from "./core/counter-melody.js";
 import { createMelodyController } from "./melody/melody-screen.js";
@@ -53,6 +54,7 @@ let projectStore;
 let melodyController;
 let rhythmController;
 let arrangeController;
+let counterController;
 let soundController;
 let demoPlayer;
 let autosave;
@@ -394,6 +396,7 @@ const screens = {
   melody: () => melodyController.render(),
   rhythm: () => rhythmController.render(),
   arrange: () => arrangeController.render(),
+  counter: () => counterController.render(),
   sound: () => soundController.render()
 };
 
@@ -1052,6 +1055,22 @@ async function previewPhrase(startBar, endBar, notes) {
   }
 }
 
+// 裏メロの候補を、指定した範囲だけ仮に当てて聴く（Projectは変更しない）
+async function previewCounterRange(startBar, endBar, notes) {
+  try {
+    const project = projectStore.getSnapshot();
+    const barTicks = project.basic.ppq * 4;
+    const preview = withCounterNotes(project, startBar, endBar, notes);
+    await demoPlayer.play(
+      sliceProject(preview, startBar * barTicks, endBar * barTicks),
+      { lengthTick: (endBar - startBar) * barTicks }
+    );
+  } catch (error) {
+    demoPlayer.stop();
+    if (playerTime) playerTime.textContent = error instanceof Error ? error.message : "再生できません。";
+  }
+}
+
 async function playBuilt(index) {
   const built = buildPlayback(index);
   if (!built) throw new Error("Sectionが見つかりません。");
@@ -1102,6 +1121,7 @@ function render(name) {
   if (name === "melody") melodyController.bind();
   if (name === "rhythm") rhythmController.bind();
   if (name === "arrange") arrangeController.bind();
+  if (name === "counter") counterController.bind();
   if (name === "sound") soundController.bind();
 }
 
@@ -1147,6 +1167,11 @@ async function boot() {
     rerender: render,
     onPlaySection: (index) => playSection(index),
     onPreviewCounter: (index, notes) => previewCounter(index, notes)
+  });
+  counterController = createCounterController({
+    projectStore,
+    rerender: render,
+    onPreview: (startBar, endBar, notes) => previewCounterRange(startBar, endBar, notes)
   });
   autosave = createAutosave({
     projectStore,

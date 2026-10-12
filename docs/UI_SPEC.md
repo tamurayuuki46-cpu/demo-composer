@@ -31,11 +31,12 @@ Bottom Navigation:
 - Hub
 - Chord
 - Melody
+- 裏メロ
 - Rhythm
 - Arrange
 - Sound
 
-6 Moduleは1行を維持し、横スクロールを使わない。短いLabelと小さめのGapを使うが、Button自体の縦Tap領域は維持する。
+7つのボタンは1行を維持し、横スクロールを使わない。短いLabelと小さめのGapを使うが、Button自体の縦Tap領域は維持する。
 
 ## Demo Player
 
@@ -83,7 +84,7 @@ Playerの `パート` ボタンで、Player下部に聴き分けパネルを開�
   - 押したSectionだけが変わる。変更が無いときは理由を表示する。`↶` で1回で戻せる
   - Backing Patternは曲全体で1つの設定のため、Section単位の候補には含めない
 - 各Sectionカードに `盛り上がり` の `Low / Mid / High` と、最後以外には `次へのつなぎ` の `Keep / Fill / Stop / Build / Drop`（選んだものの一言説明つき）。押すとSectionの設定だけが変わり、音符・コードは動かない。`↶` で戻せる
-- 下部ナビは6ボタン（Hub / Chord / Melody / Rhythm / Arrange / Sound）
+- 下部ナビは7ボタン（Hub / Chord / Melody / 裏メロ / Rhythm / Arrange / Sound）
 
 ## Hub
 
@@ -189,6 +190,11 @@ v0.2の基本入力:
 - 削除後はstartTickを1小節単位で詰め直す
 
 ダイアトニック候補は初心者向けの基本導線として残し、基準音からの9種類は「少し色を変えたい」「7th / susを試したい」ときの追加導線にする。候補を大量に一画面へ並べず、基準音を1つ選んでからQualityを選ぶことでスマホ画面を複雑化しない。
+
+### 裏メロタブ
+- 下部ナビ `裏メロ`: 範囲（Sectionから選ぶ、または 開始小節 + 長さ 2 / 4 / 8 / 16小節）を選び、6タイプ（Sparse / Active / Hook / Answer / Arpeggio / Riff）の候補を `▶ 聴く`（その範囲だけ仮に再生）→ `これにする`（範囲内の裏メロだけ置き換え、↶で戻せる）。`この範囲の裏メロを消す` もある
+- 生成はArrangeの各Sectionの `🎶 裏メロ` と同じ（`counterCandidates`）。保存先も同じ `tracks[role=counter]`。Piano Rollでの手入力は未対応（今後の候補）
+- 360px幅で7ボタンと本文が横スクロールしない
 
 ### 4小節メロディをつくる
 - `🎤 4小節メロディをつくる`（開閉）: 開始小節・長さ（2 / 4 / 8）のセレクト、輪郭ボタン（おまかせ / 上行 / 下降 / 平坦）、3候補（名前・説明・音の並びの●・`▶ 聴く` / `これにする`）、`↻ 候補を更新`

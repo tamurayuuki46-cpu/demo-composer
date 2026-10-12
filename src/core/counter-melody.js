@@ -32,6 +32,16 @@ export const COUNTER_STYLES = Object.freeze([
     id: "answer",
     label: "Answer（応答型）",
     description: "主旋律の語尾や小節後半に、3度・7度などコードの色が出る音で少し長めの返しを置く。※イメージ：Mr.Children系（特定曲のコピーではありません）"
+  },
+  {
+    id: "arpeggio",
+    label: "Arpeggio（分散和音型）",
+    description: "コードの構成音を8分で上下に流す、ピアノ風の細かい動き。主旋律が鳴っている間は音数を減らし、止まると走り出し、小節の終わりで次のコードへつなぐ。※イメージ：ピアノが走るYOASOBI / Ayase系（特定曲のコピーではありません）"
+  },
+  {
+    id: "riff",
+    label: "Riff（ギターリフ型）",
+    description: "低めの音域で、ルート・5度中心の短いリフを繰り返す。コードが変わっても形を保ち、4小節目に駆け上がる。※イメージ：ギターバンド系 / Oasis系（特定曲のコピーではありません）"
   }
 ]);
 
@@ -369,7 +379,107 @@ function buildAnswer(project, melody, startBar, endBar) {
   return notes;
 }
 
-// Sectionの範囲（startBar〜endBar）に当てる候補を4つ作る。土台（コードかメロディ）が無いときは例外
+// Arpeggio: コードの構成音を、メインメロディの下の音域で8分の上下に流す（ピアノ風）。
+// メロディが鳴っているマスは1つおきに休み、半音でぶつかる音は休む。小節の最後は次のコードの構成音へつなぐ。
+function buildArpeggio(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const target = averageMelodyPitch(melody) - 9;
+  const notes = [];
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const occupied = occupiedSteps(inBar, barStart, barTicks);
+    const chordPcs = chordPitchClasses(project, bar);
+
+    let tones = [];
+    for (let widen = 0; widen <= 10 && tones.length < 3; widen += 5) {
+      tones = [];
+      for (let pitch = Math.max(LOW, target - 12 - widen); pitch <= Math.min(HIGH, target + 3 + widen); pitch += 1) {
+        if (chordPcs.includes(pitch % 12)) tones.push(pitch);
+      }
+    }
+    if (tones.length < 2) continue;
+
+    // 上下に往復する並び
+    const order = [];
+    let index = 0;
+    let direction = 1;
+    for (let step = 0; step < 8; step += 1) {
+      order.push(index);
+      if (index + direction >= tones.length || index + direction < 0) direction *= -1;
+      index += direction;
+    }
+
+    for (let step = 0; step < 8; step += 1) {
+      const startTick = barStart + step * STEP;
+      // メロディがこのマスから始まる裏拍は休み、リズムを重ねすぎない
+      if (step % 2 === 1 && inBar.some((note) => note.startTick === startTick)) continue;
+      let pitch = tones[order[step]];
+
+      if (step === 7 && project.chords[bar + 1] && bar + 1 < endBar) {
+        const next = pickPitch({ pcs: chordPitchClasses(project, bar + 1), target: pitch, overlapping: [], previous: null });
+        if (next !== null) pitch = next;
+      }
+
+      const clash = overlappingNotes(inBar, startTick, startTick + STEP).some((note) => {
+        const distance = Math.abs(pitch - note.pitch) % 12;
+        return distance === 1 || distance === 11 || pitch > note.pitch - 3;
+      });
+      if (clash) continue;
+      const under = occupied[step] ? 8 : 0; // メロディが鳴っている間は、少し小さく
+      notes.push(makeNote(pitch, startTick, Math.round(STEP * 0.92), (step === 0 ? 60 : (step % 2 === 0 ? 52 : 46)) - under));
+    }
+  }
+  return notes;
+}
+
+// Riff: 低めの音域で、ルート・5度中心の短いリフ。コードが変わっても同じ形のまま音だけ移し、
+// 小節の最後は次のルートへの“つなぎ”、フレーズ4小節目は1音ずつ駆け上がる。
+function buildRiff(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const notes = [];
+
+  const rootFor = (bar) => {
+    const chord = project.chords[bar];
+    const rootPc = chord ? chord.root % 12 : keyPitchClass(project);
+    for (let pitch = 43; pitch <= 54; pitch += 1) if (pitch % 12 === rootPc) return { pitch, chord };
+    return { pitch: 48, chord };
+  };
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const { pitch: root, chord } = rootFor(bar);
+    const intervals = chord ? chordIntervals(chord.quality).map((value) => value % 12) : [0, 4, 7];
+    const fifth = root + (intervals.includes(7) ? 7 : intervals.includes(6) ? 6 : intervals.includes(8) ? 8 : 7);
+    const place = (step, pitch, velocity) => notes.push(makeNote(pitch, barStart + step * STEP, Math.round(STEP * 0.92), velocity));
+
+    const inPhrase = (bar - startBar) % 4;
+    if (inPhrase === 3) {
+      // 駆け上がり: ルートから1音ずつ、Key内の音で8分8つ
+      let pitch = root;
+      for (let step = 0; step < 8; step += 1) {
+        place(step, Math.min(pitch, 66), step === 0 || step === 4 ? 76 : 64);
+        pitch = scaleStepUp(pitch, 1, scale);
+      }
+      continue;
+    }
+
+    const next = bar + 1 < endBar ? rootFor(bar + 1).pitch : root;
+    place(0, root, 78);
+    place(1, root, 62);
+    place(2, fifth, 68);
+    place(3, scaleStepUp(fifth, 1, scale), 62);
+    place(4, root, 74);
+    place(5, root, 62);
+    place(6, fifth, 66);
+    place(7, next >= root ? scaleStepDown(next, 1, scale) : scaleStepUp(next, 1, scale), 62);
+  }
+  return notes;
+}
+
+// Sectionの範囲（startBar〜endBar）に当てる候補を作る。土台（コードかメロディ）が無いときは例外
 export function counterCandidates(project, { startBar, endBar }) {
   const barTicks = barTicksOf(project);
   const melody = (project.tracks.find((track) => track.role === "melody")?.notes ?? [])
@@ -382,7 +492,7 @@ export function counterCandidates(project, { startBar, endBar }) {
     throw new Error("このSectionにはコードもメロディもありません。先にどちらかを入れると、裏メロの候補を作れます。");
   }
 
-  const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer };
+  const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer, arpeggio: buildArpeggio, riff: buildRiff };
   return COUNTER_STYLES.map((style) => {
     const notes = builders[style.id](project, melody, startBar, endBar)
       .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);

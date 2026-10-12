@@ -8,7 +8,7 @@ v0.2-dev
 
 現在実装済み:
 - Android Chrome向けDemo Composer
-- Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite の6 Module
+- Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite の6 Module（＋ 裏メロタブ）
 - schemaVersion 2 / PPQ 480 / 4/4固定の共通Project State
 - IndexedDB保存 / 起動時Restore / 1.5秒AutoSave / hidden時即時Save / Save Now
 - Hub `＋ 新規Project`: 現在Projectを保存してから別IDの空ProjectをActiveにする。旧Projectは端末内に保持。`src/hub/app-entry.js` / `new-project.js` / `new-project-ui.js`
@@ -93,6 +93,7 @@ v0.2-dev
 - v0.2は機能が増えてきたため、追加機能より実制作での使いやすさ確認を優先する
 
 次に実装:
+000. Android実機で、`裏メロ` タブ（7ボタンの収まり）と新2タイプ（Arpeggio / Riff）の聞こえ方を確認。裏メロのPiano Rollでの手入力（Melody画面のPiano Rollを役割ごとに使い回す）は未実装
 00. Android実機で、Melodyの新しい初期音色（Vocal）と音量（-2dB）が合うか聴く。気になる音色は Sound画面で `Vocal Soft / Pad Lead` などに変えて比べる。音量が合わなければ `src/audio/demo-player.js` の `PART_LEVEL` を調整
 0. 4小節メロディ生成（Chord画面）をAndroid実機で確認し、拡張（B 味付け: 2度・6度 / YOASOBI風、C 裏メロの分散和音・ギターリフ、D スケール色違い）を `docs/MELODY_PHRASE_PLAN.md` の順で進める
 1. Android公開版で Melody → 安定 / キャッチー / 浮遊感 の3候補と `↻ 候補を更新` が表示されることを確認
