@@ -27,6 +27,13 @@ Audio Moduleは作曲確認用のDemo Playerを担当する。
 
 音作り / Mixing / Mastering / Plugin HostingはDemo Composerの責務にしない。
 
+### Android のクリックノイズ対策
+
+- AudioContext は `latencyHint: "playback"` で余裕のある出力バッファを使う。
+- Tone系は従来どおり Attack / Release のGain envelopeで波形の不連続を避ける。
+- Kick / Snare / Closed HHも、開始時に約3msの短いGain rampを入れる。特にNoise系を任意のサンプル値から最大Gainで突然開始しないことで、スマートフォンの小型スピーカーで「プツッ」と聞こえるクリック成分を抑える。
+- これはクリック除去用の極短処理で、Project/MIDI、BPM、ノート位置、音量設定には影響しない。
+
 ## Timing
 
 ProjectのBPM / PPQを使ってtickを秒へ変換する。
