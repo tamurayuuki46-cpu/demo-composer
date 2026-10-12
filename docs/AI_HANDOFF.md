@@ -76,3 +76,6 @@ schemaVersion 3。PPQ 480、4/4固定。`metadata / basic / structure.sections /
 大規模変更前の復元点: `restore/v0.3-before-decision-support` / Commit `6e6933329020d06d75fccadb8637bcc5b3392969`。mainへのstable統合は行っていない。
 
 公開検証で旧JSキャッシュと新HTMLが混在する問題を発見。build-static.mjsで全JS/CSS入口と相対Module依存を同じBuild IDのURLへ固定する。test:build-cacheで94 Module / 221依存を検証。
+
+## Arrangement Lab v0.2.1-dev (2026-10-13)
+独立PWA arranger/を修正検証。Demo Composer本体Version/Schemaは変更なし。正本: arranger/docs/PRODUCT_SPEC.md / VERIFICATION_v0.2.1.md。復元点: restore/arranger-v0.1.1-before-v0.2, restore/arranger-v0.2-before-work-review。

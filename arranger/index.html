@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
   <title>Arrangement Lab</title>
+  <link rel="icon" href="./icons/icon-192.png">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -13,7 +14,7 @@
     <div>
       <p class="eyebrow">Demo Composer companion</p>
       <h1>Arrangement Lab</h1>
-      <p class="subtitle">同じ曲を3つの編曲方向で比べて、採用する。</p>
+      <p class="subtitle">複数案を鳴らして比べ、Section単位で混ぜて決める。</p>
     </div>
     <span id="version" class="version"></span>
   </header>
@@ -23,25 +24,52 @@
       <div class="panel-title"><span class="step">1</span><div><h2>曲を読み込む</h2><p>Demo Composerのproject.jsonを使用します。元データは変更しません。</p></div></div>
       <label id="drop-zone" class="drop-zone">
         <input id="project-file" type="file" accept="application/json,.json,.txt">
-        <strong>project.jsonを選ぶ</strong>
-        <span>またはここへドロップ</span>
+        <strong>project.json / 編曲プランを選ぶ</strong><span>またはここへドロップ</span>
       </label>
       <div id="source-summary" class="source-summary"></div>
+      <div id="collision-summary" class="analysis-box"></div>
     </section>
 
     <section class="panel">
-      <div class="panel-title"><span class="step">2</span><div><h2>編曲の方向</h2><p>まず大枠だけ選びます。細かい音作りやMixはCubasis / Cubase側です。</p></div></div>
+      <div class="panel-title"><span class="step">2</span><div><h2>編曲の方向</h2><p>StyleからA/B/Cを生成し、試聴して比較します。</p></div></div>
       <div class="controls-row">
         <label class="field"><span>Style</span><select id="style-select"></select></label>
-        <button id="generate-btn" class="secondary">3案を作り直す</button>
+        <button id="generate-btn" class="secondary">A/B/Cを作り直す</button>
       </div>
+      <label class="field"><span>試聴開始Section</span><select id="preview-section"><option value="0">先頭から</option></select></label>
+      <div class="preview-row">
+        <button id="preview-btn" class="primary" disabled>▶ 選択案を簡易試聴</button>
+        <button id="stop-btn" class="secondary" disabled>■ 停止</button>
+      </div>
+      <p class="hint">選択Sectionから最大16秒。色付けは編曲メモ（試聴・MIDI対象外）。簡易試聴はproject.jsonのコード/ノートをWeb Audioで鳴らす比較用スケッチです。</p>
     </section>
 
     <section class="panel">
-      <div class="panel-title"><span class="step">3</span><div><h2>3案を比較</h2><p>A=余白、B=標準、C=展開強め。Sectionごとの役割を見比べます。</p></div></div>
+      <div class="panel-title"><span class="step">3</span><div><h2>案を比較・Mix</h2><p>A/B/Cを選び、2案を混ぜたMix案も作れます。</p></div></div>
       <div id="candidate-tabs" class="candidate-tabs"></div>
+      <div class="mix-row">
+        <label class="field"><span>Mix元1</span><select id="mix-a"></select></label>
+        <label class="field"><span>Mix元2</span><select id="mix-b"></select></label>
+        <button id="mix-btn" class="secondary" disabled>2案をMix</button>
+      </div>
       <div id="candidate-meta" class="candidate-meta"></div>
+      <div id="curve" class="curve"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><span class="step">4</span><div><h2>Sectionごとに調整</h2><p>密度・楽器ON/OFF・リハモをSection単位で決めます。</p></div></div>
       <div id="sections" class="sections"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><span class="step">5</span><div><h2>MIDI書き出し</h2><p>現在選択している編曲案のON/OFFとリハモを反映します。</p></div></div>
+      <div id="midi-buttons" class="midi-grid">
+        <button data-part="melody" class="secondary">Melody.mid</button>
+        <button data-part="bass" class="secondary">Bass.mid</button>
+        <button data-part="drums" class="secondary">Drums.mid</button>
+        <button data-part="counter" class="secondary">Counter.mid</button>
+        <button data-part="harmony" class="secondary">Harmony.mid</button>
+      </div>
       <div class="sticky-actions">
         <button id="adopt-btn" class="primary">この案を採用</button>
         <button id="export-btn" class="secondary" disabled>編曲プランJSONを書き出す</button>
@@ -55,7 +83,7 @@
     </section>
   </main>
 
-  <div id="message" class="toast" hidden></div>
+  <div id="message" role="status" aria-live="polite" class="toast" hidden></div>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>

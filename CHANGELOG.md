@@ -414,3 +414,5 @@
 - PWA Service Worker
 - Android実機テストの残り項目
 - Cubasis / CubaseでのMIDI Import実機確認
+## Companion Arrangement Lab v0.2.1-dev — 2026-10-13
+試聴/MIDIの一致、ch10、Section境界、リハモ計算、プラン再開、PWA scope/cache保護を修正。詳細 arranger/CHANGELOG.md。本体v0.3-dev/Schema 3は変更なし。
