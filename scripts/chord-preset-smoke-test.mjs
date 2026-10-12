@@ -4,9 +4,11 @@ import {
   CHORD_PRESETS,
   CHORD_PRESET_CATEGORIES,
   chordPresetsByCategory,
+  chordPresetOptionLabel,
   chordPresetPreview,
   getChordPreset
 } from "../src/chord/chord-presets.js";
+import { CHORD_SONG_REFERENCES } from "../src/chord/chord-song-references.js";
 
 const barTicks = 1920;
 
@@ -35,8 +37,18 @@ const grouped = chordPresetsByCategory();
 assert.equal(grouped.length, CHORD_PRESET_CATEGORIES.length);
 assert.equal(grouped.reduce((sum, category) => sum + category.presets.length, 0), 100, "every preset belongs to a category");
 assert.ok(grouped.every((category) => category.presets.length > 0), "no empty category");
-assert.equal(getChordPreset("pop-1564").label, "Pop 1564");
+assert.equal(getChordPreset("pop-1564").label, "Pop 1564", "stable internal label must stay compatible");
 assert.equal(getChordPreset("missing-id").id, CHORD_PRESETS[0].id, "unknown preset should fall back safely");
+
+assert.equal(Object.keys(CHORD_SONG_REFERENCES).length, 7, "only curated verified examples are listed");
+assert.equal(chordPresetOptionLabel(getChordPreset("pop-1564")), "Pop 1564｜チェリー / スピッツ");
+assert.equal(chordPresetOptionLabel(getChordPreset("canon")), "15634145 カノン進行｜マリーゴールド / あいみょん");
+assert.equal(chordPresetOptionLabel(getChordPreset("bright-4156")), "4156 IV–I–V–vi｜Lemon / 米津玄師");
+assert.equal(chordPresetOptionLabel(getChordPreset("bright-1451")), "1451 I–IV–V–I", "unverified presets show the numeric progression without forcing a song example");
+assert.match(getChordPreset("jpop-4536").description, /夜に駆ける \/ YOASOBI/);
+assert.match(getChordPreset("pop-6415").description, /前前前世 \/ RADWIMPS/);
+assert.match(getChordPreset("sad-6451").description, /Get Wild \/ TM NETWORK/);
+assert.match(getChordPreset("sad-4561").description, /ピースサイン \/ 米津玄師/);
 
 const pop = buildChordPreset("pop-1564", {
   key: "C",
