@@ -422,3 +422,6 @@
 
 ## Companion Arrangement Lab v0.4-dev — 2026-10-13
 Harmony14/Counter16/Development15/連動5の実音楽変換を追加。実Voicing/Note Override、対象Section採用、MIDI A/B、Plan Schema4/旧互換。本体Version/Schemaは維持。詳細 arranger/CHANGELOG.md。
+
+## Companion Arrangement Lab v0.4.1-dev — 2026-10-13
+PWAの旧画面が残る更新問題を修正。arranger入口/依存のbuild固定、build別SW/cache、network-first/offline fallback、旧保存保持の更新テストを追加。本体Moduleのstampは維持。

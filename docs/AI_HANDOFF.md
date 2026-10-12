@@ -85,3 +85,6 @@ schemaVersion 3。PPQ 480、4/4固定。`metadata / basic / structure.sections /
 
 ## Arrangement Lab v0.4-dev
 50の音楽変換手法を実装。独立Plan Schema4/旧1〜3互換。正本 arranger/docs/AI_HANDOFF_v0.4-dev.md / PRODUCT_SPEC.md / MUSIC_LAB_METHODS_v0.4.md。本体Schema/Version変更なし。復元点 restore/arranger-v0.3-before-music-labs。
+
+## Arrangement Lab v0.4.1-dev cache correction
+50手法はv0.4としてPR #171統合済み。PWA更新修正はchatgpt/arranger-v0.4-cache-update。旧画面が残る場合の入口は /arranger/?v=0.4.1。Schema4/保存キーv0.4維持。正本 PRODUCT_SPEC / VERIFICATION_v0.4。復元点 restore/arranger-v0.4-before-cache-update。

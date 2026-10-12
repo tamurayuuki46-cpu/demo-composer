@@ -15,3 +15,6 @@ Story: source JSON → category/method variants → actual chords/voicing/part n
 - 50手法・157適用Variantの音楽/Note/MIDI契約確認。既存49テストと音声回帰成功。
 - 画面画像を目視確認。360pxのカテゴリ/手法/候補/対象Section/MIDI操作ははみ出しなし。
 - Screenshots: https://github.com/tamurayuuki46-cpu/demo-composer/actions/runs/38320356468/artifacts/11778376437
+
+## v0.4.1 update correction
+公開ブラウザでv0.3 cacheが残る状態を観測。build-stamped entry/dependencies、build別SW登録/cache、network-first navigationとoffline fallbackへ変更。追加pwa-update.test.cjsで旧v0.3 cache→新入口→通常URL→offline、旧保存/別PWA cache保持を確認する。

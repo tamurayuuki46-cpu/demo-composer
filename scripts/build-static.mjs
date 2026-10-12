@@ -40,4 +40,9 @@ async function stampModules(directory) {
   }
 }
 await stampModules(`${outputDir}/src`);
+const arrangerHtmlPath = `${outputDir}/arranger/index.html`;
+const arrangerHtml = await readFile(arrangerHtmlPath, 'utf8');
+await writeFile(arrangerHtmlPath, arrangerHtml.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
+  (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
+await stampModules(`${outputDir}/arranger/src`);
 console.log('Built Demo Composer static site into dist/');

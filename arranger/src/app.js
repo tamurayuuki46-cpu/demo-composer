@@ -578,5 +578,5 @@ renderMixControls();
 restoreSavedPlan();
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register(`./sw.js?build=${encodeURIComponent(new URL(import.meta.url).searchParams.get('build') || ARRANGER_VERSION)}`, { updateViaCache: 'none' }).catch(() => {}));
 }

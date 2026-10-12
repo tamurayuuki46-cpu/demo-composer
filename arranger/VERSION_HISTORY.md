@@ -6,7 +6,8 @@
 | v0.2-dev | restore/arranger-v0.2-before-work-review / 4313a42 | レビュー前保持 |
 | v0.2.1-dev | restore/arranger-v0.2.1-before-seven-features / b70a1f5 | 7機能追加・Schema3前保持 |
 | v0.3-dev | chatgpt/arranger-v0.3-theory / 857c01a / PR #170 | 最新開発版。3幅ブラウザ・回帰CI確認 |
-| v0.4-dev | chatgpt/arranger-v0.4-music-labs | 最新開発版。50音楽手法 / Schema4 |
+| v0.4-dev | restore/arranger-v0.4-before-cache-update / c29cfc0 / PR #171 | 50音楽手法完成地点を保持 |
+| v0.4.1-dev | chatgpt/arranger-v0.4-cache-update | 最新。PWA更新修正、Schema4維持 |
 
 最新はarranger/VERSION。本体mainは安定版専用。Arrangement Labの実機DAW確認済みstableは未認定。
 各過去版のbranch/archiveを削除・上書きしない。
