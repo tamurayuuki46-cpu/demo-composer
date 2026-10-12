@@ -1,0 +1,123 @@
+.chord-mood-panel {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid var(--border, #303030);
+  border-radius: 14px;
+  background: var(--panel, #181818);
+}
+
+.chord-mood-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.chord-mood-heading h3 {
+  margin: 0 0 4px;
+}
+
+.chord-mood-heading p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.78;
+}
+
+.chord-mood-clear {
+  min-height: 40px;
+  flex: 0 0 auto;
+}
+
+.chord-mood-group {
+  margin-top: 12px;
+}
+
+.chord-mood-group > strong {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 0.88rem;
+}
+
+.chord-mood-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chord-mood-chip {
+  min-height: 42px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+
+.chord-mood-chip.active {
+  border-color: currentColor;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.chord-mood-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.chord-mood-card {
+  padding: 12px;
+  border: 1px solid var(--border, #303030);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.chord-mood-card-head {
+  display: grid;
+  gap: 5px;
+}
+
+.chord-mood-card-head strong {
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.chord-mood-difficulty {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chord-mood-matches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.chord-mood-matches span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.chord-mood-card button {
+  width: 100%;
+  min-height: 46px;
+}
+
+.chord-mood-empty {
+  margin: 14px 0 4px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.9rem;
+}
+
+@media (min-width: 700px) {
+  .chord-mood-results {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
