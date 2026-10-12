@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { clearMusicPart, musicPartHasData } from "../src/core/music-clear.js";
 import { createProjectStore } from "../src/core/project-state.js";
+import { partClearHtml } from "../src/hub/part-clear-ui.js";
 
 const note = (pitch, startTick) => ({
   id: `n${pitch}-${startTick}`,
@@ -31,6 +32,9 @@ function seededStore() {
 function trackNotes(project, role) {
   return project.tracks.find((track) => track.role === role)?.notes ?? [];
 }
+
+const hubHtml = partClearHtml();
+assert.match(hubHtml, /パートを消去/);
 
 for (const part of ["chord", "melody", "bass", "drums"]) {
   const store = seededStore();
