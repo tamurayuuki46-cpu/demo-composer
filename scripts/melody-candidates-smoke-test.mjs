@@ -67,3 +67,19 @@ for (let variation = 0; variation < MELODY_CANDIDATE_VARIATION_COUNT; variation 
 }
 
 console.log("Melody candidates smoke test passed.");
+
+// 浮遊感: 余白（休み・長い音）を作らず、全別案で小節の終わりまで切れ目なくつながる。同じ音の連打もしない
+{
+  const { MELODY_CANDIDATE_VARIATION_COUNT } = await import("../src/melody/melody-candidates.js");
+  for (let variation = 0; variation < MELODY_CANDIDATE_VARIATION_COUNT; variation += 1) {
+    const floating = melodyCandidatesForBar(project, 0, { variation }).find((item) => item.id === "floating");
+    let cursor = 0;
+    floating.steps.forEach((item, index) => {
+      assert.equal(item.step, cursor, `variation ${variation}: 休みなくつながる`);
+      assert.ok(item.length <= 2, `variation ${variation}: 長い音にしない`);
+      if (index > 0) assert.notEqual(item.pitch, floating.steps[index - 1].pitch, `variation ${variation}: 同音連打なし`);
+      cursor += item.length;
+    });
+    assert.equal(cursor, 8, `variation ${variation}: 小節の終わりまで`);
+  }
+}

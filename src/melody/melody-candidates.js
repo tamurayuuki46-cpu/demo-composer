@@ -23,11 +23,12 @@ const CATCHY_VARIANTS = Object.freeze([
   { steps: [0, 1, 3, 5, 6, 7], order: [2, 1, 0, 3, 1, 2], lengths: [1, 2, 2, 1, 1, 1] }
 ]);
 
+// 浮遊感: 2度・6度の色を混ぜつつ、長い音や休みで余白を作らず、小節の終わりまで音がつながって動く（各音は次の音の頭までのびる）
 const FLOATING_VARIANTS = Object.freeze([
-  { steps: [0, 3, 5, 7], order: [0, 2, 1, 0], lengths: [3, 2, 2, 1] },
-  { steps: [0, 2, 5, 7], order: [1, 0, 2, 1], lengths: [2, 3, 2, 1] },
-  { steps: [0, 3, 4, 7], order: [0, 1, 3, 0], lengths: [3, 1, 3, 1] },
-  { steps: [0, 2, 6], order: [2, 0, 1], lengths: [2, 4, 2] }
+  { steps: [0, 2, 3, 4, 6, 7], order: [1, 0, 2, 1, 3, 0], lengths: [2, 1, 1, 2, 1, 1] },
+  { steps: [0, 1, 3, 4, 6, 7], order: [0, 1, 3, 2, 1, 0], lengths: [1, 2, 1, 2, 1, 1] },
+  { steps: [0, 2, 4, 5, 6, 7], order: [1, 2, 0, 1, 3, 0], lengths: [2, 2, 1, 1, 1, 1] },
+  { steps: [0, 1, 2, 4, 6, 7], order: [0, 2, 1, 3, 0, 1], lengths: [1, 1, 2, 2, 1, 1] }
 ]);
 
 function positiveMod(value, modulo) {
@@ -130,7 +131,7 @@ export function melodyCandidatesForBar(project, barIndex, { octave = 4, variatio
     {
       id: "floating",
       label: "浮遊感",
-      description: "2度・6度も混ぜ、長めの音で余白を作る",
+      description: "2度・6度も混ぜ、切れ目なくふわっと動く",
       steps: makeSteps(
         floatingVariant.steps,
         orderedPitchClasses(floatingPool, floatingVariant.order, second),

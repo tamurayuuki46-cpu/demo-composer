@@ -63,7 +63,7 @@ Melody Module内に、現在の1小節へ適用するルールベースのMelody
 
 - 安定: Chord Tone中心、4分音符主体
 - キャッチー: 8分音符中心、短い反復を含む
-- 浮遊感: 2度 / 6度などScale Toneも混ぜ、長めの音を含む
+- 浮遊感: 2度 / 6度などScale Toneも混ぜ、休みや長い音で余白を作らず、切れ目なく動く
 
 生成は外部AI / APIを使わず、現在の Key / Scale / Chord / 表示Octave / Bar位置から説明可能なルールで行う。Chord未設定BarではKey / Scaleを基準にする。
 
