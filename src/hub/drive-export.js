@@ -85,18 +85,21 @@ function setReadyState(section, ready) {
   const hint = section.querySelector("[data-drive-export-hint]");
   const shareSupported = typeof globalThis.navigator?.share === "function" && typeof globalThis.File === "function";
 
+  // disabledにするとAndroidで「押しても何も起きない」ように見えるため、
+  // 常に押せる状態にして、押した時に理由をHubメッセージへ表示する。
   buttons.forEach((button) => {
-    button.disabled = !ready || !shareSupported;
+    button.disabled = false;
+    button.dataset.driveReady = String(ready && shareSupported);
   });
 
   if (!shareSupported) {
-    hint.textContent = "このブラウザはファイル共有に対応していません。下の通常Exportで保存してください。";
+    hint.textContent = "このブラウザはファイル共有に対応していません。押すと案内を表示します。Chromeで開くか、下の通常Exportを使ってください。";
     return;
   }
 
   hint.textContent = ready
     ? "タップするとAndroidの共有画面が開きます。Google Driveを選んで保存してください。"
-    : "AutoSaveの完了を待っています。数秒待つか、上の「Save Now」を押してください。";
+    : "AutoSaveの完了を確認中です。ボタンは押せます。まだ保存前なら理由を表示します。";
 }
 
 function isCurrentSavedProject() {
@@ -148,7 +151,7 @@ async function handleShareResult(result, successMessage) {
   } else if (result.status === "cancelled") {
     setHubMessage("Driveへの保存をキャンセルしました。");
   } else {
-    setHubMessage("この端末ではファイル共有できません。通常Exportを使ってください。", true);
+    setHubMessage("このブラウザではファイル共有できません。Chromeで開くか、通常Exportを使ってください。", true);
   }
 }
 
@@ -159,14 +162,14 @@ function bindDriveSection(section) {
   section.querySelector("[data-drive-export=project]")?.addEventListener("click", async () => {
     const project = readyProject();
     if (!project) {
-      setHubMessage("AutoSaveの完了を待っています。少し待ってもう一度押してください。", true);
+      setHubMessage("Drive用の最新保存を確認中です。上の「Save Now」を押すか、1〜2秒待ってもう一度押してください。", true);
       void syncSavedProject(section);
       return;
     }
 
     const file = projectJsonShareFile(project);
     if (!file) {
-      setHubMessage("この端末ではproject.jsonを共有できません。", true);
+      setHubMessage("このブラウザではproject.jsonを共有できません。Chromeで開くか、通常Exportを使ってください。", true);
       return;
     }
 
@@ -181,7 +184,7 @@ function bindDriveSection(section) {
   section.querySelector("[data-drive-export=midi]")?.addEventListener("click", async () => {
     const project = readyProject();
     if (!project) {
-      setHubMessage("AutoSaveの完了を待っています。少し待ってもう一度押してください。", true);
+      setHubMessage("Drive用の最新保存を確認中です。上の「Save Now」を押すか、1〜2秒待ってもう一度押してください。", true);
       void syncSavedProject(section);
       return;
     }
