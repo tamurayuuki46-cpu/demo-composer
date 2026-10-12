@@ -508,3 +508,46 @@
   .melody-grid.degrees-on .melody-row { grid-template-columns: 62px repeat(8, minmax(0, 1fr)); }
   .piano-key .pk-deg { font-size: 10px; gap: 5px; }
 }
+
+/* 置いた音の上に、そのコードから見た度数を小さく表示 */
+.note-cell { position: relative; }
+.note-cell .note-degree {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  color: #0369a1;
+  pointer-events: none;
+}
+.melody-row.role-avoid .note-cell.active .note-degree { color: #fff; }
+
+/* Melody Analyzer: 度数ごとの使用率バー */
+.degree-bars {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 3px;
+  align-items: end;
+  height: 92px;
+  margin: 8px 0 4px;
+}
+.degree-bar {
+  display: grid;
+  grid-template-rows: 14px 1fr 16px;
+  justify-items: center;
+  height: 100%;
+  min-width: 0;
+}
+.degree-bar em { font-style: normal; font-size: 9px; opacity: .8; }
+.degree-bar i {
+  align-self: end;
+  width: 100%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: #7dd3fc;
+}
+.degree-bar.zero i { background: #3a3a44; height: 2px !important; }
+.degree-bar b { font-size: 10px; font-weight: 700; }

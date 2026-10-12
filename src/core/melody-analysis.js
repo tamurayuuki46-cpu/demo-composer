@@ -158,6 +158,11 @@ function degreeSummary(counts, total, labels) {
     .join("・");
 }
 
+// 12度数ぶんの使用率（0も含める）。UIの棒グラフ用
+function degreeBars(counts, total, labels) {
+  return counts.map((count, index) => ({ label: labels[index], count, rate: total ? count / total : 0 }));
+}
+
 function scaleLabel(scale) {
   if (scale === "major") return "Major";
   if (scale === "minor") return "Minor";
@@ -237,8 +242,8 @@ export function describeMelody(analysis) {
 
   return [
     { id: "range", label: "音域", value: `${pitchLabel(range.low)}〜${pitchLabel(range.high)}（${spanLabel(range.span)}）`, comment: rangeComment },
-    { id: "key-degree", label: "Keyからの度数", value: degreeSummary(keyDegree.counts, keyDegree.total, DEGREE_LABELS), comment: keyDegreeComment },
-    { id: "chord-degree", label: "Chordからの度数", value: degreeSummary(chordDegree.counts, chordDegree.counted, CHORD_DEGREE_LABELS), comment: chordDegreeComment },
+    { id: "key-degree", label: "Keyからの度数（使用率）", value: degreeSummary(keyDegree.counts, keyDegree.total, DEGREE_LABELS), bars: keyDegree.total ? degreeBars(keyDegree.counts, keyDegree.total, DEGREE_LABELS) : null, comment: keyDegreeComment },
+    { id: "chord-degree", label: "Chordからの度数（使用率）", value: degreeSummary(chordDegree.counts, chordDegree.counted, CHORD_DEGREE_LABELS), bars: chordDegree.counted ? degreeBars(chordDegree.counts, chordDegree.counted, CHORD_DEGREE_LABELS) : null, comment: chordDegreeComment },
     { id: "scale-fit", label: "Scale内率", value: scaleFit.rate === null ? "—" : percent(scaleFit.rate), comment: scaleComment },
     { id: "leap", label: "跳躍", value: leaps.motions === 0 ? "音が1つだけ" : `${leaps.count}回 / ${leaps.motions}（${percent(leaps.ratio)}）・最大${leaps.max}半音`, comment: leaps.motions === 0 ? "" : leapComment },
     { id: "tone", label: "コードトーン率", value: chordTone.rate === null ? "—" : percent(chordTone.rate), comment: toneComment },
