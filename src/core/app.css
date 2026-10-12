@@ -735,3 +735,34 @@ h1 {
   background: #26262d;
   line-height: 1.55;
 }
+
+/* 更新通知 */
+.topbar .version { cursor: pointer; text-align: right; }
+.topbar .version .build-id { display: block; font-size: .7rem; opacity: .6; }
+#update-banner {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 700;
+}
+#update-banner span { flex: 1; }
+#update-banner button { min-height: 44px; min-width: 44px; border-radius: 10px; }
+#update-banner #update-apply { background: #fff; color: #111; padding: 0 16px; }
+.update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h, 80px) + 90px);
+  transform: translateX(-50%);
+  z-index: 70;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
