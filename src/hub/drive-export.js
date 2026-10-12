@@ -87,8 +87,7 @@ export async function shareFiles(files, {
   try {
     const sharing = navigatorObject.share({
       files,
-      title,
-      text: "Google Driveを選んで保存してください。"
+      title
     });
     await sharing;
     return { status: "shared" };
@@ -195,8 +194,9 @@ function bindDriveSection(section) {
   section.dataset.driveBound = "true";
 
   section.querySelector("[data-drive-export=project]")?.addEventListener("click", async () => {
-    setHubMessage("Drive共有を準備しています…");
-    const project = await readyProject();
+    // 共有はユーザー操作の直後でないと NotAllowedError になるため、IndexedDBを待たず、直近に読めた保存済みProjectを同期的に使う
+    const project = cachedProject ?? await readyProject();
+    void readyProject();
     if (!project) {
       setHubMessage("保存済みのProjectが見つかりません。「Save Now」を押してから、もう一度押してください。", true);
       return;
@@ -217,8 +217,9 @@ function bindDriveSection(section) {
   });
 
   section.querySelector("[data-drive-export=midi]")?.addEventListener("click", async () => {
-    setHubMessage("Drive共有を準備しています…");
-    const project = await readyProject();
+    // 共有はユーザー操作の直後でないと NotAllowedError になるため、IndexedDBを待たず、直近に読めた保存済みProjectを同期的に使う
+    const project = cachedProject ?? await readyProject();
+    void readyProject();
     if (!project) {
       setHubMessage("保存済みのProjectが見つかりません。「Save Now」を押してから、もう一度押してください。", true);
       return;
