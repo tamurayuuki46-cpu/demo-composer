@@ -46,6 +46,7 @@ import { buildMidiExports, downloadBytes, downloadMidiBundle, downloadProjectJso
 import { MAX_IMPORT_BYTES, parseProjectJson } from "./storage/project-import.js";
 import { createRhythmController } from "./rhythm/rhythm-screen.js";
 import { createSoundController } from "./sound/sound-screen.js";
+import { bindSheetLink, sheetLinkHtml } from "./hub/sheet-link.js";
 import { applyTextSize, loadTextSize, saveTextSize, TEXT_SIZES } from "./core/display-settings.js";
 import { createAutosave } from "./storage/autosave.js";
 import { backupProjectForMigration, loadActiveProject, requestPersistentStorage, saveProject } from "./storage/indexeddb-storage.js";
@@ -172,6 +173,8 @@ function hubScreen() {
       ${cubaseMemoHtml(project)}
 
       ${consultPanelHtml()}
+
+      ${sheetLinkHtml()}
 
       <section class="display-settings">
         <h3>文字の大きさ</h3>
@@ -539,6 +542,7 @@ function bindHubControls() {
   const exportToggle = document.querySelector("#toggle-export");
   const exportPanel = document.querySelector("#export-panel");
   bindConsultPanel({ projectStore, setMessage: setHubMessage });
+  bindSheetLink({ setMessage: setHubMessage, rerender: () => render("hub") });
   bindCubaseMemo({ projectStore, setMessage: setHubMessage, rerender: () => render("hub") });
   bindStartingPoint({
     projectStore,

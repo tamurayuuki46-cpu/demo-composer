@@ -141,5 +141,8 @@ jobs:
       - name: Drive export smoke test
         run: npm run test:drive-export
 
+      - name: Sheet link smoke test
+        run: npm run test:sheet-link
+
       - name: Static build
         run: npm run build
