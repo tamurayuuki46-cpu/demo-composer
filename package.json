@@ -1,0 +1,9 @@
+{
+  "name": "demo-composer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:chord-tags": "node tests/chordEmotionRecommendation.test.js"
+  }
+}
