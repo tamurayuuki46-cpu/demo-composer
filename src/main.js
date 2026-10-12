@@ -20,7 +20,7 @@ import { chordSymbol, getAllChordVariants, getChordVariantGroups, getDiatonicCho
 import { chordScaleSetsHtml, resolveScaleFamilyId } from "./chord/chord-scale-sets-ui.js";
 import { applyPhraseNotes, phraseCandidates, withPhraseNotes } from "./melody/phrase-generator.js";
 import { phraseMelodyHtml } from "./melody/phrase-melody-ui.js";
-import { scaleFamilyGroups, scaleLevelRows, scaleSetChords } from "./chord/chord-scale-sets.js";
+import { getScaleFamily, scaleFamilyGroups, scaleLevelRows, scaleSetChords } from "./chord/chord-scale-sets.js";
 import { migrateProject } from "./core/project-migration.js";
 import { SCHEMA_VERSION } from "./core/project-schema.js";
 import { bindCubaseMemo, cubaseMemoHtml } from "./hub/memo-ui.js";
@@ -74,6 +74,12 @@ let phraseStart = 0;
 let phraseBars = 4;
 let phraseContour = "auto";
 let phraseVariation = 0;
+let phraseFlavor = "plain";
+let phraseScaleId = "";
+// 選んだスケールの音程（未選択は null = 曲のScale）
+function phraseScaleIntervals() {
+  return phraseScaleId ? getScaleFamily(phraseScaleId).intervals : null;
+}
 let melodyChordOpen = false;
 let melodyChordBar = 0;
 let songCardOpen = false;
@@ -298,7 +304,7 @@ function chordScreen() {
 
       ${melodyChordPanel(project)}
 
-      ${phraseMelodyHtml({ project, open: phraseOpen, startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation })}
+      ${phraseMelodyHtml({ project, open: phraseOpen, startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation, flavor: phraseFlavor, scaleId: phraseScaleId, scaleGroups: scaleFamilyGroups(project.basic.scale), scaleIntervals: phraseScaleIntervals() })}
 
       <h3>${project.chords.length ? "次のコード候補（3つ）" : "最初のコード候補（3つ）"}</h3>
       <div class="chord-next">
@@ -774,12 +780,25 @@ function bindChordControls() {
       render("chord");
     });
   });
+  document.querySelectorAll("[data-phrase-flavor]").forEach((button) => {
+    button.addEventListener("click", () => {
+      phraseFlavor = button.dataset.phraseFlavor;
+      phraseVariation = 0;
+      render("chord");
+    });
+  });
+  document.querySelector("#phrase-scale")?.addEventListener("change", (event) => {
+    phraseScaleId = event.target.value;
+    phraseVariation = 0;
+    render("chord");
+  });
   document.querySelector("#phrase-refresh")?.addEventListener("click", () => {
     phraseVariation = (phraseVariation + 1) % 4;
     render("chord");
   });
   const phraseCandidateFor = (formId) => phraseCandidates(projectStore.getSnapshot(), {
-    startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation
+    startBar: phraseStart, bars: phraseBars, contour: phraseContour, variation: phraseVariation,
+    flavor: phraseFlavor, scaleIntervals: phraseScaleIntervals()
   }).find((item) => item.id === formId);
   document.querySelectorAll("[data-phrase-play]").forEach((button) => {
     button.addEventListener("click", () => {

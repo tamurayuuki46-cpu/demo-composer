@@ -116,6 +116,7 @@ v0.2-dev
 18. Melody Analyzerで `メロディの働き` が表示され、C Major等でGuide / Chord / Tension / Otherと、経過 / 刺繍 / Approach / 倚音 / 逸音 / 先取の代表例が想定どおり読めることをAndroid実機で確認。係留は「候補」として過剰断定しないこと、リック / リフが自動判定されないことも確認
 
 既知の問題:
+- メロディ生成の未実装: C 対位法の動き（反行・平行・保続）、エネルギー連動。味付け（2度・6度 / 高密度）とスケールの色は実装済みだが、耳での調整は実機で
 - Characterの型は20スケール分。耳での調整は実機で。型の無いスケールは共通型。型は音程のデータなので `character-phrases.js` の数字を直すだけで調整できる
 - 裏メロの `Character（特性音型）` は選んだスケールの色を優先し、コードやメロディとのぶつかり回避はしない。Arrange画面からはスケールを選べない（未選択のDorian / Lydian）
 - 裏メロは8タイプ（Sparse / Active / Hook / Answer / Arpeggio / Riff / Minor Penta Hook / Major Penta Hook）。ペンタの音とメロディの衝突回避はまだ行っていない（耳で確認して調整）
