@@ -5,6 +5,7 @@ const MIDI_MIME = "audio/midi";
 const JSON_MIME = "application/json";
 const SYNC_INTERVAL_MS = 250;
 const SYNC_MAX_ATTEMPTS = 20;
+const READY_CHECK_MS = 500;
 
 let cachedProject = null;
 let syncInFlight = false;
@@ -98,8 +99,18 @@ function setReadyState(section, ready) {
     : "AutoSaveの完了を待っています。数秒待つか、上の「Save Now」を押してください。";
 }
 
+function isCurrentSavedProject() {
+  const revision = hubRevision();
+  return Boolean(cachedProject && revision !== null && cachedProject.revision === revision);
+}
+
 async function syncSavedProject(section) {
+  if (isCurrentSavedProject()) {
+    setReadyState(section, true);
+    return;
+  }
   if (syncInFlight) return;
+
   syncInFlight = true;
   setReadyState(section, false);
 
@@ -128,9 +139,7 @@ async function syncSavedProject(section) {
 }
 
 function readyProject() {
-  const revision = hubRevision();
-  if (!cachedProject || revision === null || cachedProject.revision !== revision) return null;
-  return cachedProject;
+  return isCurrentSavedProject() ? cachedProject : null;
 }
 
 async function handleShareResult(result, successMessage) {
@@ -221,10 +230,16 @@ export function installDriveExportUi() {
   ensureDriveExportUi();
   const observer = new MutationObserver(() => {
     ensureDriveExportUi();
+  });
+  observer.observe(screen, { childList: true, subtree: true });
+
+  const timer = setInterval(() => {
     const section = document.querySelector("[data-drive-export-section]");
     if (section) void syncSavedProject(section);
-  });
-  observer.observe(screen, { childList: true, subtree: true, characterData: true });
+  }, READY_CHECK_MS);
 
-  return () => observer.disconnect();
+  return () => {
+    observer.disconnect();
+    clearInterval(timer);
+  };
 }
