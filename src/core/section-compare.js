@@ -1,5 +1,7 @@
 import { getSections, sectionRanges } from "./section-ops.js";
-import { pitchLabel } from "./melody-analysis.js";
+import { pitchLabel, chordDegreeBreakdown } from "./melody-analysis.js";
+
+const CHORD_DEGREE_NAMES = ["R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
 
 // Sectionごとのメロディの特徴を並べて、「AメロとサビのSectionの差が足りているか」に気づくための数字。
 // 良い / 悪いの評価ではなく、差を見る道具。Projectを読むだけの純粋関数（Melody Analyzerの一部）。
@@ -15,7 +17,13 @@ export function compareSections(project) {
   return sectionRanges(sections).map(({ section, index, startBar, endBar }) => {
     const notes = melody.filter((note) => note.startTick >= startBar * barTicks && note.startTick < endBar * barTicks);
     const base = { index, kind: section.kind, name: section.name, startBar, endBar, bars: section.bars, noteCount: notes.length };
-    if (notes.length === 0) return { ...base, range: null, avgPitch: null, density: 0, barsWithNotes: 0 };
+    if (notes.length === 0) return { ...base, range: null, avgPitch: null, density: 0, barsWithNotes: 0, chordDegrees: null };
+
+    // コードのルートから見た度数の使用率（コードがある小節の音のみ）
+    const breakdown = chordDegreeBreakdown(project, notes);
+    const chordDegrees = breakdown.counted
+      ? { counted: breakdown.counted, rates: breakdown.degrees.map((d) => (d.chord + d.tension + d.outside + d.other) / breakdown.counted), degrees: breakdown.degrees }
+      : null;
 
     const pitches = notes.map((note) => note.pitch);
     const low = Math.min(...pitches);
@@ -26,7 +34,8 @@ export function compareSections(project) {
       range: { low, high, span: high - low },
       avgPitch: pitches.reduce((sum, pitch) => sum + pitch, 0) / pitches.length,
       density: notes.length / section.bars,
-      barsWithNotes
+      barsWithNotes,
+      chordDegrees
     };
   });
 }
@@ -61,6 +70,19 @@ export function contrastHints(rows) {
     `音域のひろさ: ${signed(spanDiff, "半音")}`,
     `リズム密度: 1小節あたり ${signed(densityDiff, "音")}`
   ];
+  // 度数の使い方の差: サビで増えた / 減った度数（使用率が10ポイント以上動いたもの）
+  let degreeLine = null;
+  if (chorus.chordDegrees && ref.chordDegrees) {
+    const moves = chorus.chordDegrees.rates
+      .map((rate, index) => ({ index, diff: Math.round((rate - ref.chordDegrees.rates[index]) * 100) }))
+      .filter((item) => Math.abs(item.diff) >= 10)
+      .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))
+      .slice(0, 3);
+    degreeLine = moves.length
+      ? `コード度数: ${moves.map((item) => `${CHORD_DEGREE_NAMES[item.index]} ${item.diff > 0 ? "+" : "−"}${Math.abs(item.diff)}%`).join("・")}`
+      : "コード度数: 大きな差なし（使う度数が似ています）";
+  }
+  if (degreeLine) lines.push(degreeLine);
   const advice = lacking
     ? `${chorus.name}と${ref.name}の差が小さめです。サビの音域をひろげる・高めに置く・音の数を変えると、盛り上がりの差が出ます。`
     : `${chorus.name}と${ref.name}に差があります。意図した盛り上がり方か、聴いて確かめてみましょう。`;

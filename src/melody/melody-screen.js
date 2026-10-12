@@ -92,14 +92,29 @@ export function createMelodyController({ projectStore, rerender }) {
 
   // Melody Analyzer: 評価ではなく、自分のメロディの特徴を知るためのパネル（Melody Moduleの内部）
   // 度数ごとの使用率を12本の棒で見せる（棒の下に度数、上に%）
-  function degreeBarsHtml(bars) {
+  const ROLE_ORDER = ["chord", "tension", "other", "outside"];
+  function stackedParts(parts, total) {
+    return ROLE_ORDER.filter((role) => parts?.[role] > 0)
+      .map((role) => `<u class="role-${role}" style="flex:${parts[role]}"></u>`).join("") || (total ? "" : "");
+  }
+  function degreeBarsHtml(bars, { legend = true } = {}) {
     const max = Math.max(...bars.map((bar) => bar.rate), 0.01);
+    const hasParts = bars.some((bar) => bar.parts);
     return `<div class="degree-bars" role="img" aria-label="度数ごとの使用率">${bars.map((bar) => `
       <div class="degree-bar${bar.count ? "" : " zero"}">
         <em>${bar.count ? Math.round(bar.rate * 100) : ""}</em>
-        <i style="height:${Math.round((bar.rate / max) * 100)}%"></i>
+        <i style="height:${Math.round((bar.rate / max) * 100)}%">${bar.parts ? stackedParts(bar.parts, bar.count) : ""}</i>
         <b>${escapeHtml(bar.label)}</b>
-      </div>`).join("")}</div>`;
+      </div>`).join("")}</div>
+      ${hasParts && legend ? `<p class="degree-legend"><span class="role-chord">構成音</span><span class="role-tension">テンション</span><span class="role-other">スケール内</span><span class="role-outside">スケール外</span></p>` : ""}`;
+  }
+  // Sectionごとの小さな度数バー（ラベル・%なし）
+  function miniDegreeBarsHtml(chordDegrees) {
+    const max = Math.max(...chordDegrees.rates, 0.01);
+    return `<div class="degree-mini" aria-hidden="true">${chordDegrees.degrees.map((d, i) => {
+      const total = d.chord + d.tension + d.outside + d.other;
+      return `<div class="degree-mini-col"><i style="height:${Math.round((chordDegrees.rates[i] / max) * 100)}%">${stackedParts(d, total)}</i></div>`;
+    }).join("")}</div>`;
   }
 
   function analyzerPanelHtml(project) {
@@ -145,6 +160,7 @@ export function createMelodyController({ projectStore, rerender }) {
               <span>音域 ${escapeHtml(pitchLabel(row.range.low))}〜${escapeHtml(pitchLabel(row.range.high))}（${row.range.span}半音）</span>
               <div class="sc-bar" aria-hidden="true"><span style="width:${(row.density / maxDensity) * 100}%"></span></div>
               <span>音数 ${row.noteCount}音 ・ 1小節あたり ${row.density.toFixed(1)}音</span>
+              ${row.chordDegrees ? `<span class="sc-degree-label">コード度数（R ♭2 2 ♭3 3 4 ♭5 5 ♭6 6 ♭7 7）</span>${miniDegreeBarsHtml(row.chordDegrees)}` : ""}
             ` : `<span class="sc-empty">メロディなし</span>`}
           </div>
         `).join("")}
