@@ -11,3 +11,10 @@ Story: project.json → A/B/C・Mix・Section編集・リハモ → 試聴/MIDI/
 - Local Playwrightブラウザ取得は環境のdownload制約で失敗。モバイル操作テストはGitHub Actionsで実行し、結果と画像をartifactへ保存する。
 - ブラウザCI: 360/390/430px、3スタイル、ABC試聴/停止/終了、Mix、密度/Toggle、リハモ採用解除、5 MIDI download、JSON current state、reload、offline、他PWA cache保持、Console errors。
 - Android実機、Cubasis/Cubaseアプリそのものの実機検証は未実施。SMF構造の検証と区別する。
+
+## GitHub Actions evidence
+- PR #169 / commit d9fcb3f44908ded725f9312c4d3a75f827c0f9df。
+- Arrangement Lab CI run 38295695232: PASS。360/390/430px全フロー成功、Console error 0。
+- Demo Composer CI run 38295695032: PASS。Pages PR build run 38295695106: PASS。
+- 画面証跡: https://github.com/tamurayuuki46-cpu/demo-composer/actions/runs/38295695232/artifacts/11768796533
+- 360pxスクリーンショットを目視確認。横はみ出しなし、カード/Toggle/MIDI/JSON操作を確認。
