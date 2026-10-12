@@ -416,3 +416,6 @@
 - Cubasis / CubaseでのMIDI Import実機確認
 ## Companion Arrangement Lab v0.2.1-dev — 2026-10-13
 試聴/MIDIの一致、ch10、Section境界、リハモ計算、プラン再開、PWA scope/cache保護を修正。詳細 arranger/CHANGELOG.md。本体v0.3-dev/Schema 3は変更なし。
+
+## Companion Arrangement Lab v0.3-dev — 2026-10-13
+理論リハモとメロディ関係、裏メロスケール案、Section採用、サビ5案、引き算、主役交代を追加。独立Plan Schema 3、旧Plan 1/2互換。本体Version/Schemaは維持。詳細 arranger/CHANGELOG.md / docs/VERIFICATION_v0.3.md。
