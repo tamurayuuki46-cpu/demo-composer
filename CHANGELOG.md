@@ -10,6 +10,8 @@
 - Demo Player（再生バー）が下部ナビに隠れる / 再生が止まる症状への対策。再生バーの位置を、下部ナビの実際の高さ（`--nav-h`、ResizeObserverで追従）の真上に固定した（Androidの文字サイズ拡大などでナビが高くなっても重ならない）。ビブラートのLFOを「1音につき1つ」に共有し、ボカロ風などの音色で1音あたりのノード数を減らして端末負荷を軽くした（音量・音色は変わらない）
 
 ### 追加
+- 裏メロ `Minor Penta Hook` / `Major Penta Hook` を、曲のKey以外のKeyでも作れるようにした（裏メロ画面の `Minor / Major Penta のKey`: 曲のKey・2度上・短3度上・3度上・4度上・5度上・6度上・短7度上と、外れ感の強い半音上など）。選んだKeyのペンタの音だけで作り、曲のスケールから外れる音の数を説明に出す。UI状態のみ・Schema変更なし
+- 裏メロの `別案`（`↻ 別案を見る`）: 全タイプの候補を 基本 / 音域を変える / 間引く / 後ノリ の4案で切り替え。pitch classは変えず、音域・間引き・8分ぶんの後ずらしで作り分ける。選んだ結果以外は保存しない
 - Demo Playerの `パート` を、聴きたいパートを選んで鳴らす形に整理。鳴るパートに `✓` を表示し、`全部OFF`（そこから聴きたいパートだけ選ぶ）と `全部鳴らす` を追加。Chord / Melody / Bass / Drums / 裏メロを個別に選んで再生できる（ソロも従来どおり）。保存・Exportには影響しない
 - Hub Export: 裏メロがあるとき `CounterMelody.mid` の個別ボタンを表示。Export一覧の下に結果を出す（下へスクロール中でも見える）。`Google Drive` に「1ファイルずつDriveへ」（Song / Chord / Melody / Bass / Drums / CounterMelody の各.mid）を追加。Schema変更なし
 - Melody画面に `メイン / 裏メロ` の切替。同じPiano Rollで裏メロを1音ずつ手直しできる（タップで入力・削除、音の長さ、8/16分、Clear Bar、Copy Bar、Octave）。裏メロ編集中はメインのメロディを薄い青の目印で重ねて表示し、ぶつかりを確かめやすくした。メロディ候補・山の位置・特徴パネルはメイン専用（裏メロ編集中は隠す）。書き込みは `applyCounterMelody` で全範囲置き換え（Undo 1手、他Trackは不変）。Schema変更なし（`npm run test:counter-edit`）

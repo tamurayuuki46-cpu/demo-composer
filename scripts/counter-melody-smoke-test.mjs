@@ -276,3 +276,31 @@ assert.ok(withCounter["Song.mid"].length > plain["Song.mid"].length);
 
 validateProject(sampleProject());
 console.log("Counter melody smoke test passed.");
+
+// ---- 他のKeyのペンタ / 別案 ----
+{
+  const { PENTA_ROOT_RELATIONS, COUNTER_VARIATION_COUNT, pentaOutsideCount } = await import("../src/core/counter-melody.js");
+  const base = counterCandidates(project, { startBar: 0, endBar: 4 });
+  const fifth = counterCandidates(project, { startBar: 0, endBar: 4, pentaOffset: 7 });
+  const baseMinor = base.find((item) => item.id === "pentaMinor");
+  const fifthMinor = fifth.find((item) => item.id === "pentaMinor");
+  assert.notDeepEqual(fifthMinor.notes.map((n) => n.pitch), baseMinor.notes.map((n) => n.pitch));
+  assert.match(fifthMinor.label, /マイナーペンタ/);
+  assert.ok(PENTA_ROOT_RELATIONS.length >= 8);
+  assert.equal(typeof pentaOutsideCount(project, "major", 2), "number");
+  const shape = (notes) => notes.map((n) => [n.pitch, n.startTick, n.durationTick]);
+  assert.deepEqual(
+    shape(counterCandidates(project, { startBar: 0, endBar: 4, pentaOffset: 99 }).find((item) => item.id === "pentaMajor").notes),
+    shape(base.find((item) => item.id === "pentaMajor").notes)
+  );
+  for (let variation = 0; variation < COUNTER_VARIATION_COUNT; variation += 1) {
+    const list = counterCandidates(project, { startBar: 0, endBar: 4, variation });
+    assert.equal(list.length, 10);
+    list.forEach((item) => item.notes.forEach((note) => {
+      assert.ok(note.startTick >= 0 && note.durationTick > 0 && note.pitch >= 36 && note.pitch <= 96);
+    }));
+  }
+  const v1 = counterCandidates(project, { startBar: 0, endBar: 4, variation: 1 });
+  assert.ok(v1.some((item, index) => item.notes.length > 0 && JSON.stringify(shape(item.notes)) !== JSON.stringify(shape(base[index].notes))));
+  assert.match(v1[0].description, /別案/);
+}
