@@ -1,6 +1,6 @@
 // 「裏メロ」タブ: 範囲（開始小節 + 長さ、またはSection）を選び、10タイプの候補を聴いて当てる。
 // 候補の生成は src/core/counter-melody.js（Arrangeの各Sectionの裏メロと同じもの）。保存先は tracks[role=counter]。
-import { COUNTER_MOTIONS, counterBarCount, counterCandidates, counterNotes } from "../core/counter-melody.js";
+import { COUNTER_MOTIONS, COUNTER_VARIATIONS, COUNTER_VARIATION_COUNT, PENTA_ROOT_RELATIONS, counterBarCount, counterCandidates, counterNotes, pentaRootName } from "../core/counter-melody.js";
 import { whyHtml } from "../core/why-ui.js";
 import { getSections, sectionRanges } from "../core/section-ops.js";
 
@@ -24,6 +24,10 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
   let startBar = 0;
   let characterScaleId = null;
   let motion = "contrary";
+  // ペンタ型のKey（曲のKeyから何半音上か。0 = 曲のKey）。UI状態のみ
+  let pentaOffset = 0;
+  // 別案の番号（0 = 基本）。UI状態のみ。選んだ結果以外は保存しない
+  let variation = 0;
   let bars = 4;
   let message = "範囲を選んで、裏メロの候補を聴き比べます。メインメロディの隙間やコードに合わせて作ります。";
 
@@ -45,7 +49,7 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
   function candidatesFor(project) {
     const { startBar: from, endBar: to } = range(project);
     try {
-      return { candidates: counterCandidates(project, { startBar: from, endBar: to, characterScale: findScale(project), motion }), error: null };
+      return { candidates: counterCandidates(project, { startBar: from, endBar: to, characterScale: findScale(project), motion, pentaOffset, variation }), error: null };
     } catch (error) {
       return { candidates: [], error: error instanceof Error ? error.message : "候補を作れませんでした。" };
     }
@@ -112,6 +116,13 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
         ` : ""}
 
         <label class="field">
+          <span>Minor / Major Penta のKey</span>
+          <select id="counter-penta-root">
+            ${PENTA_ROOT_RELATIONS.map((item) => `<option value="${item.offset}"${item.offset === pentaOffset ? " selected" : ""}>${escapeHtml(`${pentaRootName(project, item.offset)}（${item.label}）`)}</option>`).join("")}
+          </select>
+        </label>
+
+        <label class="field">
           <span>Motion（対位の動き）</span>
           <select id="counter-motion">
             ${COUNTER_MOTIONS.map((item) => `<option value="${item.id}"${item.id === motion ? " selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}
@@ -119,6 +130,10 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
         </label>
 
         ${error ? `<p class="hint">${escapeHtml(error)}</p>` : `
+          <div class="counter-variation-row">
+            <small>別案 ${variation + 1}/${COUNTER_VARIATION_COUNT}（${escapeHtml(COUNTER_VARIATIONS[variation].label)}）</small>
+            <button type="button" id="counter-variation" class="small-action">↻ 別案を見る</button>
+          </div>
           <div class="counter-candidates">
             ${[...candidates].sort((x, y) => (y.id === "character") - (x.id === "character")).map((candidate) => `
               <div class="counter-pick">
@@ -157,6 +172,15 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
     });
     document.querySelector("#counter-character-scale")?.addEventListener("change", (event) => {
       characterScaleId = event.target.value || null;
+      rerenderCounter();
+    });
+    document.querySelector("#counter-variation")?.addEventListener("click", () => {
+      variation = (variation + 1) % COUNTER_VARIATION_COUNT;
+      message = `別案 ${variation + 1}/${COUNTER_VARIATION_COUNT}（${COUNTER_VARIATIONS[variation].label}）に切り替えました。全タイプの候補が変わります。`;
+      rerenderCounter();
+    });
+    document.querySelector("#counter-penta-root")?.addEventListener("change", (event) => {
+      pentaOffset = Number(event.target.value) || 0;
       rerenderCounter();
     });
     document.querySelector("#counter-motion")?.addEventListener("change", (event) => {

@@ -138,3 +138,7 @@ Answer（応答型）追加前の復元点:
 ## 手直し（Piano Roll）
 候補を適用したあとは、Melody画面の `裏メロ` 切替で1音ずつ直せる。メインのメロディは薄い目印で重なる。書き込みは `applyCounterMelody`（Undo 1手）。
 
+## 他のKeyのペンタ / 別案
+- `pentaOffset`（曲のKeyから何半音上か）でペンタのKeyを変える。オクターブ・コードトーン着地の作りは同じ。UI状態のみ。
+- `variation`（0基本 / 1音域 / 2間引き / 3後ノリ）で全タイプの候補を作り分ける。`varyCounterNotes` は pitch class を変えず、変化がなければ次の方法へフォールバックする。
+

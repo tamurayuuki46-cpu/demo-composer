@@ -39,3 +39,12 @@
 #counter-clear {
   min-height: 44px;
 }
+
+/* 別案の切り替え行（全タイプの候補が同時に変わる） */
+.counter-variation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+}

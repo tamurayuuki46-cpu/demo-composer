@@ -519,9 +519,36 @@ const PENTA_MOTIFS = Object.freeze({
   }
 });
 
-function buildPentaHook(project, melody, startBar, endBar, mode) {
+// 他のKeyのペンタ: 曲のKeyから何半音上のペンタを使うか（0 = 曲のKey）。UIの選択肢と説明
+export const PENTA_ROOT_RELATIONS = Object.freeze([
+  { offset: 0, label: "曲のKey" },
+  { offset: 2, label: "2度上" },
+  { offset: 3, label: "短3度上" },
+  { offset: 4, label: "3度上" },
+  { offset: 5, label: "4度上" },
+  { offset: 7, label: "5度上" },
+  { offset: 9, label: "6度上" },
+  { offset: 10, label: "短7度上" },
+  { offset: 1, label: "半音上（外れ感が強い）" },
+  { offset: 6, label: "増4度上（外れ感が強い）" },
+  { offset: 8, label: "短6度上（外れ感が強い）" },
+  { offset: 11, label: "長7度上（外れ感が強い）" }
+]);
+
+export function pentaRootName(project, offset = 0) {
+  return KEY_NAMES[(keyPitchClass(project) + offset) % 12];
+}
+
+// 曲のKeyの音からはみ出す音の数（0 = 曲のスケールの中だけ）。説明用
+export function pentaOutsideCount(project, mode, offset = 0) {
+  const scale = scalePitchClasses(project);
+  const tonic = (keyPitchClass(project) + offset) % 12;
+  return PENTATONIC[mode].filter((interval) => !scale.includes((tonic + interval) % 12)).length;
+}
+
+function buildPentaHook(project, melody, startBar, endBar, mode, offset = 0) {
   const barTicks = barTicksOf(project);
-  const tonic = keyPitchClass(project);
+  const tonic = (keyPitchClass(project) + offset) % 12;
   const pcs = PENTATONIC[mode].map((interval) => (tonic + interval) % 12);
   const target = Math.min(72, Math.max(57, averageMelodyPitch(melody) - 10));
   const ladder = [];
@@ -758,7 +785,56 @@ function buildMotion(project, melody, startBar, endBar, motion) {
   return notes;
 }
 
-export function counterCandidates(project, { startBar, endBar, characterScale = null, motion = "contrary" }) {
+// 別案: 同じタイプの候補を、音域・間引き・後ノリで作り分ける（0 = 元の案）。音の高さの種類（pitch class）は変えない
+export const COUNTER_VARIATIONS = Object.freeze([
+  { id: 0, label: "基本", note: "" },
+  { id: 1, label: "音域を変える", note: "1オクターブ上（高いときは下）にして、メインメロディとの距離を変えた別案。" },
+  { id: 2, label: "間引く", note: "裏拍の短い音を減らして、すっきりさせた別案。メインメロディをより立てたいときに。" },
+  { id: 3, label: "後ノリ", note: "各音を8分音符ぶん後ろへずらして、メインメロディと交互に鳴らす別案。" }
+]);
+export const COUNTER_VARIATION_COUNT = COUNTER_VARIATIONS.length;
+
+function sameNotes(a, b) {
+  return a.length === b.length && a.every((note, index) => note.startTick === b[index].startTick && note.pitch === b[index].pitch && note.durationTick === b[index].durationTick);
+}
+
+function shiftOctave(notes) {
+  if (notes.length === 0) return notes;
+  const average = notes.reduce((sum, note) => sum + note.pitch, 0) / notes.length;
+  const options = average > 66 ? [-12, 12] : [12, -12];
+  const delta = options.find((value) => notes.every((note) => note.pitch + value >= 40 && note.pitch + value <= 88));
+  return delta === undefined ? notes : notes.map((note) => ({ ...note, pitch: note.pitch + delta }));
+}
+
+function thinNotes(notes, barTicks) {
+  const kept = notes.filter((note) => !(note.startTick % (STEP * 2) !== 0 && note.durationTick <= STEP));
+  const bars = new Set(notes.map((note) => Math.floor(note.startTick / barTicks)));
+  // 小節が空にならないように、消えた小節は元の音を残す
+  const keptBars = new Set(kept.map((note) => Math.floor(note.startTick / barTicks)));
+  return [...kept, ...notes.filter((note) => bars.has(Math.floor(note.startTick / barTicks)) && !keptBars.has(Math.floor(note.startTick / barTicks)))]
+    .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+}
+
+function delayNotes(notes, barTicks) {
+  return notes.map((note) => {
+    const barEnd = (Math.floor(note.startTick / barTicks) + 1) * barTicks;
+    const start = note.startTick + STEP;
+    if (start >= barEnd) return note;
+    return { ...note, startTick: start, durationTick: Math.max(STEP / 2, Math.min(note.durationTick, barEnd - start)) };
+  });
+}
+
+export function varyCounterNotes(notes, variation, barTicks) {
+  if (!variation || notes.length === 0) return notes;
+  const order = variation === 1 ? [shiftOctave, thinNotes, delayNotes] : variation === 2 ? [thinNotes, shiftOctave, delayNotes] : [delayNotes, shiftOctave, thinNotes];
+  for (const apply of order) {
+    const result = apply(notes, barTicks);
+    if (!sameNotes(result, notes)) return result;
+  }
+  return notes;
+}
+
+export function counterCandidates(project, { startBar, endBar, characterScale = null, motion = "contrary", pentaOffset = 0, variation = 0 }) {
   const barTicks = barTicksOf(project);
   const melody = (project.tracks.find((track) => track.role === "melody")?.notes ?? [])
     .slice()
@@ -771,30 +847,49 @@ export function counterCandidates(project, { startBar, endBar, characterScale = 
   }
 
   const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer, arpeggio: buildArpeggio, riff: buildRiff,
-    pentaMinor: (...args) => buildPentaHook(...args, "minor"),
-    pentaMajor: (...args) => buildPentaHook(...args, "major"),
+    pentaMinor: (...args) => buildPentaHook(...args, "minor", penta),
+    pentaMajor: (...args) => buildPentaHook(...args, "major", penta),
     character: (...args) => buildCharacter(...args, scaleForCharacter),
     motion: (...args) => buildMotion(...args, COUNTER_MOTIONS.some((item) => item.id === motion) ? motion : "contrary") };
   const scaleForCharacter = characterScale ?? defaultCharacterScale(project);
+  const penta = PENTA_ROOT_RELATIONS.some((item) => item.offset === pentaOffset) ? pentaOffset : 0;
   return COUNTER_STYLES.map((style) => {
-    const notes = builders[style.id](project, melody, startBar, endBar)
-      .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+    const notes = varyCounterNotes(
+      builders[style.id](project, melody, startBar, endBar).sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch),
+      variation,
+      barTicks
+    );
+    const extra = variation > 0 ? `【別案: ${COUNTER_VARIATIONS[variation]?.label ?? ""}】${COUNTER_VARIATIONS[variation]?.note ?? ""}` : "";
+    const withVariation = (candidate) => (extra ? { ...candidate, description: `${candidate.description} ${extra}` } : candidate);
     if (style.id === "motion") {
       const picked = COUNTER_MOTIONS.find((item) => item.id === motion) ?? COUNTER_MOTIONS[0];
-      return { ...style, label: `Motion（${picked.label}）`, description: `${picked.note}※特定曲のコピーではありません`, notes };
+      return withVariation({ ...style, label: `Motion（${picked.label}）`, description: `${picked.note}※特定曲のコピーではありません`, notes });
     }
-    if (style.id !== "character") return { ...style, notes };
+    if ((style.id === "pentaMinor" || style.id === "pentaMajor") && penta !== 0) {
+      const mode = style.id === "pentaMinor" ? "minor" : "major";
+      const root = pentaRootName(project, penta);
+      const relation = PENTA_ROOT_RELATIONS.find((item) => item.offset === penta).label;
+      const outside = pentaOutsideCount(project, mode, penta);
+      const modeName = mode === "minor" ? "マイナーペンタ" : "メジャーペンタ";
+      return withVariation({
+        ...style,
+        label: `${mode === "minor" ? "Minor" : "Major"} Penta Hook（${root} ${modeName}）`,
+        description: `曲のKey（${project.basic.key}）ではなく、${relation}の ${root} ${modeName} の音だけで作るフック。${outside === 0 ? "音はすべて曲のスケールの中なので、なじみやすく、色だけが変わります。" : `曲のスケールから外れる音が${outside}つあり、そこが「別の景色」に聞こえます。コードとぶつかる所は耳で確かめてください。`}型の作り方（2小節の繰り返し → 3小節目で変化 → 4小節目でコードトーンに着地）は同じです。※特定曲のコピーではありません`,
+        notes
+      });
+    }
+    if (style.id !== "character") return withVariation({ ...style, notes });
     const key = KEY_NAMES[keyPitchClass(project)];
     const names = characterDegreeNames(scaleForCharacter.intervals).join("・");
     const idiom = characterIdiomFor(scaleForCharacter.id);
-    return {
+    return withVariation({
       ...style,
       label: `Character（${key} ${scaleForCharacter.label}の特性音）`,
       description: idiom
         ? `${key} ${scaleForCharacter.label} の特性音（${names}）を軸に、このスケールらしい動きで作る。${idiom.feel}コードとぶつかる所は、スケールの色として耳で確かめてください。※特定曲のコピーではありません`
         : `${key} ${scaleForCharacter.label} の特性音（${names}）を、長い音・強い拍で鳴らす。前を半音や全音で助走し、最後はルートか5度へ解決する。コードとぶつかる所は、スケールの色として耳で確かめてください。※特定曲のコピーではありません`,
       notes
-    };
+    });
   });
 }
 
