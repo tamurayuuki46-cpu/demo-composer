@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { CHORD_QUALITY_ORDER, chordIntervals } from "../src/core/chord-qualities.js";
 import { migrateProject } from "../src/core/project-migration.js";
 import { createDefaultProject, createProjectStore } from "../src/core/project-state.js";
-import { chordSymbol, getChordVariants } from "../src/chord/chord-theory.js";
+import { chordSymbol, getChordVariants, rootDegreeName } from "../src/chord/chord-theory.js";
 import { buildMidiExports } from "../src/midi/midi-export.js";
 
 const expectedSymbols = [
@@ -77,5 +77,14 @@ assert.equal(store.getSnapshot().chords.length, 9);
 const midi = buildMidiExports(store.getSnapshot());
 assert.ok(midi["Chord.mid"] instanceof Uint8Array);
 assert.ok(midi["Chord.mid"].length > 100, "expanded chord MIDI should contain note data");
+
+// 基準音の度数名（Key / Scaleごと）
+assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((root) => rootDegreeName(root, "C", "major")), ["I", "♭II", "II", "♭III", "III", "IV", "♯IV", "V", "♭VI", "VI", "♭VII", "VII"]);
+assert.equal(rootDegreeName(7, "G", "major"), "I");
+assert.equal(rootDegreeName(0, "G", "major"), "IV", "C is IV in G major");
+assert.deepEqual([9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8].map((root) => rootDegreeName(root, "A", "minor")), ["I", "♯I", "II", "III", "♯III", "IV", "♯IV", "V", "VI", "♯VI", "VII", "♯VII"].map((name, index) => (index === 1 ? "♭II" : name)));
+assert.equal(rootDegreeName(0, "A", "minor"), "III", "C is III in A minor (natural minor)");
+assert.equal(rootDegreeName(4, "A", "minor"), "V");
+assert.equal(rootDegreeName(7, "A", "minor"), "VII");
 
 console.log("Chord types smoke test passed.");
