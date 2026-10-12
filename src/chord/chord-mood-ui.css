@@ -278,3 +278,14 @@
 .mood-count b { font-size: 16px; }
 .mood-tab { white-space: nowrap; letter-spacing: .04em; gap: 4px; padding: 0 4px; }
 .mood-tab span { white-space: nowrap; }
+
+/* お気に入り（タグの組み合わせ） */
+.mood-favorites { display: grid; gap: 8px; }
+.mood-fav-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.mood-fav { display: inline-flex; align-items: stretch; border: 1px solid #4a4256; border-radius: 12px; overflow: hidden; background: #1c1822; }
+.mood-fav-apply { min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: #f2e9ff; font-size: 14px; font-weight: 700; letter-spacing: .05em; touch-action: manipulation; }
+.mood-fav-apply.on { background: linear-gradient(135deg, #f472b6, #a78bfa); color: #0b0b10; }
+.mood-fav-remove { min-width: 40px; min-height: 44px; border: 0; border-left: 1px solid #4a4256; background: transparent; color: #b9a9cf; font-size: 16px; }
+.mood-selected-actions { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.mood-fav-save { min-height: 36px; padding: 0 12px; font-size: 12px; font-weight: 700; border-radius: 999px; background: transparent; color: #f9d5ff; border: 1px solid #7c5a99; touch-action: manipulation; }
+.mood-fav-save.on { background: linear-gradient(135deg, #f472b6, #a78bfa); color: #0b0b10; border-color: transparent; }
