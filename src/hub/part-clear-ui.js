@@ -4,7 +4,8 @@ const PART_LABELS = Object.freeze({
   chord: "コード",
   melody: "メロディ",
   bass: "ベース",
-  drums: "ドラム"
+  drums: "ドラム",
+  counter: "裏メロ"
 });
 
 let open = false;
@@ -22,6 +23,7 @@ export function partClearHtml() {
         <button class="danger" data-clear-music-part="melody">メロディを消去</button>
         <button class="danger" data-clear-music-part="bass">ベースを消去</button>
         <button class="danger" data-clear-music-part="drums">ドラムを消去</button>
+        <button class="danger" data-clear-music-part="counter">裏メロを消去</button>
       </div>
       <p class="hint">選んだパートだけを空にします。他のパート・Key・BPM・構成・音色は残ります。消去後も画面上部の ↶ で戻せます。</p>
       <p class="hint">コードだけ消してBassを残すこともできます。新しいコード進行を作るときは、現在の安全設定ではBassを先に消去してください。</p>
