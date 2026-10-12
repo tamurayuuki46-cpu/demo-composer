@@ -2,7 +2,6 @@ import { buildMidiExports } from "../midi/midi-export.js";
 import { loadActiveProject } from "../storage/indexeddb-storage.js";
 
 const MIDI_MIME = "audio/midi";
-const JSON_MIME = "application/json";
 const SYNC_INTERVAL_MS = 250;
 const SYNC_MAX_ATTEMPTS = 20;
 const READY_CHECK_MS = 500;
@@ -52,12 +51,15 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Android Chromeの共有は、拡張子が許可された種類（.txt / 画像 / .wav / .pdf など）だけ。.json / .mid は NotAllowedError になる。
+// そのため project.json は中身そのまま「project.json.txt」（text/plain）として共有する。読み込みは .txt のままでもできる
+export const PROJECT_SHARE_NAME = "project.json.txt";
 export function projectJsonShareFile(project, FileCtor = globalThis.File) {
   if (typeof FileCtor !== "function") return null;
   return new FileCtor(
     [JSON.stringify(project, null, 2)],
-    "project.json",
-    { type: JSON_MIME }
+    PROJECT_SHARE_NAME,
+    { type: "text/plain" }
   );
 }
 
@@ -115,7 +117,7 @@ function setReadyState(section, ready) {
   }
 
   hint.textContent = ready
-    ? "タップするとAndroidの共有画面が開きます。Google Driveを選んで保存してください。"
+    ? "「Driveへバックアップ」は共有画面からGoogle Driveを選びます（project.json.txt として保存）。MIDIは端末に保存されるので、Driveアプリの「＋ → アップロード」で入れてください。"
     : "AutoSaveの完了を確認中です。ボタンは押せます。まだ保存前なら理由を表示します。";
 }
 
@@ -189,6 +191,13 @@ function fallbackDownload(files, error) {
   setHubMessage(`共有を開始できませんでした（${error?.name ?? "error"}）。端末にダウンロードしたので、Driveアプリから保存してください。`, true);
 }
 
+// .mid はAndroid Chromeの共有で送れないため、端末に保存してDriveアプリからアップロードしてもらう
+function saveMidiForDrive(files, label) {
+  if (files.length === 0) return;
+  files.forEach(downloadFile);
+  setHubMessage(`${label}を端末の「ダウンロード」に保存しました。Driveアプリ →「＋」→「アップロード」→「ダウンロード」から選ぶとDriveに入ります（Androidの共有はMIDIファイルに対応していないため）。`);
+}
+
 function bindDriveSection(section) {
   if (section.dataset.driveBound === "true") return;
   section.dataset.driveBound = "true";
@@ -210,7 +219,7 @@ function bindDriveSection(section) {
 
     try {
       const result = await shareFiles([file], { title: `${safeTitle(project)} - project.json` });
-      await handleShareResult(result, "project.jsonを共有しました。Google Driveを選んだ場合はDriveへ保存されています。", [file]);
+      await handleShareResult(result, "project.json.txt を共有しました。Google Driveを選んだ場合はDriveへ保存されています（読み込むときは .txt のままで大丈夫です）。", [file]);
     } catch (error) {
       fallbackDownload([file], error);
     }
@@ -225,13 +234,7 @@ function bindDriveSection(section) {
       return;
     }
 
-    const files = midiShareFiles(project);
-    try {
-      const result = await shareFiles(files, { title: `${safeTitle(project)} - MIDI` });
-      await handleShareResult(result, "MIDI一式を共有しました。Google Driveを選んだ場合はDriveへ保存されています。", files);
-    } catch (error) {
-      fallbackDownload(files, error);
-    }
+    saveMidiForDrive(midiShareFiles(project), "MIDI一式");
   });
 
   section.querySelectorAll("[data-drive-file]").forEach((button) => {
@@ -248,12 +251,7 @@ function bindDriveSection(section) {
         setHubMessage(name === "CounterMelody.mid" ? "裏メロがまだないため、CounterMelody.midはありません。" : `${name}を作れませんでした。`, true);
         return;
       }
-      try {
-        const result = await shareFiles(files, { title: `${safeTitle(project)} - ${name}` });
-        await handleShareResult(result, `${name}を共有しました。Google Driveを選んだ場合はDriveへ保存されています。`, files);
-      } catch (error) {
-        fallbackDownload(files, error);
-      }
+      saveMidiForDrive(files, name);
     });
   });
 
@@ -273,9 +271,9 @@ function ensureDriveExportUi() {
       <h3>Google Drive</h3>
       <div class="drive-export-grid">
         <button type="button" data-drive-export="project">Driveへバックアップ</button>
-        <button type="button" data-drive-export="midi">MIDI一式をDriveへ</button>
+        <button type="button" data-drive-export="midi">MIDI一式を保存（Drive用）</button>
       </div>
-      <p class="hint drive-single-label">1ファイルずつDriveへ</p>
+      <p class="hint drive-single-label">1ファイルずつ保存（Drive用）</p>
       <div class="drive-export-grid drive-single-grid">
         ${["Song.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid", "CounterMelody.mid"].map((name) => `<button type="button" data-drive-file="${name}">${name}</button>`).join("")}
       </div>
