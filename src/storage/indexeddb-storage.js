@@ -61,6 +61,83 @@ export async function saveProject(project) {
   }
 }
 
+// Project一覧・複製などで使う。保存はするがActive Projectは変更しない。
+export async function storeProjectSnapshot(project) {
+  const database = await openDatabase();
+
+  try {
+    const transaction = database.transaction(PROJECT_STORE, "readwrite");
+    transaction.objectStore(PROJECT_STORE).put(project);
+    await transactionToPromise(transaction);
+  } finally {
+    database.close();
+  }
+}
+
+export async function listProjects() {
+  const database = await openDatabase();
+
+  try {
+    const transaction = database.transaction(PROJECT_STORE, "readonly");
+    const projects = await requestToPromise(transaction.objectStore(PROJECT_STORE).getAll());
+    return Array.isArray(projects) ? projects : [];
+  } finally {
+    database.close();
+  }
+}
+
+export async function getActiveProjectId() {
+  const database = await openDatabase();
+
+  try {
+    const transaction = database.transaction(META_STORE, "readonly");
+    const entry = await requestToPromise(transaction.objectStore(META_STORE).get(ACTIVE_PROJECT_KEY));
+    return entry?.value ?? null;
+  } finally {
+    database.close();
+  }
+}
+
+export async function setActiveProjectId(projectId) {
+  if (!projectId) throw new Error("開くProjectを指定してください。");
+  const database = await openDatabase();
+
+  try {
+    const readTransaction = database.transaction(PROJECT_STORE, "readonly");
+    const project = await requestToPromise(readTransaction.objectStore(PROJECT_STORE).get(projectId));
+    if (!project) throw new Error("指定したProjectが端末内に見つかりません。");
+
+    const writeTransaction = database.transaction(META_STORE, "readwrite");
+    writeTransaction.objectStore(META_STORE).put({ key: ACTIVE_PROJECT_KEY, value: projectId });
+    await transactionToPromise(writeTransaction);
+    return true;
+  } finally {
+    database.close();
+  }
+}
+
+export async function deleteStoredProject(projectId) {
+  if (!projectId) throw new Error("削除するProjectを指定してください。");
+  const activeProjectId = await getActiveProjectId();
+  if (projectId === activeProjectId) {
+    throw new Error("開いているProjectは削除できません。別のProjectを開いてから削除してください。");
+  }
+
+  const database = await openDatabase();
+  try {
+    const readTransaction = database.transaction(PROJECT_STORE, "readonly");
+    const project = await requestToPromise(readTransaction.objectStore(PROJECT_STORE).get(projectId));
+    if (!project) throw new Error("削除するProjectが端末内に見つかりません。");
+
+    const writeTransaction = database.transaction(PROJECT_STORE, "readwrite");
+    writeTransaction.objectStore(PROJECT_STORE).delete(projectId);
+    await transactionToPromise(writeTransaction);
+    return true;
+  } finally {
+    database.close();
+  }
+}
+
 export async function backupProjectForMigration(project) {
   const database = await openDatabase();
 
