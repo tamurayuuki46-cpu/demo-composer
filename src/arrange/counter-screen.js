@@ -1,6 +1,6 @@
-// 「裏メロ」タブ: 範囲（開始小節 + 長さ、またはSection）を選び、9タイプの候補を聴いて当てる。
+// 「裏メロ」タブ: 範囲（開始小節 + 長さ、またはSection）を選び、10タイプの候補を聴いて当てる。
 // 候補の生成は src/core/counter-melody.js（Arrangeの各Sectionの裏メロと同じもの）。保存先は tracks[role=counter]。
-import { counterBarCount, counterCandidates, counterNotes } from "../core/counter-melody.js";
+import { COUNTER_MOTIONS, counterBarCount, counterCandidates, counterNotes } from "../core/counter-melody.js";
 import { getSections, sectionRanges } from "../core/section-ops.js";
 
 const BAR_CHOICES = Object.freeze([2, 4, 8, 16]);
@@ -22,6 +22,7 @@ function totalBars(project) {
 export function createCounterController({ projectStore, rerender, onPreview, scaleGroups = null }) {
   let startBar = 0;
   let characterScaleId = null;
+  let motion = "contrary";
   let bars = 4;
   let message = "範囲を選んで、裏メロの候補を聴き比べます。メインメロディの隙間やコードに合わせて作ります。";
 
@@ -43,7 +44,7 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
   function candidatesFor(project) {
     const { startBar: from, endBar: to } = range(project);
     try {
-      return { candidates: counterCandidates(project, { startBar: from, endBar: to, characterScale: findScale(project) }), error: null };
+      return { candidates: counterCandidates(project, { startBar: from, endBar: to, characterScale: findScale(project), motion }), error: null };
     } catch (error) {
       return { candidates: [], error: error instanceof Error ? error.message : "候補を作れませんでした。" };
     }
@@ -62,7 +63,7 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
         <div class="section-heading">
           <div>
             <h2>裏メロ</h2>
-            <p>メインメロディのもう1本の旋律を作ります。9タイプ（スケールの特性音型を含む）を聴き比べて、範囲に当てます。</p>
+            <p>メインメロディのもう1本の旋律を作ります。10タイプ（スケールの特性音型・対位の動きを含む）を聴き比べて、範囲に当てます。</p>
           </div>
         </div>
 
@@ -109,6 +110,13 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
           </label>
         ` : ""}
 
+        <label class="field">
+          <span>Motion（対位の動き）</span>
+          <select id="counter-motion">
+            ${COUNTER_MOTIONS.map((item) => `<option value="${item.id}"${item.id === motion ? " selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}
+          </select>
+        </label>
+
         ${error ? `<p class="hint">${escapeHtml(error)}</p>` : `
           <div class="counter-candidates">
             ${candidates.map((candidate) => `
@@ -148,6 +156,10 @@ export function createCounterController({ projectStore, rerender, onPreview, sca
     });
     document.querySelector("#counter-character-scale")?.addEventListener("change", (event) => {
       characterScaleId = event.target.value || null;
+      rerenderCounter();
+    });
+    document.querySelector("#counter-motion")?.addEventListener("change", (event) => {
+      motion = event.target.value;
       rerenderCounter();
     });
     document.querySelector("#counter-bars")?.addEventListener("change", (event) => {

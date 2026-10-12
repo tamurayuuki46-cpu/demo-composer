@@ -45,7 +45,7 @@ function sampleProject() {
 const project = sampleProject();
 assert.equal(hasCounter(project), false);
 assert.equal(COUNTER_ROLE, "counter");
-assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer", "arpeggio", "riff", "pentaMinor", "pentaMajor", "character"]);
+assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer", "arpeggio", "riff", "pentaMinor", "pentaMajor", "character", "motion"]);
 assert.match(COUNTER_STYLES[0].description, /米津/);
 assert.match(COUNTER_STYLES[1].description, /YOASOBI \/ Ayase/);
 assert.match(COUNTER_STYLES[1].description, /コードトーン型/);
@@ -59,7 +59,7 @@ assert.ok(COUNTER_STYLES.every((item) => item.description.includes("特定曲の
 // --- 候補は4つで、どれも範囲内・MIDI範囲内
 const candidates = counterCandidates(project, { startBar: 0, endBar: 4 });
 assert.deepEqual(candidates.map((item) => item.id), COUNTER_STYLES.map((style) => style.id));
-assert.equal(candidates.length, 9);
+assert.equal(candidates.length, 10);
 candidates.forEach((candidate) => {
   assert.ok(candidate.notes.length > 0, `${candidate.id} has notes`);
   assert.ok(candidate.notes.every((note) => note.startTick >= 0 && note.startTick < 4 * BAR), `${candidate.id} stays in range`);
@@ -152,6 +152,35 @@ Object.entries(idiomScales).forEach(([id, intervals]) => {
 });
 // 型の無いスケール（例: Dorian♭2）は従来の共通型
 assert.ok(characterOf({ id: "dorian-flat2", label: "Dorian ♭2", intervals: [0, 1, 3, 5, 7, 9, 10] }).notes.length >= 12);
+
+// Motion: 反行 / 平行 / 保続
+const mainMel = project.tracks.find((track) => track.role === "melody").notes.filter((note) => note.startTick < 4 * BAR);
+const motionOf = (motion) => counterCandidates(project, { startBar: 0, endBar: 4, motion }).find((item) => item.id === "motion");
+const majorPcs = [0, 2, 4, 5, 7, 9, 11];
+const contrary = motionOf("contrary");
+assert.match(contrary.label, /反行/);
+assert.ok(contrary.notes.length >= 4 && contrary.notes.every((note) => majorPcs.includes(note.pitch % 12)), "contrary stays in key");
+assert.ok(contrary.notes.every((note) => { const m = mainMel.find((item) => item.startTick === note.startTick); return !m || note.pitch < m.pitch; }), "contrary stays under the melody");
+let opposite = 0; let moves = 0;
+for (let i = 1; i < contrary.notes.length; i += 1) {
+  const m0 = mainMel.find((item) => item.startTick === contrary.notes[i - 1].startTick);
+  const m1 = mainMel.find((item) => item.startTick === contrary.notes[i].startTick);
+  if (!m0 || !m1 || m0.pitch === m1.pitch) continue;
+  moves += 1;
+  if ((contrary.notes[i].pitch - contrary.notes[i - 1].pitch) * (m1.pitch - m0.pitch) <= 0) opposite += 1;
+}
+assert.ok(moves === 0 || opposite / moves >= 0.7, `contrary moves the other way (${opposite}/${moves})`);
+const parallel = motionOf("parallel");
+assert.match(parallel.label, /平行/);
+assert.equal(parallel.notes.length, mainMel.length, "parallel follows every melody note");
+parallel.notes.forEach((note) => {
+  const m = mainMel.find((item) => item.startTick === note.startTick);
+  assert.ok(m && [3, 4].includes(m.pitch - note.pitch) && majorPcs.includes(note.pitch % 12), "parallel is a diatonic third below");
+});
+const pedal = motionOf("pedal");
+assert.match(pedal.label, /保続/);
+assert.ok(pedal.notes.length >= 2 && pedal.notes.every((note) => note.pitch % 12 === 0 && note.durationTick >= BAR), "pedal holds the tonic");
+assert.ok(pedal.notes.every((note) => note.startTick + note.durationTick <= 4 * BAR));
 
 // Answer: 語尾側（後半）を優先し、Sparseより長い2拍単位の返しを作る。
 // Arpeggio: 8分の細かい動きで、メロディの下に置かれ、半音でぶつからない

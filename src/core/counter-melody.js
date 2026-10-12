@@ -59,6 +59,12 @@ export const COUNTER_STYLES = Object.freeze([
     label: "Character（特性音型）",
     description: "選んだスケールの特性音（そのスケールらしさを決める音）を、長い音・強い拍で鳴らす。前を半音や全音で助走し、最後はルートか5度へ解決する。※特定曲のコピーではありません"
   }
+,
+  {
+    id: "motion",
+    label: "Motion（対位の動き）",
+    description: "主旋律との動きの関係で作る。反行（逆向き）/ 平行（3度下で同じ動き）/ 保続（主音を持続）。※特定曲のコピーではありません"
+  }
 ]);
 
 function clone(value) {
@@ -678,7 +684,81 @@ function buildCharacter(project, melody, startBar, endBar, characterScale) {
 }
 
 // Sectionの範囲（startBar〜endBar）に当てる候補を作る。土台（コードかメロディ）が無いときは例外
-export function counterCandidates(project, { startBar, endBar, characterScale = null }) {
+export const COUNTER_MOTIONS = Object.freeze([
+  { id: "contrary", label: "反行", note: "主旋律が上がるとき下がり、下がるとき上がる。同じ方向に動かないので、2本の線が独立して聞こえる。" },
+  { id: "parallel", label: "平行（3度下）", note: "主旋律と同じ動きを、スケール内の3度下でなぞる。ハモリのように厚くなる。" },
+  { id: "pedal", label: "保続", note: "主音を長く持続させる（ペダルポイント）。コードが変わっても低音が動かず、土台の緊張感が出る。" }
+]);
+
+// 範囲内の主旋律 → 反行 / 平行 / 保続。メロディが無い範囲は、保続だけ作れる。
+const scaleStepsBetween = (from, to, scale) => {
+  if (from === to) return 0;
+  const direction = to > from ? 1 : -1;
+  let steps = 0;
+  for (let pitch = from; pitch !== to; ) {
+    pitch += direction;
+    if (scale.includes(pitch % 12)) steps += 1;
+  }
+  return steps * direction;
+};
+
+function buildMotion(project, melody, startBar, endBar, motion) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const notes = [];
+
+  if (motion === "pedal") {
+    const tonic = keyPitchClass(project);
+    let pitch = 48;
+    for (let candidate = 45; candidate <= 57; candidate += 1) if (candidate % 12 === tonic) pitch = candidate;
+    for (let bar = startBar; bar < endBar; bar += 2) {
+      const length = Math.min(2, endBar - bar);
+      notes.push(makeNote(pitch, bar * barTicks, Math.round(length * barTicks * 0.98), 62));
+    }
+    return notes;
+  }
+
+  const inRange = notesIn(melody, startBar * barTicks, endBar * barTicks);
+  if (inRange.length === 0) return [];
+  const place = (pitch, note) => {
+    let fitted = pitch;
+    while (fitted < LOW) fitted += 12;
+    while (fitted > HIGH) fitted -= 12;
+    notes.push(makeNote(fitted, note.startTick, Math.max(30, Math.round(note.durationTick * 0.96)), Math.min(82, Math.max(40, Math.round(note.velocity * 0.72)))));
+    return fitted;
+  };
+
+  if (motion === "parallel") {
+    inRange.forEach((note) => place(scaleStepDown(note.pitch, 2, scale), note));
+    return notes;
+  }
+
+  // 反行: 主旋律が動いた向きと逆へ、同じ程度（最大3スケール音）動く。小節の頭はコードトーンへ寄せる。常に主旋律より下
+  let previousMelody = null;
+  let current = null;
+  inRange.forEach((note) => {
+    const bar = Math.floor(note.startTick / barTicks);
+    const barStart = bar * barTicks;
+    const first = note.startTick - barStart < STEP;
+    if (current === null) {
+      current = pickPitch({ pcs: chordPitchClasses(project, bar), target: note.pitch - 9, overlapping: [note], previous: null }) ?? note.pitch - 9;
+    } else {
+      const moved = scaleStepsBetween(previousMelody, note.pitch, scale);
+      const size = Math.min(3, Math.abs(moved));
+      current = moved > 0 ? scaleStepDown(current, size, scale) : moved < 0 ? scaleStepUp(current, size, scale) : current;
+      if (first) {
+        current = pickPitch({ pcs: chordPitchClasses(project, bar), target: current, overlapping: [], previous: current }) ?? current;
+      }
+    }
+    while (current > note.pitch - 3) current -= 12;
+    while (current < note.pitch - 17) current += 12;
+    current = place(current, note);
+    previousMelody = note.pitch;
+  });
+  return notes;
+}
+
+export function counterCandidates(project, { startBar, endBar, characterScale = null, motion = "contrary" }) {
   const barTicks = barTicksOf(project);
   const melody = (project.tracks.find((track) => track.role === "melody")?.notes ?? [])
     .slice()
@@ -693,11 +773,16 @@ export function counterCandidates(project, { startBar, endBar, characterScale = 
   const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer, arpeggio: buildArpeggio, riff: buildRiff,
     pentaMinor: (...args) => buildPentaHook(...args, "minor"),
     pentaMajor: (...args) => buildPentaHook(...args, "major"),
-    character: (...args) => buildCharacter(...args, scaleForCharacter) };
+    character: (...args) => buildCharacter(...args, scaleForCharacter),
+    motion: (...args) => buildMotion(...args, COUNTER_MOTIONS.some((item) => item.id === motion) ? motion : "contrary") };
   const scaleForCharacter = characterScale ?? defaultCharacterScale(project);
   return COUNTER_STYLES.map((style) => {
     const notes = builders[style.id](project, melody, startBar, endBar)
       .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+    if (style.id === "motion") {
+      const picked = COUNTER_MOTIONS.find((item) => item.id === motion) ?? COUNTER_MOTIONS[0];
+      return { ...style, label: `Motion（${picked.label}）`, description: `${picked.note}※特定曲のコピーではありません`, notes };
+    }
     if (style.id !== "character") return { ...style, notes };
     const key = KEY_NAMES[keyPitchClass(project)];
     const names = characterDegreeNames(scaleForCharacter.intervals).join("・");
