@@ -10,25 +10,37 @@
     main{max-width:760px;margin:auto;padding:20px}
     .card{background:white;border:1px solid #d6d3d1;border-radius:16px;padding:18px;margin:14px 0}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-    .stat{background:#f5f5f4;border-radius:12px;padding:12px}
+    .stat{background:#f5f5f4;border-radius:12px;padding:12px;display:grid;gap:4px}
     .actions{display:grid;gap:10px}
     .actions.split{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
     a,button,.file{display:block;box-sizing:border-box;width:100%;min-height:48px;border-radius:12px;padding:13px 14px;border:1px solid #9ca3af;background:white;color:#111827;text-decoration:none;font:inherit;text-align:center;cursor:pointer}
     .primary{background:#111827;color:white;border-color:#111827}
-    .ok{color:#166534}.pending{color:#92400e}
-    small{color:#57534e}
+    .ok,.workflow-step.done{color:#166534}.pending,.workflow-step.pending{color:#92400e}
+    small,.workflow-step span{color:#57534e}
     input[type=file],input[type=url]{box-sizing:border-box;width:100%}
     input[type=url]{min-height:48px;border:1px solid #9ca3af;border-radius:12px;padding:12px 14px;font:inherit;margin:8px 0 10px}
+    .workflow-list{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
+    .workflow-step{border:1px solid #e7e5e4;border-radius:12px;padding:12px;display:grid;gap:4px;background:#fafaf9}
+    .workflow-step.optional{border-style:dashed}.workflow-step.locked{opacity:.58}.workflow-step.external{border-color:#111827}
+    .hint{background:#eff6ff;border-radius:10px;padding:10px 12px}
     [hidden]{display:none!important}
+    @media(max-width:520px){main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
 <main>
   <header>
     <p>SONG PROJECT v1</p>
-    <h1>Project Home</h1>
-    <p>3アプリの入口とProject状態確認だけを行います。Editor機能は重複させません。</p>
+    <h1>Music Project Home</h1>
+    <p>作曲シートからPC DAWまでの流れを案内します。Editor機能は重複させません。</p>
   </header>
+
+  <section id="workflow-card" class="card">
+    <h2>今の作業フロー</h2>
+    <ol id="workflow-list" class="workflow-list"></ol>
+    <a id="next-action" class="primary">次の一手</a>
+    <p id="optional-analysis" class="hint" hidden>参考曲や素材を調べたい場合だけ、MIDI Analyzerへ寄り道できます。分析は必須ではありません。</p>
+  </section>
 
   <section class="card">
     <h2>Song Projectを開く</h2>
@@ -43,6 +55,7 @@
       <div class="stat"><small>Key</small><strong id="key"></strong></div>
       <div class="stat"><small>Schema</small><strong id="schema"></strong></div>
       <div class="stat"><small>Updated</small><strong id="updated"></strong></div>
+      <div class="stat"><small>Lineage</small><strong id="lineage"></strong></div>
     </div>
     <h3>Status</h3>
     <p id="analysis-status"></p>
@@ -50,33 +63,34 @@
     <p id="arrangement-status"></p>
   </section>
 
-  <section class="card">
-    <h2>Apps</h2>
-    <div class="actions">
-      <a class="primary" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/">Reference / Analysis — Open MIDI Analyzer</a>
-      <a href="../">Composition — Open Demo Composer</a>
-      <a href="../arranger/">Arrangement — Open Arrangement Lab</a>
-    </div>
-    <p><small>別Origin間のProject受け渡しはSongProject JSONを使用します。</small></p>
-  </section>
-
   <section class="card" id="claude-link-card">
-    <h2>Claude Artifact / 作曲シート</h2>
-    <p>Demo Composerと同じClaudeリンクを、この端末だけで共有します。</p>
+    <h2>1. 作曲シート — 決める</h2>
+    <p>Claude Artifactで曲の場面・目的・参考曲・BPM/Key候補・制約を決めます。</p>
     <label for="claude-link-input"><small>claude.ai のリンク</small></label>
     <input id="claude-link-input" type="url" inputmode="url" autocomplete="off" placeholder="https://claude.ai/artifact/…">
     <div class="actions split">
       <button id="claude-link-save" type="button">この端末に保存</button>
-      <a id="claude-link-open" class="primary" target="_blank" rel="noopener noreferrer" hidden>Claude Artifactを開く</a>
+      <a id="claude-link-open" class="primary" target="_blank" rel="noopener noreferrer" hidden>作曲シートを開く</a>
     </div>
     <button id="claude-link-clear" type="button" hidden>リンクを消す</button>
     <p id="claude-link-message" aria-live="polite"></p>
     <p><small>リンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p>
   </section>
 
+  <section class="card">
+    <h2>制作アプリ</h2>
+    <div class="actions">
+      <a href="https://tamurayuuki46-cpu.github.io/midi-analyzer/">2. MIDI Analyzer — 素材を集める / 曲を理解する（任意レーン）</a>
+      <a class="primary" href="../">3. Demo Composer — 曲を作る</a>
+      <a href="../arranger/">4. Arrangement Lab — 曲を育てる / DAWへ渡す</a>
+    </div>
+    <p><small>別Origin間のProject受け渡しはSongProject JSONを使用します。PC DAWは最終制作の必須工程です。</small></p>
+  </section>
+
   <section id="export-card" class="card" hidden>
-    <h2>Export</h2>
-    <button id="backup" class="primary">Project Backup (.json)</button>
+    <h2>Backup / Recovery</h2>
+    <button id="backup" class="primary">Song Projectをバックアップ (.json)</button>
+    <p><small>IndexedDBだけを唯一の保存先にせず、重要な曲は明示Backupしてください。</small></p>
   </section>
 </main>
 <script type="module" src="./app.js"></script>
