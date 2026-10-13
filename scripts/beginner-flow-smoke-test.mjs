@@ -19,6 +19,9 @@ for (const step of BEGINNER_FLOW) {
 
 assert.match(source, /仮決めでOK。あとからいつでも戻って直せます。/);
 assert.match(source, /もっと試す — 候補を5つ見る/);
+assert.match(source, /寄り道：/);
+assert.match(source, /beginner-return/);
+assert.match(source, /beginner-extra-next/);
 assert.match(source, /Arrangement Labへ/);
 assert.doesNotMatch(source, /完了条件/);
 assert.match(html, /src\/hub\/beginner-flow\.css/);
@@ -27,4 +30,4 @@ assert.match(css, /data-screen="counter"/);
 assert.match(css, /data-screen="sound"/);
 assert.match(css, /beginner-more-open/);
 
-console.log("Beginner guided flow smoke test passed: one path, reversible navigation, five optional ideas.");
+console.log("Beginner guided flow smoke test passed: one path, reversible detours, five optional ideas.");
