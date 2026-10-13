@@ -21,10 +21,10 @@
 
   <main>
     <section class="panel">
-      <div class="panel-title"><span class="step">1</span><div><h2>曲を読み込む</h2><p>Demo Composerのproject.jsonを使用します。元データは変更しません。</p></div></div>
+      <div class="panel-title"><span class="step">1</span><div><h2>曲を読み込む</h2><p>Demo Composerのproject.jsonまたはSong Project v1を使用します。元データは変更しません。</p></div></div>
       <label id="drop-zone" class="drop-zone">
         <input id="project-file" type="file" accept="application/json,.json,.txt">
-        <strong>project.json / 編曲プランを選ぶ</strong><span>またはここへドロップ</span>
+        <strong>project.json / song_project_v1.json / 編曲プランを選ぶ</strong><span>またはここへドロップ</span>
       </label>
       <div id="source-summary" class="source-summary"></div>
       <div id="collision-summary" class="analysis-box"></div>
@@ -62,7 +62,7 @@
     </section>
 
     <section class="panel">
-      <div class="panel-title"><span class="step">5</span><div><h2>MIDI書き出し</h2><p>現在選択している編曲案のON/OFFとリハモを反映します。</p></div></div>
+      <div class="panel-title"><span class="step">5</span><div><h2>MIDI / Project書き出し</h2><p>現在選択している編曲案のON/OFFとリハモを反映します。Song Project v1から開いた場合は編曲結果だけを書き戻せます。</p></div></div>
       <div id="midi-buttons" class="midi-grid">
         <button data-part="melody" class="secondary">Melody.mid</button>
         <button data-part="bass" class="secondary">Bass.mid</button>
@@ -73,7 +73,9 @@
       <div class="sticky-actions">
         <button id="adopt-btn" class="primary">この案を採用</button>
         <button id="export-btn" class="secondary" disabled>編曲プランJSONを書き出す</button>
+        <button id="export-song-project-btn" class="secondary" disabled>Song Project v1を書き出す</button>
       </div>
+      <p class="hint">Song Project v1の書き戻しはarrangement領域だけを更新し、Demo Composerのcompositionは上書きしません。</p>
     </section>
 
     <section class="panel danger-zone">
@@ -84,6 +86,7 @@
   </main>
 
   <div id="message" role="status" aria-live="polite" class="toast" hidden></div>
+  <script type="module" src="./src/song-project-ui.js"></script>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>
