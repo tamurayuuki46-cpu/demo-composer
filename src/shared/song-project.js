@@ -1,7 +1,17 @@
+import { defaultDesign } from '../core/decision-design.js';
+
 export const SONG_PROJECT_SCHEMA_VERSION = 1;
 export const SONG_PROJECT_KIND = 'song-project';
 
 const CORE_ROLES = ['melody', 'counter', 'bass', 'drums'];
+const VALID_KEYS = new Set(['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']);
+const KEY_ALIASES = Object.freeze({
+  'C♯': 'C#', 'D♭': 'C#', Db: 'C#',
+  'D♯': 'D#', 'E♭': 'D#', Eb: 'D#',
+  'F♯': 'F#', 'G♭': 'F#', Gb: 'F#',
+  'G♯': 'G#', 'A♭': 'G#', Ab: 'G#',
+  'A♯': 'A#', 'B♭': 'A#', Bb: 'A#',
+});
 
 function clone(value) {
   return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
@@ -13,6 +23,99 @@ function makeId() {
 }
 function track(project, role) { return project?.tracks?.find((item) => item.role === role) || null; }
 function trackNotes(project, role) { return clone(track(project, role)?.notes || []); }
+function text(value, max = 2000) { return String(value ?? '').trim().slice(0, max); }
+function textList(value, maxItems = 30, maxLength = 200) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => text(item, maxLength)).filter(Boolean).slice(0, maxItems);
+}
+function referenceItems(value) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 30).map((item) => {
+    if (typeof item === 'string') return { title: text(item, 160), artist: '', note: '' };
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+    const next = clone(item);
+    if (Object.hasOwn(next, 'title')) next.title = text(next.title, 160);
+    if (Object.hasOwn(next, 'artist')) next.artist = text(next.artist, 160);
+    if (Object.hasOwn(next, 'note')) next.note = text(next.note, 500);
+    if (Object.hasOwn(next, 'type')) next.type = text(next.type, 40);
+    if (Object.hasOwn(next, 'name')) next.name = text(next.name, 200);
+    return next;
+  }).filter((item) => item && Object.keys(item).length > 0);
+}
+
+function emptyIntent() {
+  return {
+    scene: '',
+    purpose: '',
+    references: [],
+    genre: [],
+    mood: [],
+    constraints: [],
+    experiments: [],
+    vocal: {
+      isVocalSong: null,
+      lyricsTheme: '',
+      lyricalImage: '',
+      direction: '',
+      range: { low: null, high: null, note: '' },
+    },
+    notes: '',
+  };
+}
+
+function emptyAssets() {
+  return { files: [] };
+}
+
+function normalizeIntent(intent) {
+  const base = emptyIntent();
+  if (!intent || typeof intent !== 'object') return base;
+  const vocal = intent.vocal && typeof intent.vocal === 'object' ? intent.vocal : {};
+  return {
+    scene: text(intent.scene, 1000),
+    purpose: text(intent.purpose, 1000),
+    references: referenceItems(intent.references),
+    genre: textList(intent.genre, 10, 80),
+    mood: textList(intent.mood, 10, 80),
+    constraints: textList(intent.constraints, 30, 240),
+    experiments: textList(intent.experiments, 30, 240),
+    vocal: {
+      isVocalSong: typeof vocal.isVocalSong === 'boolean' ? vocal.isVocalSong : null,
+      lyricsTheme: text(vocal.lyricsTheme, 1000),
+      lyricalImage: text(vocal.lyricalImage, 1000),
+      direction: text(vocal.direction, 1000),
+      range: {
+        low: text(vocal.range?.low, 20) || null,
+        high: text(vocal.range?.high, 20) || null,
+        note: text(vocal.range?.note, 500),
+      },
+    },
+    notes: text(intent.notes, 4000),
+  };
+}
+
+function normalizeAssets(assets) {
+  if (!assets || typeof assets !== 'object') return emptyAssets();
+  const files = Array.isArray(assets.files) ? assets.files : [];
+  return {
+    ...clone(assets),
+    files: files.slice(0, 200).map((item, index) => {
+      const source = item && typeof item === 'object' && !Array.isArray(item) ? clone(item) : {};
+      const next = {
+        ...source,
+        id: text(source.id, 120) || `asset-${index + 1}`,
+        type: text(source.type, 60) || 'file',
+        name: text(source.name, 240),
+        external: source.external !== false,
+      };
+      if (Object.hasOwn(source, 'role')) next.role = text(source.role, 60) || null;
+      if (Object.hasOwn(source, 'path')) next.path = text(source.path, 500) || null;
+      if (Object.hasOwn(source, 'mimeType')) next.mimeType = text(source.mimeType, 120) || null;
+      if (Object.hasOwn(source, 'sha256')) next.sha256 = text(source.sha256, 128) || null;
+      return next;
+    }),
+  };
+}
 
 function createLineage({ projectId, sourceApp = 'demo-composer', createdFrom = 'new', revision = 1 } = {}) {
   return {
@@ -38,22 +141,38 @@ function normalizeLineage(lineage, projectId, fallback = {}) {
   };
 }
 
+function normalizeKeyRoot(value) {
+  const raw = text(value, 20);
+  const mapped = KEY_ALIASES[raw] || raw.replace('♯', '#');
+  return VALID_KEYS.has(mapped) ? mapped : null;
+}
+
+function parseKeyValue(value) {
+  const parts = text(value, 60).replace(/\s+/g, ' ').split(' ').filter(Boolean);
+  const key = normalizeKeyRoot(parts[0]);
+  const scaleRaw = (parts[1] || '').toLowerCase();
+  const scale = scaleRaw === 'major' || scaleRaw === 'minor' ? scaleRaw : null;
+  return { key, scale };
+}
+
 export function createEmptySongProject({ projectId = makeId(), title = 'Untitled Project', now, sourceApp = 'demo-composer', createdFrom = 'new' } = {}) {
   const stamp = nowIso(now);
   return {
     kind: SONG_PROJECT_KIND,
     schemaVersion: SONG_PROJECT_SCHEMA_VERSION,
     projectId,
-    title,
+    title: text(title, 80) || 'Untitled Project',
     createdAt: stamp,
     updatedAt: stamp,
     lineage: createLineage({ projectId, sourceApp, createdFrom }),
+    intent: emptyIntent(),
     basic: { bpm: 120, timeSignature: '4/4', key: 'C', scale: 'major', ppq: 480 },
     analysis: { keyCandidates: [], chordCandidates: [], degreeAnalysis: null, melodyAnalysis: null, bassAnalysis: null, rhythmAnalysis: null },
     composition: { chords: [], melody: [], counterMelody: [], bass: [], drums: [], sections: [] },
     arrangement: { reharmonization: null, voicing: null, density: null, instruments: null, selectedAlternatives: null, decisions: [] },
     history: { version: 1, changes: [] },
     reference: { items: [] },
+    assets: emptyAssets(),
     export: { lastDraftMidiAt: null, lastSongMidiAt: null, lastDawHandoffAt: null },
     compatibility: {}
   };
@@ -61,6 +180,36 @@ export function createEmptySongProject({ projectId = makeId(), title = 'Untitled
 
 export function isSongProject(value) {
   return Boolean(value && value.kind === SONG_PROJECT_KIND && value.schemaVersion === SONG_PROJECT_SCHEMA_VERSION);
+}
+
+export function normalizeSongProjectV1(project, { now } = {}) {
+  if (!isSongProject(project)) throw new Error(`Unsupported SongProject schemaVersion: ${project?.schemaVersion ?? 'unknown'}`);
+  const next = clone(project);
+  next.projectId = text(next.projectId, 200) || makeId();
+  next.title = text(next.title, 80) || 'Untitled Project';
+  next.createdAt = text(next.createdAt, 80) || nowIso(now);
+  next.updatedAt = text(next.updatedAt, 80) || next.createdAt;
+  next.lineage = normalizeLineage(next.lineage, next.projectId, { sourceApp: 'unknown', createdFrom: 'legacy-song-project' });
+  next.intent = normalizeIntent(next.intent);
+  next.basic = { bpm: 120, timeSignature: '4/4', key: 'C', scale: 'major', ppq: 480, ...(next.basic || {}) };
+  next.basic.bpm = Number.isInteger(Number(next.basic.bpm)) && Number(next.basic.bpm) >= 40 && Number(next.basic.bpm) <= 240 ? Number(next.basic.bpm) : 120;
+  next.basic.key = normalizeKeyRoot(next.basic.key) || 'C';
+  next.basic.scale = ['major', 'minor'].includes(String(next.basic.scale).toLowerCase()) ? String(next.basic.scale).toLowerCase() : 'major';
+  next.basic.timeSignature = '4/4';
+  next.basic.ppq = 480;
+  next.analysis = { keyCandidates: [], chordCandidates: [], degreeAnalysis: null, melodyAnalysis: null, bassAnalysis: null, rhythmAnalysis: null, ...(next.analysis || {}) };
+  next.composition = {
+    chords: [], melody: [], counterMelody: [], bass: [], drums: [], sections: [], ...(next.composition || {})
+  };
+  next.arrangement = {
+    reharmonization: null, voicing: null, density: null, instruments: null, selectedAlternatives: null, decisions: [], ...(next.arrangement || {})
+  };
+  next.history = { version: 1, changes: [], ...(next.history || {}) };
+  next.reference = { ...(next.reference || {}), items: referenceItems(next.reference?.items) };
+  next.assets = normalizeAssets(next.assets);
+  next.export = { lastDraftMidiAt: null, lastSongMidiAt: null, lastDawHandoffAt: null, ...(next.export || {}) };
+  next.compatibility = next.compatibility && typeof next.compatibility === 'object' ? next.compatibility : {};
+  return next;
 }
 
 export function validateSongProject(project) {
@@ -71,6 +220,8 @@ export function validateSongProject(project) {
   if (!project.composition || !Array.isArray(project.composition.chords) || !Array.isArray(project.composition.sections)) throw new Error('SongProject composition is invalid.');
   for (const key of ['melody', 'counterMelody', 'bass', 'drums']) if (!Array.isArray(project.composition[key])) throw new Error(`SongProject composition.${key} is invalid.`);
   if (!project.analysis || !project.arrangement || !project.history || !project.reference || !project.export) throw new Error('SongProject sections are incomplete.');
+  if (project.intent !== undefined && (!project.intent || typeof project.intent !== 'object')) throw new Error('SongProject intent is invalid.');
+  if (project.assets !== undefined && (!project.assets || typeof project.assets !== 'object' || !Array.isArray(project.assets.files))) throw new Error('SongProject assets is invalid.');
   if (project.lineage !== undefined) {
     const lineage = project.lineage;
     if (!lineage || typeof lineage !== 'object') throw new Error('SongProject lineage is invalid.');
@@ -93,6 +244,9 @@ export function demoProjectToSongProject(demoProject, { now } = {}) {
     createdFrom: 'demo-project',
     revision: demoProject.revision ?? 1,
   });
+  result.intent.genre = textList(demoProject.metadata?.genre ? [demoProject.metadata.genre] : [], 10, 80);
+  result.intent.mood = textList(demoProject.metadata?.mood || [], 10, 80);
+  result.intent.notes = text(demoProject.metadata?.memo, 4000);
   result.basic = {
     bpm: demoProject.basic.bpm,
     timeSignature: demoProject.basic.timeSignature || '4/4',
@@ -140,25 +294,30 @@ function mergeCoreTracks(baseTracks, composition) {
 }
 
 export function songProjectToDemoProject(songProject) {
-  validateSongProject(songProject);
-  const legacy = clone(songProject.compatibility?.demoComposer || {});
+  const normalized = normalizeSongProjectV1(songProject);
+  validateSongProject(normalized);
+  const legacy = clone(normalized.compatibility?.demoComposer || {});
   const base = clone(legacy.legacyProject || {});
   const metadata = {
     ...(base.metadata || {}),
-    title: songProject.title,
-    lineage: normalizeLineage(songProject.lineage, songProject.projectId, { sourceApp: 'demo-composer', createdFrom: 'song-project' }),
+    title: normalized.title,
+    genre: normalized.intent.genre[0] || base.metadata?.genre || '',
+    mood: clone(normalized.intent.mood),
+    memo: normalized.intent.notes || base.metadata?.memo || '',
+    composition: clone(base.metadata?.composition || defaultDesign()),
+    lineage: normalizeLineage(normalized.lineage, normalized.projectId, { sourceApp: 'demo-composer', createdFrom: 'song-project' }),
   };
   return {
     ...base,
     schemaVersion: legacy.schemaVersion ?? base.schemaVersion ?? 3,
     appVersion: legacy.appVersion ?? base.appVersion ?? 'v0.3-dev',
-    id: songProject.projectId,
+    id: normalized.projectId,
     revision: legacy.revision ?? base.revision ?? 1,
     metadata,
-    basic: clone(songProject.basic),
-    structure: { ...(base.structure || {}), sections: clone(songProject.composition.sections) },
-    chords: clone(songProject.composition.chords),
-    tracks: mergeCoreTracks(base.tracks, songProject.composition),
+    basic: clone(normalized.basic),
+    structure: { ...(base.structure || {}), sections: clone(normalized.composition.sections) },
+    chords: clone(normalized.composition.chords),
+    tracks: mergeCoreTracks(base.tracks, normalized.composition),
     instruments: clone(base.instruments || []),
     progress: clone(base.progress || {}),
     exportSettings: clone(base.exportSettings || {})
@@ -166,9 +325,10 @@ export function songProjectToDemoProject(songProject) {
 }
 
 export function mergeDemoChangesIntoSongProject(songProject, demoProject, { now } = {}) {
-  validateSongProject(songProject);
+  const normalized = normalizeSongProjectV1(songProject);
+  validateSongProject(normalized);
   const fresh = demoProjectToSongProject(demoProject, { now });
-  const next = clone(songProject);
+  const next = clone(normalized);
   next.title = fresh.title;
   next.updatedAt = nowIso(now);
   next.basic = fresh.basic;
@@ -176,6 +336,87 @@ export function mergeDemoChangesIntoSongProject(songProject, demoProject, { now 
   next.lineage = normalizeLineage(next.lineage, next.projectId, { sourceApp: 'demo-composer', createdFrom: 'song-project' });
   next.compatibility = { ...next.compatibility, demoComposer: fresh.compatibility.demoComposer };
   return next;
+}
+
+export function mergeSheetChangesIntoSongProject(songProject, sheet = {}, { now } = {}) {
+  const next = normalizeSongProjectV1(songProject);
+  const refs = Array.isArray(sheet.references) ? sheet.references : Array.isArray(sheet.referenceSongs) ? sheet.referenceSongs : [];
+  next.title = text(sheet.title, 80) || next.title;
+  next.updatedAt = nowIso(now);
+  next.intent = normalizeIntent({
+    ...next.intent,
+    scene: sheet.scene ?? next.intent.scene,
+    purpose: sheet.purpose ?? next.intent.purpose,
+    references: refs.length ? refs : next.intent.references,
+    genre: Array.isArray(sheet.genre) ? sheet.genre : sheet.genre ? [sheet.genre] : next.intent.genre,
+    mood: Array.isArray(sheet.mood) ? sheet.mood : next.intent.mood,
+    constraints: sheet.constraints ?? next.intent.constraints,
+    experiments: sheet.experiments ?? next.intent.experiments,
+    vocal: sheet.vocal ?? next.intent.vocal,
+    notes: sheet.notes ?? next.intent.notes,
+  });
+  const bpm = Number(sheet.bpm?.selected ?? sheet.bpm);
+  if (Number.isInteger(bpm) && bpm >= 40 && bpm <= 240) next.basic.bpm = bpm;
+  const parsedKey = parseKeyValue(sheet.key?.selected ?? sheet.key);
+  if (parsedKey.key) next.basic.key = parsedKey.key;
+  if (parsedKey.scale) next.basic.scale = parsedKey.scale;
+  if (sheet.scale && ['major', 'minor'].includes(String(sheet.scale).toLowerCase())) next.basic.scale = String(sheet.scale).toLowerCase();
+  return next;
+}
+
+function legacySheetProjectToSongProject(value, { now } = {}) {
+  const sheet = value.sheet && typeof value.sheet === 'object' ? value.sheet : {};
+  const project = createEmptySongProject({
+    projectId: text(value.projectId, 200) || makeId(),
+    title: text(value.title, 80) || '新しい曲',
+    now: text(value.updatedAt, 80) || nowIso(now),
+    sourceApp: 'composition-sheet',
+    createdFrom: 'legacy-sheet-json',
+  });
+  const merged = mergeSheetChangesIntoSongProject(project, { ...sheet, title: value.title }, { now });
+  if (value.composer && typeof value.composer === 'object') {
+    merged.composition = {
+      ...merged.composition,
+      chords: clone(value.composer.chords || []),
+      melody: clone(value.composer.melody || []),
+      counterMelody: clone(value.composer.counterMelody || []),
+      bass: clone(value.composer.bass || []),
+      drums: clone(value.composer.drums || []),
+      sections: clone(value.composer.sections || []),
+    };
+  }
+  if (value.arrangement && typeof value.arrangement === 'object') merged.arrangement = { ...merged.arrangement, ...clone(value.arrangement) };
+  if (value.midiAnalysis && typeof value.midiAnalysis === 'object') merged.analysis = { ...merged.analysis, ...clone(value.midiAnalysis) };
+  merged.compatibility.legacyCompositionSheet = clone(value);
+  return merged;
+}
+
+function compositionSheetHandoffToSongProject(value, { now } = {}) {
+  const sheet = value.sheet && typeof value.sheet === 'object' ? value.sheet : {};
+  const project = createEmptySongProject({
+    title: text(value.title, 80) || '新しい曲',
+    now: text(value.createdAt, 80) || nowIso(now),
+    sourceApp: text(value.source, 80) || 'composition-sheet',
+    createdFrom: 'composition-sheet-handoff',
+  });
+  const merged = mergeSheetChangesIntoSongProject(project, sheet, { now });
+  merged.compatibility.compositionSheetHandoff = clone(value);
+  return merged;
+}
+
+export function projectValueToSongProject(value, { now } = {}) {
+  if (!value || typeof value !== 'object') throw new Error('Project JSONが不正です。');
+  if (isSongProject(value)) return normalizeSongProjectV1(value, { now });
+  if (value.kind === 'composition-sheet-handoff') return compositionSheetHandoffToSongProject(value, { now });
+  if (value.format === 'demo-composer-project' && value.sheet) return legacySheetProjectToSongProject(value, { now });
+  if (value.basic && value.structure) return demoProjectToSongProject(value, { now });
+  throw new Error('対応していないProject JSONです。SongProject v1または旧互換形式を選んでください。');
+}
+
+export function parseProjectJsonToSongProject(textValue, options = {}) {
+  let value;
+  try { value = JSON.parse(textValue); } catch { throw new Error('Project JSONとして読めませんでした。'); }
+  return projectValueToSongProject(value, options);
 }
 
 export function forkSongProject(songProject, {
@@ -186,17 +427,18 @@ export function forkSongProject(songProject, {
   forkReason = '',
   now,
 } = {}) {
-  validateSongProject(songProject);
+  const normalized = normalizeSongProjectV1(songProject);
+  validateSongProject(normalized);
   const stamp = nowIso(now);
-  const next = clone(songProject);
-  const rootProjectId = songProject.lineage?.rootProjectId || songProject.projectId;
+  const next = clone(normalized);
+  const rootProjectId = normalized.lineage?.rootProjectId || normalized.projectId;
   next.projectId = projectId;
-  next.title = title;
+  next.title = text(title, 80) || 'Untitled Project';
   next.createdAt = stamp;
   next.updatedAt = stamp;
   next.lineage = {
     rootProjectId,
-    parentProjectId: songProject.projectId,
+    parentProjectId: normalized.projectId,
     sourceApp,
     createdFrom,
     forkReason: String(forkReason || '').slice(0, 400) || null,
@@ -206,7 +448,7 @@ export function forkSongProject(songProject, {
     ...clone(next.history),
     changes: [
       ...(Array.isArray(next.history?.changes) ? clone(next.history.changes) : []),
-      { at: stamp, type: 'fork', fromProjectId: songProject.projectId, sourceApp, reason: next.lineage.forkReason },
+      { at: stamp, type: 'fork', fromProjectId: normalized.projectId, sourceApp, reason: next.lineage.forkReason },
     ],
   };
   validateSongProject(next);
@@ -214,13 +456,15 @@ export function forkSongProject(songProject, {
 }
 
 export function serializeSongProject(project) {
-  validateSongProject(project);
-  return `${JSON.stringify(project, null, 2)}\n`;
+  const normalized = normalizeSongProjectV1(project);
+  validateSongProject(normalized);
+  return `${JSON.stringify(normalized, null, 2)}\n`;
 }
 
-export function parseSongProjectJson(text) {
+export function parseSongProjectJson(textValue) {
   let value;
-  try { value = JSON.parse(text); } catch { throw new Error('SongProject JSONとして読めませんでした。'); }
-  validateSongProject(value);
-  return value;
+  try { value = JSON.parse(textValue); } catch { throw new Error('SongProject JSONとして読めませんでした。'); }
+  const normalized = normalizeSongProjectV1(value);
+  validateSongProject(normalized);
+  return normalized;
 }
