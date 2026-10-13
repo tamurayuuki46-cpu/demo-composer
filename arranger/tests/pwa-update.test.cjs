@@ -28,9 +28,7 @@ const server=http.createServer(async(req,res)=>{
   await page.evaluate(async()=>{localStorage.setItem('demo-composer-arranger-v0.3','old-data-kept');await caches.open('another-pwa-sentinel')});
   phase='current';
   // The old cache still owns the normal URL. A fresh entry must not reuse its core module.
-  await page.goto(base+'?v=0.4.1');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
-  // page.waitForFunction is intentionally not used for the async registration lookup. Poll inside
-  // page.evaluate so the Promise is awaited, then reload after the build-stamped worker is active.
+  await page.goto(base+'?v=0.5');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.5-dev');
   const buildWorkerUrl=await page.evaluate(async()=>{
    const deadline=Date.now()+30000;
    while(Date.now()<deadline){
@@ -42,11 +40,11 @@ const server=http.createServer(async(req,res)=>{
    throw new Error(`build worker did not activate: active=${r?.active?.scriptURL||'none'} waiting=${r?.waiting?.scriptURL||'none'} installing=${r?.installing?.scriptURL||'none'}`);
   });
   assert.ok(buildWorkerUrl.includes('?build='));
-  await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
+  await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.5-dev');
   assert.equal(await page.evaluate(()=>localStorage.getItem('demo-composer-arranger-v0.3')),'old-data-kept');
   assert.ok((await page.evaluate(()=>caches.keys())).includes('another-pwa-sentinel'));
-  await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
-  await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.4.1-dev');
-  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.4.1 -> normal URL -> offline; saved data and other caches preserved');
+  await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.5-dev');
+  await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.5-dev');
+  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.5 -> normal URL -> offline; saved data and other caches preserved');
  }finally{await browser.close();await new Promise(r=>server.close(r))}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1});

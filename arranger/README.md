@@ -5,8 +5,24 @@ Demo Composer companion PWA.
 ## Flow
 Demo Composer → Arrangement Lab → Cubasis → Cubase
 
-## v0.4-dev
-Demo Composerのproject.jsonを読み込み、A/B/C編曲案を試聴・比較・Mixし、Sectionごとの密度/楽器ON-OFFとリハモ3案を編集して、パート別MIDIとArrangement Plan JSONを書き出す。
+## v0.5-dev
+Arrangement Labを「候補を自動完成するアプリ」ではなく、編曲判断を行う6つの部屋として整理。
+
+1. 比較試聴室 — A/B/C・Mix、目隠し消去式、簡易ラウドネス補正、変更部分だけ再生、Bメロ→サビ試聴
+2. ハーモニー実験室 — v0.4のHarmony/理論Lab 14手法を継続
+3. 裏メロ・対話設計 — v0.4のCounter Lab 16手法を継続
+4. 展開・密度設計 — v0.4のDevelopment Lab 15手法＋連動5セット、Drum Fill/Bass Approach実Note3案
+5. 判断の記録と復元 — 採用/不採用/保留/気になる/制作日記、Section snapshot履歴、原案/過去履歴への復元
+6. DAW引き継ぎ — パート別MIDI、Before/After Song.mid、Demo Composer複製JSON、判断ログとチェックリストを含むDAW ZIP
+
+詳細: `docs/V0.5_SIX_ROOMS.md`。
+
+## Compatibility
+- Arrangement Plan Schema 4を維持
+- 保存キー `demo-composer-arranger-v0.4` を維持
+- 判断ログは `demo-composer-arranger-decisions-v0.5`
+- Demo Composer本体Schemaは変更しない
+- 元project.jsonは上書きしない
 
 ## Start
 Repository rootをHTTP配信して `/arranger/` を開く。
@@ -22,20 +38,24 @@ python -m http.server 8080
 ```bash
 node --check arranger/src/core.js
 node --check arranger/src/app.js
+node --check arranger/src/v05-tools.js
+node --check arranger/src/v05-workflow.js
+node --check arranger/src/v05-ui.js
 node arranger/tests/core.test.mjs
+node arranger/tests/regression.test.mjs
+node arranger/tests/features.test.mjs
+node arranger/tests/music-labs.test.mjs
+node arranger/tests/v05.test.mjs
+node arranger/tests/v05-workflow.test.mjs
 ```
 
-採用したプランは再読み込みで編集再開できます。編曲プランJSONも同じ入力欄で読み込めます。旧プランは元project.json（同じID/revision）の再選択で復元します。
+Browser CI:
 
-追加検証: `node arranger/tests/regression.test.mjs`。ブラウザCIは `arranger/tests/browser.test.cjs`。
-検証詳細は `docs/VERIFICATION_v0.2.1.md`。
+- `arranger/tests/browser.test.cjs`
+- `arranger/tests/v05-browser.test.cjs`
+- `arranger/tests/pwa-update.test.cjs`
 
-## 7機能の入口
-project.json読込後、Sectionカードの「Sectionの編曲ラボ・7つの機能」を開く。
-リハモ理論・メロディとの関係、裏メロ5案、Section採用、サビ5案、引き算、主役の受け渡しを試聴して採用する。
-`node arranger/tests/features.test.mjs`でNote不変/Section範囲/保存/MIDIを検証。
+360/390/430pxの既存回帰に加え、v0.5は390pxで目隠し比較、変更部分/Bメロ→サビ試聴、判断履歴/復元、実Note生成、DAW ZIPを確認する。
 
-## 50 musical methods
-Sectionの編曲ラボ上部から②Harmony / ③Counter / ④Development / 連動を選択。
-素材不足や同一の発音になる候補は理由を表示。適用案は試聴・採用・候補MIDIに共通反映。
-テスト: `node arranger/tests/music-labs.test.mjs`。全手法・157適用VariantのNote/Chord/保存/MIDI往復、空素材・異なるPPQを確認。
+## v0.4 musical methods
+Sectionの編曲ラボ上部からHarmony / Counter / Development / 連動を選択。50手法（14/16/15/5）と157適用Variantは維持し、v0.5の6部屋整理でも既存機能を削除しない。

@@ -6,7 +6,7 @@
   "background_color": "#070b14",
   "theme_color": "#111827",
   "lang": "ja",
-  "description": "Demo Composerのproject.jsonから複数の編曲・Mix・リハモ案を比較し、MIDIへ書き出すAndroid向けPWA",
+  "description": "Demo Composerの曲を6つの編曲ラボで比較・判断・復元し、MIDIとDAW引き継ぎパックへ書き出すAndroid向けPWA",
   "id": "./",
   "scope": "./",
   "icons": [
