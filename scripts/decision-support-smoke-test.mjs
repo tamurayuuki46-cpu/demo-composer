@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createDefaultProject,createProjectStore,validateProject} from '../src/core/project-state.js';
 import {migrateProject} from '../src/core/project-migration.js';
+import {APP_VERSION} from '../src/core/project-schema.js';
 import {defaultDesign,designOf,undecidedItems} from '../src/core/decision-design.js';
 import {decisionCandidates,withDecisionCandidate} from '../src/core/decision-candidates.js';
 import {createDecisionComparison,decisionPreview} from '../src/core/decision-comparison.js';
@@ -21,7 +22,7 @@ base.structure.sections=[{id:'verse',kind:'verse',name:'Aメロ',bars:2},{id:'ch
 for(const schemaVersion of [1,2]){
  const old=clone(base);old.schemaVersion=schemaVersion;old.appVersion='v0.2-dev';delete old.metadata.composition;
  const untouched=clone(old),migrated=migrateProject(old);
- assert.deepEqual(old,untouched);assert.equal(migrated.schemaVersion,3);assert.equal(migrated.appVersion,'v0.3-dev');
+ assert.deepEqual(old,untouched);assert.equal(migrated.schemaVersion,3);assert.equal(migrated.appVersion,APP_VERSION);
  for(const key of ['basic','chords','tracks','structure','instruments','id','revision'])assert.deepEqual(migrated[key],old[key]);
  assert.equal(migrated.metadata.memo,old.metadata.memo);assert.deepEqual(migrated.metadata.composition,defaultDesign());validateProject(migrated);
 }
@@ -83,5 +84,5 @@ const voiced=withDecisionCandidate(base,upper);const a=parseMidi(buildMidiExport
 assert.equal(a.division,480);assert.equal(b.division,480);
 const pitches=m=>m.tracks.flatMap(t=>t.notes).map(n=>n.pitch);
 assert.deepEqual(pitches(b),pitches(a).map(p=>p+12));assert.deepEqual(voiced.chords,base.chords);
-const sound=withDecisionCandidate(base,decisionCandidates(base,{mode:'sound'})[0]);assert.deepEqual(buildMidiExports(sound)['Song.mid'],buildMidiExports(base)['Song.mid']);
+const sound=withDecisionCandidate(base,decisionCandidates(base,{mode:'sound'})[0]);assert.deepEqual(buildMidiExports(sound)['Draft.mid'],buildMidiExports(base)['Draft.mid']);
 console.log('Decision support: migration, scope preservation, stale rejection, atomic reasons, Bass protection, annotations, analysis and MIDI passed');
