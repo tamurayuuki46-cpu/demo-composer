@@ -1,7 +1,7 @@
 # AI_HANDOFF
 
 現在Version:
-v0.4-dev
+v0.5-dev
 
 最新安定版:
 未認定。mainは自動テスト合格版。stable tagは実機確認後のみ。v0.1機能完成地点は復元可能。
@@ -83,16 +83,19 @@ schemaVersion 3。PPQ 480、4/4固定。`metadata / basic / structure.sections /
 ## Arrangement Lab v0.3-dev — seven features
 理論リハモ/相性分析、裏メロスケール案、Section採用、サビ5案、引き算、主役交代をarranger/へ追加。独立Plan Schema 3、旧1/2互換。正本 arranger/docs/PRODUCT_SPEC.md。restore/arranger-v0.2.1-before-seven-features を変更前復元点とする。
 
-## Arrangement Lab v0.4-dev
-50の音楽変換手法を実装。独立Plan Schema4/旧1〜3互換。正本 arranger/docs/AI_HANDOFF_v0.4-dev.md / PRODUCT_SPEC.md / MUSIC_LAB_METHODS_v0.4.md。本体Schema/Version変更なし。復元点 restore/arranger-v0.3-before-music-labs。
+## Arrangement Lab v0.5-dev
+50の音楽変換手法を実装。独立Plan Schema4/旧1〜3互換。正本 arranger/docs/AI_HANDOFF_v0.5-dev.md / PRODUCT_SPEC.md / MUSIC_LAB_METHODS_v0.4.md。本体Schema/Version変更なし。復元点 restore/arranger-v0.3-before-music-labs。
 
 ## Arrangement Lab v0.4.1-dev cache correction
 50手法はv0.4としてPR #171統合済み。PWA更新修正はchatgpt/arranger-v0.4-cache-update。旧画面が残る場合の入口は /arranger/?v=0.4.1。Schema4/保存キーv0.4維持。正本 PRODUCT_SPEC / VERIFICATION_v0.4。復元点 restore/arranger-v0.4-before-cache-update。
 
 ## 2026-10-13 現在の統合状態
 
-- PR #177でv0.4-dev / Arrangement Lab v0.5-dev / SongProject v1をmainへ統合済み。
+- PR #177でv0.5-dev / Arrangement Lab v0.5-dev / SongProject v1をmainへ統合済み。
 - PR #180でPages公開元をmainへ変更済み。developへのpushでは公開しない。
 - Legacy Project Schema 3を維持し、共通SongProject v1 Adapterで相互変換。ownership / composition保持をCI確認済み。
 - Draft.midはDemoの草稿、final Song.midはArrangement Labの5Track出力。
 - Android実機の保存・音・PWA更新、Cubasis/Cubase実機取込は未確認。stable tag未作成。
+
+## Cloud Browser回帰修正 v0.5-dev
+実公開UIでSong.midボタンの出力失敗を再現。src/midi/midi-export.jsのDraft.midとUI/Drive/案内を統一。Schema変更なし。Android実機・Cubasis/Cubase未確認、stable tag未作成。

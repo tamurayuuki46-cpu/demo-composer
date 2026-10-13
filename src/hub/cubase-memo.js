@@ -62,13 +62,13 @@ export function buildCubaseMemo(project) {
     "",
     "■ 1. プロジェクトを作る",
     `- テンポを ${basic.bpm}、拍子を ${basic.timeSignature} に設定する`,
-    "- Song.mid を読み込む（全パートが1ファイルに入っている）。パートごとに分けたいときは下の個別MIDIを使う"
+    "- Draft.mid を読み込む（全パートが1ファイルに入っている）。パートごとに分けたいときは下の個別MIDIを使う"
   ];
 
   lines.push("", "■ 2. 取り込むMIDI");
   const files = [["Chord.mid", chords.length > 0], ["Melody.mid", melody.length > 0], ["Bass.mid", bass.length > 0], ["Drums.mid", drums.length > 0]];
   files.forEach(([name, filled]) => lines.push(`- ${name}${filled ? "" : "（まだ中身がありません）"}`));
-  if (notesOf(project, "counter").length > 0) lines.push("- CounterMelody.mid（裏メロ。Song.midにも入っています）");
+  if (notesOf(project, "counter").length > 0) lines.push("- CounterMelody.mid（裏メロ。Draft.midにも入っています）");
 
   lines.push("", "■ 3. 使ったコード");
   if (chords.length === 0) lines.push("- まだありません");
@@ -88,7 +88,7 @@ export function buildCubaseMemo(project) {
   });
   lines.push("- ドラム: Kick=C1(36) / Snare=D1(38) / Closed HH=F#1(42)。使うドラム音源のマッピングに合わせて確認する");
 
-  lines.push("", "■ 5. 曲の構成（Song.midにMarkerとして入っています）");
+  lines.push("", "■ 5. 曲の構成（Draft.midにMarkerとして入っています）");
   if (sections.length === 0) lines.push("- 構成はまだ決めていません");
   else {
     sections.forEach((range) => {
