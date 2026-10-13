@@ -1,5 +1,32 @@
 # CHANGELOG
 
+Version: v0.5-dev
+更新日: 2026-10-13
+
+【追加】
+・アプリ全体を①比較試聴室 ②ハーモニー実験室 ③裏メロ・対話設計 ④展開・密度設計 ⑤判断の記録と復元 ⑥DAW引き継ぎの6分類として整理
+・比較試聴室に簡易ラウドネス補正、目隠し消去式比較、変更パートだけ再生、Bメロ/Prechorus→サビ連続試聴を追加
+・判断記録に採用/不採用/保留/気になる/制作日記、理由メモ、Section snapshot履歴、原案/過去snapshot復元を追加
+・判断ログ用localStorage `demo-composer-arranger-decisions-v0.5` を追加。Arrangement Planにも判断履歴を同梱
+・Drum Fill 3案、Bass Approach 3案を実NoteとしてSectionへ適用・解除できる機能を追加
+・SMF Type 1のSong.mid一括出力、Section Marker、Before/After Song.midを追加
+・Arrangement結果を反映したDemo Composer用複製project.json出力を追加
+・DAW引き継ぎZIPを追加。Before/After MIDI、各パートMIDI、Arrangement Plan、Demo Composer JSON、Track/Section指示、判断ログ、比較manifest、DAWチェックリストを同梱
+
+【変更】
+・Arrangement Plan Schema 4、保存キー `demo-composer-arranger-v0.4` を維持したままv0.5機能を互換レイヤーとして追加
+・簡易試聴に候補密度差の影響を抑えるエネルギー基準のGain補正を追加
+・PWA cacheへv0.5 Module / CSSを追加
+・Version表示をv0.5-devへ更新
+
+【修正】
+・目隠し比較中にCandidate詳細/曲線/Section内容から案を推測できないように非表示化
+・PWA更新回帰テストをv0.5表示・cacheへ更新
+
+【未対応】
+・Android Chrome実機での音量感・長時間操作確認
+・Cubasis / Cubase実機でのBefore/After Song.mid、DAW ZIP内MIDI取込確認
+
 Version: v0.4.1-dev
 更新日: 2026-10-13
 
