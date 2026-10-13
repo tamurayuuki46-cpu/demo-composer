@@ -14,7 +14,9 @@ import {
   buildThreeCandidates,
   createArrangerProject,
 } from '../arranger/src/core.js';
+import { createDemoComposerProject } from '../arranger/src/v05-tools.js';
 import {
+  createArrangementForkSongProject,
   songProjectToArrangementSourceInput,
   mergeArrangementChangesIntoSongProject,
 } from '../arranger/src/song-project-sync.js';
@@ -55,19 +57,16 @@ const legacyDemo = {
   legacyUnknownTopLevel: { must: 'survive' },
 };
 
-// 1. Empty project + lineage
 const empty = createEmptySongProject({ projectId: 'empty-1', title: 'Empty', now: NOW });
 assert.equal(empty.schemaVersion, 1);
 assert.equal(empty.lineage.rootProjectId, 'empty-1');
 assert.equal(empty.lineage.parentProjectId, null);
 assert.equal(validateSongProject(empty), true);
 
-// Backward compatibility: old SongProject v1 without lineage still validates.
 const oldV1 = structuredClone(empty);
 delete oldV1.lineage;
 assert.equal(validateSongProject(oldV1), true);
 
-// 2. Demo -> SongProject
 const song = demoProjectToSongProject(legacyDemo, { now: NOW });
 assert.equal(song.title, 'Integration Song');
 assert.equal(song.composition.melody[0].pitch, 64);
@@ -75,20 +74,17 @@ assert.equal(song.composition.counterMelody[0].pitch, 71);
 assert.equal(song.lineage.rootProjectId, legacyDemo.id);
 assert.equal(song.lineage.sourceApp, 'demo-composer');
 
-// 3/4. JSON export/import
 const json = serializeSongProject(song);
 const importedSong = parseSongProjectJson(json);
 assert.deepEqual(importedSong.composition, song.composition);
 assert.deepEqual(importedSong.lineage, song.lineage);
 
-// 5. Arrangement Lab source restore
 const arrangementInput = songProjectToArrangementSourceInput(importedSong);
 const source = normalizeSourceProject(arrangementInput);
 assert.equal(source.title, song.title);
 assert.equal(source.basic.key, 'E');
 assert.equal(source.tracks.find((track) => track.role === 'melody').notes.length, 1);
 
-// 6. Arrangement update
 const candidate = buildThreeCandidates(source, 'jpop-band')[1];
 candidate.sections[0].density = 'full';
 candidate.sections[0].enabled.counter = false;
@@ -102,11 +98,9 @@ assert.equal(arrangedSong.arrangement.density[0].density, 'full');
 assert.equal(arrangedSong.arrangement.instruments[0].enabled.counter, false);
 assert.equal(arrangedSong.arrangement.decisions[0].sectionId, 'verse-1');
 
-// 7. Re-export
 const reexported = parseSongProjectJson(serializeSongProject(arrangedSong));
 assert.equal(reexported.arrangement.selectedAlternatives.id, candidate.id);
 
-// 8/9/10. Back to Demo: composition intact and Arrangement retained in SongProject.
 const roundTripDemo = songProjectToDemoProject(reexported);
 assert.deepEqual(roundTripDemo.chords, legacyDemo.chords);
 assert.deepEqual(roundTripDemo.structure.sections, legacyDemo.structure.sections);
@@ -116,7 +110,6 @@ assert.deepEqual(roundTripDemo.legacyUnknownTopLevel, legacyDemo.legacyUnknownTo
 assert.equal(roundTripDemo.metadata.lineage.rootProjectId, legacyDemo.id);
 assert.equal(reexported.arrangement.density[0].density, 'full');
 
-// Demo owns composition, but Arrangement and lineage survive a later Demo merge.
 const editedDemo = structuredClone(roundTripDemo);
 editedDemo.basic.bpm = 132;
 editedDemo.tracks.find((track) => track.role === 'melody').notes.push(note('m2', 66, 960));
@@ -126,7 +119,6 @@ assert.equal(merged.composition.melody.length, 2);
 assert.deepEqual(merged.arrangement, reexported.arrangement, 'Demo merge must preserve Arrangement-owned data');
 assert.deepEqual(merged.lineage, reexported.lineage, 'Demo merge must preserve project lineage');
 
-// Explicit fork creates a new project without overwriting its parent.
 const forked = forkSongProject(merged, {
   projectId: 'fork-1',
   title: 'Integration Song - Arrangement Fork',
@@ -142,4 +134,26 @@ assert.equal(forked.lineage.forkReason, '採用した編曲を新しい作曲案
 assert.equal(merged.projectId, legacyDemo.id, 'parent project must remain unchanged');
 assert.equal(forked.history.changes.at(-1).type, 'fork');
 
-console.log('SongProject v1 smoke test passed: ownership, lineage, fork, and legacy compatibility are preserved.');
+// Arrangement Labの明示Forkは、元Projectを上書きせず、採用済み編曲のCompositionと系譜を新Projectへ移す。
+const arrangedDemoProject = createDemoComposerProject(source, candidate);
+const arrangementFork = createArrangementForkSongProject(arrangedSong, arrangedDemoProject, {
+  projectId: 'arrangement-fork-1',
+  title: 'Integration Song Arrangement Fork',
+  forkReason: '編曲採用版を作曲ProjectへFork',
+  now: '2026-10-13T00:04:00.000Z',
+});
+assert.equal(arrangementFork.projectId, 'arrangement-fork-1');
+assert.equal(arrangementFork.lineage.rootProjectId, legacyDemo.id);
+assert.equal(arrangementFork.lineage.parentProjectId, arrangedSong.projectId);
+assert.equal(arrangementFork.lineage.sourceApp, 'arrangement-lab');
+assert.equal(arrangementFork.lineage.createdFrom, 'arrangement-fork');
+assert.equal(arrangementFork.lineage.revision, 1);
+assert.deepEqual(arrangementFork.composition.chords, arrangedDemoProject.chords);
+assert.deepEqual(
+  arrangementFork.composition.melody,
+  arrangedDemoProject.tracks.find((track) => track.role === 'melody')?.notes || [],
+);
+assert.deepEqual(arrangementFork.arrangement, arrangedSong.arrangement, 'Arrangement evidence must remain attached to the fork');
+assert.equal(arrangedSong.projectId, legacyDemo.id, 'Arrangement fork must not mutate its parent');
+
+console.log('SongProject v1 smoke test passed: ownership, lineage, explicit Arrangement fork, and legacy compatibility are preserved.');
