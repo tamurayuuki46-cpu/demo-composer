@@ -34,8 +34,24 @@ jobs:
       - name: Existing Demo Composer syntax regression
         run: npm run test:syntax
 
-      - name: Arrangement Lab regression
-        run: npm run test:arranger
+      - name: Arrangement Lab syntax regression
+        run: |
+          node --check arranger/src/core.js
+          node --check arranger/src/app.js
+          node --check arranger/src/song-project-sync.js
+          node --check arranger/sw.js
+          for file in arranger/src/*lab*.js; do node --check "$file"; done
+
+      - name: Arrangement Lab core regression
+        run: |
+          node arranger/tests/core.test.mjs
+          node arranger/tests/regression.test.mjs
+          node arranger/tests/features.test.mjs
+          node arranger/tests/music-labs.test.mjs
 
       - name: Static build
-        run: npm run build
+        run: |
+          npm run build
+          test -f dist/arranger/index.html
+          test -f dist/arranger/src/app.js
+          test -f dist/arranger/src/core.js
