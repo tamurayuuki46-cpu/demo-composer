@@ -10,6 +10,7 @@ await copyFile('index.html', `${outputDir}/index.html`);
 await cp('src', `${outputDir}/src`, { recursive: true });
 await cp('public', `${outputDir}/public`, { recursive: true });
 await cp('arranger', `${outputDir}/arranger`, { recursive: true });
+await cp('project-home', `${outputDir}/project-home`, { recursive: true });
 
 // 更新の検出用。BUILD_ID はコミットの短縮ID。アプリは build.json を読んで自分のBUILD_IDと比べる
 let commit = (process.env.GITHUB_SHA ?? '').slice(0, 7);
@@ -45,4 +46,8 @@ const arrangerHtml = await readFile(arrangerHtmlPath, 'utf8');
 await writeFile(arrangerHtmlPath, arrangerHtml.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
   (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
 await stampModules(`${outputDir}/arranger/src`);
+const projectHomeHtmlPath = `${outputDir}/project-home/index.html`;
+const projectHomeHtml = await readFile(projectHomeHtmlPath, 'utf8');
+await writeFile(projectHomeHtmlPath, projectHomeHtml.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
+  (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
 console.log('Built Demo Composer static site into dist/');
