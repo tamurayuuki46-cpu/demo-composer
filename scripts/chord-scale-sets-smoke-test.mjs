@@ -49,7 +49,7 @@ store.updateChords(ids.map((quality, bar) => ({ root: (bar * 5) % 12, quality, d
 const project = store.getSnapshot();
 validateProject(project);
 const midi = buildMidiExports(project);
-assert.ok(midi["Song.mid"].length > 100 && midi["Chord.mid"].length > 100);
+assert.ok(midi["Draft.mid"].length > 100 && midi["Chord.mid"].length > 100);
 for (const quality of ids) for (let root = 0; root < 12; root += 1) {
   assert.ok(60 + root + Math.max(...chordIntervals(quality)) <= 127, `${quality} within MIDI range`);
 }
