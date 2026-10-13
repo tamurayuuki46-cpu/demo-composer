@@ -14,7 +14,9 @@ on:
       - 'src/hub/sheet-link.js'
       - 'arranger/**'
       - 'project-home/**'
+      - 'docs/JSON_HANDOFF_GUIDE.md'
       - 'scripts/song-project-smoke-test.mjs'
+      - 'scripts/json-handoff-guide-smoke-test.mjs'
       - 'scripts/project-home-claude-link-smoke-test.mjs'
       - '.github/workflows/song-project-ci.yml'
 
@@ -43,6 +45,9 @@ jobs:
 
       - name: SongProject round-trip smoke test
         run: node scripts/song-project-smoke-test.mjs
+
+      - name: JSON handoff guide smoke test
+        run: node scripts/json-handoff-guide-smoke-test.mjs
 
       - name: Project Home Claude link smoke test
         run: node scripts/project-home-claude-link-smoke-test.mjs

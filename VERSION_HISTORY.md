@@ -1,3 +1,30 @@
+## v0.7-dev
+更新日: 2026-10-14
+
+【追加】
+・MIDI Analyzer → Demo Composer → Arrangement Lab のSongProject受け渡しを「保存 → 開く → 反映」の一本道へ整理。
+・同じChromeでは `music-project-songproject-handoff-v1` を補助導線として使用し、JSONファイル選択の手間を減らした。
+・JSONファイルは毎回バックアップとして保存し、一時受け渡しに失敗した場合はファイル選択へフォールバック。
+・Demo Composerで受け取ったSongProjectのanalysis / arrangement等を保持したままcompositionを書き戻す導線を追加。
+
+【変更】
+・初心者向けの主表示を「前のアプリから受け取る」「Arrangement Labへ渡す」に変更。SongProject / Schema等の詳細操作は補助扱い。
+・Arrangement LabはDemo Composerからの受け渡しを検知すると「Demo Composerから続ける」を表示。
+
+【互換性】
+・Demo Composer Project Schema 3据え置き。
+・SongProject schemaVersion 1据え置き。
+・Arrangement Plan Schema 4据え置き。
+・旧project.json / SongProject JSON読込を維持。
+
+【復元ポイント】
+・`restore/develop-before-json-handoff-guide-20261014`
+
+【未対応】
+・Android実機でMIDI Analyzer → Demo Composer → Arrangement Labの通し確認。
+・Cubasis / Cubase実機確認。
+・stable tag作成（実機確認後のみ）。
+
 ## v0.6-dev
 更新日: 2026-10-13
 
