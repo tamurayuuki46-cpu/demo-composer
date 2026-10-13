@@ -17,8 +17,9 @@ Arrangement Labは独立Repositoryではありません。Demo Composerと同じ
 3. Arrangement Lab → SongProject v1 (`arrangement` only)
 4. MIDI Analyzer → SongProject v1 (`analysis` / `reference`)
 5. SongProject v1 → Demo Composer (`basic` + required composition inputs)
-6. Arrangement Lab → final `Song.mid`
-7. Audio / Basic Pitch / Key / Stem
+6. Demo Composer → draft `Draft.mid`
+7. Arrangement Lab → final `Song.mid`
+8. Audio / Basic Pitch / Key / Stem
 
 ## Responsibility boundary
 
@@ -35,6 +36,8 @@ Arrangement Labは独立Repositoryではありません。Demo Composerと同じ
 
 既存IndexedDBを維持し、SongProjectを理由に既存Projectを破壊的Migrationしません。
 
+全体MIDIは`Draft.mid`として出力します。これは作曲段階のドラフトであり、最終Song MIDIではありません。
+
 ### Arrangement Lab
 
 編曲判断を担当します。
@@ -48,6 +51,8 @@ Arrangement Labは独立Repositoryではありません。Demo Composerと同じ
 
 Compositionは参照しますが、SongProjectへの書き戻し時に所有しません。
 
+採用済み編曲結果の最終一括MIDIは`Song.mid`として出力します。
+
 ### MIDI Analyzer
 
 解析・参照素材を担当します。
@@ -57,8 +62,10 @@ Compositionは参照しますが、SongProjectへの書き戻し時に所有し�
 - chord / degree
 - melody / bass / rhythm analysis
 - reference metadata
+- Audio→MIDI / Stem reference
+- Key adaptation / 12 Key material generation
 
-Analyzer接続時もComposition / Arrangementは保持します。
+Analyzer接続時もComposition / Arrangementは保持します。Stem Audio BlobはSongProject JSONへ含めず、metadata参照だけを`reference`へ渡します。
 
 ## Storage boundary
 
@@ -68,4 +75,4 @@ Analyzer接続時もComposition / Arrangementは保持します。
 
 ## Privacy / Copyright
 
-将来のAudio→MIDIはユーザーが明示選択したファイルだけを対象とし、端末内処理を優先します。Spotify等の配信Audioを取得・録音・リッピングする機能は本Integration Contractの対象外です。
+Audio→MIDIはユーザーが明示選択したファイルだけを対象とし、端末内処理を優先します。Spotify等の配信Audioを取得・録音・リッピングする機能は本Integration Contractの対象外です。
