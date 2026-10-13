@@ -1,29 +1,25 @@
 import { loadSheetLink, saveSheetLink } from '../src/hub/sheet-link.js';
+import {
+  buildWorkflowState,
+  hasAnalysis,
+  hasArrangement,
+  hasComposition,
+  lineageLabel,
+} from './workflow.js';
 
 let current = null;
 const file = document.querySelector('#project-file');
 const message = document.querySelector('#message');
 const summary = document.querySelector('#summary');
 const exportCard = document.querySelector('#export-card');
+const workflowCard = document.querySelector('#workflow-card');
+const workflowList = document.querySelector('#workflow-list');
+const nextAction = document.querySelector('#next-action');
+const optionalAnalysis = document.querySelector('#optional-analysis');
 const claudeInput = document.querySelector('#claude-link-input');
 const claudeOpen = document.querySelector('#claude-link-open');
 const claudeClear = document.querySelector('#claude-link-clear');
 const claudeMessage = document.querySelector('#claude-link-message');
-
-function hasAnalysis(p) {
-  const a = p.analysis || {};
-  return Boolean((a.keyCandidates?.length) || (a.chordCandidates?.length) || a.degreeAnalysis || a.melodyAnalysis || a.bassAnalysis || a.rhythmAnalysis);
-}
-
-function hasComposition(p) {
-  const c = p.composition || {};
-  return Boolean((c.chords?.length) || (c.melody?.length) || (c.counterMelody?.length) || (c.bass?.length) || (c.drums?.length) || (c.sections?.length));
-}
-
-function hasArrangement(p) {
-  const a = p.arrangement || {};
-  return Boolean((a.reharmonization?.length) || (a.voicing?.length) || (a.density?.length) || (a.instruments?.length) || a.selectedAlternatives || (a.decisions?.length));
-}
 
 function status(id, label, done) {
   const el = document.querySelector(id);
@@ -35,17 +31,62 @@ function safeName(v) {
   return String(v || 'song-project').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80);
 }
 
+function workflowStatusLabel(statusValue) {
+  return ({
+    done: '完了',
+    pending: '次に進める',
+    optional: '任意',
+    locked: '前工程待ち',
+    external: 'PC工程',
+  })[statusValue] || statusValue;
+}
+
+function renderWorkflow() {
+  const sheetLink = loadSheetLink();
+  if (!current) {
+    workflowCard.hidden = false;
+    workflowList.innerHTML = '<li class="workflow-step pending"><strong>1. 作曲シート</strong><span>まず曲の方向性を決めます。</span></li>';
+    nextAction.textContent = sheetLink ? '作曲シートを開く' : 'Claude Artifact / 作曲シートを登録する';
+    nextAction.removeAttribute('href');
+    if (sheetLink) nextAction.href = sheetLink;
+    optionalAnalysis.hidden = true;
+    return;
+  }
+
+  const workflow = buildWorkflowState(current, { sheetLinked: Boolean(sheetLink) });
+  workflowList.replaceChildren(...workflow.steps.map((step) => {
+    const item = document.createElement('li');
+    item.className = `workflow-step ${step.status}`;
+    const title = document.createElement('strong');
+    title.textContent = step.label;
+    const meta = document.createElement('span');
+    meta.textContent = `${step.role}・${workflowStatusLabel(step.status)}${step.required ? '' : '（任意）'}`;
+    item.append(title, meta);
+    return item;
+  }));
+
+  nextAction.textContent = workflow.nextAction.label;
+  nextAction.removeAttribute('href');
+  if (workflow.nextAction.id === 'sheet' && sheetLink) nextAction.href = sheetLink;
+  else if (workflow.nextAction.href) nextAction.href = workflow.nextAction.href;
+
+  optionalAnalysis.hidden = !workflow.optionalAnalysisSuggested;
+  workflowCard.hidden = false;
+}
+
 function show(p) {
   document.querySelector('#title').textContent = p.title || 'Untitled';
   document.querySelector('#bpm').textContent = p.basic?.bpm ?? '—';
   document.querySelector('#key').textContent = `${p.basic?.key || '—'} ${p.basic?.scale || ''}`.trim();
   document.querySelector('#schema').textContent = `v${p.schemaVersion}`;
   document.querySelector('#updated').textContent = p.updatedAt ? new Date(p.updatedAt).toLocaleString() : '—';
+  document.querySelector('#lineage').textContent = lineageLabel(p);
   status('#analysis-status', 'Analysis', hasAnalysis(p));
   status('#composition-status', 'Composition', hasComposition(p));
   status('#arrangement-status', 'Arrangement', hasArrangement(p));
   summary.hidden = false;
   exportCard.hidden = false;
+  renderWorkflow();
 }
 
 function renderClaudeLink({ keepInput = false } = {}) {
@@ -55,6 +96,7 @@ function renderClaudeLink({ keepInput = false } = {}) {
   claudeClear.hidden = !link;
   if (link) claudeOpen.href = link;
   else claudeOpen.removeAttribute('href');
+  renderWorkflow();
 }
 
 file.addEventListener('change', async () => {
@@ -71,6 +113,7 @@ file.addEventListener('change', async () => {
     summary.hidden = true;
     exportCard.hidden = true;
     message.textContent = `読み込み失敗: ${error.message}`;
+    renderWorkflow();
   }
 });
 
