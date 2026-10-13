@@ -7,7 +7,9 @@ on:
       - main
     paths:
       - 'sheet-app/**'
+      - 'src/shared/song-project.js'
       - 'scripts/composition-sheet-app-smoke-test.mjs'
+      - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
       - 'scripts/build-static.mjs'
       - '.github/workflows/sheet-app-ci.yml'
 
@@ -26,6 +28,9 @@ jobs:
       - name: Composition Sheet smoke test
         run: node scripts/composition-sheet-app-smoke-test.mjs
 
+      - name: Composition Sheet to Demo Composer roundtrip
+        run: node scripts/song-project-sheet-roundtrip-smoke-test.mjs
+
       - name: Static build
         run: npm run build
 
@@ -34,5 +39,7 @@ jobs:
           test -f dist/sheet-app/index.html
           test -f dist/sheet-app/latest/composition_sheet_latest.html
           test -f dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
-          grep -q 'まずは、2項目だけ。' dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
-          grep -q 'demo-composer-project' dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
+          test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
+          test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.js
+          grep -q 'まずは、2項目だけ。' dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
+          grep -q 'SongProject v1' dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html

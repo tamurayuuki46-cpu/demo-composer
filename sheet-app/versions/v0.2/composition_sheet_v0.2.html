@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>作曲シート v0.2</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111827;background:#f3f4f6;--card:#fff;--line:#d1d5db;--muted:#6b7280;--accent:#2563eb;--required:#b91c1c;--ok:#047857}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(180deg,#eef2ff 0,#f8fafc 36%,#f3f4f6 100%)}button,input,textarea{font:inherit}.app{width:min(760px,100%);margin:0 auto;padding:18px 14px 42px}.hero{background:#111827;color:#fff;border-radius:22px;padding:22px;box-shadow:0 14px 35px rgba(15,23,42,.18)}.eyebrow{display:flex;flex-wrap:wrap;gap:8px;font-size:.8rem;color:#cbd5e1}.badge{border-radius:999px;padding:5px 9px;background:rgba(255,255,255,.1)}h1{margin:10px 0 6px;font-size:clamp(1.55rem,5vw,2rem)}.hero p{margin:0;line-height:1.65;color:#dbeafe}.progress-wrap{margin-top:16px;display:flex;align-items:center;gap:10px}.progress{flex:1;height:9px;background:#374151;border-radius:999px;overflow:hidden}.progress>span{display:block;width:0;height:100%;background:#60a5fa;transition:width .2s}.progress-text{min-width:44px;text-align:right;font-weight:700}.section{margin-top:16px;background:var(--card);border:1px solid #e5e7eb;border-radius:20px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.section.required{border:2px solid #fecaca;background:linear-gradient(180deg,#fff7f7,#fff 42%)}.section-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.section-head h2{margin:0;font-size:1.08rem}.section-head p{margin:4px 0 0;color:var(--muted);font-size:.9rem;line-height:1.5}.required-pill{flex:none;color:#fff;background:var(--required);border-radius:999px;padding:5px 9px;font-size:.78rem;font-weight:800}.field{display:block;margin-top:14px}.field:first-of-type{margin-top:0}.label-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px;font-weight:750}.mini-required{color:var(--required);font-size:.75rem;font-weight:800}.hint{color:var(--muted);font-size:.8rem;font-weight:500}input,textarea{width:100%;border:1px solid var(--line);border-radius:13px;padding:12px 13px;background:#fff;color:#111827;outline:none}textarea{min-height:104px;resize:vertical;line-height:1.55}input:focus,textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 4px rgba(96,165,250,.18)}.invalid{border-color:#ef4444!important}.field-status{margin-top:6px;min-height:1.1em;font-size:.78rem;color:var(--muted)}.field-status.ok{color:var(--ok);font-weight:700}.field-status.error{color:var(--required);font-weight:700}details.section{padding:0;overflow:hidden}details.section>summary{list-style:none;cursor:pointer;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:800}details.section>summary::-webkit-details-marker{display:none}.optional-body{border-top:1px solid #e5e7eb;padding:4px 18px 18px}.grid{display:grid;gap:12px}@media(min-width:620px){.grid.two{grid-template-columns:1fr 1fr}}.actions{position:sticky;bottom:8px;margin-top:18px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border:1px solid #e5e7eb;border-radius:18px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:9px;box-shadow:0 10px 30px rgba(15,23,42,.14)}.btn{border:0;border-radius:12px;padding:12px 10px;font-weight:800}.primary{background:var(--accent);color:#fff}.secondary{background:#eef2f7;color:#111827}.btn:disabled{opacity:.42}.message{margin-top:10px;padding:10px 12px;border-radius:12px;font-size:.86rem;display:none}.message.show{display:block}.message.ok{background:#ecfdf5;color:#065f46}.message.warn{background:#fff7ed;color:#9a3412}.json-note{margin-top:14px;border:1px dashed #93c5fd;background:#eff6ff;border-radius:14px;padding:12px;color:#1e3a8a;font-size:.84rem;line-height:1.55}.footer{text-align:center;margin-top:18px;color:var(--muted);font-size:.78rem;line-height:1.6}
+  </style>
+</head>
+<body>
+<main class="app">
+  <header class="hero">
+    <div class="eyebrow"><span class="badge">作曲シート</span><span class="badge">SongProject v1</span><span class="badge">v0.2-dev</span></div>
+    <h1>まずは、2項目だけ。</h1>
+    <p>必須は「どんな場面の曲か」と「参考曲1曲」だけ。JSONは全アプリ共通のSongProject v1で保存します。</p>
+    <div class="progress-wrap"><div class="progress"><span id="progressBar"></span></div><div id="progressText" class="progress-text">0/2</div></div>
+  </header>
+
+  <section class="section required">
+    <div class="section-head"><div><h2>まずここだけ入力</h2><p>この2つが入れば共通JSONを保存できます。</p></div><span class="required-pill">必須 2項目</span></div>
+    <label class="field"><span class="label-row"><span>1. どんな場面の曲？</span><span class="mini-required">必須</span></span><textarea id="scene" placeholder="例：夜の帰り道。少し寂しいけど、最後は前向き"></textarea><div id="sceneStatus" class="field-status">短い一文でもOK</div></label>
+    <label class="field"><span class="label-row"><span>2. 参考曲</span><span class="mini-required">最低1曲</span></span><input id="reference1" placeholder="例：アーティスト名 / 曲名"><div id="reference1Status" class="field-status">まず1曲だけ入れればOK</div></label>
+    <label class="field"><span class="label-row"><span>参考曲 2</span><span class="hint">任意</span></span><input id="reference2" placeholder="2曲目があれば入力"></label>
+  </section>
+
+  <details class="section">
+    <summary><span>任意項目 — あとで決める</span><span>＋</span></summary>
+    <div class="optional-body">
+      <label class="field"><span class="label-row"><span>Project名</span><span class="hint">任意・80文字まで</span></span><input id="title" maxlength="80" placeholder="例：夜の帰り道"></label>
+      <div class="grid two">
+        <label class="field"><span class="label-row"><span>Genre</span><span class="hint">任意</span></span><input id="genre" placeholder="例：J-POP"></label>
+        <label class="field"><span class="label-row"><span>Mood</span><span class="hint">カンマ区切り</span></span><input id="mood" placeholder="例：切ない, 浮遊感"></label>
+        <label class="field"><span class="label-row"><span>BPM</span><span class="hint">40〜240</span></span><input id="bpm" type="number" min="40" max="240" step="1" placeholder="例：128"></label>
+        <label class="field"><span class="label-row"><span>Key</span><span class="hint">major / minor</span></span><input id="key" placeholder="例：C major / E♭ major"></label>
+      </div>
+      <label class="field"><span class="label-row"><span>メモ</span><span class="hint">任意</span></span><textarea id="notes" placeholder="歌詞の断片、使いたい音、展開のアイデアなど"></textarea></label>
+    </div>
+  </details>
+
+  <section class="section">
+    <div class="section-head"><div><h2>共通JSON</h2><p>作曲シート / Demo Composer / Arrangement Lab / MIDI Analyzerで同じSongProjectを使います。</p></div></div>
+    <div class="json-note">このシートが更新するのは主に <code>intent</code> とBPM/Keyです。<code>composition</code> / <code>arrangement</code> / <code>analysis</code> / <code>assets</code> は保持します。MIDIや音源そのものはJSONへ埋め込まず、必要なら外部ファイルとして参照できます。</div>
+    <div id="message" class="message"></div>
+  </section>
+
+  <div class="actions"><button id="importButton" class="btn secondary" type="button">JSONを開く</button><button id="exportButton" class="btn primary" type="button" disabled>共通JSONを保存</button><input id="fileInput" type="file" accept="application/json,.json" hidden></div>
+  <footer class="footer">Composition Sheet v0.2-dev / SongProject v1 canonical exchange format<br>過去v0.1は保持します。</footer>
+</main>
+<script type="module" src="./composition_sheet_v0.2.js"></script>
+</body>
+</html>
