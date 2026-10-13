@@ -1,6 +1,7 @@
 import { arrangedNotes } from './core.js';
 
-export const ARRANGER_V05_VERSION = 'v0.5-dev';
+// Legacy export name is kept for source compatibility; the current Arrangement Lab build is v0.6-dev.
+export const ARRANGER_V05_VERSION = 'v0.6-dev';
 
 const PART_NAMES = {
   melody: 'Melody',
@@ -259,60 +260,55 @@ function arrangedChords(source, candidate) {
     return true;
   }).sort((a, b) => a.startTick - b.startTick);
 }
-function newProjectId() {
-  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-  return `arranged-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function forkLineage(source, newProjectId) {
-  const parentId = source?.sourceSnapshot?.id || source?.projectId || null;
-  const existing = source?.sourceSnapshot?.metadata?.lineage || null;
+function buildTrack(source, candidate, role, name, midiChannel, { drumMap, notes } = {}) {
+  const track = source.sourceSnapshot?.tracks?.find((item) => item.role === role);
   return {
-    rootProjectId: existing?.rootProjectId || parentId || newProjectId,
-    parentProjectId: parentId,
-    sourceApp: 'arrangement-lab',
-    createdFrom: 'fork',
-    forkReason: 'Arrangement Labで採用した編曲を新しい作曲案として続ける',
-    revision: 1,
+    role,
+    name: track?.name || name,
+    midiChannel: track?.midiChannel || midiChannel,
+    mute: false,
+    solo: false,
+    volume: track?.volume ?? 1,
+    pan: track?.pan ?? 0,
+    ...(drumMap ? { drumMap: clone(drumMap) } : {}),
+    notes: materializeNotes(notes ?? arrangedNotes(source, candidate, role), role),
   };
 }
 
 export function createDemoComposerProject(source, candidate) {
-  if (!source?.sourceSnapshot) throw new Error('元project.jsonのsnapshotがありません。元Projectを読み直してください。');
-  const project = clone(source.sourceSnapshot);
-  const id = newProjectId();
-  project.id = id;
-  project.revision = 1;
-  project.metadata ||= {};
-  const originalTitle = project.metadata.title || source.title || 'Untitled';
-  project.metadata.title = `${originalTitle} - Arrangement`.slice(0, 80);
-  project.metadata.lineage = forkLineage(source, id);
-  project.chords = arrangedChords(source, candidate);
-
-  const roles = ['melody', 'bass', 'drums', 'counter'];
-  const roleNotes = Object.fromEntries(roles.map((role) => [role, materializeNotes(arrangedNotes(source, candidate, role), `arr-${role}`)]));
-  const originalTracks = Array.isArray(project.tracks) ? project.tracks : [];
-  const seen = new Set();
-  project.tracks = originalTracks.map((track) => {
-    if (!roles.includes(track.role)) return track;
-    if (seen.has(track.role)) return { ...track, notes: [] };
-    seen.add(track.role);
-    return { ...track, notes: roleNotes[track.role] };
-  });
-  for (const role of roles) {
-    if (seen.has(role) || !roleNotes[role].length) continue;
-    project.tracks.push({
-      role,
-      name: role === 'counter' ? 'Counter Melody' : role[0].toUpperCase() + role.slice(1),
-      midiChannel: DEFAULT_CHANNELS[role],
-      instrumentId: null,
-      mute: false,
-      solo: false,
-      volume: 1,
-      pan: 0,
-      ...(role === 'drums' ? { drumMap: { kick: 36, snare: 38, closedHH: 42 } } : {}),
-      notes: roleNotes[role],
-    });
+  const sourceProject = source.sourceSnapshot;
+  if (!sourceProject) throw new Error('元project.jsonのsnapshotがありません。');
+  const next = clone(sourceProject);
+  const parentLineage = sourceProject.metadata?.lineage || null;
+  const rootProjectId = parentLineage?.rootProjectId || source.sourceProjectId;
+  const now = new Date().toISOString();
+  next.id = `${source.sourceProjectId}-arr-${Date.now().toString(36)}`;
+  next.revision = 1;
+  next.updatedAt = now;
+  next.metadata = {
+    ...(next.metadata || {}),
+    title: `${source.title} Arrangement`,
+    lineage: {
+      rootProjectId,
+      parentProjectId: source.sourceProjectId,
+      sourceApp: 'arrangement-lab',
+      createdFrom: 'fork',
+      forkReason: '編曲案をDemo Composerへ複製して戻す',
+      revision: 1,
+    },
+  };
+  next.chords = arrangedChords(source, candidate);
+  next.tracks = [
+    buildTrack(source, candidate, 'melody', 'Melody', 2),
+    buildTrack(source, candidate, 'counter', 'Counter Melody', 4),
+    buildTrack(source, candidate, 'bass', 'Bass', 3),
+    buildTrack(source, candidate, 'drums', 'Drums', 10, { drumMap: { kick: 36, snare: 38, closedHH: 42 } }),
+  ];
+  const counterA = arrangedNotes(source, candidate, 'counter-a');
+  const counterB = arrangedNotes(source, candidate, 'counter-b');
+  if (counterA.length || counterB.length) {
+    next.tracks[1].notes = materializeNotes([...counterA, ...counterB].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch), 'counter');
   }
-  return project;
+  next.appVersion = ARRANGER_V05_VERSION;
+  return next;
 }
