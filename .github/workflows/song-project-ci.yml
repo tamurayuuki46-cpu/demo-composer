@@ -9,6 +9,7 @@ on:
       - develop
     paths:
       - 'src/shared/**'
+      - 'src/hub/song-project-ui.js'
       - 'arranger/**'
       - 'scripts/song-project-smoke-test.mjs'
       - '.github/workflows/song-project-ci.yml'
@@ -28,11 +29,17 @@ jobs:
       - name: Shared modules syntax
         run: |
           node --check src/shared/song-project.js
+          node --check src/hub/song-project-ui.js
           node --check arranger/src/song-project-sync.js
           node --check arranger/src/song-project-ui.js
+          node --check arranger/src/song-midi.js
+          node --check arranger/src/song-midi-ui.js
 
       - name: SongProject round-trip smoke test
         run: node scripts/song-project-smoke-test.mjs
+
+      - name: Final Song.mid test
+        run: node arranger/tests/song-midi.test.mjs
 
       - name: Existing Demo Composer syntax regression
         run: npm run test:syntax
@@ -43,6 +50,8 @@ jobs:
           node --check arranger/src/app.js
           node --check arranger/src/song-project-sync.js
           node --check arranger/src/song-project-ui.js
+          node --check arranger/src/song-midi.js
+          node --check arranger/src/song-midi-ui.js
           node --check arranger/sw.js
           for file in arranger/src/*lab*.js; do node --check "$file"; done
 
@@ -61,3 +70,5 @@ jobs:
           test -f dist/arranger/src/core.js
           test -f dist/arranger/src/song-project-ui.js
           test -f dist/arranger/src/song-project-sync.js
+          test -f dist/arranger/src/song-midi.js
+          test -f dist/arranger/src/song-midi-ui.js
