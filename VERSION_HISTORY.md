@@ -1,3 +1,21 @@
+## v0.6-dev
+更新日: 2026-10-13
+
+【追加】
+・Project Homeに「Claude Artifact / 作曲シート」を追加。claude.aiリンクを端末内に保存し、1タップで新しいタブに開ける。
+・Project Home用のClaudeリンク回帰テストを追加。
+
+【変更】
+・Demo Composer HubとProject Homeで同じ `demo-composer.sheetLink` を共有。リンクはlocalStorageのみで保持し、Song Project JSON・MIDI・公開コードには保存しない。
+・Project HomeのModule依存にもBuild IDを付与し、更新時の新旧Module混在を防止。
+
+【修正】
+・なし。
+
+【未対応】
+・mainへの統合／GitHub Pages公開は本番反映のため未実施。
+・Android実機とCubasis/Cubase実機確認は引き続き未完了。
+
 ## v0.5-dev
 更新日: 2026-10-13
 
