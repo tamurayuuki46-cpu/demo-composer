@@ -11,9 +11,11 @@ on:
     paths:
       - 'src/shared/**'
       - 'src/hub/song-project-ui.js'
+      - 'src/hub/sheet-link.js'
       - 'arranger/**'
       - 'project-home/**'
       - 'scripts/song-project-smoke-test.mjs'
+      - 'scripts/project-home-claude-link-smoke-test.mjs'
       - '.github/workflows/song-project-ci.yml'
 
 jobs:
@@ -32,6 +34,7 @@ jobs:
         run: |
           node --check src/shared/song-project.js
           node --check src/hub/song-project-ui.js
+          node --check src/hub/sheet-link.js
           node --check arranger/src/song-project-sync.js
           node --check arranger/src/song-project-ui.js
           node --check arranger/src/song-midi.js
@@ -40,6 +43,9 @@ jobs:
 
       - name: SongProject round-trip smoke test
         run: node scripts/song-project-smoke-test.mjs
+
+      - name: Project Home Claude link smoke test
+        run: node scripts/project-home-claude-link-smoke-test.mjs
 
       - name: Final Song.mid test
         run: node arranger/tests/song-midi.test.mjs
@@ -77,3 +83,4 @@ jobs:
           test -f dist/arranger/src/song-midi-ui.js
           test -f dist/project-home/index.html
           test -f dist/project-home/app.js
+          grep -q '../src/hub/sheet-link.js?build=' dist/project-home/app.js
