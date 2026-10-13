@@ -6,6 +6,9 @@ const html = await readFile(new URL('../project-home/index.html', import.meta.ur
 const app = await readFile(new URL('../project-home/app.js', import.meta.url), 'utf8');
 const build = await readFile(new URL('./build-static.mjs', import.meta.url), 'utf8');
 
+assert.match(html, /id="composition-sheet-card"/);
+assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.1 を開く/);
+assert.match(html, /<h1>Music Project Home<\/h1>/);
 assert.match(html, /id="claude-link-input"/);
 assert.match(html, /id="claude-link-open"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
 assert.match(html, /Song Project JSON・MIDI・公開コードには入れません/);
@@ -20,4 +23,4 @@ assert.equal(
 );
 assert.equal(normalizeSheetLink('https://example.com/not-claude'), null);
 
-console.log('Project Home Claude link smoke test passed.');
+console.log('Project Home Composition Sheet top link + Claude link smoke test passed.');

@@ -26,9 +26,16 @@
 <main>
   <header>
     <p>SONG PROJECT v1</p>
-    <h1>Project Home</h1>
-    <p>3アプリの入口とProject状態確認だけを行います。Editor機能は重複させません。</p>
+    <h1>Music Project Home</h1>
+    <p>作曲シートから各制作アプリへ進むための入口です。</p>
   </header>
+
+  <section id="composition-sheet-card" class="card">
+    <h2>1. 作曲シート — 決める</h2>
+    <p>最初にここから開始します。必須は「どんな場面の曲か」と「参考曲1曲」の2項目だけです。</p>
+    <a class="primary" href="../sheet-app/">作曲シート v0.1 を開く</a>
+    <p><small>入力内容は共通JSONとして保存し、Demo Composerなどへ引き継げます。</small></p>
+  </section>
 
   <section class="card">
     <h2>Song Projectを開く</h2>
@@ -61,8 +68,8 @@
   </section>
 
   <section class="card" id="claude-link-card">
-    <h2>Claude Artifact / 作曲シート</h2>
-    <p>Demo Composerと同じClaudeリンクを、この端末だけで共有します。</p>
+    <h2>Claude Artifact 作曲シート（旧リンク）</h2>
+    <p>必要な場合だけ、Claude Artifact版の作曲シートをこの端末に登録して開けます。</p>
     <label for="claude-link-input"><small>claude.ai のリンク</small></label>
     <input id="claude-link-input" type="url" inputmode="url" autocomplete="off" placeholder="https://claude.ai/artifact/…">
     <div class="actions split">
