@@ -1,5 +1,10 @@
 import { loadSheetLink, saveSheetLink } from '../src/hub/sheet-link.js';
 import {
+  loadCompositionSheetHandoff,
+  parseCompositionSheetHandoffJson,
+  saveCompositionSheetHandoff,
+} from '../src/hub/composition-sheet-handoff.js';
+import {
   buildWorkflowState,
   hasAnalysis,
   hasArrangement,
@@ -20,6 +25,8 @@ const claudeInput = document.querySelector('#claude-link-input');
 const claudeOpen = document.querySelector('#claude-link-open');
 const claudeClear = document.querySelector('#claude-link-clear');
 const claudeMessage = document.querySelector('#claude-link-message');
+const sheetJsonFile = document.querySelector('#sheet-json-file');
+const sheetJsonStatus = document.querySelector('#sheet-json-status');
 
 function status(id, label, done) {
   const el = document.querySelector(id);
@@ -43,17 +50,20 @@ function workflowStatusLabel(statusValue) {
 
 function renderWorkflow() {
   const sheetLink = loadSheetLink();
+  const sheetHandoff = loadCompositionSheetHandoff();
+  const sheetReady = Boolean(sheetLink || sheetHandoff);
   if (!current) {
     workflowCard.hidden = false;
-    workflowList.innerHTML = '<li class="workflow-step pending"><strong>1. 作曲シート</strong><span>まず曲の方向性を決めます。</span></li>';
-    nextAction.textContent = sheetLink ? '作曲シートを開く' : 'Claude Artifact / 作曲シートを登録する';
+    workflowList.innerHTML = `<li class="workflow-step ${sheetReady ? 'done' : 'pending'}"><strong>1. 作曲シート</strong><span>${sheetHandoff ? '引き継ぎJSON保存済み' : sheetLink ? 'Artifact登録済み' : 'まず曲の方向性を決めます。'}</span></li>`;
+    nextAction.textContent = sheetHandoff ? 'Demo Composerで曲を作る' : sheetLink ? '作曲シートを開く' : 'Claude Artifact / 作曲シートを登録する';
     nextAction.removeAttribute('href');
-    if (sheetLink) nextAction.href = sheetLink;
+    if (sheetHandoff) nextAction.href = '../';
+    else if (sheetLink) nextAction.href = sheetLink;
     optionalAnalysis.hidden = true;
     return;
   }
 
-  const workflow = buildWorkflowState(current, { sheetLinked: Boolean(sheetLink) });
+  const workflow = buildWorkflowState(current, { sheetLinked: sheetReady });
   workflowList.replaceChildren(...workflow.steps.map((step) => {
     const item = document.createElement('li');
     item.className = `workflow-step ${step.status}`;
@@ -96,6 +106,8 @@ function renderClaudeLink({ keepInput = false } = {}) {
   claudeClear.hidden = !link;
   if (link) claudeOpen.href = link;
   else claudeOpen.removeAttribute('href');
+  const handoff = loadCompositionSheetHandoff();
+  if (handoff) sheetJsonStatus.textContent = `引き継ぎJSON保存済み: ${handoff.title || 'Untitled'}。Demo Composerで初期値を確認できます。`;
   renderWorkflow();
 }
 
@@ -114,6 +126,21 @@ file.addEventListener('change', async () => {
     exportCard.hidden = true;
     message.textContent = `読み込み失敗: ${error.message}`;
     renderWorkflow();
+  }
+});
+
+sheetJsonFile?.addEventListener('change', async () => {
+  const selected = sheetJsonFile.files?.[0];
+  if (!selected) return;
+  try {
+    const handoff = parseCompositionSheetHandoffJson(await selected.text());
+    saveCompositionSheetHandoff(handoff);
+    sheetJsonStatus.textContent = `「${handoff.title || 'Untitled'}」の作曲シート引き継ぎJSONをこの端末に保存しました。`;
+    renderWorkflow();
+  } catch (error) {
+    sheetJsonStatus.textContent = `作曲シートJSONを読み込めませんでした: ${error.message}`;
+  } finally {
+    sheetJsonFile.value = '';
   }
 });
 
