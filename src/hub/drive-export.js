@@ -70,7 +70,7 @@ export function midiShareFiles(project, FileCtor = globalThis.File) {
   ));
 }
 
-// Androidの共有は .mid を送れないため、同じ中身を「Song.mid.txt」（text/plain）にして共有する。
+// Androidの共有は .mid を送れないため、同じ中身を「Draft.mid.txt」（text/plain）にして共有する。
 // Drive側で名前の末尾「.txt」を消せば、そのまま .mid として使える（中身は変えていない）
 export const MIDI_TXT_SUFFIX = ".txt";
 export function midiShareFilesAsText(project, FileCtor = globalThis.File) {
@@ -303,7 +303,7 @@ function ensureDriveExportUi() {
       </div>
       <p class="hint drive-single-label">1ファイルずつDriveへ</p>
       <div class="drive-export-grid drive-single-grid">
-        ${["Song.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid", "CounterMelody.mid"].map((name) => `<button type="button" data-drive-file="${name}">${name}</button>`).join("")}
+        ${["Draft.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid", "CounterMelody.mid"].map((name) => `<button type="button" data-drive-file="${name}">${name}</button>`).join("")}
       </div>
       <p class="hint" data-drive-export-hint>AutoSaveの状態を確認しています…</p>
       <p class="status-message" data-drive-export-status aria-live="polite"></p>

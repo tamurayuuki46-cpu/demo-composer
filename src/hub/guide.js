@@ -130,7 +130,7 @@ export const GUIDE_STEPS = Object.freeze([
     phase: "finish",
     screen: "hub",
     title: "書き出す",
-    what: "HubのExportで Song.mid と、Chord / Melody / Bass / Drums（あれば CounterMelody）の.midと project.json を保存します。",
+    what: "HubのExportで Draft.mid と、Chord / Melody / Bass / Drums（あれば CounterMelody）の.midと project.json を保存します。",
     tip: "「Cubase用メモ」に、取り込む順番と使ったコードがまとまっています。AI相談テキストもここから作れます。"
   },
   {
@@ -138,7 +138,7 @@ export const GUIDE_STEPS = Object.freeze([
     phase: "finish",
     screen: "hub",
     title: "Cubasis / Cubaseで読み込む",
-    what: "Song.mid を読み込み、テンポ・拍子が合っているか、パートが分かれているかを確認します。",
+    what: "Draft.mid を読み込み、テンポ・拍子が合っているか、パートが分かれているかを確認します。",
     tip: "ここからは「何を作ろう」ではなく「どういい音に仕上げよう」。音色・ミックスはDAW側で行います。"
   }
 ]);

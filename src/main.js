@@ -208,7 +208,7 @@ function hubScreen() {
         <h3>Export</h3>
         <div class="export-grid">
           <button id="export-all-midi" class="export-primary">All MIDI</button>
-          <button data-midi-file="Song.mid">Song.mid</button>
+          <button data-midi-file="Draft.mid">Draft.mid</button>
           <button data-midi-file="Chord.mid">Chord.mid</button>
           <button data-midi-file="Melody.mid">Melody.mid</button>
           <button data-midi-file="Bass.mid">Bass.mid</button>
@@ -224,7 +224,7 @@ function hubScreen() {
         <input id="import-midi-file" type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden />
         <p class="hint">MIDIを読み込むと、トラックごとの役割（Chord / Melody / Bass / Drums / 裏メロ）を確かめてから取り込めます。</p>
         <p class="hint">書き出したproject.jsonから曲を戻します。いまの曲は置き換わります（画面上部の ↶ で元に戻せます）。</p>
-        <p class="hint">All MIDIはSong.midとパート別MIDIをまとめてダウンロードします。Androidで複数ダウンロードが止められた場合は個別ボタンを使ってください。</p>
+        <p class="hint">All MIDIはDraft.midとパート別MIDIをまとめてダウンロードします。Androidで複数ダウンロードが止められた場合は個別ボタンを使ってください。</p>
       </section>
     </section>
   `;
@@ -329,7 +329,7 @@ function chordScreen() {
           </select>
         </label>
         <small>${escapeHtml(backingPattern.description)}</small>
-        <p class="backing-pattern-hint">コード進行は変えず、鳴らし方だけを変更します。Demo PlayerとChord.mid / Song.midに反映されます。</p>
+        <p class="backing-pattern-hint">コード進行は変えず、鳴らし方だけを変更します。Demo PlayerとChord.mid / Draft.midに反映されます。</p>
       </div>
 
       <h3>進行</h3>
@@ -666,7 +666,7 @@ function bindHubControls() {
 
   document.querySelector("#export-all-midi")?.addEventListener("click", () => {
     downloadMidiBundle(projectStore.getSnapshot());
-    setExportMessage("Song.midとパート別MIDIの書き出しを開始しました。");
+    setExportMessage("Draft.midとパート別MIDIの書き出しを開始しました。");
   });
 
   document.querySelectorAll("[data-midi-file]").forEach((button) => {

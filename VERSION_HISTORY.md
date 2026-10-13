@@ -1,3 +1,20 @@
+## v0.5-dev
+更新日: 2026-10-13
+
+【追加】
+・390px幅で保存・再読込・主要画面・Draft.midダウンロードを確認するブラウザ回帰テスト。
+
+【変更】
+・Demo ComposerのMIDI出力ボタン、Drive共有、制作ガイドをDraft.midへ統一。Arrangement Labのfinal Song.midとは役割を分離。
+・Legacy Schema 3 / Song Project v1と保存データは維持。
+
+【修正】
+・Song.midボタンが存在しない出力キーを参照して「生成できませんでした」となる不具合を修正。
+
+【未対応】
+・Android実機とCubasis/Cubase実機確認。
+・Cloud Browserはviewport変更APIがないためスマホ幅の直接確認は未実施（390pxはCIで確認）。
+
 # VERSION_HISTORY
 
 ## 2026-10-13 — main統合・公開後の整合性修正
