@@ -36,7 +36,7 @@ function sampleProject() {
 
 const original = sampleProject();
 const files = buildMidiExports(original);
-const parsed = parseMidi(files["Song.mid"]);
+const parsed = parseMidi(files["Draft.mid"]);
 
 // ---- 読み取り
 assert.equal(parsed.division, 480);
@@ -71,7 +71,7 @@ assert.equal(notesOf(project, "drums").length, 24);
 assert.equal(notesOf(project, "counter").length, 2);
 assert.equal(project.tracks.find((track) => track.role === "counter").midiChannel, 4);
 // 取り込んだものを、もう一度書き出せる
-assert.ok(buildMidiExports(project)["Song.mid"].length > 100);
+assert.ok(buildMidiExports(project)["Draft.mid"].length > 100);
 
 // ---- 役割を選び直す: Chordだけ / 使わないトラックは入らない
 const onlyMelody = buildProjectFromMidi(parsed, ["none", "melody", "none", "none", "none"]);
@@ -161,7 +161,7 @@ assert.deepEqual(notesOf(scaled.project, "melody").map((n) => n.startTick), [0, 
 assert.throws(() => parseMidi(new Uint8Array([1, 2, 3])), /MIDIファイルとして読めません/);
 assert.throws(() => parseMidi(new TextEncoder().encode("this is not a midi file at all")), /MIDIファイルとして読めません/);
 assert.throws(() => parseMidi(new Uint8Array([0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 1, 0, 1, 0xe7, 0x28])), /SMPTE/);
-assert.throws(() => parseMidi(files["Song.mid"].subarray(0, 60)), /途中で終わって/);
+assert.throws(() => parseMidi(files["Draft.mid"].subarray(0, 60)), /途中で終わって/);
 assert.throws(() => buildProjectFromMidi(parsed, ["none", "none", "none", "none", "none"]), /取り込むトラック/);
 const waltz = createMidiFile({
   format: 1, division: 480,

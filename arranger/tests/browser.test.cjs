@@ -17,8 +17,14 @@ const fixture = {
    // Seed another PWA's cache before registration; Arrangement Lab must preserve it.
    await context.addInitScript(()=>{window.AudioContextOriginal=window.AudioContext;window.testContexts=[];window.AudioContext=class extends window.AudioContextOriginal {constructor(...args){super(...args);window.testContexts.push(this)}};});
    const page=await context.newPage(),errors=[];
+   let deliberateOffline=false;
    page.on('pageerror',e=>errors.push(e.message));
-   page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+   page.on('console',m=>{
+    if(m.type()!=='error')return;
+    const text=m.text();
+    if(deliberateOffline&&text.includes('ERR_INTERNET_DISCONNECTED'))return;
+    errors.push(text);
+   });
    await page.goto(base); await page.evaluate(()=>caches.open('demo-composer-sentinel'));
    await page.locator('#version').waitFor();
    await page.locator('#project-file').setInputFiles({name:'project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});
@@ -130,6 +136,7 @@ const fixture = {
    await page.evaluate(()=>navigator.serviceWorker.ready);await page.reload();
    await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
    assert.ok((await page.evaluate(()=>caches.keys())).includes('demo-composer-sentinel'));
+   deliberateOffline=true;
    await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===6);
    await page.selectOption('#preview-section','7680');await page.click('#preview-btn');
    await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='running');
