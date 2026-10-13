@@ -10,6 +10,12 @@
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./v05.css">
   <link rel="stylesheet" href="./v06.css">
+  <script>
+    try {
+      const requestedMode = new URLSearchParams(location.search).get('mode');
+      if (requestedMode === 'beginner' || requestedMode === 'explore') localStorage.setItem('arrangement-lab-ui-mode-v0.6', requestedMode);
+    } catch {}
+  </script>
 </head>
 <body>
   <header class="app-header">
