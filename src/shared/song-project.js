@@ -32,15 +32,15 @@ function referenceItems(value) {
   if (!Array.isArray(value)) return [];
   return value.slice(0, 30).map((item) => {
     if (typeof item === 'string') return { title: text(item, 160), artist: '', note: '' };
-    return {
-      title: text(item?.title, 160),
-      artist: text(item?.artist, 160),
-      note: text(item?.note, 500),
-      ...(item?.type ? { type: text(item.type, 40) } : {}),
-      ...(item?.name ? { name: text(item.name, 200) } : {}),
-      ...(item?.metadata && typeof item.metadata === 'object' ? { metadata: clone(item.metadata) } : {}),
-    };
-  }).filter((item) => item.title || item.artist || item.note || item.name || item.type);
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+    const next = clone(item);
+    if (Object.hasOwn(next, 'title')) next.title = text(next.title, 160);
+    if (Object.hasOwn(next, 'artist')) next.artist = text(next.artist, 160);
+    if (Object.hasOwn(next, 'note')) next.note = text(next.note, 500);
+    if (Object.hasOwn(next, 'type')) next.type = text(next.type, 40);
+    if (Object.hasOwn(next, 'name')) next.name = text(next.name, 200);
+    return next;
+  }).filter((item) => item && Object.keys(item).length > 0);
 }
 
 function emptyIntent() {
@@ -98,17 +98,22 @@ function normalizeAssets(assets) {
   if (!assets || typeof assets !== 'object') return emptyAssets();
   const files = Array.isArray(assets.files) ? assets.files : [];
   return {
-    files: files.slice(0, 200).map((item, index) => ({
-      id: text(item?.id, 120) || `asset-${index + 1}`,
-      type: text(item?.type, 60) || 'file',
-      role: text(item?.role, 60) || null,
-      name: text(item?.name, 240),
-      path: text(item?.path, 500) || null,
-      mimeType: text(item?.mimeType, 120) || null,
-      sha256: text(item?.sha256, 128) || null,
-      external: item?.external !== false,
-      ...(item?.metadata && typeof item.metadata === 'object' ? { metadata: clone(item.metadata) } : {}),
-    })),
+    ...clone(assets),
+    files: files.slice(0, 200).map((item, index) => {
+      const source = item && typeof item === 'object' && !Array.isArray(item) ? clone(item) : {};
+      const next = {
+        ...source,
+        id: text(source.id, 120) || `asset-${index + 1}`,
+        type: text(source.type, 60) || 'file',
+        name: text(source.name, 240),
+        external: source.external !== false,
+      };
+      if (Object.hasOwn(source, 'role')) next.role = text(source.role, 60) || null;
+      if (Object.hasOwn(source, 'path')) next.path = text(source.path, 500) || null;
+      if (Object.hasOwn(source, 'mimeType')) next.mimeType = text(source.mimeType, 120) || null;
+      if (Object.hasOwn(source, 'sha256')) next.sha256 = text(source.sha256, 128) || null;
+      return next;
+    }),
   };
 }
 
@@ -137,7 +142,7 @@ function normalizeLineage(lineage, projectId, fallback = {}) {
 }
 
 function normalizeKeyRoot(value) {
-  const raw = text(value, 20).replace(/♭/g, '♭').replace(/♯/g, '♯');
+  const raw = text(value, 20);
   const mapped = KEY_ALIASES[raw] || raw.replace('♯', '#');
   return VALID_KEYS.has(mapped) ? mapped : null;
 }
@@ -200,8 +205,7 @@ export function normalizeSongProjectV1(project, { now } = {}) {
     reharmonization: null, voicing: null, density: null, instruments: null, selectedAlternatives: null, decisions: [], ...(next.arrangement || {})
   };
   next.history = { version: 1, changes: [], ...(next.history || {}) };
-  next.reference = { items: [], ...(next.reference || {}) };
-  next.reference.items = referenceItems(next.reference.items);
+  next.reference = { ...(next.reference || {}), items: referenceItems(next.reference?.items) };
   next.assets = normalizeAssets(next.assets);
   next.export = { lastDraftMidiAt: null, lastSongMidiAt: null, lastDawHandoffAt: null, ...(next.export || {}) };
   next.compatibility = next.compatibility && typeof next.compatibility === 'object' ? next.compatibility : {};
