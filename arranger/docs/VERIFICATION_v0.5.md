@@ -3,6 +3,7 @@
 更新日: 2026-10-13
 Branch: `chatgpt/arranger-v0.5`
 Restore: `restore/arranger-v0.4.1-before-v0.5`
+PR: #173
 
 ## 自動検証対象
 
@@ -43,7 +44,18 @@ Restore: `restore/arranger-v0.4.1-before-v0.5`
 `pwa-update.test.cjs`: v0.3旧Worker/Cacheからv0.5 Build-stamped PWAへ更新し、旧保存データと別PWA Cacheを保持。Offline再読込。
 
 ## CI結果
-PR作成後のGitHub Actions結果をここへ追記する。
+検証head: `c39cf7477e5f1cd6b82155c0bdd54299fc5ea1c1`
+
+- Arrangement Lab CI run `38327454311`: **SUCCESS**
+  - JavaScript syntax: success
+  - core/regression/features/music-labs/v05/v05-workflow: success
+  - static build: success
+  - Mobile Chromium end-to-end: success
+  - mobile evidence upload: success
+- Demo Composer CI run `38327454297`: **SUCCESS**
+  - 本体smoke tests 53 step + static build/versioned assets: success
+- GitHub Pages PR build run `38327454388`: **SUCCESS**
+  - PRのためproduction deployは行わず、build/verifyのみ確認
 
 ## 実機継続課題
 - Android Chrome実機での音量感・長時間操作
