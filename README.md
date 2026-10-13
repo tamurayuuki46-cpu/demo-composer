@@ -21,11 +21,11 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 ## Current Version
 
-`v0.5-dev`
+`v0.7-dev`
 
 ## Status
 
-現在は、Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite、Undo / Redo、project.json読み込み、schemaVersion 3準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Exportを実装しています。
+現在は、Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite、Undo / Redo、project.json読み込み、schemaVersion 3準拠の共通Project State、IndexedDB保存、AutoSave、常設Demo Player、MIDI / project.json Export、Song Project v1、Project Home、Root PWA / Service Workerを実装しています。
 
 HubではProject名 / BPM / Key / Scaleを編集できます。Key変更時はChord / Melody / Bassを同じ最短半音幅で自動移調し、Drumsは変更しません。Scale変更はChord / Melody / Bassがある場合は安全のため拒否します。通常の変更は1.5秒後にAutoSaveされ、アプリがバックグラウンドへ移る時にも保存します。`Save Now`は即時保存とPersistent Storage要求に使います。Hubの `＋ 新規Project` では現在のProjectを保存してから、別IDの空ProjectをActiveにして新しい曲を始められます。旧Project自体は端末内に残します。
 
@@ -53,7 +53,9 @@ Hubの Export から、`project.json` に加えて MIDI（.mid）も読み込め
 
 Hubの「作編曲の手引き」から、出発点からCubasis / Cubaseへ渡すまでの手順をスマホで確認できます。Android実機で1曲を通して作るテスト手順は `docs/REAL_SONG_TEST.md` にあります。
 
-未実装の主要項目は、Snapshot履歴、PWA Service Worker、Drums音色変更、本格Sound Sketch整理です。
+Root PWAはBuild ID単位のService Worker Cacheを使い、Demo Composer本体とProject Homeを初回オンライン読込後にオフラインでも開ける構成です。更新通知の「更新する」でwaiting workerを切り替えます。Arrangement Labは独自PWA Cacheを持つためroot Cacheから分離しています。詳細は `docs/PWA_SERVICE_WORKER.md`。
+
+未実装の主要項目は、Snapshot履歴、Drums音色変更、本格Sound Sketch整理です。PWAのホーム画面追加・standalone・offline更新はAndroid実機確認が残っています。
 
 ## v0.3 作曲判断
 
@@ -77,7 +79,8 @@ Arrange: 編集可能なSection役割。Chord: 感情タグとは別の「コー
 4. `docs/PRODUCT_SPEC.md`
 5. `docs/ARCHITECTURE.md`
 6. `docs/DATA_SCHEMA.md`
-7. `CHANGELOG.md`
+7. `docs/PWA_SERVICE_WORKER.md`
+8. `CHANGELOG.md`
 
 ## 開発原則
 
@@ -119,19 +122,19 @@ Vercel配布時のみ `npm run build` を実行し、`dist/` を静的公開し�
 
 アプリ本体の構成は変更せず、`index.html` / `src/` / `public/` をそのまま `dist/` へコピーします。
 
-## GitHub Pages Fallback
+## GitHub Pages
 
-VercelのDeployment上限・障害時の第二公開先としてGitHub Pagesを利用します。
+GitHub Pagesを公開先として利用します。
 
 - Workflow: `.github/workflows/pages.yml`
-- 公開元: `develop`
+- 公開元: `main`
 - Build Command: `npm run build`
 - Output Directory: `dist/`
 - 詳細: `docs/GITHUB_PAGES.md`
 - 公開URL: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
-`develop`は開発統合、`main`は自動テスト・build・回帰CI合格版、GitHub Pages公開元。stable tagはAndroid実機と必要なCubasis/Cubase実機確認後のみ作成します。 mainへの変更はPR経由で行います。
+`develop`は未公開の開発統合、`main`は自動テスト・build・回帰CI合格版かつGitHub Pages公開元です。stable tagはAndroid実機と必要なCubasis/Cubase実機確認後のみ作成します。mainへの変更はPR経由で行います。
 
-## Song Project v1連携（v0.5-dev）
+## Song Project v1連携
 
 共通SongProject JSONと既存project.jsonを併用。Arrangement Lab v0.5-devとの往復とarrangement書き戻しに対応。Demo ComposerのDraft.midとArrangement Labのfinal Song.midを分離します。詳細は `docs/SONG_PROJECT.md` と `docs/RELEASE_POLICY.md`。
