@@ -1,130 +1,308 @@
-# Arrangement Lab v0.4.1-dev
+# Arrangement Lab v0.5-dev
+
+更新日: 2026-10-13
 
 ## 目的
-Demo Composerで作った曲の骨格を、Cubasis / Cubaseへ渡す前に「複数の編曲候補を鳴らして比べ、Section単位で混ぜ、必要ならリハモして、MIDIへ渡せる状態」にする。
+Demo Composerで作った曲の骨格を、Cubasis / Cubaseへ渡す前に「複数の編曲候補を鳴らして比べ、Section単位で混ぜ、判断理由を残し、DAWへ渡せる状態」にする。
+
+Arrangement Labは自動で正解を決めるアプリではない。候補を生成・比較し、ユーザーが編曲判断を行うための独立PWAとする。
 
 ## 位置づけ
-Demo Composer → Arrangement Lab → Cubasis → Cubase
+`Demo Composer → Arrangement Lab → Cubasis → Cubase → 本制作`
 
-Demo ComposerのArrangeは曲構成（Section順・小節数・Energy・Transition）を担当する。Arrangement Labは同じ構成を前提に、楽器参加・密度・リハモ・比較・MIDI出力を担当する。
+Demo Composer:
+- コード
+- 主旋律
+- 裏メロ
+- ベース
+- ドラム
+- 曲構成
+- 作曲判断
 
-## v0.2 Scope
-- Demo Composer project.json読み込み
-- J-POP Band / Modern Synth Pop / Piano Ballad
+Arrangement Lab:
+- 編曲候補比較
+- ハーモニー/裏メロ/展開の実験
+- Section単位の密度・パート参加
+- リハモ
+- 判断履歴
+- MIDI / DAW引き継ぎ
+
+## 6つの部屋
+詳細一覧は `V0.5_SIX_ROOMS.md` を正本とする。
+
+### ① 比較試聴室
+ユーザーが決めること: **どの案を選ぶか**。
+
 - A: 余白重視 / B: 標準 / C: 展開強め
-- A/B/CのWeb Audio簡易試聴
 - 2案Mix
-- Section単位の密度編集
-- Drums / Bass / Harmony / 裏メロ / 色付けのON/OFF
-- Energy / Density / 楽器数の可視化
-- 主旋律×裏メロの近接衝突チェック
-- リハモ3案: 自然 / 色付け / 大胆
-- 選択リハモをArrangement Planへ保存
-- Melody / Bass / Drums / Counter / Harmonyの個別MIDI出力
-- Harmony MIDIへ選択リハモを反映
-- 採用案localStorage保存
-- Arrangement Plan JSON出力
-- PWA / Offline cache
+- Web Audio簡易試聴
+- 簡易ラウドネス補正
+- 目隠し消去式比較
+- 選択Sectionの変更パートだけ再生
+- Bメロ/Prechorus → サビ連続試聴
+- 比較中はCandidate名/詳細/曲線/Section情報を隠す
 
-## リハモ方針
-- 自然: Rootを保ち、major→maj7 / minor→m7を中心に色を追加
-- 色付け: 一部を次コードへのSecondary Dominantへ変更
-- 大胆: DominantのTritone Sub、Approach Diminished、9th系を利用
+音量補正は完成音源のLUFS測定ではない。Note数・Velocity・長さから簡易的なエネルギーを推定してGainを補正し、単純な音量差で候補を選びにくくするための比較補助とする。
 
-リハモ案は元のDemo Composer project.jsonを書き換えない。Arrangement PlanのSection内に選択結果だけを保持する。
+### ② ハーモニー実験室
+ユーザーが決めること: **同じメロディをどう響かせるか**。
 
-## 簡易試聴
-Web Audioを使う比較用スケッチ。Demo ComposerのMelody / Counter NoteとChordを使い、Arrangement LabのHarmony / Bass / Drums ON/OFFとリハモを反映する。完成音源の代替ではない。
+v0.4のHarmony Lab 14手法とv0.3理論Labを継続する。
 
-## MIDI
-- Melody / Bass / Drums / Counter: Demo ComposerのNoteをSection ON/OFFでフィルタして書き出す
-- Harmony: Chordから簡易Voicingを生成し、Section密度と選択リハモを反映する
-- MIDIはDAWへ渡すドラフトで、音色 / Mix / HumanizeはCubasis / Cubase側で行う
+含む:
+- リハモ
+- メロディ音の再解釈
+- 共通音
+- ベース固定/ベースから逆算
+- 解決
+- 借用
+- 転調候補
+- Voicing
+- トップライン
+- 内声
+- 浮遊
+- Secondary Dominant / Tritone Sub / Approach dim等
+
+リハモ案は元Demo Composer project.jsonを直接変更しない。
+
+### ③ 裏メロ・対話設計
+ユーザーが決めること: **主旋律とどう関わらせるか**。
+
+v0.4 Counter Lab 16手法を継続する。
+
+含む:
+- スケール変更
+- コード別音階
+- リハモ追従
+- 輪郭/リズム保持
+- 反行/斜行/並行
+- 語尾応答
+- 入り方
+- モチーフ共有
+- 持続
+- 音域
+- 衝突修正
+- 独立性
+- Section展開
+- 制約
+- A/B分担
+- 主旋律の休みにだけ入るrestPolicy
+
+### ④ 展開・密度設計
+ユーザーが決めること: **曲のどこで何を際立たせるか**。
+
+v0.4 Development Lab 15手法＋連動5セットを継続する。
+
+含む:
+- サビ5案
+- 引き算
+- 楽器入口/出口
+- 密度
+- 音域
+- 主役交代
+- サビ前落差
+- サビ反復差
+- ラスサビ
+- 間奏
+- イントロ回収
+- 終わり方
+
+v0.5追加:
+- Drum Fill 3案を実Note生成
+- Bass Approach 3案を実Note生成
+- SectionのpartOverridesへ適用
+- 解除時は既存Overrideをバックアップから復元
+
+## ⑤ 判断の記録と復元
+ユーザーが決めること: **何を試し、なぜ選んだか**。
+
+判断種別:
+- 採用
+- 不採用
+- 保留
+- 気になる
+- 制作日記
+
+記録内容:
+- 時刻
+- 対象Section / 曲全体
+- 判断種別
+- 理由/制作メモ
+- Section snapshot
+
+復元:
+- v0.5で判断記録を始めた時点のSection原案へ戻す
+- 任意の過去判断snapshotへ戻す
+- 復元操作も履歴へ追加
+
+保存:
+- Arrangement Plan内 `decisionJournal`
+- 補助localStorage `demo-composer-arranger-decisions-v0.5`
+- 最大300件
+
+判断履歴は「正誤」や評価点ではない。ユーザーの制作判断を復元可能にするための記録とする。
+
+## ⑥ DAW引き継ぎ
+ユーザーが決めること: **本制作で何を実現するか**。
+
+### 個別MIDI
+- Melody.mid
+- Harmony.mid
+- Bass.mid
+- Drums.mid
+- Counter.mid
+- Counter A/Bは既存music labから個別出力可能
+
+### Song.mid
+変更後Song.mid:
+- SMF Type 1
+- Conductor Track
+- Tempo
+- 4/4
+- Section Marker
+- 各パートTrack
+- 入力PPQを維持
+- Drums MIDI Channel 10
+
+変更前Song.mid:
+- 元project.jsonのNote/Chordを基準にした比較用baseline
+- Before / AfterをDAWでA/Bする用途
+
+### Demo Composer戻し
+Arrangement結果を反映した複製project.jsonを生成する。
+
+- 元Projectを上書きしない
+- 新しいProject ID
+- revision=1
+- Chord/各Track Noteへ現在のArrangement結果を反映
+
+### DAW引き継ぎZIP
+以下をStore方式ZIPでまとめる。
+
+- `01_compare/Before_Source_Song.mid`
+- `01_compare/After_Arrangement_Song.mid`
+- `02_plan/Arrangement_Plan.json`
+- `02_plan/Demo_Composer_Project.json`
+- `03_notes/TRACK_INSTRUCTIONS.md`
+- `03_notes/SECTION_INSTRUCTIONS.md`
+- `03_notes/DAW_CHECKLIST.md`
+- `03_notes/DECISIONS.json`
+- `03_notes/COMPARE_MANIFEST.json`
+- `04_parts/*.mid`
+
+COMPARE_MANIFESTにはSectionごとの変更パートを記録する。
+
+## v0.4 Musical Transformation Labs
+50手法の正本は `MUSIC_LAB_METHODS_v0.4.md` と `music-lab-catalog.js`。
+
+カテゴリ:
+- Harmony 14
+- Counter 16
+- Development 15
+- Linked 5
+
+候補は現在Arrangementの実発音を読み、Chord変更は `reharmonization.chords`、実配置は `chord.voicing`、Note変更は `partOverrides` へ保存する。
+
+主旋律は原則保持する。全休符/停止/減衰など、展開操作として主旋律を明示的に対象にする場合のみ変更可能。
+
+## Data Contract
+Arrangement PlanはDemo Composer Schemaとは別形式。
+
+### Schema
+- `arrangerSchemaVersion`: 4を維持
+- 旧Schema 1/2/3を受理
+- v0.5でSchema番号は上げない
+
+### Sectionの主な追加Field
+- `harmonyPattern`
+- `chorusDirection`
+- `counterArrangement`
+- `restPolicy`
+- `leadRole`
+- `reason`
+- `decisionNote`
+- `adoptedFrom`
+- `partOverrides`
+- `musicLab`
+- `tonalTarget`
+- `voiceRoles`
+- `performanceBackup`
+- `performanceGenerator`
+
+### 保存キー
+- 現行Plan: `demo-composer-arranger-v0.4`
+- 判断履歴補助: `demo-composer-arranger-decisions-v0.5`
+- v0.3/v0.2/v0.1キーは読込fallbackとして保持し、自動削除しない
+
+元Project snapshotは読取専用コピーとして保持する。Demo Composer IndexedDB/元project.jsonへArrangement Labから破壊的書込みを行わない。
+
+## MIDI共通契約
+- Noteは0〜127
+- Velocityは1〜127
+- Note Offを同tickのNote Onより先に配置
+- DrumsはMIDI Channel 10
+- Section OFF境界では持続Noteを切る
+- 連続ON Sectionでは同一source Noteの持続を維持
+- HarmonyはChord quality定義に基づきVoicingを生成
+- 選択リハモ/partOverridesは試聴とMIDIで同じ発音経路を使用
+
+パート別MIDIはSMF Type 0、Song.midはSMF Type 1。
+
+## Preview Contract
+- Web Audio
+- 選択Sectionから最大16秒
+- 最大32同時Oscillator
+- 短いlookahead
+- 停止/画面非表示/pagehideでAudioContextを破棄
+- 完成音源の代替ではなく編曲比較用スケッチ
+
+## PWA / Offline
+- Arrangement Lab自身のscope/cacheだけを管理
+- Build時にHTML/CSS/Module依存を同じbuild queryへ固定
+- Service Workerはbuild別cache
+- Online navigationはnetwork-first
+- Offlineは同build cache
+- 旧localStorageと別PWA cacheは保持
+- v0.5 Moduleと `v05.css` をprecache
 
 ## Non-goals
 - Mixing / Mastering
 - Plugin Hosting
 - DAW級Piano Roll
 - 高品質音源レンダリング
-- 元のDemo Composer project.jsonの破壊的変更
+- 自動で編曲の正解を決めること
+- 調性感/転調成立の完全自動判定
+- 全声部の厳密なクラシック和声チェック
 
-## 次Version候補
-- Demo ComposerへArrangement Planを戻す双方向連携
-- SectionごとのVoicing詳細編集
-- Drum Fill / Bass Approachの実Note生成
-- Song.mid一括出力
-- Android Chrome / Cubasisの実機受け渡し自動テスト手順整備
+## Verification
+自動検証の正本: `VERIFICATION_v0.5.md`。
 
-## v0.2.1 検証後の契約
-- 試聴は選択Sectionから最大16秒。MIDIと同じNote生成を利用。元Bass/Drumsが無ければそのパートは無音。
-- 色付けON/OFFは計画・楽器数の指標のみ。音源やMIDI Noteを生成しない。
-- Harmonyは44 Quality対応。thinは2音、standardは最大3音、fullは全構成音。拡張コードでは特徴音を残す。
-- リハモはSection内で開始するコードだけを対象にし開始tick/長さを維持。音声/MIDI出力時はSection境界に切り詰める。
-- 自然はRoot保持。Secondary Dominantは次Root+7。Tritoneは次Rootへ解決するV7のみRoot+6。Approach dim7は次Root-1。
-- SMF Type 0、1トラック、入力PPQ、Tempo/4/4/Track Name/EOT。Note Offを同tickのNote Onより先に置く。Drumsはch10固定。
-- パートのON範囲内にNoteを切り詰める。連続ON Sectionでは元持続音を維持する。
-- localStorageキーはv0.2のまま、Schema 2への任意sourceSnapshot追加。採用時に保存。変更後は再採用で保存、JSONは表示中の案を出力。
-- sourceSnapshotは元Projectのコピー。元Project/IndexedDBには書込まない。
-- v0.1/初期v0.2のsnapshotなしプランはJSON出力を維持。同じID/revisionの元project.jsonを再読込すると編集再開。旧キーや不正データを自動削除しない。
-- Service WorkerはArrangement Lab自身のcache/scopeだけを管理。キャッシュ更新時はversionを上げる。
-- 詳細検証記録: VERIFICATION_v0.2.1.md。
+継続する既存検証:
+- core / regression
+- v0.3 7機能
+- v0.4 50手法 / 157 Variant
+- 360 / 390 / 430px Browser
+- PWA Offline / update
 
-## v0.3: 理論を編曲判断に使う7機能
-1. リハモ理論Lab。6手法の候補、成立条件、目的、注意、構成音差分、最寄り音対応。元/候補/特徴音/元Bassを最大16秒で比較する。
-2. 裏メロのスケール案。Key / pentatonic / Lydian(major)・Dorian(minor) / 採用Chord Tone / 隙間応答。元リズムを保ち最寄り音へ移す。元CounterがないSectionは短い叩き台を生成。採用結果はcounterArrangement.notesへ保存。
-3. Section別候補採用。現在案へ対象Sectionだけコピー。他Sectionを維持し採用元ラベルを保存。
-4. サビだけ5案。chorus Section限定。壮大=sustain/full、疾走=pulse/full、浮遊=arpeggio/standard、静かな熱量=sustain/thin、踊れる=offbeat/standard。既存Bass/DrumsをON/OFFで利用し、自動ドラム生成はしない。
-5. 引き算。3方向の候補を試聴し対象Sectionへ適用。
-6. 主旋律との相性付きリハモ。構成音に重なる時間の割合を元/候補で表示。強拍(4/4の1・3拍)・1拍以上の非構成音を確認対象にする。点数/正誤判定ではない。元Bassの非構成音も表示。
-7. 主役の受け渡し。melody-gapsでCounterの発音区間を主旋律の休みへ切り詰める。裏メロ主役時Harmony Velocityを75%へ。伴奏主役時CounterをOFF。主旋律Noteは保持。
+v0.5追加検証:
+- Song.mid Type 1
+- Drum Fill / Bass Approach
+- 比較範囲/変更パート
+- 判断履歴/復元
+- DAW ZIP
+- 390pxの6部屋Browser flow
 
-各Sectionの「編曲ラボ」内に折りたたんで配置。候補の試聴は採用操作とは別で、元Project/採用案を変更しない。採用したら従来の「この案を採用」で保存。JSON/MIDIは表示中の案へ反映する。
+## 実機継続課題
+- Android Chrome実機の音量感・長時間操作
+- Cubasis / CubaseでのBefore/After Song.mid実取込
+- DAW ZIP内各Trackの実取込と音源割当確認
 
-### 理論の範囲
-- 単一Keyを仮定する初期ルール。function/borrowedは長調のみ、Section外の解決先は使わない。
-- 理論候補も元ChordのstartTick/durationTickを保持。挿入/転調の自動生成はしない。
-- 代理機能はI↔vi、IV↔iiに限定。終止の最後のChordは機能代理で変更しない。
-- 裏コードは解決するV7を対象。半音下dim7は導音型であり共通音dimとは別。
-- 異名同音は#表記に統一。最寄り構成音の表示は音高クラスの対応で、実際の声部の独立性/平行進行/配置最適化を判定するものではない。
-- 構成音重複時間はpolyphonic Melodyでは各Noteの重複時間合算。非構成音はアボイド断定ではなく、経過音/テンションになり得る。
-- フィルタ時のCounter持続音はON/OFF境界や主旋律発音境界で切る。各パートMIDIも同じeventを出す。
+## 参考資料
+理論実装の既存参考:
+- Berklee / Chord Substitution and Reharmonization
+- Open Music Theory / Applied Chords
+- Open Music Theory / Embellishing Chords
+- Berklee / Basic Piano Voicing Techniques
+- Berklee / Voice Leading Paradigms
 
-### 理論の参考資料
-- Berklee / Randy Felts, Chord Substitution and Reharmonization: https://online.berklee.edu/takenote/reharmonization-simple-substitution/
-- Open Music Theory, Applied Chords: https://openmusictheory.github.io/appliedChords.html
-- Open Music Theory, Embellishing Chords: https://viva.pressbooks.pub/openmusictheory/chapter/jazz-embellishing-chords/
-教材の図や本文を転載せず、本アプリのルール・説明・コード実装は独自に作成。
-
-### Arrangement Plan Schema 3
-追加フィールド（いずれもSection内）：harmonyPattern、chorusDirection、counterArrangement:{id,label,notes,generated}、restPolicy、leadRole、reason、decisionNote、adoptedFrom。
-旧Schema 1/2は受理し、元snapshotがあれば再開、なければ同じProject ID/revisionの元JSONを選択する。v0.3保存はdemo-composer-arranger-v0.3、v0.2/v0.1は起動時fallbackのみで自動削除しない。Demo Composer Schema 3とは別の形式。
-
-## v0.4 musical transformation labs
-50手法の正本は `music-lab-catalog.js`。実装は harmony-lab / counter-lab / development-lab と music-lab の連動処理。各Sectionの編曲ラボ上部でカテゴリ→手法→複数案を生成する。14/16/15/5の機能一覧とVariantは MUSIC_LAB_METHODS_v0.4.md。
-
-- 変換は現在のArrangement候補の実発音を読む。元Project Snapshotは変更しない。
-- Chord変換はreharmonization.chords、実配置はchord.voicing、Note変換はSection.partOverridesへ保存する。
-- 候補のaffectedSectionIdsを表示。採用はこのIDだけ現在案へコピーし、他Sectionの後続編集を保持。
-- サビ前引き算は直前Section、ラスサビは最後のchorus、終わり方は末尾、サビ反復差は複数chorusが対象。素材がなければ理由付きで不適用。
-- 元を聴く/候補を聴くは最初の対象Sectionから最大16秒。長い案は通常の試聴開始Sectionから各区間を確認する。
-- 変換の発音区間数とMIDI音域を表示。少ない/多いを良さの点数として扱わない。
-- MIDIは候補を採用せず書き出せる。対象外Sectionは現在の案を維持。Counter A/Bはvoice=A/Bを個別channel6/7へ出力。
-- 主旋律はハーモニー/裏メロの変換で保持。全休符/停止/減衰など明示的な展開操作では主旋律の発音区間/Velocityも変わる。
-- 転調候補はSection内のii–V–I等を実Chordへ展開しtonalTargetとして記録。主旋律固定のため不一致は確認対象。新調の成立を自動断定しない。
-- 内声の半音装飾はコード記号外の音を含み得る。コード記号は骨格、voicingが実発音。
-- 輪郭保持は元の上下方向、リズム保持は開始/長さを基準にする。音域端では変更できない候補もある。
-- 既存Density/Backing/リハモ/裏メロ再採用時は、競合するHarmony/Counter Overrideを解除して新しい選択を優先する。
-- PWAは新Moduleを同じv0.4 cacheへ保存。別PWAのcacheは変更しない。
-
-### Schema 4 and restoration
-SectionにpartOverrides:{melody?,counter?,bass?,drums?,harmony?}、musicLab、tonalTarget、voiceRolesを追加。Chordのvoicingは0〜127整数の配列、NoteのvoiceはA/Bの役割ラベル。Demo ComposerのSchemaは変更しない。
-旧Plan Schema1/2/3を受理し、追加fieldなしを既定動作にする。旧キーを上書きせず、v0.4採用時に新キーへ保存。旧アプリにSchema4を戻す場合はv0.3復元branch/archiveと旧キー/旧JSONを使用する。
-
-### Theory references
-- Voicing: https://online.berklee.edu/takenote/basic-piano-voicing-techniques/
-- Voice leading: https://online.berklee.edu/takenote/voice-leading-paradigms-for-harmony-in-music-composition/
-- Pedal / II–V / melodic identity: https://college.berklee.edu/bt/204/lesson.html
-本実装は短いルールベースの比較候補を作る。教材文章や譜例を転載しない。
-
-## v0.4.1 PWA update contract
-Build時にarrangerのHTML/CSS/Module入口と全相対依存を同じbuild queryで固定。appがsw.js?build=同IDをupdateViaCache:noneで登録。SWはbuild別cacheにreloadで取得し、オンラインnavigationはnetwork-first、offlineは同build cache。異なるbuildのModule queryは旧cacheへフォールバックしない。旧v0.3が残る場合はバージョン付き入口URLで旧HTML cacheを避け、以後通常URLの更新も新SWが管理する。localStorageと別PWA cacheは保持。
+教材本文や譜例は転載せず、Arrangement Labの候補生成規則・UI・コードは独自実装とする。
