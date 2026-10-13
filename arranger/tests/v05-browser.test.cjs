@@ -34,6 +34,8 @@ const fixture={
   await page.locator('[data-blind-choose="0"]').click();await page.locator('[data-blind-choose="0"]').click();
   assert.equal(await page.evaluate(()=>document.body.classList.contains('blind-active')),false);assert.match(await page.locator('#comparison-result').textContent(),/勝ち残り/);
 
+  // Use the high-development candidate so changed-only playback always has a real difference.
+  await page.locator('.candidate-tab').nth(2).click();
   // Changed-only and Bメロ -> サビ preview use the normalized comparison path.
   await page.selectOption('#preview-section',String(BAR));await page.click('#changed-only');await page.waitForFunction(()=>window.testContexts.at(-1)?.state==='running');await page.click('#comparison-stop');
   assert.match(await page.locator('#comparison-result').textContent(),/変更部分/);
