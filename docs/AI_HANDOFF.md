@@ -28,6 +28,7 @@
 - `docs/WORKFLOW_PRINCIPLES.md`
 - `docs/APP_INTEGRATION.md`
 - `docs/SONG_PROJECT.md`
+- `docs/VOCAL_LYRICS_BOUNDARY.md`
 
 機能数よりWorkflowの直感性、次の一手の分かりやすさ、再入力の少なさを優先する。
 
@@ -70,6 +71,7 @@ Handoff:
 
 Project HomeでJSONを読み込み、同一Origin localStorageへ保存。
 Demo Composer Hubで内容を確認し、Title / BPM / Key / Scaleだけ明示適用可能。
+Vocal初期情報は`歌詞 / Vocal設計` Panelの初期候補として利用する。
 Chord / Melody / Bass / Drum / CounterをClaude JSONから自動生成しない。
 
 旧Schema 1 handoffで`vocal`欠落を許容する。
@@ -84,12 +86,18 @@ Chord / Melody / Bass / Drum / CounterをClaude JSONから自動生成しない�
 - Vocal方向
 - 想定音域候補
 
-Demo Composer:
-- 将来Phrase単位歌詞メモ
-- Melodyとの対応
-- 音節数
+Demo Composer実装済み:
+- 歌もの / Instrumental / 未決定
+- 歌詞テーマ / 言葉のイメージ
+- Vocal方向
 - Vocal Range
+- 歌詞Draft
+- Phrase単位の歌詞 / Melodyとの当たり
+- 音節メモ
 - 仮歌 / SynthV前段メモ
+
+保存正本は`project.metadata.vocal`。Project Schemaは3のまま、optional metadataとして旧Project互換を維持する。
+保存時はProject ID照合付きreload Bridgeを使い、別Projectへ誤適用しない。
 
 Arrangement Lab:
 - Vocalの居場所、密度、Counterとの対話
@@ -133,9 +141,11 @@ SongProject Schemaは`1`のまま。
 - root lineage維持
 - parent記録
 - revision=1
-- fork reason記録可能
+- fork reason記録
+- Arrangementで採用したCompositionを新Forkへ反映
 
-Arrangement Lab UIの旧`Demo Composer戻し`は`新しい作曲ProjectとしてFork`へ変更。
+SongProject v1からArrangement Labへ入った場合、既存ForkボタンはLineage付きSongProject Forkを書き出す。
+legacy Demo Composer project.json入力時は従来のproject.json Forkを維持する。
 
 通常の出口は**DAW Handoff Package**。
 
@@ -167,6 +177,7 @@ Composition Owner:
 - Counter Melody
 - Sections
 - BPM / Key / Scale
+- Lyrics / Vocalの作曲前段メモ
 - 作曲案A/B
 - 作曲判断
 - Draft.mid
@@ -175,7 +186,7 @@ Composition Owner:
 
 深い参考曲分析 / Personal Trend → MIDI Analyzer。
 高度Reharm / Voicing / Density / Development → Arrangement Lab。
-Mix / Mastering / Plugin Hosting → PC DAW。
+Mix / Mastering / Plugin Hosting / Vocal本制作 → PC DAW。
 
 ## 既存主要機能
 
@@ -201,6 +212,8 @@ Mix / Mastering / Plugin Hosting → PC DAW。
 - Root Service Worker / manifest / versioned precache / offline fallback
 - SongProject v1 Adapter
 - Project Home
+- Claude composition-sheet-handoff
+- Lyrics / Vocal設計Panel
 
 ## Root PWA
 
@@ -220,6 +233,7 @@ Mix / Mastering / Plugin Hosting → PC DAW。
 - PPQ 480
 - timeSignature 4/4固定
 - `project.json`をDemo Composer内部正本とする
+- `metadata.vocal`はoptional Lyrics/Vocal作曲情報
 
 ### SongProject
 - schemaVersion 1
@@ -231,6 +245,7 @@ Mix / Mastering / Plugin Hosting → PC DAW。
 ### Storage
 Project Libraryは既存IndexedDB `projects` + `meta.activeProjectId`。
 Project Home / Sheet handoffの軽量UI stateはlocalStorageを使用。
+Vocal pending情報はreloadを跨ぐ一時キューだけで、正本はProject metadata。
 別OriginのIndexedDBを直接共有しない。
 
 ## v0.8-dev 自動テスト追加
@@ -242,13 +257,16 @@ Project Home / Sheet handoffの軽量UI stateはlocalStorageを使用。
 確認:
 - Claude handoff Schema 1
 - old v1 without Vocal
+- Handoff Vocal → Demo Vocal model
+- Vocal pending save / Project ID一致適用 / revision更新 / ID不一致保護
 - Project Home Workflow
 - 次の一手
 - SongProject old v1 without lineage
 - Lineage roundtrip
-- ArrangementがCompositionを保持
+- ArrangementがCompositionを通常上書きしない
 - Demo mergeがArrangementを保持
 - explicit Fork root / parent / sourceApp / reason
+- Arrangement Forkが採用Composition + lineageを保持
 - parent Project不変
 - Static build
 - PWA precache
@@ -256,13 +274,11 @@ Project Home / Sheet handoffの軽量UI stateはlocalStorageを使用。
 ## 現在の開発状態
 
 作業Branch:
-`chatgpt/workflow-boundary-cleanup`
-
-PR:
-`#188 feat: align songwriting workflow boundaries and Project Home (v0.8-dev)`
+`chatgpt/workflow-boundary-phase2`
 
 変更前復元点:
-`restore/before-workflow-boundary-2026-10-13`
+- `restore/before-workflow-boundary-2026-10-13`
+- `restore/v0.8-workflow-boundary-phase1`
 
 ## Git運用
 
@@ -287,9 +303,8 @@ PR:
 ## 継続課題
 
 - Android実機でProject Home → Claude handoff JSON → Demo Composer → Arrangement Lab → DAW Handoffの通し確認
+- Android実機でLyrics / Vocal Panel入力・保存・reload・Project切替確認
 - Android実機PWA install / standalone / offline / update
 - Cubasis / Cubase実機MIDI / DAW ZIP取込
-- Demo ComposerのPhrase単位Lyrics / syllable / Vocal Range UI本実装
-- Arrangement Labのlegacy Demo Composer Fork出力へSongProject lineageをさらに直接統合
 
 stable tagはこれら実機確認前に作らない。
