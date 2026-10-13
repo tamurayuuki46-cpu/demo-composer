@@ -1,5 +1,31 @@
 # CHANGELOG
 
+Version: v0.6-dev
+更新日: 2026-10-13
+
+【追加】
+・初心者モードを初期ONで追加。①読込 → ②A/B/C試聴 → ③案を選ぶ → ④Sectionを1つ調整 → ⑤判断記録 → ⑥DAW引き継ぎの一本道に整理
+・画面上部に「次にやること」を1つだけ表示するガイドを追加
+・スマホ下部に「前へ / 現在工程 / 次へ」の固定ナビを追加。完了条件なしで自由に前後移動可能
+・④Section調整が未生成の場合に空欄ではなく、①→②の手順と戻るボタンを表示
+・「もっと試す」モードを追加し、A/B/C Mix、目隠し比較、50手法、Drum Fill / Bass Approach、詳細MIDI等を展開可能にした
+・モード選択を端末内に保持
+
+【変更】
+・初心者モードでは④を密度 / 楽器 / 裏メロ / リハモ中心に絞って表示
+・高度機能は削除せず「もっと試す」へ収納
+・初心者モードでは詳細出力・端末内削除UIを隠し、DAW引き継ぎを主出口として強調
+・Arrangement Plan Schema 4、保存キー `demo-composer-arranger-v0.4`、判断ログ `demo-composer-arranger-decisions-v0.5` は維持
+・PWA cacheをv0.6へ更新し、v0.6 CSS / 初心者フローModuleを事前cache対象に追加
+
+【修正】
+・④のSectionカードがまだ無い時に「機能していない」ように見える空表示を解消
+・判断パネル見出しの重複した「⑤」表記をUI補正
+
+【未対応】
+・Android Chrome実機での固定ナビ位置・長時間操作確認
+・Cubasis / Cubase実機でのBefore/After Song.mid、DAW ZIP内MIDI取込確認
+
 Version: v0.5-dev
 更新日: 2026-10-13
 
