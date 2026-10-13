@@ -3,8 +3,7 @@
 .blind-box { margin-top: 12px; padding: 12px; border: 1px solid #6366f1; border-radius: 12px; background: #111827; }
 .blind-box > p { margin-top: 4px; }
 .blind-active .candidate-tab strong, .blind-active .candidate-tab small { visibility: hidden; }
-.blind-active #candidate-meta { filter: blur(10px); user-select: none; }
-.blind-active #candidate-meta * { pointer-events: none; }
+.blind-active #candidate-meta, .blind-active #curve, .blind-active #sections { filter: blur(12px); user-select: none; pointer-events: none; }
 .decision-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .decision-reason { display: block; margin-top: 10px; }
 .decision-reason textarea { width: 100%; min-height: 92px; resize: vertical; border: 1px solid #334155; border-radius: 10px; padding: 10px; color: inherit; background: #0b1220; font: inherit; }
