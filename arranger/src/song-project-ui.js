@@ -1,4 +1,4 @@
-import { projectValueToSongProject, serializeSongProject } from '../../src/shared/song-project.js';
+import { isSongProject, projectValueToSongProject, serializeSongProject } from '../../src/shared/song-project.js';
 import { songProjectToArrangementSourceInput, mergeArrangementChangesIntoSongProject } from './song-project-sync.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.4';
@@ -10,10 +10,6 @@ const dropZone = document.querySelector('#drop-zone');
 const adoptButton = document.querySelector('#adopt-btn');
 const exportSongButton = document.querySelector('#export-song-project-btn');
 
-function clone(value) {
-  return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
-}
-
 function flash(message, isError = false) {
   const el = document.querySelector('#message');
   if (!el) return;
@@ -22,6 +18,11 @@ function flash(message, isError = false) {
   el.hidden = false;
   window.clearTimeout(flash.timer);
   flash.timer = window.setTimeout(() => { el.hidden = true; }, 4200);
+}
+
+function dispatchOriginal(file) {
+  PASSTHROUGH.add(file);
+  fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 function replaceInputFile(file) {
@@ -33,20 +34,45 @@ function replaceInputFile(file) {
   fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+function isLegacyDemoProject(data) {
+  return Boolean(data && typeof data === 'object' && Number.isInteger(data.schemaVersion) && data.basic && data.structure);
+}
+
+function needsCanonicalConversion(data) {
+  return isSongProject(data) || data?.kind === 'composition-sheet-handoff' || (data?.format === 'demo-composer-project' && data?.sheet);
+}
+
 async function routeFile(file) {
   const text = await file.text();
   let data;
   try { data = JSON.parse(text); } catch {
-    PASSTHROUGH.add(file);
-    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    currentSongProject = null;
+    exportSongButton.disabled = true;
+    dispatchOriginal(file);
+    return;
+  }
+
+  if (isLegacyDemoProject(data)) {
+    currentSongProject = projectValueToSongProject(data);
+    exportSongButton.disabled = false;
+    dispatchOriginal(file);
+    flash(`旧Demo Project「${currentSongProject.title}」をそのまま読み込み、共通SongProject v1へ紐づけました。`);
+    return;
+  }
+
+  if (!needsCanonicalConversion(data)) {
+    currentSongProject = null;
+    exportSongButton.disabled = true;
+    dispatchOriginal(file);
     return;
   }
 
   try {
     currentSongProject = projectValueToSongProject(data);
   } catch {
-    PASSTHROUGH.add(file);
-    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    currentSongProject = null;
+    exportSongButton.disabled = true;
+    dispatchOriginal(file);
     return;
   }
 
