@@ -1,6 +1,6 @@
 const BUILD = new URL(self.location.href).searchParams.get('build') || 'local';
-const CACHE = `arrangement-lab-v0.4.1-dev-${BUILD}`;
-const ASSETS = ['./', './index.html', './styles.css', './manifest.webmanifest', './src/app.js', './src/core.js', './src/music-lab-catalog.js', './src/music-lab-utils.js', './src/harmony-lab.js', './src/counter-lab.js', './src/development-lab.js', './src/music-lab.js', './src/music-lab-ui.js', './src/reharm-theory.js', './src/arrangement-tools.js', './src/feature-ui.js', './src/preview.js', './src/chord-qualities.js', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = `arrangement-lab-v0.5-dev-${BUILD}`;
+const ASSETS = ['./', './index.html', './styles.css', './manifest.webmanifest', './src/app.js', './src/core.js', './src/music-lab-catalog.js', './src/music-lab-utils.js', './src/harmony-lab.js', './src/counter-lab.js', './src/development-lab.js', './src/music-lab.js', './src/music-lab-ui.js', './src/reharm-theory.js', './src/arrangement-tools.js', './src/feature-ui.js', './src/preview.js', './src/chord-qualities.js', './src/v05-tools.js', './src/v05-ui.js', './icons/icon-192.png', './icons/icon-512.png'];
 const buildUrl = (path) => `${path}${path.includes('?') ? '&' : '?'}build=${encodeURIComponent(BUILD)}`;
 self.addEventListener('install', (event) => {
   // Build-stamp the precache requests too. During an upgrade an older active worker can still
