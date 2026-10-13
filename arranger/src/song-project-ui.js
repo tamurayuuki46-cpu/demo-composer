@@ -1,4 +1,4 @@
-import { isSongProject, serializeSongProject } from '../../src/shared/song-project.js';
+import { isSongProject, projectValueToSongProject, serializeSongProject } from '../../src/shared/song-project.js';
 import { songProjectToArrangementSourceInput, mergeArrangementChangesIntoSongProject } from './song-project-sync.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.4';
@@ -10,10 +10,6 @@ const dropZone = document.querySelector('#drop-zone');
 const adoptButton = document.querySelector('#adopt-btn');
 const exportSongButton = document.querySelector('#export-song-project-btn');
 
-function clone(value) {
-  return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
-}
-
 function flash(message, isError = false) {
   const el = document.querySelector('#message');
   if (!el) return;
@@ -22,6 +18,11 @@ function flash(message, isError = false) {
   el.hidden = false;
   window.clearTimeout(flash.timer);
   flash.timer = window.setTimeout(() => { el.hidden = true; }, 4200);
+}
+
+function dispatchOriginal(file) {
+  PASSTHROUGH.add(file);
+  fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 function replaceInputFile(file) {
@@ -33,22 +34,48 @@ function replaceInputFile(file) {
   fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+function isLegacyDemoProject(data) {
+  return Boolean(data && typeof data === 'object' && Number.isInteger(data.schemaVersion) && data.basic && data.structure);
+}
+
+function needsCanonicalConversion(data) {
+  return isSongProject(data) || data?.kind === 'composition-sheet-handoff' || (data?.format === 'demo-composer-project' && data?.sheet);
+}
+
 async function routeFile(file) {
   const text = await file.text();
   let data;
   try { data = JSON.parse(text); } catch {
-    PASSTHROUGH.add(file);
-    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    currentSongProject = null;
+    exportSongButton.disabled = true;
+    dispatchOriginal(file);
     return;
   }
 
-  if (!isSongProject(data)) {
-    PASSTHROUGH.add(file);
-    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+  if (isLegacyDemoProject(data)) {
+    currentSongProject = projectValueToSongProject(data);
+    exportSongButton.disabled = false;
+    dispatchOriginal(file);
+    flash(`旧Demo Project「${currentSongProject.title}」をそのまま読み込み、共通SongProject v1へ紐づけました。`);
     return;
   }
 
-  currentSongProject = clone(data);
+  if (!needsCanonicalConversion(data)) {
+    currentSongProject = null;
+    exportSongButton.disabled = true;
+    dispatchOriginal(file);
+    return;
+  }
+
+  try {
+    currentSongProject = projectValueToSongProject(data);
+  } catch {
+    currentSongProject = null;
+    exportSongButton.disabled = true;
+    dispatchOriginal(file);
+    return;
+  }
+
   const demoInput = songProjectToArrangementSourceInput(currentSongProject);
   const converted = new File(
     [JSON.stringify(demoInput, null, 2)],
@@ -57,7 +84,7 @@ async function routeFile(file) {
   );
   exportSongButton.disabled = false;
   replaceInputFile(converted);
-  flash(`Song Project v${currentSongProject.schemaVersion}「${currentSongProject.title}」をArrangement Labへ読み込みました。`);
+  flash(`共通SongProject v${currentSongProject.schemaVersion}「${currentSongProject.title}」をArrangement Labへ読み込みました。`);
 }
 
 fileInput?.addEventListener('change', (event) => {
@@ -89,14 +116,12 @@ function syncAdoptedArrangement() {
 }
 
 adoptButton?.addEventListener('click', () => {
-  // app.js stores the adopted Arrangement synchronously in its own click handler.
-  // This callback may run first because the bridge is loaded first, so defer one task.
   window.setTimeout(syncAdoptedArrangement, 0);
 });
 
 exportSongButton?.addEventListener('click', () => {
   if (!currentSongProject) {
-    flash('先にSong Project v1を読み込んでください。', true);
+    flash('先に曲のJSONを読み込んでください。', true);
     return;
   }
   syncAdoptedArrangement();
@@ -109,7 +134,7 @@ exportSongButton?.addEventListener('click', () => {
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 500);
-  flash('Arrangementの変更を保持したSong Project v1を書き出しました。');
+  flash('Arrangementの変更を保持した共通SongProject v1を書き出しました。');
 });
 
 function safeFileName(value) {
