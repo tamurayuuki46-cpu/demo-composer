@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Demo Composer">
+  <rect width="512" height="512" rx="112" fill="#111111"/>
+  <path d="M132 352V160h58l132 112V160h58v192h-58L190 240v112z" fill="#f5f5f5"/>
+  <circle cx="164" cy="372" r="28" fill="#8bd3ff"/>
+  <circle cx="348" cy="372" r="28" fill="#8bd3ff"/>
+</svg>
