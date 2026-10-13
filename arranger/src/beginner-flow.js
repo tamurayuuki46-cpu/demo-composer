@@ -38,9 +38,13 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+function setText(node, text) {
+  if (node && node.textContent !== text) node.textContent = text;
+}
+
 function enforceVersion() {
   const version = document.querySelector('#version');
-  if (version && version.textContent !== UI_VERSION) version.textContent = UI_VERSION;
+  setText(version, UI_VERSION);
   document.documentElement.dataset.arrangerUiVersion = UI_VERSION;
 }
 
@@ -112,10 +116,11 @@ function setMode(next, { persist = true } = {}) {
   document.querySelectorAll('[data-arranger-mode]').forEach((button) => {
     const active = button.dataset.arrangerMode === mode;
     button.classList.toggle('is-active', active);
-    button.setAttribute('aria-pressed', String(active));
+    if (button.getAttribute('aria-pressed') !== String(active)) button.setAttribute('aria-pressed', String(active));
   });
   const sectionToggle = document.querySelector('#section-more-toggle');
-  if (sectionToggle) sectionToggle.textContent = mode === 'beginner' ? 'もっと試す（高度な編曲）' : '初心者モードへ戻る';
+  const toggleText = mode === 'beginner' ? 'もっと試す（高度な編曲）' : '初心者モードへ戻る';
+  setText(sectionToggle, toggleText);
   updateNextAction();
 }
 
@@ -198,9 +203,10 @@ function updateNextAction() {
   const nextAction = document.querySelector('#beginner-next-action');
   if (!nextAction) return;
   const base = STEPS[currentStep]?.next || STEPS[0].next;
-  nextAction.textContent = mode === 'explore' && currentStep === 3
+  const text = mode === 'explore' && currentStep === 3
     ? `${base}。必要なら50手法・実Note生成まで開く`
     : base;
+  setText(nextAction, text);
 }
 
 function updateNav() {
@@ -211,9 +217,9 @@ function updateNav() {
   if (prev) prev.disabled = currentStep === 0;
   if (next) {
     next.disabled = currentStep === STEPS.length - 1;
-    next.textContent = currentStep === STEPS.length - 1 ? 'DAWへ書き出す' : '次へ →';
+    setText(next, currentStep === STEPS.length - 1 ? 'DAWへ書き出す' : '次へ →');
   }
-  if (label) label.textContent = STEPS[currentStep].label;
+  setText(label, STEPS[currentStep].label);
   updateNextAction();
 }
 
@@ -263,8 +269,11 @@ function init() {
   updateNav();
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
-  const observer = new MutationObserver(queueDynamicRefresh);
-  observer.observe(document.body, { childList: true, subtree: true });
+  const sections = document.querySelector('#sections');
+  if (sections) {
+    const observer = new MutationObserver(queueDynamicRefresh);
+    observer.observe(sections, { childList: true, subtree: true });
+  }
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
