@@ -1,4 +1,9 @@
-import { songProjectToDemoProject, validateSongProject } from '../../src/shared/song-project.js';
+import {
+  forkSongProject,
+  mergeDemoChangesIntoSongProject,
+  songProjectToDemoProject,
+  validateSongProject,
+} from '../../src/shared/song-project.js';
 
 function clone(value) {
   return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
@@ -62,5 +67,41 @@ export function mergeArrangementChangesIntoSongProject(songProject, arrangerProj
     }
   };
   if (JSON.stringify(next.composition) !== compositionBefore) throw new Error('Arrangement writeback modified composition unexpectedly.');
+  return next;
+}
+
+export function createArrangementForkSongProject(songProject, arrangedDemoProject, {
+  projectId,
+  title = `${songProject?.title || 'Untitled Project'} Arrangement Fork`,
+  forkReason = 'Arrangement Labで採用した編曲を新しい作曲Projectとして続ける',
+  now,
+} = {}) {
+  validateSongProject(songProject);
+  if (!arrangedDemoProject || typeof arrangedDemoProject !== 'object') throw new Error('Arranged Demo Composer Project is invalid.');
+
+  const stamp = nowIso(now);
+  const fork = forkSongProject(songProject, {
+    ...(projectId ? { projectId } : {}),
+    title,
+    sourceApp: 'arrangement-lab',
+    createdFrom: 'arrangement-fork',
+    forkReason,
+    now: stamp,
+  });
+
+  const arranged = clone(arrangedDemoProject);
+  arranged.id = fork.projectId;
+  arranged.revision = 1;
+  arranged.metadata = {
+    ...(arranged.metadata || {}),
+    title: fork.title,
+    lineage: clone(fork.lineage),
+  };
+
+  const next = mergeDemoChangesIntoSongProject(fork, arranged, { now: stamp });
+  next.lineage = clone(fork.lineage);
+  next.createdAt = fork.createdAt;
+  next.history = clone(fork.history);
+  validateSongProject(next);
   return next;
 }
