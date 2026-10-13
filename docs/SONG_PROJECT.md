@@ -109,6 +109,7 @@ Fork元。起点Projectは`null`。
 - `demo-project`
 - `song-project`
 - `fork`
+- `arrangement-fork`
 
 ### forkReason
 
@@ -142,6 +143,31 @@ Fork:
 - 元Projectを上書きしない
 
 `src/shared/song-project.js` の `forkSongProject()` を共通処理とする。
+
+### Arrangement Lab固有Fork
+
+SongProject v1をArrangement Labへ読み込んだ場合、`新しい作曲ProjectとしてFork`は共通SongProject v1を出力する。
+
+処理:
+1. 元SongProjectの`arrangement`へ現在の採用編曲を同期
+2. `forkSongProject()`で新しいSongProject IDとlineageを生成
+3. Arrangement Labの採用結果をDemo Composer互換Compositionへ展開
+4. 新Forkの`composition`へその結果を反映
+5. 元SongProjectの`projectId / composition / lineage`は変更しない
+
+新Fork:
+- `sourceApp = arrangement-lab`
+- `createdFrom = arrangement-fork`
+- `parentProjectId = 元SongProject.projectId`
+- `rootProjectId = 元lineage.rootProjectId`（無ければ元Project ID）
+- `revision = 1`
+- `arrangement` evidenceも保持する
+
+実装:
+- `arranger/src/song-project-sync.js` → `createArrangementForkSongProject()`
+- `arranger/src/song-project-ui.js` → SongProject入力時のFork Download
+
+legacy Demo Composer `project.json`を直接Arrangement Labへ読み込んだ場合は、v0.9既存のDemo Composer `project.json` Forkを維持する。
 
 ## Demo Composer Adapter
 
@@ -178,7 +204,7 @@ Audio Blobは含めない。
 - `arranger/src/song-project-sync.js`
 - `arranger/src/song-project-ui.js`
 
-Arrangement LabはSongProjectを入力としてCompositionを参照するが、書き戻すのはArrangement領域のみ。
+Arrangement LabはSongProjectを入力としてCompositionを参照するが、通常の書き戻しはArrangement領域のみ。
 
 - reharmonization
 - voicing / harmony pattern
@@ -188,6 +214,8 @@ Arrangement LabはSongProjectを入力としてCompositionを参照するが、�
 - decision note / music-lab metadata
 
 Composition同一性をRegressionで確認する。
+
+Compositionを書き換えるのは、ユーザーが明示的に`新しい作曲ProjectとしてFork`を選んだ場合の**新Project側だけ**。親Projectは不変。
 
 ## DAW Ready
 
@@ -234,5 +262,9 @@ Reference metadataのみを扱い、実体は各アプリの端末Storageへ保�
 11. old v1 without lineage受理
 12. explicit Forkでroot / parentを保持
 13. Fork元Project不変
+14. Arrangement固有Forkで採用Compositionを新Projectへ反映
+15. Arrangement固有ForkでArrangement evidenceを保持
+16. SongProject Fork後も親SongProject不変
+17. legacy project.json Fork互換を維持
 
 実装テスト: `scripts/song-project-smoke-test.mjs`
