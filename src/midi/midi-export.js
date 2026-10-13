@@ -52,7 +52,6 @@ function conductorEvents(project) {
     tempoEvent(project.basic.bpm),
     timeSignatureEvent(),
     keySignatureEvent(signatureMap[project.basic.key] ?? 0, project.basic.scale === "minor"),
-    // CubasisやCubaseで曲の構成が分かるよう、Sectionの先頭にマーカーを入れる
     ...sectionRanges(getSections(project)).map((range) => (
       markerEvent(range.startBar * project.basic.ppq * 4, range.section.name)
     ))
@@ -120,7 +119,6 @@ function songTracks(project) {
     projectTrackEvents(project, "melody", "Melody", 2),
     projectTrackEvents(project, "bass", "Bass", 3),
     projectTrackEvents(project, "drums", "Drums", 10),
-    // 裏メロがあるときだけ追加（無いProjectのMIDIは今までと同じ）
     ...(hasCounterMelody(project) ? [projectTrackEvents(project, "counter", "Counter Melody", 4)] : [])
   ];
 }
@@ -135,7 +133,7 @@ function partFile(project, events) {
 
 export function buildMidiExports(project) {
   const files = {
-    "Song.mid": createMidiFile({
+    "Draft.mid": createMidiFile({
       format: 1,
       division: project.basic.ppq,
       tracks: songTracks(project)
