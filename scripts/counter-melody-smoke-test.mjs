@@ -268,11 +268,11 @@ assert.deepEqual(afterKey, beforeKey.map((pitch) => pitch + 2));
 assert.throws(() => store.updateHub({ basic: { scale: "minor" } }), /Scale/);
 
 const plain = buildMidiExports(sampleProject());
-assert.deepEqual(Object.keys(plain), ["Song.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid"]);
+assert.deepEqual(Object.keys(plain), ["Draft.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid"]);
 const withCounter = buildMidiExports(store.getSnapshot());
 assert.ok(Object.keys(withCounter).includes("CounterMelody.mid"));
 assert.ok(withCounter["CounterMelody.mid"].length > 30);
-assert.ok(withCounter["Song.mid"].length > plain["Song.mid"].length);
+assert.ok(withCounter["Draft.mid"].length > plain["Draft.mid"].length);
 
 validateProject(sampleProject());
 console.log("Counter melody smoke test passed.");
