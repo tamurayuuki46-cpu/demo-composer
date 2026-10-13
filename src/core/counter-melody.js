@@ -1,0 +1,935 @@
+// Counter Melody（裏メロ）: メインMelodyを邪魔しない範囲で、役割の違う4系統の候補を作る。
+// 完全自動ではなく「候補を聴く → 選ぶ → 必要なら別候補にする / 消す」。選んだSectionだけに当てる。
+// 保存先は tracks[] の role:"counter"（Schema追記のみ。無い古いProjectはそのまま有効）。
+// ProjectをUIにもAudioにも依存せずに読む純粋関数。元のProjectは変更しない。
+
+import { chordIntervals } from "./chord-qualities.js";
+import { characterIdiomFor } from "./character-phrases.js";
+
+export const COUNTER_ROLE = "counter";
+const STEP = 240; // 8分音符
+const LOW = 48;
+const HIGH = 76;
+const SCALE_INTERVALS = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] };
+const KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+export const COUNTER_STYLES = Object.freeze([
+  {
+    id: "sparse",
+    label: "Sparse（隙間型）",
+    description: "休符の隙間に短い返事を入れる。音数は少なめで、主旋律を立てる。※イメージ：米津系（特定曲のコピーではありません）"
+  },
+  {
+    id: "active",
+    label: "Active（動く型）",
+    description: "8分音符中心で下側を動き、①コードトーン型 → ②テンション型 → ③薄い別コード感型を混ぜて色を足す。※イメージ：YOASOBI / Ayase系（特定曲のコピーではありません）"
+  },
+  {
+    id: "hook",
+    label: "Hook（フック型）",
+    description: "少ない音の覚えやすい型を繰り返し、もう1つの歌えるフックを作る。※イメージ：Oasis系（特定曲のコピーではありません）"
+  },
+  {
+    id: "answer",
+    label: "Answer（応答型）",
+    description: "主旋律の語尾や小節後半に、3度・7度などコードの色が出る音で少し長めの返しを置く。※イメージ：Mr.Children系（特定曲のコピーではありません）"
+  },
+  {
+    id: "arpeggio",
+    label: "Arpeggio（分散和音型）",
+    description: "コードの構成音を8分で上下に流す、ピアノ風の細かい動き。主旋律が鳴っている間は音数を減らし、止まると走り出し、小節の終わりで次のコードへつなぐ。※イメージ：ピアノが走るYOASOBI / Ayase系（特定曲のコピーではありません）"
+  },
+  {
+    id: "riff",
+    label: "Riff（ギターリフ型）",
+    description: "低めの音域で、ルート・5度中心の短いリフを繰り返す。コードが変わっても形を保ち、4小節目に駆け上がる。※イメージ：ギターバンド系 / Oasis系（特定曲のコピーではありません）"
+  },
+  {
+    id: "pentaMinor",
+    label: "Minor Penta Hook（マイナーペンタ）",
+    description: "Keyのマイナーペンタ（ド・ミ♭・ファ・ソ・シ♭）だけで作る、ブルージーで歌えるフック。2小節で型を繰り返し、3小節目で少し変化、4小節目でコードトーンに着地する。メジャーKeyの上では少しブルース寄りの色になる。※イメージ：ロック / ギターバンド系（特定曲のコピーではありません）"
+  },
+  {
+    id: "pentaMajor",
+    label: "Major Penta Hook（メジャーペンタ）",
+    description: "Keyのメジャーペンタ（ド・レ・ミ・ソ・ラ）だけで作る、明るく素直なフック。半音のぶつかりがなく、どのコードの上でも歌いやすい。2小節で型を繰り返し、3小節目で上へ、4小節目でコードトーンに着地する。※イメージ：爽やかなバンド / J-POP系（特定曲のコピーではありません）"
+  },
+  {
+    id: "character",
+    label: "Character（特性音型）",
+    description: "選んだスケールの特性音（そのスケールらしさを決める音）を、長い音・強い拍で鳴らす。前を半音や全音で助走し、最後はルートか5度へ解決する。※特定曲のコピーではありません"
+  }
+,
+  {
+    id: "motion",
+    label: "Motion（対位の動き）",
+    description: "主旋律との動きの関係で作る。反行（逆向き）/ 平行（3度下で同じ動き）/ 保続（主音を持続）。※特定曲のコピーではありません"
+  }
+]);
+
+function clone(value) {
+  return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+}
+
+function createId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `note-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function barTicksOf(project) {
+  return project.basic.ppq * 4;
+}
+
+export function counterNotes(project) {
+  return project.tracks.find((track) => track.role === COUNTER_ROLE)?.notes ?? [];
+}
+
+export function hasCounter(project) {
+  return counterNotes(project).length > 0;
+}
+
+function notesIn(notes, startTick, endTick) {
+  return notes.filter((note) => note.startTick >= startTick && note.startTick < endTick);
+}
+
+function overlappingNotes(notes, startTick, endTick) {
+  return notes.filter((note) => note.startTick < endTick && note.startTick + note.durationTick > startTick);
+}
+
+function keyPitchClass(project) {
+  return Math.max(0, KEY_NAMES.indexOf(project.basic.key));
+}
+
+function scalePitchClasses(project) {
+  const tonic = keyPitchClass(project);
+  return (SCALE_INTERVALS[project.basic.scale] ?? SCALE_INTERVALS.major).map((interval) => (tonic + interval) % 12);
+}
+
+// この小節のコードの構成音（pitch class）。コードが無い小節はKeyの主和音を使う
+function chordPitchClasses(project, bar) {
+  const chord = project.chords[bar];
+  if (chord) return chordIntervals(chord.quality).map((interval) => (chord.root + interval) % 12);
+  const tonic = keyPitchClass(project);
+  const third = project.basic.scale === "minor" ? 3 : 4;
+  return [tonic, (tonic + third) % 12, (tonic + 7) % 12];
+}
+
+// ルート以外のコード構成音。3度・7度など、コードの明暗や色が出やすい音を優先する。
+function chordColorPitchClasses(project, bar) {
+  const chord = project.chords[bar];
+  const pcs = chordPitchClasses(project, bar);
+  if (!chord) return pcs.slice(1).length > 0 ? pcs.slice(1) : pcs;
+  const root = chord.root % 12;
+  const colors = pcs.filter((pc) => pc !== root);
+  return colors.length > 0 ? colors : pcs;
+}
+
+// コード構成音以外のKey内音。9th / 11th / 13thなどの「色」に使う。
+function tensionPitchClasses(project, bar) {
+  const scale = scalePitchClasses(project);
+  const chord = chordPitchClasses(project, bar);
+  const tensions = scale.filter((pc) => !chord.includes(pc));
+  return tensions.length > 0 ? tensions : scale;
+}
+
+// 現在コードの3度上のScale Degreeから作る3音を「薄い別コード感」として使う。
+// 例: C Major上のCでは E-G-B となり、土台Cを変えずにEm系の輪郭を薄く重ねられる。
+function upperStructurePitchClasses(project, bar) {
+  const scale = scalePitchClasses(project);
+  const chord = project.chords[bar];
+  if (!chord) return scale;
+  const rootIndex = scale.indexOf(chord.root % 12);
+  if (rootIndex === -1) return chordPitchClasses(project, bar);
+  const upperRoot = (rootIndex + 2) % scale.length;
+  return [0, 2, 4].map((offset) => scale[(upperRoot + offset) % scale.length]);
+}
+
+// 8分(240tick)8マスの使用状況。メロディが鳴っているマスは true
+function occupiedSteps(melody, barStart, barTicks) {
+  const steps = new Array(barTicks / STEP).fill(false);
+  melody.forEach((note) => {
+    const from = Math.max(0, Math.floor((note.startTick - barStart) / STEP));
+    const to = Math.min(steps.length, Math.ceil((note.startTick + note.durationTick - barStart) / STEP));
+    for (let step = from; step < to; step += 1) steps[step] = true;
+  });
+  return steps;
+}
+
+function freeRuns(steps) {
+  const runs = [];
+  let start = null;
+  steps.forEach((taken, step) => {
+    if (!taken && start === null) start = step;
+    if ((taken || step === steps.length - 1) && start !== null) {
+      const end = taken ? step : step + 1;
+      runs.push({ start, length: end - start });
+      start = null;
+    }
+  });
+  return runs;
+}
+
+// 候補の音を選ぶ。目標の高さに近い許可音のうち、同時に鳴るメロディとぶつかりにくいものを選ぶ
+function pickPitch({ pcs, target, overlapping, previous }) {
+  let best = null;
+  for (let pitch = LOW; pitch <= HIGH; pitch += 1) {
+    if (!pcs.includes(pitch % 12)) continue;
+    let score = Math.abs(pitch - target);
+    overlapping.forEach((note) => {
+      const distance = Math.abs(pitch - note.pitch) % 12;
+      if (distance === 1 || distance === 11) score += 20;
+      else if (distance === 0) score += 6;
+      else if (distance === 6) score += 8;
+      if (pitch > note.pitch - 2) score += 10; // できるだけメロディより下に置く
+    });
+    if (previous !== null && previous !== undefined) score += Math.abs(pitch - previous) * 0.4;
+    if (best === null || score < best.score) best = { pitch, score };
+  }
+  return best ? best.pitch : null;
+}
+
+// 音階の中で pitch から degrees だけ下へ
+function scaleStepDown(pitch, degrees, scale) {
+  let current = pitch;
+  let remaining = degrees;
+  while (remaining > 0 && current > 0) {
+    current -= 1;
+    if (scale.includes(current % 12)) remaining -= 1;
+  }
+  return current;
+}
+
+// 音階の中で pitch から degrees だけ上へ
+function scaleStepUp(pitch, degrees, scale) {
+  let current = pitch;
+  let remaining = degrees;
+  while (remaining > 0 && current < 127) {
+    current += 1;
+    if (scale.includes(current % 12)) remaining -= 1;
+  }
+  return current;
+}
+
+function makeNote(pitch, startTick, durationTick, velocity) {
+  return { id: createId(), pitch, startTick, durationTick, velocity };
+}
+
+function averageMelodyPitch(melody) {
+  if (melody.length === 0) return 66;
+  return melody.reduce((sum, note) => sum + note.pitch, 0) / melody.length;
+}
+
+// Sparse: メロディの隙間だけに短い「返事」を置く。詰まっている小節は休む。
+function buildSparse(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const target = averageMelodyPitch(melody) - 8;
+  const notes = [];
+  let previous = null;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const occupied = inBar.length === 0
+      ? [true, true, true, true, false, false, false, false]
+      : occupiedSteps(inBar, barStart, barTicks);
+    const runs = freeRuns(occupied).filter((run) => run.length >= 2);
+    if (runs.length === 0) continue;
+
+    const run = runs.reduce((best, item) => (item.length >= best.length ? item : best));
+    const runStart = barStart + run.start * STEP;
+    const overlap = overlappingNotes(inBar, runStart, runStart + Math.min(run.length, 3) * STEP);
+    const pitch = pickPitch({ pcs: chordPitchClasses(project, bar), target, overlapping: overlap, previous });
+    if (pitch === null) continue;
+
+    if (run.length >= 3) {
+      const answer = scaleStepDown(pitch, 1, scale);
+      notes.push(
+        makeNote(pitch, runStart, STEP, 66),
+        makeNote(answer, runStart + STEP, STEP * 2, 60)
+      );
+      previous = answer;
+    } else {
+      notes.push(makeNote(pitch, runStart, STEP * 2, 64));
+      previous = pitch;
+    }
+  }
+  return notes;
+}
+
+// Active: 8分音符中心。強拍はコードトーン、間にテンションと「薄い別コード感」を混ぜて推進力を出す。
+function buildActive(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const target = averageMelodyPitch(melody) - 10;
+  const notes = [];
+  let previous = null;
+  const positions = [0, 1, 2, 4, 5, 6]; // 4拍すべてを埋めず、息継ぎを残す
+  const targetMoves = [0, 2, 4, 2, -1, 1];
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const chordPcs = chordPitchClasses(project, bar);
+    const tensionPcs = tensionPitchClasses(project, bar);
+    const upperPcs = upperStructurePitchClasses(project, bar);
+    const anchor = pickPitch({ pcs: chordPcs, target, overlapping: inBar, previous });
+    if (anchor === null) continue;
+
+    // ①Chord Tone → ②Tension → ③Upper Structure を2回まわす。
+    // 土台コードは変えず、主旋律とは違う度数を使って「薄い第二のハーモニー」を作る。
+    const palettes = [chordPcs, tensionPcs, upperPcs, chordPcs, tensionPcs, upperPcs];
+
+    positions.forEach((step, index) => {
+      const startTick = barStart + step * STEP;
+      const endTick = startTick + STEP;
+      const overlap = overlappingNotes(inBar, startTick, endTick);
+      const move = targetMoves[index];
+      const desired = move >= 0
+        ? scaleStepUp(anchor, Math.round(move / 2), scale)
+        : scaleStepDown(anchor, Math.abs(move), scale);
+      const pitch = pickPitch({ pcs: palettes[index], target: desired, overlapping: overlap, previous });
+      if (pitch === null) return;
+      notes.push(makeNote(pitch, startTick, STEP, index === 0 || index === 3 ? 65 : 58));
+      previous = pitch;
+    });
+  }
+  return notes;
+}
+
+// Hook: 各小節で同じ3音の輪郭を繰り返す。コードが変わっても「上がって戻る」形は維持する。
+function buildHook(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const target = averageMelodyPitch(melody) - 9;
+  const notes = [];
+  let previous = null;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const chordPcs = chordPitchClasses(project, bar);
+    const anchor = pickPitch({ pcs: chordPcs, target, overlapping: inBar, previous });
+    if (anchor === null) continue;
+
+    const upperTarget = scaleStepUp(anchor, 2, scale);
+    const first = pickPitch({
+      pcs: chordPcs,
+      target: anchor,
+      overlapping: overlappingNotes(inBar, barStart, barStart + STEP * 2),
+      previous
+    });
+    const second = pickPitch({
+      pcs: scale,
+      target: upperTarget,
+      overlapping: overlappingNotes(inBar, barStart + STEP * 2, barStart + STEP * 4),
+      previous: first
+    });
+    const third = pickPitch({
+      pcs: chordPcs,
+      target: anchor,
+      overlapping: overlappingNotes(inBar, barStart + STEP * 4, barStart + STEP * 8),
+      previous: second
+    });
+    if (first === null || second === null || third === null) continue;
+
+    notes.push(
+      makeNote(first, barStart, STEP * 2, 64),
+      makeNote(second, barStart + STEP * 2, STEP * 2, 60),
+      makeNote(third, barStart + STEP * 4, STEP * 4, 63)
+    );
+    previous = third;
+  }
+  return notes;
+}
+
+// Answer: 主旋律が言い切った後の隙間を優先し、コードの色が出る音で少し長めに返す。
+// Sparseより音価を長くし、短い装飾ではなく「歌に答えるもう1フレーズ」の感覚を作る。
+function buildAnswer(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const target = averageMelodyPitch(melody) - 7;
+  const notes = [];
+  let previous = null;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const occupied = inBar.length === 0
+      ? [true, true, true, true, false, false, false, false]
+      : occupiedSteps(inBar, barStart, barTicks);
+    const runs = freeRuns(occupied).filter((run) => run.length >= 2);
+    if (runs.length === 0) continue;
+
+    // 「語尾への返答」に寄せるため、最も後ろまで伸びる隙間を優先する。
+    const run = runs.reduce((best, item) => {
+      const bestEnd = best.start + best.length;
+      const itemEnd = item.start + item.length;
+      if (itemEnd !== bestEnd) return itemEnd > bestEnd ? item : best;
+      return item.length > best.length ? item : best;
+    });
+    const runStart = barStart + run.start * STEP;
+    const usableSteps = Math.min(run.length, 4);
+    const colorPcs = chordColorPitchClasses(project, bar);
+    const first = pickPitch({
+      pcs: colorPcs,
+      target,
+      overlapping: overlappingNotes(inBar, runStart, runStart + usableSteps * STEP),
+      previous
+    });
+    if (first === null) continue;
+
+    if (usableSteps >= 4) {
+      const directionTarget = bar % 2 === 0 ? scaleStepUp(first, 1, scale) : scaleStepDown(first, 1, scale);
+      const second = pickPitch({
+        pcs: chordPitchClasses(project, bar),
+        target: directionTarget,
+        overlapping: overlappingNotes(inBar, runStart + STEP * 2, runStart + STEP * 4),
+        previous: first
+      });
+      if (second === null) continue;
+      notes.push(
+        makeNote(first, runStart, STEP * 2, 62),
+        makeNote(second, runStart + STEP * 2, STEP * 2, 58)
+      );
+      previous = second;
+    } else {
+      notes.push(makeNote(first, runStart, usableSteps * STEP, 61));
+      previous = first;
+    }
+  }
+  return notes;
+}
+
+// Arpeggio: コードの構成音を、メインメロディの下の音域で8分の上下に流す（ピアノ風）。
+// メロディが鳴っているマスは1つおきに休み、半音でぶつかる音は休む。小節の最後は次のコードの構成音へつなぐ。
+function buildArpeggio(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const target = averageMelodyPitch(melody) - 9;
+  const notes = [];
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const occupied = occupiedSteps(inBar, barStart, barTicks);
+    const chordPcs = chordPitchClasses(project, bar);
+
+    let tones = [];
+    for (let widen = 0; widen <= 10 && tones.length < 3; widen += 5) {
+      tones = [];
+      for (let pitch = Math.max(LOW, target - 12 - widen); pitch <= Math.min(HIGH, target + 3 + widen); pitch += 1) {
+        if (chordPcs.includes(pitch % 12)) tones.push(pitch);
+      }
+    }
+    if (tones.length < 2) continue;
+
+    // 上下に往復する並び
+    const order = [];
+    let index = 0;
+    let direction = 1;
+    for (let step = 0; step < 8; step += 1) {
+      order.push(index);
+      if (index + direction >= tones.length || index + direction < 0) direction *= -1;
+      index += direction;
+    }
+
+    for (let step = 0; step < 8; step += 1) {
+      const startTick = barStart + step * STEP;
+      // メロディがこのマスから始まる裏拍は休み、リズムを重ねすぎない
+      if (step % 2 === 1 && inBar.some((note) => note.startTick === startTick)) continue;
+      let pitch = tones[order[step]];
+
+      if (step === 7 && project.chords[bar + 1] && bar + 1 < endBar) {
+        const next = pickPitch({ pcs: chordPitchClasses(project, bar + 1), target: pitch, overlapping: [], previous: null });
+        if (next !== null) pitch = next;
+      }
+
+      const clash = overlappingNotes(inBar, startTick, startTick + STEP).some((note) => {
+        const distance = Math.abs(pitch - note.pitch) % 12;
+        return distance === 1 || distance === 11 || pitch > note.pitch - 3;
+      });
+      if (clash) continue;
+      const under = occupied[step] ? 8 : 0; // メロディが鳴っている間は、少し小さく
+      notes.push(makeNote(pitch, startTick, Math.round(STEP * 0.92), (step === 0 ? 60 : (step % 2 === 0 ? 52 : 46)) - under));
+    }
+  }
+  return notes;
+}
+
+// Riff: 低めの音域で、ルート・5度中心の短いリフ。コードが変わっても同じ形のまま音だけ移し、
+// 小節の最後は次のルートへの“つなぎ”、フレーズ4小節目は1音ずつ駆け上がる。
+function buildRiff(project, melody, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const notes = [];
+
+  const rootFor = (bar) => {
+    const chord = project.chords[bar];
+    const rootPc = chord ? chord.root % 12 : keyPitchClass(project);
+    for (let pitch = 43; pitch <= 54; pitch += 1) if (pitch % 12 === rootPc) return { pitch, chord };
+    return { pitch: 48, chord };
+  };
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const { pitch: root, chord } = rootFor(bar);
+    const intervals = chord ? chordIntervals(chord.quality).map((value) => value % 12) : [0, 4, 7];
+    const fifth = root + (intervals.includes(7) ? 7 : intervals.includes(6) ? 6 : intervals.includes(8) ? 8 : 7);
+    const place = (step, pitch, velocity) => notes.push(makeNote(pitch, barStart + step * STEP, Math.round(STEP * 0.92), velocity));
+
+    const inPhrase = (bar - startBar) % 4;
+    if (inPhrase === 3) {
+      // 駆け上がり: ルートから1音ずつ、Key内の音で8分8つ
+      let pitch = root;
+      for (let step = 0; step < 8; step += 1) {
+        place(step, Math.min(pitch, 66), step === 0 || step === 4 ? 76 : 64);
+        pitch = scaleStepUp(pitch, 1, scale);
+      }
+      continue;
+    }
+
+    const next = bar + 1 < endBar ? rootFor(bar + 1).pitch : root;
+    place(0, root, 78);
+    place(1, root, 62);
+    place(2, fifth, 68);
+    place(3, scaleStepUp(fifth, 1, scale), 62);
+    place(4, root, 74);
+    place(5, root, 62);
+    place(6, fifth, 66);
+    place(7, next >= root ? scaleStepDown(next, 1, scale) : scaleStepUp(next, 1, scale), 62);
+  }
+  return notes;
+}
+
+// Pentatonic Hook: Keyのペンタトニック（マイナー or メジャー）の音だけで、短い型を繰り返すフック。
+// 2小節同じ型 → 3小節目で変化 → 4小節目でコードトーンに着地。ペンタの音を「はしご」にして上下に動く。
+const PENTATONIC = Object.freeze({
+  minor: [0, 3, 5, 7, 10],
+  major: [0, 2, 4, 7, 9]
+});
+const PENTA_MOTIFS = Object.freeze({
+  //            [はしごの動き]            [開始step] [長さstep]
+  minor: {
+    main: { offsets: [0, 2, 1, 0], steps: [0, 2, 3, 4], lengths: [2, 1, 1, 3] },
+    vary: { offsets: [0, 2, 3, 2], steps: [0, 2, 3, 4], lengths: [2, 1, 1, 3] }
+  },
+  major: {
+    main: { offsets: [0, 1, 2, 1], steps: [0, 2, 4, 6], lengths: [2, 2, 2, 2] },
+    vary: { offsets: [0, 2, 3, 2], steps: [0, 2, 4, 6], lengths: [2, 2, 2, 2] }
+  }
+});
+
+// 他のKeyのペンタ: 曲のKeyから何半音上のペンタを使うか（0 = 曲のKey）。UIの選択肢と説明
+export const PENTA_ROOT_RELATIONS = Object.freeze([
+  { offset: 0, label: "曲のKey" },
+  { offset: 2, label: "2度上" },
+  { offset: 3, label: "短3度上" },
+  { offset: 4, label: "3度上" },
+  { offset: 5, label: "4度上" },
+  { offset: 7, label: "5度上" },
+  { offset: 9, label: "6度上" },
+  { offset: 10, label: "短7度上" },
+  { offset: 1, label: "半音上（外れ感が強い）" },
+  { offset: 6, label: "増4度上（外れ感が強い）" },
+  { offset: 8, label: "短6度上（外れ感が強い）" },
+  { offset: 11, label: "長7度上（外れ感が強い）" }
+]);
+
+export function pentaRootName(project, offset = 0) {
+  return KEY_NAMES[(keyPitchClass(project) + offset) % 12];
+}
+
+// 曲のKeyの音からはみ出す音の数（0 = 曲のスケールの中だけ）。説明用
+export function pentaOutsideCount(project, mode, offset = 0) {
+  const scale = scalePitchClasses(project);
+  const tonic = (keyPitchClass(project) + offset) % 12;
+  return PENTATONIC[mode].filter((interval) => !scale.includes((tonic + interval) % 12)).length;
+}
+
+function buildPentaHook(project, melody, startBar, endBar, mode, offset = 0) {
+  const barTicks = barTicksOf(project);
+  const tonic = (keyPitchClass(project) + offset) % 12;
+  const pcs = PENTATONIC[mode].map((interval) => (tonic + interval) % 12);
+  const target = Math.min(72, Math.max(57, averageMelodyPitch(melody) - 10));
+  const ladder = [];
+  for (let pitch = 48; pitch <= 79; pitch += 1) if (pcs.includes(pitch % 12)) ladder.push(pitch);
+  const nearest = (candidates, to) => candidates.reduce((best, pitch) => (
+    best === null || Math.abs(pitch - to) < Math.abs(best - to) ? pitch : best
+  ), null);
+  const clampIndex = (index) => Math.max(0, Math.min(ladder.length - 1, index));
+  const notes = [];
+  let previous = null;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const chordPcs = chordPitchClasses(project, bar);
+    const chordTones = ladder.filter((pitch) => chordPcs.includes(pitch % 12));
+    // 小節の出発点: 目標音域に近いペンタの音。コードトーンがペンタ内にあればそれを優先
+    const pool = chordTones.length > 0 ? chordTones : ladder;
+    const anchor = nearest(pool, previous === null ? target : Math.round((previous + target) / 2));
+    const anchorIndex = ladder.indexOf(anchor);
+    const inPhrase = (bar - startBar) % 4;
+    const last = inPhrase === 3 || bar === endBar - 1;
+    const motif = PENTA_MOTIFS[mode][inPhrase === 2 ? "vary" : "main"];
+
+    motif.offsets.forEach((offset, index) => {
+      let pitch = ladder[clampIndex(anchorIndex + offset)];
+      const isLastNote = index === motif.offsets.length - 1;
+      // 4小節目（と最後の小節）の最後の音は、コードトーンに着地する
+      if (last && isLastNote) pitch = nearest(chordTones.length > 0 ? chordTones : ladder, anchor) ?? pitch;
+      const velocity = index === 0 ? 70 : isLastNote ? 66 : 60;
+      const duration = Math.round(STEP * motif.lengths[index] * (isLastNote ? 0.95 : 0.9));
+      notes.push(makeNote(pitch, barStart + motif.steps[index] * STEP, duration, velocity));
+      previous = pitch;
+    });
+  }
+  return notes;
+}
+
+// ---- Character: スケールの特性音を強調するフレーズ ----
+// 特性音 = そのスケールが「近い基本スケール」（長3度があればMajor、短3度ならNatural Minor）と違う音。
+// 例: Dorian → ♮6 / Phrygian → ♭2 / Lydian → ♯4 / Mixolydian → ♭7 / 都節音階 → ♭2・♭6
+// 違いが無い（ペンタなど）ときは、ルートと5度以外の音を特性音として扱う。
+const DEGREE_NAMES = Object.freeze(["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"]);
+const IONIAN = Object.freeze([0, 2, 4, 5, 7, 9, 11]);
+const AEOLIAN = Object.freeze([0, 2, 3, 5, 7, 8, 10]);
+
+export function characterIntervals(intervals) {
+  const reference = intervals.includes(4) ? IONIAN : intervals.includes(3) ? AEOLIAN : IONIAN;
+  const different = intervals.filter((interval) => !reference.includes(interval));
+  if (different.length > 0) return different;
+  const fallback = intervals.filter((interval) => interval !== 0 && interval !== 7);
+  return fallback.length > 0 ? fallback : intervals.filter((interval) => interval !== 0);
+}
+
+export function characterDegreeNames(intervals) {
+  return characterIntervals(intervals).map((interval) => DEGREE_NAMES[interval % 12]);
+}
+
+export function defaultCharacterScale(project) {
+  return project.basic.scale === "minor"
+    ? { id: "dorian", label: "Dorian", intervals: [0, 2, 3, 5, 7, 9, 10] }
+    : { id: "lydian", label: "Lydian", intervals: [0, 2, 4, 6, 7, 9, 11] };
+}
+
+// スケール別の「らしい動き」（character-phrases.js）で4小節を作る。小節ごとに ①提示 ②返し ③高まり ④解決。
+// 範囲の最後の小節は必ず ④（解決 / 浮かせる）にする。主旋律が鳴っている所は少し弱める。
+function buildCharacterIdiom(project, melody, startBar, endBar, idiom) {
+  const barTicks = barTicksOf(project);
+  const tonic = keyPitchClass(project);
+  const target = Math.min(72, Math.max(58, averageMelodyPitch(melody) - 7));
+  const first = idiom.bars[0];
+  const centre = first.reduce((sum, item) => sum + item.interval, 0) / first.length;
+  let base = null;
+  for (let pitch = 36; pitch <= 72; pitch += 1) {
+    if (pitch % 12 !== tonic) continue;
+    if (base === null || Math.abs(pitch + centre - target) < Math.abs(base + centre - target)) base = pitch;
+  }
+  const notes = [];
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const position = bar === endBar - 1 ? 3 : (bar - startBar) % 4;
+    const inBar = notesIn(melody, barStart, barStart + barTicks);
+    const lines = idiom.bars[position];
+    let shift = 0;
+    const highest = Math.max(...lines.map((item) => base + item.interval));
+    const lowest = Math.min(...lines.map((item) => base + item.interval));
+    if (highest > HIGH + 4) shift = -12;
+    else if (lowest < LOW) shift = 12;
+
+    lines.forEach((item) => {
+      const startTick = barStart + Math.round(item.step * STEP);
+      const duration = Math.min(Math.round(item.length * STEP * 0.94), barStart + barTicks - startTick);
+      if (duration < 30) return;
+      const busy = overlappingNotes(inBar, startTick, startTick + duration).length > 0;
+      notes.push(makeNote(base + item.interval + shift, startTick, duration, Math.max(1, Math.round(item.velocity * (busy ? 0.86 : 1)))));
+    });
+  }
+  return notes;
+}
+
+function buildCharacter(project, melody, startBar, endBar, characterScale) {
+  const idiom = characterIdiomFor(characterScale.id);
+  if (idiom) return buildCharacterIdiom(project, melody, startBar, endBar, idiom);
+  const barTicks = barTicksOf(project);
+  const tonic = keyPitchClass(project);
+  const intervals = characterScale.intervals;
+  const scale = intervals.map((interval) => (tonic + interval) % 12);
+  const characters = characterIntervals(intervals).map((interval) => (tonic + interval) % 12);
+  const target = Math.min(74, Math.max(57, averageMelodyPitch(melody) - 7));
+  const nearestWith = (pcs, to) => {
+    let best = null;
+    for (let pitch = 48; pitch <= 84; pitch += 1) {
+      if (!pcs.includes(pitch % 12)) continue;
+      if (best === null || Math.abs(pitch - to) < Math.abs(best - to)) best = pitch;
+    }
+    return best ?? Math.round(to);
+  };
+  const resolvePcs = [tonic, (tonic + 7) % 12];
+  const notes = [];
+  let previous = target;
+
+  for (let bar = startBar; bar < endBar; bar += 1) {
+    const barStart = bar * barTicks;
+    const inPhrase = (bar - startBar) % 4;
+    const phraseIndex = Math.floor((bar - startBar) / 4);
+    // 特性音を順番に回す（複数あるスケールは、フレーズごとに別の特性音が主役になる）
+    const characterPc = characters[(inPhrase === 3 ? phraseIndex : phraseIndex + (inPhrase % 2)) % characters.length];
+    const tone = nearestWith([characterPc], Math.round((previous + target) / 2));
+    const below = scaleStepDown(tone, 1, scale);
+    const above = scaleStepUp(tone, 1, scale);
+    const home = nearestWith(resolvePcs, tone);
+    const place = (step, pitch, length, velocity) => notes.push(
+      makeNote(pitch, barStart + step * STEP, Math.round(STEP * length * 0.94), velocity)
+    );
+
+    if (inPhrase === 0) {
+      place(0, below, 1, 56);       // 助走
+      place(1, tone, 3, 86);        // 特性音を長く
+      place(4, below, 1, 62);
+      place(5, home, 3, 70);        // ルート / 5度へ
+    } else if (inPhrase === 1) {
+      place(0, tone, 2, 84);
+      place(2, above, 1, 64);
+      place(3, tone, 1, 72);
+      place(4, home, 4, 68);
+    } else if (inPhrase === 2) {
+      place(0, below, 2, 58);
+      place(2, tone, 2, 88);        // 食い気味の強拍
+      place(4, tone, 1, 70);
+      place(5, above, 1, 62);
+      place(6, tone, 2, 74);
+    } else {
+      place(0, tone, 3, 86);
+      place(3, below, 1, 62);
+      place(4, nearestWith([tonic], tone), 4, 74); // ルートに解決して止まる
+    }
+    previous = notes[notes.length - 1].pitch;
+  }
+  return notes;
+}
+
+// Sectionの範囲（startBar〜endBar）に当てる候補を作る。土台（コードかメロディ）が無いときは例外
+export const COUNTER_MOTIONS = Object.freeze([
+  { id: "contrary", label: "反行", note: "主旋律が上がるとき下がり、下がるとき上がる。同じ方向に動かないので、2本の線が独立して聞こえる。" },
+  { id: "parallel", label: "平行（3度下）", note: "主旋律と同じ動きを、スケール内の3度下でなぞる。ハモリのように厚くなる。" },
+  { id: "pedal", label: "保続", note: "主音を長く持続させる（ペダルポイント）。コードが変わっても低音が動かず、土台の緊張感が出る。" }
+]);
+
+// 範囲内の主旋律 → 反行 / 平行 / 保続。メロディが無い範囲は、保続だけ作れる。
+const scaleStepsBetween = (from, to, scale) => {
+  if (from === to) return 0;
+  const direction = to > from ? 1 : -1;
+  let steps = 0;
+  for (let pitch = from; pitch !== to; ) {
+    pitch += direction;
+    if (scale.includes(pitch % 12)) steps += 1;
+  }
+  return steps * direction;
+};
+
+function buildMotion(project, melody, startBar, endBar, motion) {
+  const barTicks = barTicksOf(project);
+  const scale = scalePitchClasses(project);
+  const notes = [];
+
+  if (motion === "pedal") {
+    const tonic = keyPitchClass(project);
+    let pitch = 48;
+    for (let candidate = 45; candidate <= 57; candidate += 1) if (candidate % 12 === tonic) pitch = candidate;
+    for (let bar = startBar; bar < endBar; bar += 2) {
+      const length = Math.min(2, endBar - bar);
+      notes.push(makeNote(pitch, bar * barTicks, Math.round(length * barTicks * 0.98), 62));
+    }
+    return notes;
+  }
+
+  const inRange = notesIn(melody, startBar * barTicks, endBar * barTicks);
+  if (inRange.length === 0) return [];
+  const place = (pitch, note) => {
+    let fitted = pitch;
+    while (fitted < LOW) fitted += 12;
+    while (fitted > HIGH) fitted -= 12;
+    notes.push(makeNote(fitted, note.startTick, Math.max(30, Math.round(note.durationTick * 0.96)), Math.min(82, Math.max(40, Math.round(note.velocity * 0.72)))));
+    return fitted;
+  };
+
+  if (motion === "parallel") {
+    inRange.forEach((note) => place(scaleStepDown(note.pitch, 2, scale), note));
+    return notes;
+  }
+
+  // 反行: 主旋律が動いた向きと逆へ、同じ程度（最大3スケール音）動く。小節の頭はコードトーンへ寄せる。常に主旋律より下
+  let previousMelody = null;
+  let current = null;
+  inRange.forEach((note) => {
+    const bar = Math.floor(note.startTick / barTicks);
+    const barStart = bar * barTicks;
+    const first = note.startTick - barStart < STEP;
+    if (current === null) {
+      current = pickPitch({ pcs: chordPitchClasses(project, bar), target: note.pitch - 9, overlapping: [note], previous: null }) ?? note.pitch - 9;
+    } else {
+      const moved = scaleStepsBetween(previousMelody, note.pitch, scale);
+      const size = Math.min(3, Math.abs(moved));
+      current = moved > 0 ? scaleStepDown(current, size, scale) : moved < 0 ? scaleStepUp(current, size, scale) : current;
+      if (first) {
+        current = pickPitch({ pcs: chordPitchClasses(project, bar), target: current, overlapping: [], previous: current }) ?? current;
+      }
+    }
+    while (current > note.pitch - 3) current -= 12;
+    while (current < note.pitch - 17) current += 12;
+    current = place(current, note);
+    previousMelody = note.pitch;
+  });
+  return notes;
+}
+
+// 別案: 同じタイプの候補を、音域・間引き・後ノリで作り分ける（0 = 元の案）。音の高さの種類（pitch class）は変えない
+export const COUNTER_VARIATIONS = Object.freeze([
+  { id: 0, label: "基本", note: "" },
+  { id: 1, label: "音域を変える", note: "1オクターブ上（高いときは下）にして、メインメロディとの距離を変えた別案。" },
+  { id: 2, label: "間引く", note: "裏拍の短い音を減らして、すっきりさせた別案。メインメロディをより立てたいときに。" },
+  { id: 3, label: "後ノリ", note: "各音を8分音符ぶん後ろへずらして、メインメロディと交互に鳴らす別案。" }
+]);
+export const COUNTER_VARIATION_COUNT = COUNTER_VARIATIONS.length;
+
+function sameNotes(a, b) {
+  return a.length === b.length && a.every((note, index) => note.startTick === b[index].startTick && note.pitch === b[index].pitch && note.durationTick === b[index].durationTick);
+}
+
+function shiftOctave(notes) {
+  if (notes.length === 0) return notes;
+  const average = notes.reduce((sum, note) => sum + note.pitch, 0) / notes.length;
+  const options = average > 66 ? [-12, 12] : [12, -12];
+  const delta = options.find((value) => notes.every((note) => note.pitch + value >= 40 && note.pitch + value <= 88));
+  return delta === undefined ? notes : notes.map((note) => ({ ...note, pitch: note.pitch + delta }));
+}
+
+function thinNotes(notes, barTicks) {
+  const kept = notes.filter((note) => !(note.startTick % (STEP * 2) !== 0 && note.durationTick <= STEP));
+  const bars = new Set(notes.map((note) => Math.floor(note.startTick / barTicks)));
+  // 小節が空にならないように、消えた小節は元の音を残す
+  const keptBars = new Set(kept.map((note) => Math.floor(note.startTick / barTicks)));
+  return [...kept, ...notes.filter((note) => bars.has(Math.floor(note.startTick / barTicks)) && !keptBars.has(Math.floor(note.startTick / barTicks)))]
+    .sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+}
+
+function delayNotes(notes, barTicks) {
+  return notes.map((note) => {
+    const barEnd = (Math.floor(note.startTick / barTicks) + 1) * barTicks;
+    const start = note.startTick + STEP;
+    if (start >= barEnd) return note;
+    return { ...note, startTick: start, durationTick: Math.max(STEP / 2, Math.min(note.durationTick, barEnd - start)) };
+  });
+}
+
+export function varyCounterNotes(notes, variation, barTicks) {
+  if (!variation || notes.length === 0) return notes;
+  const order = variation === 1 ? [shiftOctave, thinNotes, delayNotes] : variation === 2 ? [thinNotes, shiftOctave, delayNotes] : [delayNotes, shiftOctave, thinNotes];
+  for (const apply of order) {
+    const result = apply(notes, barTicks);
+    if (!sameNotes(result, notes)) return result;
+  }
+  return notes;
+}
+
+export function counterCandidates(project, { startBar, endBar, characterScale = null, motion = "contrary", pentaOffset = 0, variation = 0 }) {
+  const barTicks = barTicksOf(project);
+  const melody = (project.tracks.find((track) => track.role === "melody")?.notes ?? [])
+    .slice()
+    .sort((a, b) => a.startTick - b.startTick);
+  const hasMelody = notesIn(melody, startBar * barTicks, endBar * barTicks).length > 0;
+  const hasChords = project.chords.slice(startBar, endBar).length > 0;
+
+  if (!hasMelody && !hasChords) {
+    throw new Error("このSectionにはコードもメロディもありません。先にどちらかを入れると、裏メロの候補を作れます。");
+  }
+
+  const builders = { sparse: buildSparse, active: buildActive, hook: buildHook, answer: buildAnswer, arpeggio: buildArpeggio, riff: buildRiff,
+    pentaMinor: (...args) => buildPentaHook(...args, "minor", penta),
+    pentaMajor: (...args) => buildPentaHook(...args, "major", penta),
+    character: (...args) => buildCharacter(...args, scaleForCharacter),
+    motion: (...args) => buildMotion(...args, COUNTER_MOTIONS.some((item) => item.id === motion) ? motion : "contrary") };
+  const scaleForCharacter = characterScale ?? defaultCharacterScale(project);
+  const penta = PENTA_ROOT_RELATIONS.some((item) => item.offset === pentaOffset) ? pentaOffset : 0;
+  return COUNTER_STYLES.map((style) => {
+    const notes = varyCounterNotes(
+      builders[style.id](project, melody, startBar, endBar).sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch),
+      variation,
+      barTicks
+    );
+    const extra = variation > 0 ? `【別案: ${COUNTER_VARIATIONS[variation]?.label ?? ""}】${COUNTER_VARIATIONS[variation]?.note ?? ""}` : "";
+    const withVariation = (candidate) => (extra ? { ...candidate, description: `${candidate.description} ${extra}` } : candidate);
+    if (style.id === "motion") {
+      const picked = COUNTER_MOTIONS.find((item) => item.id === motion) ?? COUNTER_MOTIONS[0];
+      return withVariation({ ...style, label: `Motion（${picked.label}）`, description: `${picked.note}※特定曲のコピーではありません`, notes });
+    }
+    if ((style.id === "pentaMinor" || style.id === "pentaMajor") && penta !== 0) {
+      const mode = style.id === "pentaMinor" ? "minor" : "major";
+      const root = pentaRootName(project, penta);
+      const relation = PENTA_ROOT_RELATIONS.find((item) => item.offset === penta).label;
+      const outside = pentaOutsideCount(project, mode, penta);
+      const modeName = mode === "minor" ? "マイナーペンタ" : "メジャーペンタ";
+      return withVariation({
+        ...style,
+        label: `${mode === "minor" ? "Minor" : "Major"} Penta Hook（${root} ${modeName}）`,
+        description: `曲のKey（${project.basic.key}）ではなく、${relation}の ${root} ${modeName} の音だけで作るフック。${outside === 0 ? "音はすべて曲のスケールの中なので、なじみやすく、色だけが変わります。" : `曲のスケールから外れる音が${outside}つあり、そこが「別の景色」に聞こえます。コードとぶつかる所は耳で確かめてください。`}型の作り方（2小節の繰り返し → 3小節目で変化 → 4小節目でコードトーンに着地）は同じです。※特定曲のコピーではありません`,
+        notes
+      });
+    }
+    if (style.id !== "character") return withVariation({ ...style, notes });
+    const key = KEY_NAMES[keyPitchClass(project)];
+    const names = characterDegreeNames(scaleForCharacter.intervals).join("・");
+    const idiom = characterIdiomFor(scaleForCharacter.id);
+    return withVariation({
+      ...style,
+      label: `Character（${key} ${scaleForCharacter.label}の特性音）`,
+      description: idiom
+        ? `${key} ${scaleForCharacter.label} の特性音（${names}）を軸に、このスケールらしい動きで作る。${idiom.feel}コードとぶつかる所は、スケールの色として耳で確かめてください。※特定曲のコピーではありません`
+        : `${key} ${scaleForCharacter.label} の特性音（${names}）を、長い音・強い拍で鳴らす。前を半音や全音で助走し、最後はルートか5度へ解決する。コードとぶつかる所は、スケールの色として耳で確かめてください。※特定曲のコピーではありません`,
+      notes
+    });
+  });
+}
+
+// 範囲（startBar〜endBar）の裏メロを notes に置き換えた新しいProjectを返す。範囲外は変えない
+export function withCounterNotes(project, startBar, endBar, notes) {
+  const barTicks = barTicksOf(project);
+  const startTick = startBar * barTicks;
+  const endTick = endBar * barTicks;
+  const next = clone(project);
+  const keep = counterNotes(next).filter((note) => note.startTick < startTick || note.startTick >= endTick);
+  const merged = [...keep, ...clone(notes)].sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+  const index = next.tracks.findIndex((track) => track.role === COUNTER_ROLE);
+
+  if (index === -1) {
+    if (merged.length === 0) return next;
+    next.tracks.push({
+      role: COUNTER_ROLE,
+      name: "Counter Melody",
+      midiChannel: 4,
+      instrumentId: null,
+      mute: false,
+      solo: false,
+      volume: 1,
+      pan: 0,
+      notes: merged
+    });
+  } else {
+    next.tracks[index] = { ...next.tracks[index], notes: merged };
+  }
+  return next;
+}
+
+// 範囲内で、裏メロが鳴っている小節の数（長くのばした音は、またぐ小節すべてに数える）
+export function counterBarCount(project, startBar, endBar) {
+  const barTicks = barTicksOf(project);
+  const bars = new Set();
+  counterNotes(project).forEach((note) => {
+    const first = Math.floor(note.startTick / barTicks);
+    const last = Math.floor((note.startTick + note.durationTick - 1) / barTicks);
+    for (let bar = Math.max(first, startBar); bar <= Math.min(last, endBar - 1); bar += 1) bars.add(bar);
+  });
+  return bars.size;
+}

@@ -1,0 +1,169 @@
+name: Demo Composer CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JavaScript syntax check
+        run: npm run test:syntax
+
+      - name: Audio playback anti-click smoke test
+        run: node scripts/audio-playback-smoke-test.mjs
+
+      - name: MIDI smoke test
+        run: npm run test:midi
+
+      - name: Rhythm copy smoke test
+        run: npm run test:rhythm
+
+      - name: Rhythm preset smoke test
+        run: npm run test:rhythm-presets
+
+      - name: Melody grid smoke test
+        run: npm run test:melody
+
+      - name: Chord types smoke test
+        run: npm run test:chord
+
+      - name: Chord preset smoke test
+        run: npm run test:chord-presets
+
+      - name: Backing pattern smoke test
+        run: npm run test:backing
+
+      - name: Hub key-change smoke test
+        run: npm run test:key-change
+
+      - name: Diatonic fan smoke test
+        run: npm run test:diatonic-fan
+
+      - name: History (Undo / Redo) smoke test
+        run: npm run test:history
+
+      - name: Project list / switch smoke test
+        run: npm run test:project-list
+
+      - name: Section (Arrange) smoke test
+        run: npm run test:section
+
+      - name: Sound Sketch smoke test
+        run: npm run test:sound
+
+      - name: Part switch (mute / solo) smoke test
+        run: npm run test:parts
+
+      - name: AI consult text smoke test
+        run: npm run test:consult
+
+      - name: Next chord / bass candidates smoke test
+        run: npm run test:candidates
+
+      - name: CSS brace balance test
+        run: npm run test:css
+
+      - name: Progression library smoke test
+        run: npm run test:library
+
+      - name: Cubase memo / consult template smoke test
+        run: npm run test:memo
+
+      - name: Melody analysis smoke test
+        run: npm run test:analysis
+
+      - name: Energy curve smoke test
+        run: npm run test:energy-curve
+
+      - name: Structure library smoke test
+        run: npm run test:structure-library
+
+      - name: Peak guide smoke test
+        run: npm run test:peak-guide
+
+      - name: Counter melody smoke test
+        run: npm run test:counter-melody
+
+      - name: Counter Melody Piano Roll edit smoke test
+        run: npm run test:counter-edit
+
+      - name: Why UI smoke test
+        run: npm run test:why-ui
+
+      - name: Skeleton recipe smoke test
+        run: npm run test:recipes
+
+      - name: Skeleton check smoke test
+        run: npm run test:skeleton-check
+
+      - name: Guide smoke test
+        run: npm run test:guide
+
+      - name: MIDI import smoke test
+        run: npm run test:midi-import
+
+      - name: Run Melody pitch role colors smoke test
+        run: npm run test:pitch-roles
+
+      - name: Chord scale sets smoke test
+        run: npm run test:chord-scale-sets
+
+      - name: Phrase melody smoke test
+        run: npm run test:phrase-melody
+
+      - name: Loop guide smoke test
+        run: npm run test:loop-guide
+
+      - name: Section variation smoke test
+        run: npm run test:variation
+
+      - name: Melody to chord candidates smoke test
+        run: npm run test:melody-chords
+
+      - name: Starting point smoke test
+        run: npm run test:starting-point
+
+      - name: Section compare smoke test
+        run: npm run test:section-compare
+
+      - name: Display settings smoke test
+        run: npm run test:display
+
+      - name: project.json import smoke test
+        run: npm run test:import
+
+      - name: Drive export smoke test
+        run: npm run test:drive-export
+
+      - name: Sheet link smoke test
+        run: npm run test:sheet-link
+
+      - name: Update notice smoke test
+        run: npm run test:update-notice
+
+      - name: Clear all MIDI smoke test
+        run: npm run test:clear-all
+
+      - name: Melody A/B comparison smoke test
+        run: npm run test:melody-ab
+
+      - name: Decision support and migration smoke test
+        run: npm run test:decision-support
+
+      - name: Static build
+        run: npm run build
+
+      - name: Versioned assets and dependency cache check
+        run: npm run test:build-cache

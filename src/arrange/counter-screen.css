@@ -1,0 +1,50 @@
+/* 裏メロタブ */
+.counter-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.counter-controls .field,
+.counter-controls select,
+.counter-card .field select {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.counter-candidates {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.counter-pick {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+}
+
+.counter-pick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.counter-pick-actions button,
+#counter-clear {
+  min-height: 44px;
+}
+
+/* 別案の切り替え行（全タイプの候補が同時に変わる） */
+.counter-variation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+}

@@ -1,0 +1,55 @@
+/* Chord画面: 4小節メロディをつくる */
+.phrase-melody {
+  margin: 0 0 12px;
+}
+
+.phrase-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.phrase-controls .field,
+.phrase-controls select {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.phrase-candidates {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.phrase-candidate {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+}
+
+.phrase-dots {
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  overflow-wrap: anywhere;
+}
+
+.phrase-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.phrase-actions button,
+#phrase-refresh {
+  min-height: 44px;
+}
+
+.phrase-contours button {
+  min-width: 70px;
+}

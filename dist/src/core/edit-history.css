@@ -1,0 +1,38 @@
+.topbar > div:first-child {
+  min-width: 0;
+}
+
+.topbar h1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+}
+
+.history-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.history-actions button {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: #28282f;
+  color: #f5f5f5;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.history-actions button:disabled {
+  opacity: .32;
+}

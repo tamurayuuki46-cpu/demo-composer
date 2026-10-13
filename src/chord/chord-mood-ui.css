@@ -1,0 +1,307 @@
+.chord-mood-panel {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid var(--border, #303030);
+  border-radius: 14px;
+  background: var(--panel, #181818);
+}
+
+.chord-mood-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.chord-mood-heading h3 {
+  margin: 0 0 4px;
+}
+
+.chord-mood-heading p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.78;
+}
+
+.chord-mood-clear {
+  min-height: 40px;
+  flex: 0 0 auto;
+}
+
+.chord-mood-group {
+  margin-top: 12px;
+}
+
+.chord-mood-group > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chord-mood-group > summary small { font-weight: 400; opacity: .72; }
+.chord-mood-chip.none { background: #26262d; color: #f5f5f5; }
+.chord-mood-chip.none.active { background: #f1f1f1; color: #111; }
+
+.chord-mood-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chord-mood-chip {
+  min-height: 42px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+
+.chord-mood-chip.active {
+  border-color: currentColor;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.chord-mood-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.chord-mood-card {
+  padding: 12px;
+  border: 1px solid var(--border, #303030);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.chord-mood-card-head {
+  display: grid;
+  gap: 5px;
+}
+
+.chord-mood-card-head strong {
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.chord-mood-difficulty {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chord-mood-matches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.chord-mood-matches span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.chord-mood-card button {
+  width: 100%;
+  min-height: 46px;
+}
+
+.chord-mood-empty {
+  margin: 14px 0 4px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.9rem;
+}
+
+@media (min-width: 700px) {
+  .chord-mood-results {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 曲想を1つ選んで一覧 */
+.chord-emotion-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.chord-emotion-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.chord-emotion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #303038;
+  border-radius: 12px;
+  background: #17171b;
+}
+.chord-emotion-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.chord-emotion-main strong {
+  overflow-wrap: anywhere;
+}
+.chord-emotion-main small {
+  opacity: 0.72;
+  overflow-wrap: anywhere;
+}
+.chord-emotion-row button {
+  flex: none;
+  min-height: 44px;
+  min-width: 64px;
+}
+.chord-emotion-more {
+  min-height: 44px;
+}
+.chord-mood-combine {
+  margin: 10px 0 6px;
+}
+.chord-mood-combine > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chord-mood-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.chord-mood-tab {
+  min-height: 46px;
+  border-radius: 12px;
+  touch-action: manipulation;
+}
+.chord-mood-tab.active {
+  border-color: currentColor;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+/* ===== 曲想タグ（感情 / 質感 / 場面）: 複数選択・選択中が常に見える ===== */
+.mood-picker { display: grid; gap: 12px; font-feature-settings: "palt"; }
+
+.mood-selected {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #2f2f3a;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #1b1b23, #15151b);
+}
+.mood-selected-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mood-selected-label { font-size: 12px; font-weight: 700; letter-spacing: .12em; opacity: .75; }
+.mood-clear { min-height: 36px; padding: 0 12px; font-size: 12px; border-radius: 999px; background: transparent; color: #c9c9d4; border: 1px solid #3a3a47; }
+.mood-selected-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.mood-selected-empty { margin: 0; padding: 10px 12px; border: 1px dashed #3a3a47; border-radius: 12px; font-size: 13px; opacity: .8; }
+
+.mood-pill {
+  --accent: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 14%, #14141a);
+  color: #f5f5fa;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  touch-action: manipulation;
+}
+.mood-pill small { font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--accent); }
+.mood-pill b { font-size: 16px; line-height: 1; opacity: .7; }
+.mood-pill.g-emotion { --accent: #fb7185; }
+.mood-pill.g-texture { --accent: #38bdf8; }
+.mood-pill.g-scene { --accent: #fbbf24; }
+
+.mood-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px; border-radius: 14px; background: #121217; border: 1px solid #2a2a33; }
+.mood-tab {
+  min-height: 46px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  border: 0; border-radius: 10px;
+  background: transparent; color: #b9b9c6;
+  font-size: 15px; font-weight: 700; letter-spacing: .1em;
+  touch-action: manipulation;
+}
+.mood-tab em { font-style: normal; font-size: 9px; opacity: .6; }
+.mood-tab i { font-style: normal; min-width: 20px; height: 20px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: linear-gradient(135deg, #38bdf8, #818cf8); color: #0b0b10; font-size: 12px; font-weight: 800; }
+.mood-tab.active { background: #23232d; color: #fff; box-shadow: inset 0 -2px 0 #818cf8; }
+
+.mood-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.mood-chip {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #34343f;
+  border-radius: 12px;
+  background: #1c1c24;
+  color: #e6e6ee;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  touch-action: manipulation;
+  transition: transform .08s ease, box-shadow .15s ease;
+}
+.mood-chip:active { transform: scale(.95); }
+.mood-chip.on {
+  border-color: transparent;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  color: #0b0b10;
+  font-weight: 800;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, .35), 0 4px 14px rgba(56, 189, 248, .25);
+}
+.mood-chip.on::before { content: "✓ "; }
+
+.mood-count { margin: 2px 0 0; font-size: 13px; opacity: .85; }
+.mood-count b { font-size: 16px; }
+.mood-tab { white-space: nowrap; letter-spacing: .04em; gap: 4px; padding: 0 4px; }
+.mood-tab span { white-space: nowrap; }
+
+/* お気に入り（タグの組み合わせ） */
+.mood-favorites { display: grid; gap: 8px; }
+.mood-fav-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.mood-fav { display: inline-flex; align-items: stretch; border: 1px solid #4a4256; border-radius: 12px; overflow: hidden; background: #1c1822; }
+.mood-fav-apply { min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: #f2e9ff; font-size: 14px; font-weight: 700; letter-spacing: .05em; touch-action: manipulation; }
+.mood-fav-apply.on { background: linear-gradient(135deg, #f472b6, #a78bfa); color: #0b0b10; }
+.mood-fav-remove { min-width: 40px; min-height: 44px; border: 0; border-left: 1px solid #4a4256; background: transparent; color: #b9a9cf; font-size: 16px; }
+.mood-selected-actions { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.mood-fav-save { min-height: 36px; padding: 0 12px; font-size: 12px; font-weight: 700; border-radius: 999px; background: transparent; color: #f9d5ff; border: 1px solid #7c5a99; touch-action: manipulation; }
+.mood-fav-save.on { background: linear-gradient(135deg, #f472b6, #a78bfa); color: #0b0b10; border-color: transparent; }
+
+/* ▶ 聴く（試聴） */
+.audition-btn {
+  min-height: 44px;
+  min-width: 64px;
+  padding: 0 12px;
+  border: 1px solid #4b6a8a;
+  border-radius: 12px;
+  background: #1c2733;
+  color: #cfe8ff;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+.audition-btn:active { transform: scale(.95); }
+.chord-emotion-actions { display: grid; gap: 6px; flex: none; }
+.chord-emotion-actions button { min-height: 44px; min-width: 72px; }

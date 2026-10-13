@@ -1,0 +1,113 @@
+.consult-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0 10px;
+  padding: 10px;
+  border: 1px solid #303038;
+  border-radius: 10px;
+  background: #18181c;
+  color: #f5f5f5;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.consult-copy {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+.consult-details {
+  margin-top: 10px;
+}
+.consult-details summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+.consult-details textarea {
+  font-size: 12px;
+}
+
+/* 曲の特徴カード */
+.song-card-toggle {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 10px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-weight: 700;
+}
+
+.song-card {
+  margin-top: 8px;
+  padding: 14px;
+  border: 1px solid #3b3b46;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.song-card h4 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.song-card-meta {
+  margin: 2px 0 10px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.song-card dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.song-card dt {
+  font-size: 12px;
+  color: #93c5fd;
+}
+
+.song-card dd {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.song-card dd small {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Cubaseメモ / 相談テンプレート */
+.cubase-memo-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.consult-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.consult-template {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #383842;
+  border-radius: 999px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-size: 13px;
+}

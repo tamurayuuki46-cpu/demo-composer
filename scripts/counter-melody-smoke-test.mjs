@@ -1,0 +1,306 @@
+import assert from "node:assert/strict";
+import { createDefaultProject, createProjectStore, validateProject } from "../src/core/project-state.js";
+import {
+  COUNTER_ROLE,
+  characterDegreeNames,
+  characterIntervals,
+  COUNTER_STYLES,
+  counterBarCount,
+  counterCandidates,
+  counterNotes,
+  hasCounter,
+  withCounterNotes
+} from "../src/core/counter-melody.js";
+import { CHARACTER_IDIOMS } from "../src/core/character-phrases.js";
+import { buildMidiExports } from "../src/midi/midi-export.js";
+import { appendSectionCopy, getSections, sliceProject } from "../src/core/section-ops.js";
+
+const BAR = 1920;
+const STEP = 240;
+
+function sampleProject() {
+  const project = createDefaultProject();
+  project.structure.sections = [
+    { id: "s1", kind: "verse", name: "Aメロ", bars: 4, energy: "low" },
+    { id: "s2", kind: "chorus", name: "サビ", bars: 4, energy: "high" }
+  ];
+  const roots = [0, 9, 5, 7, 0, 9, 5, 7];
+  const qualities = ["major", "minor", "major", "major", "major", "minor", "major", "major"];
+  project.chords = roots.map((root, index) => ({ root, quality: qualities[index], degree: "I", startTick: index * BAR, durationTick: BAR }));
+
+  // 各小節の前半だけメロディ、後半は休符。最後の小節だけ8分で埋める。
+  const notes = [];
+  for (let bar = 0; bar < 8; bar += 1) {
+    [72, 74].forEach((pitch, step) => {
+      notes.push({ id: `m-${bar}-${step}`, pitch, startTick: bar * BAR + step * 480, durationTick: 480, velocity: 90 });
+    });
+  }
+  for (let step = 0; step < 8; step += 1) {
+    notes.push({ id: `dense-${step}`, pitch: 76, startTick: 7 * BAR + step * STEP, durationTick: STEP, velocity: 90 });
+  }
+  project.tracks.push({ role: "melody", name: "Melody", midiChannel: 2, instrumentId: null, mute: false, solo: false, volume: 1, pan: 0, notes });
+  return project;
+}
+
+const project = sampleProject();
+assert.equal(hasCounter(project), false);
+assert.equal(COUNTER_ROLE, "counter");
+assert.deepEqual(COUNTER_STYLES.map((item) => item.id), ["sparse", "active", "hook", "answer", "arpeggio", "riff", "pentaMinor", "pentaMajor", "character", "motion"]);
+assert.match(COUNTER_STYLES[0].description, /米津/);
+assert.match(COUNTER_STYLES[1].description, /YOASOBI \/ Ayase/);
+assert.match(COUNTER_STYLES[1].description, /コードトーン型/);
+assert.match(COUNTER_STYLES[1].description, /テンション型/);
+assert.match(COUNTER_STYLES[1].description, /別コード感型/);
+assert.match(COUNTER_STYLES[2].description, /Oasis/);
+assert.match(COUNTER_STYLES[3].description, /Mr\.Children/);
+assert.match(COUNTER_STYLES[3].description, /3度・7度/);
+assert.ok(COUNTER_STYLES.every((item) => item.description.includes("特定曲のコピーではありません")));
+
+// --- 候補は4つで、どれも範囲内・MIDI範囲内
+const candidates = counterCandidates(project, { startBar: 0, endBar: 4 });
+assert.deepEqual(candidates.map((item) => item.id), COUNTER_STYLES.map((style) => style.id));
+assert.equal(candidates.length, 10);
+candidates.forEach((candidate) => {
+  assert.ok(candidate.notes.length > 0, `${candidate.id} has notes`);
+  assert.ok(candidate.notes.every((note) => note.startTick >= 0 && note.startTick < 4 * BAR), `${candidate.id} stays in range`);
+  assert.ok(candidate.notes.every((note) => note.pitch >= 0 && note.pitch <= 127 && note.durationTick >= 1 && note.velocity >= 1 && note.velocity <= 127));
+  assert.ok(candidate.notes.every((note) => note.startTick + note.durationTick <= 4 * BAR), `${candidate.id} does not run past the section`);
+  assert.equal(new Set(candidate.notes.map((note) => note.id)).size, candidate.notes.length, "unique ids");
+});
+
+const sparse = candidates.find((item) => item.id === "sparse");
+sparse.notes.forEach((note) => assert.ok(note.startTick % BAR >= 960, "sparse starts in the gap"));
+
+const active = candidates.find((item) => item.id === "active");
+assert.ok(active.notes.length > sparse.notes.length, "active is denser than sparse");
+assert.ok(active.notes.every((note) => note.durationTick === STEP), "active uses eighth-note motion");
+
+const activeBar0 = active.notes.filter((note) => Math.floor(note.startTick / BAR) === 0);
+assert.deepEqual(activeBar0.map((note) => note.startTick % BAR), [0, 240, 480, 960, 1200, 1440]);
+const chordPcs = [0, 4, 7];
+const scalePcs = [0, 2, 4, 5, 7, 9, 11];
+const upperStructurePcs = [4, 7, 11];
+[0, 3].forEach((index) => assert.ok(chordPcs.includes(activeBar0[index].pitch % 12)));
+[1, 4].forEach((index) => {
+  const pc = activeBar0[index].pitch % 12;
+  assert.ok(scalePcs.includes(pc));
+  assert.ok(!chordPcs.includes(pc));
+});
+[2, 5].forEach((index) => assert.ok(upperStructurePcs.includes(activeBar0[index].pitch % 12)));
+
+const hook = candidates.find((item) => item.id === "hook");
+for (let bar = 0; bar < 4; bar += 1) {
+  const inBar = hook.notes.filter((note) => Math.floor(note.startTick / BAR) === bar);
+  assert.deepEqual(inBar.map((note) => note.startTick % BAR), [0, 480, 960]);
+  assert.deepEqual(inBar.map((note) => note.durationTick), [480, 480, 960]);
+}
+
+// Pentatonic Hook: Keyのペンタトニックの音だけ。最後の小節の最後の音はコードトーン
+const pentaSets = { pentaMinor: [0, 3, 5, 7, 10], pentaMajor: [0, 2, 4, 7, 9] };
+Object.entries(pentaSets).forEach(([id, allowed]) => {
+  const penta = candidates.find((item) => item.id === id);
+  assert.ok(penta.notes.length >= 12, `${id} has a hook per bar`);
+  assert.ok(penta.notes.every((note) => allowed.includes(note.pitch % 12)), `${id} stays in its pentatonic`);
+  assert.ok(penta.notes.every((note) => note.pitch >= 48 && note.pitch <= 79), `${id} stays in a singable range`);
+  const finalNote = penta.notes[penta.notes.length - 1];
+  assert.ok(finalNote, `${id} ends on a note`);
+});
+assert.match(COUNTER_STYLES.find((item) => item.id === "pentaMinor").label, /マイナーペンタ/);
+assert.match(COUNTER_STYLES.find((item) => item.id === "pentaMajor").label, /メジャーペンタ/);
+
+// Character: 選んだスケールの特性音を強調する。音はすべてスケール内、特性音が長い音に入る
+assert.deepEqual(characterIntervals([0, 2, 3, 5, 7, 9, 10]), [9], "Dorian -> natural 6");
+assert.deepEqual(characterIntervals([0, 1, 3, 5, 7, 8, 10]), [1], "Phrygian -> b2");
+assert.deepEqual(characterIntervals([0, 2, 4, 6, 7, 9, 11]), [6], "Lydian -> #4");
+assert.deepEqual(characterIntervals([0, 2, 4, 5, 7, 9, 10]), [10], "Mixolydian -> b7");
+assert.deepEqual(characterIntervals([0, 1, 5, 7, 8]), [1, 8], "Miyako-bushi -> b2, b6");
+assert.deepEqual(characterDegreeNames([0, 1, 4, 5, 7, 8, 10]), ["♭2", "♭6", "♭7"]);
+assert.ok(characterIntervals([0, 3, 5, 7, 10]).length > 0, "pentatonic falls back");
+const phrygian = [0, 1, 3, 5, 7, 8, 10];
+const characterOf = (scaleDef) => counterCandidates(project, { startBar: 0, endBar: 4, characterScale: scaleDef }).find((item) => item.id === "character");
+const phrygianCandidate = characterOf({ id: "phrygian", label: "Phrygian", intervals: phrygian });
+assert.ok(phrygianCandidate.notes.length >= 12);
+assert.ok(phrygianCandidate.notes.every((note) => phrygian.includes(((note.pitch - 0) % 12 + 12) % 12)), "stays in the chosen scale (key C)");
+assert.ok(phrygianCandidate.notes.some((note) => note.pitch % 12 === 1 && note.durationTick >= STEP * 2), "b2 is held long");
+assert.match(phrygianCandidate.label, /Phrygian/);
+assert.match(phrygianCandidate.description, /♭2/);
+assert.ok(phrygianCandidate.notes.every((note) => note.startTick + note.durationTick <= 4 * BAR));
+const defaultCharacter = counterCandidates(project, { startBar: 0, endBar: 4 }).find((item) => item.id === "character");
+assert.match(defaultCharacter.label, /Lydian|Dorian/);
+
+// スケール別の型: すべてそのスケールの音だけ / 小節内 / 特性音が長い音に入る / 型ごとに4小節が違う
+const idiomScales = {
+  dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10], lydian: [0, 2, 4, 6, 7, 9, 11],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10], locrian: [0, 1, 3, 5, 6, 8, 10], "harmonic-minor": [0, 2, 3, 5, 7, 8, 11],
+  "melodic-minor": [0, 2, 3, 5, 7, 9, 11], "phrygian-dominant": [0, 1, 4, 5, 7, 8, 10], "double-harmonic": [0, 1, 4, 5, 7, 8, 11],
+  "hungarian-minor": [0, 2, 3, 6, 7, 8, 11], "whole-tone": [0, 2, 4, 6, 8, 10], "diminished-wh": [0, 2, 3, 5, 6, 8, 9, 11],
+  "diminished-hw": [0, 1, 3, 4, 6, 7, 9, 10], blues: [0, 3, 5, 6, 7, 10], "lydian-dominant": [0, 2, 4, 6, 7, 9, 10],
+  altered: [0, 1, 3, 4, 6, 8, 10], "miyako-bushi": [0, 1, 5, 7, 8], "in-sen": [0, 1, 5, 7, 10], ritsu: [0, 2, 5, 7, 9], ryukyu: [0, 4, 5, 7, 11]
+};
+Object.entries(idiomScales).forEach(([id, intervals]) => {
+  assert.ok(CHARACTER_IDIOMS[id], `${id} has an idiom`);
+  const picked = characterOf({ id, label: id, intervals });
+  assert.ok(picked.notes.length >= 12, `${id} has enough notes`);
+  assert.ok(picked.notes.every((note) => intervals.includes(note.pitch % 12)), `${id} stays in the scale`);
+  assert.ok(picked.notes.every((note) => note.startTick + note.durationTick <= 4 * BAR && note.durationTick > 0), `${id} stays in range`);
+  assert.ok(picked.notes.every((note) => note.pitch >= 45 && note.pitch <= 84), `${id} stays singable`);
+  const special = characterIntervals(intervals);
+  assert.ok(picked.notes.some((note) => special.includes(note.pitch % 12) && note.durationTick >= STEP * 1.8), `${id} holds a characteristic tone`);
+  const perBar = [0, 1, 2, 3].map((bar) => picked.notes.filter((note) => Math.floor(note.startTick / BAR) === bar).map((note) => `${note.pitch}:${note.startTick % BAR}`).join(","));
+  assert.equal(new Set(perBar).size, 4, `${id} bars are all different`);
+  assert.match(picked.description, new RegExp(CHARACTER_IDIOMS[id].feel.slice(0, 6)));
+});
+// 型の無いスケール（例: Dorian♭2）は従来の共通型
+assert.ok(characterOf({ id: "dorian-flat2", label: "Dorian ♭2", intervals: [0, 1, 3, 5, 7, 9, 10] }).notes.length >= 12);
+
+// Motion: 反行 / 平行 / 保続
+const mainMel = project.tracks.find((track) => track.role === "melody").notes.filter((note) => note.startTick < 4 * BAR);
+const motionOf = (motion) => counterCandidates(project, { startBar: 0, endBar: 4, motion }).find((item) => item.id === "motion");
+const majorPcs = [0, 2, 4, 5, 7, 9, 11];
+const contrary = motionOf("contrary");
+assert.match(contrary.label, /反行/);
+assert.ok(contrary.notes.length >= 4 && contrary.notes.every((note) => majorPcs.includes(note.pitch % 12)), "contrary stays in key");
+assert.ok(contrary.notes.every((note) => { const m = mainMel.find((item) => item.startTick === note.startTick); return !m || note.pitch < m.pitch; }), "contrary stays under the melody");
+let opposite = 0; let moves = 0;
+for (let i = 1; i < contrary.notes.length; i += 1) {
+  const m0 = mainMel.find((item) => item.startTick === contrary.notes[i - 1].startTick);
+  const m1 = mainMel.find((item) => item.startTick === contrary.notes[i].startTick);
+  if (!m0 || !m1 || m0.pitch === m1.pitch) continue;
+  moves += 1;
+  if ((contrary.notes[i].pitch - contrary.notes[i - 1].pitch) * (m1.pitch - m0.pitch) <= 0) opposite += 1;
+}
+assert.ok(moves === 0 || opposite / moves >= 0.7, `contrary moves the other way (${opposite}/${moves})`);
+const parallel = motionOf("parallel");
+assert.match(parallel.label, /平行/);
+assert.equal(parallel.notes.length, mainMel.length, "parallel follows every melody note");
+parallel.notes.forEach((note) => {
+  const m = mainMel.find((item) => item.startTick === note.startTick);
+  assert.ok(m && [3, 4].includes(m.pitch - note.pitch) && majorPcs.includes(note.pitch % 12), "parallel is a diatonic third below");
+});
+const pedal = motionOf("pedal");
+assert.match(pedal.label, /保続/);
+assert.ok(pedal.notes.length >= 2 && pedal.notes.every((note) => note.pitch % 12 === 0 && note.durationTick >= BAR), "pedal holds the tonic");
+assert.ok(pedal.notes.every((note) => note.startTick + note.durationTick <= 4 * BAR));
+
+// Answer: 語尾側（後半）を優先し、Sparseより長い2拍単位の返しを作る。
+// Arpeggio: 8分の細かい動きで、メロディの下に置かれ、半音でぶつからない
+const arpeggio = candidates.find((item) => item.id === "arpeggio");
+assert.ok(arpeggio.notes.length > sparse.notes.length, "arpeggio is denser than sparse");
+assert.ok(arpeggio.notes.every((note) => note.durationTick < STEP), "arpeggio uses short eighth notes");
+const mainMelody = project.tracks.find((track) => track.role === "melody").notes;
+arpeggio.notes.forEach((note) => {
+  mainMelody.filter((m) => m.startTick < note.startTick + note.durationTick && m.startTick + m.durationTick > note.startTick).forEach((m) => {
+    const distance = Math.abs(note.pitch - m.pitch) % 12;
+    assert.ok(distance !== 1 && distance !== 11, "arpeggio does not clash by a semitone");
+    assert.ok(note.pitch < m.pitch - 2, "arpeggio stays below the main melody");
+  });
+});
+
+// Riff: 低い音域で、各小節の頭はそのコードのルート。4小節目は駆け上がる
+const riff = candidates.find((item) => item.id === "riff");
+assert.ok(riff.notes.every((note) => note.pitch >= 36 && note.pitch <= 70), "riff stays in a low register");
+[0, 1, 2].forEach((bar) => {
+  const first = riff.notes.find((note) => note.startTick === bar * BAR);
+  assert.equal(first.pitch % 12, project.chords[bar].root % 12, `riff bar ${bar + 1} starts on the chord root`);
+});
+const riffBar4 = riff.notes.filter((note) => Math.floor(note.startTick / BAR) === 3);
+assert.equal(riffBar4.length, 8, "riff bar 4 is an eighth-note run");
+assert.ok(riffBar4.every((note, index) => index === 0 || note.pitch > riffBar4[index - 1].pitch), "riff bar 4 climbs");
+
+const answer = candidates.find((item) => item.id === "answer");
+for (let bar = 0; bar < 4; bar += 1) {
+  const inBar = answer.notes.filter((note) => Math.floor(note.startTick / BAR) === bar);
+  assert.deepEqual(inBar.map((note) => note.startTick % BAR), [960, 1440]);
+  assert.deepEqual(inBar.map((note) => note.durationTick), [480, 480]);
+  assert.ok(inBar.every((note) => note.startTick % BAR >= 960), "answer stays after the main phrase");
+}
+const answerBar0 = answer.notes.filter((note) => Math.floor(note.startTick / BAR) === 0);
+assert.ok([4, 7].includes(answerBar0[0].pitch % 12), "answer begins on a non-root chord color tone");
+
+// 詰まった小節では隙間系は休む
+const chorus = counterCandidates(project, { startBar: 4, endBar: 8 });
+assert.ok(chorus.find((item) => item.id === "sparse").notes.every((note) => Math.floor(note.startTick / BAR) !== 7));
+assert.ok(chorus.find((item) => item.id === "answer").notes.every((note) => Math.floor(note.startTick / BAR) !== 7));
+
+const empty = createDefaultProject();
+assert.throws(() => counterCandidates(empty, { startBar: 0, endBar: 4 }), /コードもメロディもありません/);
+
+// --- 適用 / 消去 / 範囲外は触らない / Undo
+const store = createProjectStore(project);
+const revisionBefore = store.getSnapshot().revision;
+store.applyCounterMelody({ startBar: 0, endBar: 4, notes: answer.notes });
+assert.equal(store.getSnapshot().revision, revisionBefore + 1);
+let snapshot = store.getSnapshot();
+assert.equal(snapshot.tracks.find((track) => track.role === "counter").midiChannel, 4);
+assert.equal(counterBarCount(snapshot, 0, 4), 4);
+assert.equal(counterBarCount(snapshot, 4, 8), 0);
+validateProject(snapshot);
+
+store.applyCounterMelody({ startBar: 4, endBar: 8, notes: counterCandidates(snapshot, { startBar: 4, endBar: 8 }).find((item) => item.id === "hook").notes });
+snapshot = store.getSnapshot();
+assert.equal(counterBarCount(snapshot, 0, 4), 4);
+assert.equal(counterBarCount(snapshot, 4, 8), 4);
+
+store.applyCounterMelody({ startBar: 0, endBar: 4, notes: [] });
+snapshot = store.getSnapshot();
+assert.equal(counterBarCount(snapshot, 0, 4), 0);
+assert.equal(counterBarCount(snapshot, 4, 8), 4);
+store.undo();
+assert.equal(counterBarCount(store.getSnapshot(), 0, 4), 4);
+
+assert.equal(counterNotes(project).length, 0);
+const preview = withCounterNotes(project, 0, 4, answer.notes);
+assert.equal(counterNotes(project).length, 0);
+assert.ok(counterNotes(preview).length > 0);
+
+// --- Section操作 / Key変更 / MIDI Exportとの互換
+snapshot = store.getSnapshot();
+const sliced = sliceProject(snapshot, 0, 4 * BAR);
+assert.ok(counterNotes(sliced).every((note) => note.startTick < 4 * BAR));
+const copied = appendSectionCopy(snapshot, 0, "verse");
+assert.equal(getSections(copied).length, 3);
+assert.equal(counterBarCount(copied, 8, 12), counterBarCount(snapshot, 0, 4));
+
+const beforeKey = counterNotes(store.getSnapshot()).map((note) => note.pitch);
+store.updateHub({ basic: { key: "D" } });
+const afterKey = counterNotes(store.getSnapshot()).map((note) => note.pitch);
+assert.deepEqual(afterKey, beforeKey.map((pitch) => pitch + 2));
+assert.throws(() => store.updateHub({ basic: { scale: "minor" } }), /Scale/);
+
+const plain = buildMidiExports(sampleProject());
+assert.deepEqual(Object.keys(plain), ["Draft.mid", "Chord.mid", "Melody.mid", "Bass.mid", "Drums.mid"]);
+const withCounter = buildMidiExports(store.getSnapshot());
+assert.ok(Object.keys(withCounter).includes("CounterMelody.mid"));
+assert.ok(withCounter["CounterMelody.mid"].length > 30);
+assert.ok(withCounter["Draft.mid"].length > plain["Draft.mid"].length);
+
+validateProject(sampleProject());
+console.log("Counter melody smoke test passed.");
+
+// ---- 他のKeyのペンタ / 別案 ----
+{
+  const { PENTA_ROOT_RELATIONS, COUNTER_VARIATION_COUNT, pentaOutsideCount } = await import("../src/core/counter-melody.js");
+  const base = counterCandidates(project, { startBar: 0, endBar: 4 });
+  const fifth = counterCandidates(project, { startBar: 0, endBar: 4, pentaOffset: 7 });
+  const baseMinor = base.find((item) => item.id === "pentaMinor");
+  const fifthMinor = fifth.find((item) => item.id === "pentaMinor");
+  assert.notDeepEqual(fifthMinor.notes.map((n) => n.pitch), baseMinor.notes.map((n) => n.pitch));
+  assert.match(fifthMinor.label, /マイナーペンタ/);
+  assert.ok(PENTA_ROOT_RELATIONS.length >= 8);
+  assert.equal(typeof pentaOutsideCount(project, "major", 2), "number");
+  const shape = (notes) => notes.map((n) => [n.pitch, n.startTick, n.durationTick]);
+  assert.deepEqual(
+    shape(counterCandidates(project, { startBar: 0, endBar: 4, pentaOffset: 99 }).find((item) => item.id === "pentaMajor").notes),
+    shape(base.find((item) => item.id === "pentaMajor").notes)
+  );
+  for (let variation = 0; variation < COUNTER_VARIATION_COUNT; variation += 1) {
+    const list = counterCandidates(project, { startBar: 0, endBar: 4, variation });
+    assert.equal(list.length, 10);
+    list.forEach((item) => item.notes.forEach((note) => {
+      assert.ok(note.startTick >= 0 && note.durationTick > 0 && note.pitch >= 36 && note.pitch <= 96);
+    }));
+  }
+  const v1 = counterCandidates(project, { startBar: 0, endBar: 4, variation: 1 });
+  assert.ok(v1.some((item, index) => item.notes.length > 0 && JSON.stringify(shape(item.notes)) !== JSON.stringify(shape(base[index].notes))));
+  assert.match(v1[0].description, /別案/);
+}

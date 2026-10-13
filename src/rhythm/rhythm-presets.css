@@ -1,0 +1,130 @@
+.rhythm-preset-panel {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.rhythm-preset-panel > label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rhythm-preset-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px;
+  gap: 8px;
+}
+
+.rhythm-preset-controls select,
+.rhythm-preset-controls button {
+  min-width: 0;
+  min-height: 46px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+}
+
+.rhythm-preset-controls select {
+  width: 100%;
+  padding: 0 10px;
+}
+
+.rhythm-preset-controls button {
+  border: 0;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+.rhythm-preset-panel small {
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: .68;
+}
+
+.rhythm-preset-section {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 8px;
+  border: 1px solid #5a5a66;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+}
+
+/* Bass候補（3つ） */
+.bass-candidate-panel {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.bass-candidate-panel h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.bass-candidate {
+  display: grid;
+  gap: 3px;
+  min-height: 64px;
+  padding: 8px 12px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  text-align: left;
+}
+
+.bass-candidate-dots {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #60a5fa;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ドラムフィル */
+.drum-fill-panel {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.drum-fill-panel h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.drum-fill-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.drum-fill-buttons button,
+.drum-fill-all {
+  min-height: 48px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-size: 13px;
+}

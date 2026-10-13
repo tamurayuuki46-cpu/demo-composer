@@ -1,0 +1,72 @@
+name: Arrangement Lab CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'arranger/**'
+      - '.github/workflows/arranger-ci.yml'
+
+jobs:
+  arranger-v05:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JavaScript syntax check
+        run: |
+          node --check arranger/src/core.js
+          node --check arranger/src/app.js
+          node --check arranger/sw.js
+          node --check arranger/src/preview.js
+          node --check arranger/src/reharm-theory.js
+          node --check arranger/src/arrangement-tools.js
+          node --check arranger/src/feature-ui.js
+          node --check arranger/src/v05-tools.js
+          node --check arranger/src/v05-workflow.js
+          node --check arranger/src/v05-ui.js
+          for file in arranger/src/*lab*.js; do node --check "$file"; done
+
+      - name: Arrangement Lab core regression
+        run: |
+          node arranger/tests/core.test.mjs
+          node arranger/tests/regression.test.mjs
+          node arranger/tests/features.test.mjs
+          node arranger/tests/music-labs.test.mjs
+          node arranger/tests/v05.test.mjs
+          node arranger/tests/v05-workflow.test.mjs
+
+      - name: Static build includes Arrangement Lab
+        run: |
+          npm run build
+          test -f dist/arranger/index.html
+          test -f dist/arranger/v05.css
+          test -f dist/arranger/src/app.js
+          test -f dist/arranger/src/core.js
+          test -f dist/arranger/src/v05-tools.js
+          test -f dist/arranger/src/v05-workflow.js
+          test -f dist/arranger/src/v05-ui.js
+
+      - name: Mobile Chromium end-to-end
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8080 --directory dist > /tmp/arranger-server.log 2>&1 &
+          node arranger/tests/browser.test.cjs
+          node arranger/tests/v05-browser.test.cjs
+          node arranger/tests/pwa-update.test.cjs
+
+      - name: Upload mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arranger-mobile-evidence
+          path: test-results/

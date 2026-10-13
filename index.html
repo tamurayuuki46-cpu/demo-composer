@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>Demo Composer</title>
+  <link rel="manifest" href="./public/manifest.webmanifest" />
+  <link rel="stylesheet" href="./src/core/app.css" />
+  <link rel="stylesheet" href="./src/chord/chord-presets.css" />
+  <link rel="stylesheet" href="./src/chord/chord-mood-ui.css" />
+  <link rel="stylesheet" href="./src/chord/diatonic-fan.css" />
+  <link rel="stylesheet" href="./src/chord/chord-for-melody.css" />
+  <link rel="stylesheet" href="./src/chord/chord-scale-sets.css" />
+  <link rel="stylesheet" href="./src/melody/phrase-melody.css" />
+  <link rel="stylesheet" href="./src/arrange/counter-screen.css" />
+  <link rel="stylesheet" href="./src/melody/melody.css" />
+  <link rel="stylesheet" href="./src/hub/export.css" />
+  <link rel="stylesheet" href="./src/hub/consult.css" />
+  <link rel="stylesheet" href="./src/hub/starting-point.css" />
+  <link rel="stylesheet" href="./src/core/edit-history.css" />
+  <link rel="stylesheet" href="./src/arrange/arrange.css" />
+  <link rel="stylesheet" href="./src/audio/part-switch.css" />
+  <link rel="stylesheet" href="./src/rhythm/rhythm-presets.css" />
+  <link rel="stylesheet" href="./src/sound/sound.css" />
+  <link rel="stylesheet" href="./src/core/display.css" />
+</head>
+<body>
+  <main id="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Demo Composer</p>
+        <h1>Untitled Project</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="history-actions" role="group" aria-label="編集の取り消し">
+          <button id="history-undo" aria-label="元に戻す" disabled>↶</button>
+          <button id="history-redo" aria-label="やり直す" disabled>↷</button>
+        </div>
+        <span class="version">v0.3-dev</span>
+      </div>
+    </header>
+
+    <section id="screen" class="screen" aria-live="polite"></section>
+
+    <section id="demo-player" class="demo-player" aria-label="Demo Player">
+      <button id="player-play" class="player-main" aria-label="再生">▶</button>
+      <button id="player-stop" aria-label="停止">■</button>
+      <button id="player-loop" aria-pressed="false">Loop</button>
+      <button id="player-parts" aria-expanded="false" aria-controls="part-panel">パート</button>
+      <div class="player-position">
+        <progress id="player-progress" max="1" value="0"></progress>
+        <span id="player-time">0:00 / 0:00</span>
+      </div>
+      <div id="part-panel" class="part-panel" hidden>
+        <div class="part-buttons" role="group" aria-label="鳴らすパート">
+          <button data-part="chord" aria-pressed="true">Chord</button>
+          <button data-part="melody" aria-pressed="true">Melody</button>
+          <button data-part="bass" aria-pressed="true">Bass</button>
+          <button data-part="drums" aria-pressed="true">Drums</button>
+          <button data-part="counter" aria-pressed="true">裏メロ</button>
+        </div>
+        <div class="part-quick" role="group" aria-label="まとめて切り替え">
+          <button id="part-all" type="button">全部鳴らす</button>
+          <button id="part-none" type="button">全部OFF</button>
+          <button id="part-solo" class="part-solo" aria-pressed="false">ソロ</button>
+        </div>
+        <p id="part-hint" class="part-hint"></p>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="主要モジュール">
+      <button data-screen="hub" class="nav-btn active">Hub</button>
+      <button data-screen="chord" class="nav-btn">Chord</button>
+      <button data-screen="melody" class="nav-btn">Melody</button>
+      <button data-screen="counter" class="nav-btn">裏メロ</button>
+      <button data-screen="rhythm" class="nav-btn">Rhythm</button>
+      <button data-screen="arrange" class="nav-btn">Arrange</button>
+      <button data-screen="sound" class="nav-btn">Sound</button>
+    </nav>
+  </main>
+
+  <script type="module" src="./src/hub/app-entry.js"></script>
+  <script type="module" src="./src/chord/diatonic-fan.js"></script>
+  <script type="module" src="./src/chord/chord-mood-ui.js"></script>
+  <script type="module" src="./src/core/update-notice.js"></script>
+</body>
+</html>

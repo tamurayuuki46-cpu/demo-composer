@@ -1,0 +1,100 @@
+.sound-card {
+  padding-inline: 12px;
+}
+.sound-help {
+  margin: 14px 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: .72;
+}
+.sound-parts {
+  display: grid;
+  gap: 12px;
+}
+.sound-part-card {
+  padding: 14px;
+  border: 1px solid #303039;
+  border-radius: 16px;
+  background: #202026;
+}
+.sound-part-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sound-part-heading h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.sound-part-heading p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: .66;
+}
+.sound-current {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #303038;
+  font-size: 11px;
+  font-weight: 700;
+}
+.sound-preset-field {
+  margin-top: 12px;
+}
+.sound-tone-group {
+  margin-top: 12px;
+}
+.sound-tone-label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  opacity: .72;
+}
+.sound-tone-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.sound-tone {
+  min-height: 44px;
+  padding: 8px 5px;
+  border: 1px solid #3a3a44;
+  border-radius: 11px;
+  background: #292930;
+  color: #f5f5f5;
+  font-size: 12px;
+  touch-action: manipulation;
+}
+.sound-tone.active {
+  border-color: #f1f1f1;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+/* Arrange + Soundを含む6 Moduleを1行で維持し、横スクロールを避ける。 */
+.bottom-nav {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  padding-inline: 6px;
+}
+.nav-btn {
+  min-width: 0;
+  padding-inline: 2px;
+  font-size: 11px;
+}
+
+@media (max-width: 380px) {
+  .sound-tone-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bottom-nav {
+    gap: 2px;
+    padding-inline: 4px;
+  }
+  .nav-btn {
+    font-size: 10px;
+  }
+}

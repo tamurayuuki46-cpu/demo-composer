@@ -1,0 +1,79 @@
+name: Song Project Integration CI
+
+on:
+  push:
+    branches:
+      - feature/shared-song-project
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'src/shared/**'
+      - 'src/hub/song-project-ui.js'
+      - 'arranger/**'
+      - 'project-home/**'
+      - 'scripts/song-project-smoke-test.mjs'
+      - '.github/workflows/song-project-ci.yml'
+
+jobs:
+  song-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Shared modules syntax
+        run: |
+          node --check src/shared/song-project.js
+          node --check src/hub/song-project-ui.js
+          node --check arranger/src/song-project-sync.js
+          node --check arranger/src/song-project-ui.js
+          node --check arranger/src/song-midi.js
+          node --check arranger/src/song-midi-ui.js
+          node --check project-home/app.js
+
+      - name: SongProject round-trip smoke test
+        run: node scripts/song-project-smoke-test.mjs
+
+      - name: Final Song.mid test
+        run: node arranger/tests/song-midi.test.mjs
+
+      - name: Existing Demo Composer syntax regression
+        run: npm run test:syntax
+
+      - name: Arrangement Lab syntax regression
+        run: |
+          node --check arranger/src/core.js
+          node --check arranger/src/app.js
+          node --check arranger/src/song-project-sync.js
+          node --check arranger/src/song-project-ui.js
+          node --check arranger/src/song-midi.js
+          node --check arranger/src/song-midi-ui.js
+          node --check arranger/sw.js
+          for file in arranger/src/*lab*.js; do node --check "$file"; done
+
+      - name: Arrangement Lab core regression
+        run: |
+          node arranger/tests/core.test.mjs
+          node arranger/tests/regression.test.mjs
+          node arranger/tests/features.test.mjs
+          node arranger/tests/music-labs.test.mjs
+
+      - name: Static build
+        run: |
+          npm run build
+          test -f dist/arranger/index.html
+          test -f dist/arranger/src/app.js
+          test -f dist/arranger/src/core.js
+          test -f dist/arranger/src/song-project-ui.js
+          test -f dist/arranger/src/song-project-sync.js
+          test -f dist/arranger/src/song-midi.js
+          test -f dist/arranger/src/song-midi-ui.js
+          test -f dist/project-home/index.html
+          test -f dist/project-home/app.js

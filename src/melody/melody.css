@@ -1,0 +1,614 @@
+.melody-grid {
+  margin-top: 14px;
+  gap: 2px;
+}
+
+.melody-row {
+  grid-template-columns: 54px repeat(8, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.melody-header span:not(.piano-key-spacer) {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: .68;
+}
+
+.melody-header .beat-start,
+.note-cell.beat-start {
+  box-shadow: inset 2px 0 0 #4a4a54;
+}
+
+.note-cell {
+  min-height: 44px;
+  border-radius: 7px;
+}
+
+@media (max-width: 420px) {
+  .melody-card {
+    margin-left: -6px;
+    margin-right: -6px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .melody-row {
+    grid-template-columns: 44px repeat(8, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .piano-key {
+    min-height: 44px;
+    padding: 0 4px;
+    font-size: 9px;
+  }
+
+  .note-cell {
+    min-height: 44px;
+    border-radius: 6px;
+  }
+}
+
+.melody-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.melody-mode-switch button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #28282f;
+  color: #f5f5f5;
+}
+
+.melody-mode-switch button.active {
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+/* 8分表示のマスの後半に16分音符がある印 */
+.note-cell.has-sub:not(.active) {
+  box-shadow: inset 0 -5px 0 #b9b9c4;
+}
+
+.note-cell.active.has-sub {
+  box-shadow: inset 0 -5px 0 #5d5d68;
+}
+
+.note-cell.held {
+  background: #6a6a74;
+  border-color: #6a6a74;
+}
+
+/* 裏メロを直すときの、メインのメロディの目印（薄い青。入力済みの音ではない） */
+.note-cell.ref {
+  background: #cfe0f5;
+  border-color: #9db9dd;
+}
+
+.melody-track-switch {
+  margin-top: 8px;
+}
+
+.melody-secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.melody-secondary-actions button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #28282f;
+  color: #f5f5f5;
+  font-size: 13px;
+}
+.melody-secondary-actions button:disabled {
+  opacity: .4;
+}
+
+/* 音の役割の色分け（見た目のみ・保存しない）。優先: アボイド(赤) > コード構成音(青) > テンション(緑) > スケール外(黄)
+   青 = コード構成音(1・3・5・7相当) / 緑 = テンション(9・11・13相当) / 黄 = 選択Scaleの7音以外 / 赤 = アボイドノート(光る) */
+.melody-row.role-chord .note-cell:not(.active):not(.held) {
+  background: rgba(96, 165, 250, 0.22);
+}
+.melody-row.role-chord .piano-key {
+  box-shadow: inset 4px 0 0 #60a5fa;
+}
+.melody-row.role-tension .note-cell:not(.active):not(.held) {
+  background: rgba(74, 222, 128, 0.20);
+}
+.melody-row.role-tension .piano-key {
+  box-shadow: inset 4px 0 0 #4ade80;
+}
+.melody-row.role-outside:not(.role-chord):not(.role-tension) .note-cell:not(.active):not(.held) {
+  background: rgba(250, 204, 21, 0.18);
+}
+.melody-row.role-outside .piano-key {
+  background-image: linear-gradient(#facc15, #facc15);
+  background-repeat: no-repeat;
+  background-position: right 0 top 0;
+  background-size: 5px 100%;
+}
+.melody-row.role-avoid .note-cell:not(.active):not(.held) {
+  background: rgba(248, 113, 113, 0.30);
+  animation: avoid-glow 1.6s ease-in-out infinite;
+}
+.melody-row.role-avoid .piano-key {
+  box-shadow: inset 4px 0 0 #f87171;
+  color: #fecaca;
+}
+/* 置いた音がアボイドのとき: 縁を赤く光らせる */
+.melody-row.role-avoid .note-cell.active,
+.melody-row.role-avoid .note-cell.held {
+  outline: 3px solid #f87171;
+  outline-offset: -3px;
+  animation: avoid-glow-outline 1.6s ease-in-out infinite;
+}
+@keyframes avoid-glow {
+  0%, 100% { background-color: rgba(248, 113, 113, 0.22); }
+  50% { background-color: rgba(248, 113, 113, 0.55); }
+}
+@keyframes avoid-glow-outline {
+  0%, 100% { outline-color: rgba(248, 113, 113, 0.65); }
+  50% { outline-color: #ff4d4d; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .melody-row.role-avoid .note-cell { animation: none !important; }
+  .melody-row.role-avoid .note-cell:not(.active):not(.held) { background: rgba(248, 113, 113, 0.42); }
+}
+
+.pitch-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.pitch-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pitch-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex: none;
+}
+.pitch-dot.role-chord { background: #60a5fa; }
+.pitch-dot.role-tension { background: #4ade80; }
+.pitch-dot.role-outside { background: #facc15; }
+.pitch-dot.role-avoid { background: #f87171; box-shadow: 0 0 6px #ef4444; }
+
+/* 度数表示 */
+.melody-legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+
+.degree-toggle {
+  min-width: 92px;
+  min-height: 40px;
+  border: 1px solid #383842;
+  border-radius: 10px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-size: 13px;
+}
+
+.degree-toggle.active {
+  border-color: transparent;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+.degree-hint {
+  margin: 0 0 8px;
+}
+
+/* 3候補から選んでPiano Rollへ展開するMelody候補 */
+.melody-candidate-panel {
+  display: grid;
+  gap: 9px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.melody-candidate-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.melody-candidate-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.melody-candidate-heading strong {
+  font-size: 14px;
+}
+
+.melody-candidate-heading small,
+.melody-candidate-heading > span {
+  font-size: 11px;
+  opacity: .68;
+}
+
+.melody-candidate-list {
+  display: grid;
+  gap: 8px;
+}
+
+.melody-candidate-list button {
+  display: grid;
+  grid-template-columns: minmax(82px, auto) 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 9px 10px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #28282f;
+  color: #f5f5f5;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.melody-candidate-list button strong {
+  font-size: 14px;
+}
+
+.melody-candidate-list button small {
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  opacity: .72;
+}
+
+.melody-candidate-dots {
+  font-size: 10px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  opacity: .78;
+}
+
+.melody-candidate-panel > .hint {
+  margin: 0;
+}
+
+@media (max-width: 380px) {
+  .melody-candidate-list button {
+    grid-template-columns: 78px 1fr;
+  }
+
+  .melody-candidate-dots {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Melody Analyzer（メロディの特徴） */
+.analyzer-toggle {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 10px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-weight: 700;
+}
+
+.analyzer-panel {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid #303038;
+  border-radius: 14px;
+  background: #1d1d22;
+}
+
+.analyzer-row {
+  display: grid;
+  gap: 2px;
+}
+
+.analyzer-row strong {
+  font-size: 13px;
+}
+
+.analyzer-row small {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Sectionごとの比べ */
+.section-compare {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #303038;
+}
+
+.section-compare h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.sc-row {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #18181c;
+  font-size: 13px;
+}
+
+.sc-row small {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.sc-track,
+.sc-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: #2a2a31;
+}
+
+.sc-track span,
+.sc-bar span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 4px;
+  background: #93c5fd;
+}
+
+.sc-bar span {
+  background: #86efac;
+}
+
+.sc-empty {
+  opacity: 0.6;
+}
+
+.sc-hints {
+  padding: 10px;
+  border: 1px solid #303038;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sc-hints.lacking {
+  border-color: #b8860b;
+}
+
+.sc-hints ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.sc-hints p {
+  margin: 0;
+}
+
+/* 山の位置から作る */
+.peak-bar-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 96px;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
+.peak-bar-row button {
+  min-height: 48px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  font-weight: 700;
+}
+
+.peak-bar-row button:disabled {
+  opacity: 0.4;
+}
+
+.peak-shapes {
+  display: grid;
+  gap: 8px;
+}
+
+.peak-shape {
+  display: grid;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 1px solid #383842;
+  border-radius: 12px;
+  background: #26262d;
+  color: #f5f5f5;
+  font: inherit;
+  text-align: left;
+}
+
+.peak-shape small {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.peak-shape.active {
+  border-color: #f1f1f1;
+  background: #f1f1f1;
+  color: #111;
+}
+
+.peak-list {
+  margin: 0;
+  padding-left: 22px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.peak-list li.peak {
+  font-weight: 700;
+  color: #fca5a5;
+}
+
+.peak-panel .primary {
+  min-height: 48px;
+}
+
+/* 鍵盤の度数表示: 音名 + コード度数（水色）+ Key度数（金色） */
+.melody-grid.degrees-on .melody-row { grid-template-columns: 66px repeat(8, minmax(0, 1fr)); }
+.melody-grid.degrees-on .piano-key {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 5px;
+}
+.melody-grid.degrees-on .piano-key.black { width: 92%; }
+.piano-key .pk-name { font-size: 10px; }
+.piano-key .pk-deg { display: flex; gap: 6px; font-size: 11px; line-height: 1; }
+.pk-chord { color: #0369a1; }
+.pk-key { color: #a16207; }
+.piano-key.black .pk-chord { color: #7dd3fc; }
+.piano-key.black .pk-key { color: #fcd34d; }
+.degree-hint .pk-chord { color: #7dd3fc; }
+.degree-hint .pk-key { color: #fcd34d; }
+@media (max-width: 420px) {
+  .melody-grid.degrees-on .melody-row { grid-template-columns: 62px repeat(8, minmax(0, 1fr)); }
+  .piano-key .pk-deg { font-size: 10px; gap: 5px; }
+}
+
+/* 置いた音の上に、そのコードから見た度数を小さく表示 */
+.note-cell { position: relative; }
+.note-cell .note-degree {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  color: #0369a1;
+  pointer-events: none;
+}
+.melody-row.role-avoid .note-cell.active .note-degree { color: #fff; }
+
+/* Melody Analyzer: 度数ごとの使用率バー */
+.degree-bars {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 3px;
+  align-items: end;
+  height: 92px;
+  margin: 8px 0 4px;
+}
+.degree-bar {
+  display: grid;
+  grid-template-rows: 14px 1fr 16px;
+  justify-items: center;
+  height: 100%;
+  min-width: 0;
+}
+.degree-bar em { font-style: normal; font-size: 9px; opacity: .8; }
+.degree-bar i,
+.degree-mini-col i {
+  align-self: end;
+  width: 100%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: #7dd3fc;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.degree-bar i u, .degree-mini-col i u { display: block; text-decoration: none; min-height: 1px; }
+u.role-chord { background: #3b82f6; }
+u.role-tension { background: #4ade80; }
+u.role-other { background: #7dd3fc; }
+u.role-outside { background: #facc15; }
+.degree-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 2px 0 6px; font-size: 11px; }
+.degree-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 4px; border-radius: 2px; vertical-align: -1px; }
+.degree-legend .role-chord::before { background: #3b82f6; }
+.degree-legend .role-tension::before { background: #4ade80; }
+.degree-legend .role-other::before { background: #7dd3fc; }
+.degree-legend .role-outside::before { background: #facc15; }
+.degree-mini { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; align-items: end; height: 36px; margin: 2px 0 6px; }
+.degree-mini-col { display: flex; align-items: flex-end; height: 100%; }
+.sc-degree-label { font-size: 10px; opacity: .7; }
+.degree-bar.zero i { background: #3a3a44; height: 2px !important; }
+.degree-bar b { font-size: 10px; font-weight: 700; }
+
+button.degree-bar { padding: 0; border: 0; background: none; color: inherit; font: inherit; touch-action: manipulation; cursor: pointer; }
+button.degree-bar:disabled { opacity: .5; cursor: default; }
+button.degree-bar:not(:disabled):active { transform: scale(.94); }
+
+/* メロディ候補: 適用ボタンの横に ▶ 聴く */
+.melody-candidate-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: stretch;
+}
+.melody-candidate-list .melody-compare-start {
+  grid-column: 1 / -1;
+  display: block;
+  min-height: 44px;
+  text-align: center;
+}
+.melody-ab-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--accent, #7195ff);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.melody-ab-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.melody-ab-actions button { min-height: 44px; white-space: normal; }
+.melody-ab-actions button[aria-pressed="true"] { outline: 2px solid #7195ff; }
+.melody-candidate-list .melody-candidate-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-template-columns: none;
+  min-width: 64px;
+  padding: 0 10px;
+  text-align: center;
+  font-size: 13px;
+}

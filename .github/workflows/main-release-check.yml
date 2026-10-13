@@ -1,0 +1,38 @@
+name: Main Release Check
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  verify-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Demo syntax regression
+        run: npm run test:syntax
+
+      - name: SongProject round-trip
+        run: node scripts/song-project-smoke-test.mjs
+
+      - name: Arrangement Lab regression
+        run: |
+          node arranger/tests/core.test.mjs
+          node arranger/tests/regression.test.mjs
+          node arranger/tests/features.test.mjs
+          node arranger/tests/music-labs.test.mjs
+          node arranger/tests/v05.test.mjs
+          node arranger/tests/v05-workflow.test.mjs
+          node arranger/tests/song-midi.test.mjs
+
+      - name: Static build
+        run: npm run build
