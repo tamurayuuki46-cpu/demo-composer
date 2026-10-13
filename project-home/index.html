@@ -35,6 +35,13 @@
     <p>作曲シートからPC DAWまでの流れを案内します。Editor機能は重複させません。</p>
   </header>
 
+  <section id="composition-sheet-card" class="card">
+    <h2>1. 作曲シート — 決める</h2>
+    <p>最初にここから開始します。必須は「どんな場面の曲か」と「参考曲1曲」の2項目だけです。</p>
+    <a class="primary" href="../sheet-app/">作曲シート v0.1 を開く</a>
+    <p><small>入力した内容は共通JSONとして保存し、Demo Composerなどへ引き継げます。</small></p>
+  </section>
+
   <section id="workflow-card" class="card">
     <h2>今の作業フロー</h2>
     <ol id="workflow-list" class="workflow-list"></ol>
@@ -64,13 +71,13 @@
   </section>
 
   <section class="card" id="claude-link-card">
-    <h2>1. 作曲シート — 決める</h2>
-    <p>Claude Artifactで曲の場面・目的・参考曲・BPM/Key候補・制約・Vocal/Lyrics方向を決めます。</p>
+    <h2>Claude Artifact 作曲シート（旧リンク）</h2>
+    <p>必要な場合だけ、Claude Artifact版の作曲シートを登録して開けます。</p>
     <label for="claude-link-input"><small>claude.ai のリンク</small></label>
     <input id="claude-link-input" type="url" inputmode="url" autocomplete="off" placeholder="https://claude.ai/artifact/…">
     <div class="actions split">
       <button id="claude-link-save" type="button">この端末に保存</button>
-      <a id="claude-link-open" class="primary" target="_blank" rel="noopener noreferrer" hidden>作曲シートを開く</a>
+      <a id="claude-link-open" class="primary" target="_blank" rel="noopener noreferrer" hidden>Claude Artifactを開く</a>
     </div>
     <button id="claude-link-clear" type="button" hidden>リンクを消す</button>
     <p id="claude-link-message" aria-live="polite"></p>
@@ -78,7 +85,7 @@
     <label for="sheet-json-file"><strong>Demo Composer引き継ぎJSON</strong></label>
     <input id="sheet-json-file" type="file" accept="application/json,.json">
     <p id="sheet-json-status" aria-live="polite"></p>
-    <p><small>Claude Artifactで「Demo Composerへ渡すJSON」を出力し、ここで読み込むと同一端末のDemo Composerへ引き継げます。Chord / Melody等を自動生成しません。</small></p>
+    <p><small>作曲シートで「Demo Composerへ渡すJSON」を出力し、ここで読み込むと同一端末のDemo Composerへ引き継げます。Chord / Melody等を自動生成しません。</small></p>
     <p><small>ArtifactリンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p>
   </section>
 
