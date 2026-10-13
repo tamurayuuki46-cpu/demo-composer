@@ -14,7 +14,7 @@ assert.match(demo, /前のアプリから受け取る/);
 assert.match(demo, /Arrangement Labへ渡す/);
 assert.match(demo, /song_project_v1\.json/);
 assert.match(demo, /writeHandoff\(songProject,\s*'arrangement-lab'\)/);
-assert.match(demo, /handoff=midi-analyzer/);
+assert.match(demo, /get\('handoff'\)\s*===\s*'midi-analyzer'/);
 
 assert.match(arranger, /Demo Composerから続ける/);
 assert.match(arranger, /受け取った曲を反映/);
