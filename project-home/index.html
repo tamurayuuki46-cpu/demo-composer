@@ -65,7 +65,7 @@
 
   <section class="card" id="claude-link-card">
     <h2>1. 作曲シート — 決める</h2>
-    <p>Claude Artifactで曲の場面・目的・参考曲・BPM/Key候補・制約を決めます。</p>
+    <p>Claude Artifactで曲の場面・目的・参考曲・BPM/Key候補・制約・Vocal/Lyrics方向を決めます。</p>
     <label for="claude-link-input"><small>claude.ai のリンク</small></label>
     <input id="claude-link-input" type="url" inputmode="url" autocomplete="off" placeholder="https://claude.ai/artifact/…">
     <div class="actions split">
@@ -74,7 +74,12 @@
     </div>
     <button id="claude-link-clear" type="button" hidden>リンクを消す</button>
     <p id="claude-link-message" aria-live="polite"></p>
-    <p><small>リンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p>
+    <hr>
+    <label for="sheet-json-file"><strong>Demo Composer引き継ぎJSON</strong></label>
+    <input id="sheet-json-file" type="file" accept="application/json,.json">
+    <p id="sheet-json-status" aria-live="polite"></p>
+    <p><small>Claude Artifactで「Demo Composerへ渡すJSON」を出力し、ここで読み込むと同一端末のDemo Composerへ引き継げます。Chord / Melody等を自動生成しません。</small></p>
+    <p><small>ArtifactリンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p>
   </section>
 
   <section class="card">
