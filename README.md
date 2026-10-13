@@ -21,7 +21,7 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 ## Current Version
 
-`v0.3-dev`
+`v0.4-dev`
 
 ## Status
 
@@ -130,4 +130,8 @@ VercelのDeployment上限・障害時の第二公開先としてGitHub Pagesを�
 - 詳細: `docs/GITHUB_PAGES.md`
 - 公開URL: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
-`main` はstable専用のため、Fallback運用でも直接変更しません。
+`develop`は開発統合、`main`は自動テスト・build・回帰CI合格版、GitHub Pages公開元。stable tagはAndroid実機と必要なCubasis/Cubase実機確認後のみ作成します。 mainへの変更はPR経由で行います。
+
+## Song Project v1連携（v0.4-dev）
+
+共通SongProject JSONと既存project.jsonを併用。Arrangement Lab v0.5-devとの往復とarrangement書き戻しに対応。Demo ComposerのDraft.midとArrangement Labのfinal Song.midを分離します。詳細は `docs/SONG_PROJECT.md` と `docs/RELEASE_POLICY.md`。

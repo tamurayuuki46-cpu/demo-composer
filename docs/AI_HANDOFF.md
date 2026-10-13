@@ -1,10 +1,10 @@
 # AI_HANDOFF
 
 現在Version:
-v0.3-dev
+v0.4-dev
 
 最新安定版:
-なし。`main` はstable専用。v0.1機能完成地点は復元可能。
+未認定。mainは自動テスト合格版。stable tagは実機確認後のみ。v0.1機能完成地点は復元可能。
 
 現在実装済み:
 - v0.3作曲判断: 設計メモ5項目、個性の5軸、編集可能なSection役割、コード目的タグ、主旋律/裏メロ分析と手動タグ、未決定項目、採用理由ログ。
@@ -50,7 +50,7 @@ v0.3-dev
 - Cubasis / Cubase実機取り込みの網羅的Regressionは継続課題
 
 触らない部分:
-- `main` は動作確認済みstable専用。開発機能はまず `develop` へ
+- `develop`は開発統合、`main`は自動テスト・build・回帰CI合格版、GitHub Pages公開元。stable tagはAndroid実機と必要なCubasis/Cubase実機確認後のみ作成します。
 - schemaVersion 3 / PPQ 480 / 4/4固定を、明確なSchema変更手順なしに変えない
 - project.jsonをDemo Composer内の正本とする
 - Module間を直接強依存させない。複数Moduleにまたがる変更はCore / Storageの責務として扱う
@@ -88,3 +88,11 @@ schemaVersion 3。PPQ 480、4/4固定。`metadata / basic / structure.sections /
 
 ## Arrangement Lab v0.4.1-dev cache correction
 50手法はv0.4としてPR #171統合済み。PWA更新修正はchatgpt/arranger-v0.4-cache-update。旧画面が残る場合の入口は /arranger/?v=0.4.1。Schema4/保存キーv0.4維持。正本 PRODUCT_SPEC / VERIFICATION_v0.4。復元点 restore/arranger-v0.4-before-cache-update。
+
+## 2026-10-13 現在の統合状態
+
+- PR #177でv0.4-dev / Arrangement Lab v0.5-dev / SongProject v1をmainへ統合済み。
+- PR #180でPages公開元をmainへ変更済み。developへのpushでは公開しない。
+- Legacy Project Schema 3を維持し、共通SongProject v1 Adapterで相互変換。ownership / composition保持をCI確認済み。
+- Draft.midはDemoの草稿、final Song.midはArrangement Labの5Track出力。
+- Android実機の保存・音・PWA更新、Cubasis/Cubase実機取込は未確認。stable tag未作成。
