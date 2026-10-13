@@ -9,7 +9,15 @@ const build = await readFile(new URL('./build-static.mjs', import.meta.url), 'ut
 
 assert.match(html, /id="composition-sheet-card"/);
 assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.1 を開く/);
-assert.ok(html.indexOf('id="composition-sheet-card"') < html.indexOf('id="workflow-card"'), '作曲シート入口がMusic Project Homeの最上部にありません');
+assert.ok(html.indexOf('id="composition-sheet-card"') < html.indexOf('id="quick-flow-card"'), '作曲シート入口がMusic Project Homeの最上部にありません');
+assert.match(html, /id="quick-flow-card"/);
+assert.match(html, /id="quick-flow"/);
+assert.match(html, /<strong>1 決める<\/strong><small>作曲シート<\/small>/);
+assert.match(html, /<strong>2 作る<\/strong><small>Demo Composer<\/small>/);
+assert.match(html, /<strong>3 育てる<\/strong><small>Arrangement Lab<\/small>/);
+assert.match(html, /<strong>4 仕上げる<\/strong><small>Cubasis \/ Cubase<\/small>/);
+assert.match(html, /MIDI Analyzerで分析/);
+assert.ok(html.indexOf('id="quick-flow-card"') < html.indexOf('id="workflow-card"'), '簡易フローが現在地表示より後ろにあります');
 assert.match(html, /id="workflow-card"/);
 assert.match(html, /id="workflow-list"/);
 assert.match(html, /id="next-action"/);
@@ -63,4 +71,4 @@ assert.equal(workflow.nextAction.id, 'pcDaw');
 assert.equal(lineageLabel({ projectId: 'song-1' }), 'このProjectが起点');
 assert.equal(lineageLabel({ projectId: 'song-2', lineage: { rootProjectId: 'song-1', parentProjectId: 'song-1' } }), '親: song-1');
 
-console.log('Project Home workflow + Claude link + Composition Sheet top entry smoke test passed.');
+console.log('Project Home workflow + quick flow + Claude link smoke test passed.');
