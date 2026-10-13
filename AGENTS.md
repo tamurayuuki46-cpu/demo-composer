@@ -13,6 +13,7 @@ ChatGPT / Codex向けの作業入口です。
 5. docs/ARCHITECTURE.md
 6. docs/DATA_SCHEMA.md
 7. CHANGELOG.md
+8. docs/RELEASE_POLICY.md
 
 ## 共通ルール
 
@@ -31,5 +32,8 @@ ChatGPT / Codex向けの作業入口です。
 `chatgpt/v0.1-hub-shell`
 `chatgpt/v0.2-melody-analyzer`
 
-mainは安定版のみ。
-developは開発統合用。
+- `develop`: 開発統合用。
+- `main`: 自動テスト・build・必要な回帰CIに合格した統合版。実機未確認でも可。
+- `stable tag`: Android実機と、該当する場合はCubasis / Cubase実機確認まで完了した版だけに付与する。
+- `main`へ入れる前に復元Branchを作成し、過去Version / 復元Branchは削除・上書きしない。
+- 詳細は `docs/RELEASE_POLICY.md` を正本とする。
