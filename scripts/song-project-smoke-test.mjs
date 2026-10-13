@@ -14,7 +14,9 @@ import {
   buildThreeCandidates,
   createArrangerProject,
 } from '../arranger/src/core.js';
+import { createDemoComposerProject } from '../arranger/src/v05-tools.js';
 import {
+  createArrangementForkSongProject,
   songProjectToArrangementSourceInput,
   mergeArrangementChangesIntoSongProject,
 } from '../arranger/src/song-project-sync.js';
@@ -126,7 +128,7 @@ assert.equal(merged.composition.melody.length, 2);
 assert.deepEqual(merged.arrangement, reexported.arrangement, 'Demo merge must preserve Arrangement-owned data');
 assert.deepEqual(merged.lineage, reexported.lineage, 'Demo merge must preserve project lineage');
 
-// Explicit fork creates a new project without overwriting its parent.
+// Explicit generic fork creates a new project without overwriting its parent.
 const forked = forkSongProject(merged, {
   projectId: 'fork-1',
   title: 'Integration Song - Arrangement Fork',
@@ -142,4 +144,27 @@ assert.equal(forked.lineage.forkReason, '採用した編曲を新しい作曲案
 assert.equal(merged.projectId, legacyDemo.id, 'parent project must remain unchanged');
 assert.equal(forked.history.changes.at(-1).type, 'fork');
 
-console.log('SongProject v1 smoke test passed: ownership, lineage, fork, and legacy compatibility are preserved.');
+// Arrangement-specific fork adopts arranged Composition while preserving SongProject lineage/ownership.
+const arrangedDemoProject = createDemoComposerProject(source, candidate);
+const arrangementFork = createArrangementForkSongProject(arrangedSong, arrangedDemoProject, {
+  projectId: 'arrangement-fork-1',
+  title: 'Integration Song Arrangement Fork',
+  forkReason: '編曲採用版を作曲ProjectへFork',
+  now: '2026-10-13T00:04:00.000Z',
+});
+assert.equal(arrangementFork.projectId, 'arrangement-fork-1');
+assert.equal(arrangementFork.lineage.rootProjectId, legacyDemo.id);
+assert.equal(arrangementFork.lineage.parentProjectId, arrangedSong.projectId);
+assert.equal(arrangementFork.lineage.sourceApp, 'arrangement-lab');
+assert.equal(arrangementFork.lineage.createdFrom, 'arrangement-fork');
+assert.equal(arrangementFork.lineage.revision, 1);
+assert.equal(arrangementFork.basic.bpm, arrangedDemoProject.basic.bpm);
+assert.deepEqual(arrangementFork.composition.chords, arrangedDemoProject.chords);
+assert.deepEqual(
+  arrangementFork.composition.melody,
+  arrangedDemoProject.tracks.find((track) => track.role === 'melody')?.notes || [],
+);
+assert.deepEqual(arrangementFork.arrangement, arrangedSong.arrangement, 'Arrangement-owned evidence remains attached to the fork');
+assert.equal(arrangedSong.projectId, legacyDemo.id, 'Arrangement fork must not mutate its parent');
+
+console.log('SongProject v1 smoke test passed: ownership, lineage, arrangement fork, and legacy compatibility are preserved.');
