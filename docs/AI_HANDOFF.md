@@ -197,13 +197,22 @@ Mix / Mastering / Plugin Hosting / Vocal本制作 → PC DAW。
 
 ## 現在の開発状態
 
-作業Branch: `chatgpt/v0.9-vocal-workflow-completion`
+開発統合Branch: `develop`
 
-PR: `#189 feat: complete vocal workflow and lineage-aware forks (v0.9-dev)`
+統合済み:
+- PR #188: Workflow boundary / Music Project Home / Claude sheet handoff / SongProject Lineage（v0.8-dev）
+- PR #189: Lyrics/Vocal workflow / lineage-aware Arrangement Fork（v0.9-dev）
+- PR #190: v0.8-v0.9 VERSION_HISTORY同期
 
-変更前復元点: `restore/v0.8-workflow-boundary-feature-complete`
+現在のdevelop headはv0.9-dev。main/publicはv0.6-devのままで未変更。
 
-v0.8基盤は`develop`へ統合済み。main/publicは未変更。
+復元点:
+- `restore/before-workflow-boundary-2026-10-13`
+- `restore/v0.8-workflow-boundary-feature-complete`
+- `restore/v0.9-vocal-workflow-feature-complete`
+- `restore/v0.9-workflow-docs-synced`
+
+v0.9-devのコード・自動テスト・正本docsの開発統合は完了。次の必須確認はAndroid / Cubasis / Cubase等の実機工程。
 
 ## Git運用
 
