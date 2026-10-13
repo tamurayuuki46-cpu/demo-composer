@@ -27,7 +27,7 @@ assert.match(String(jsonFile.parts[0]), /Drive Test/);
 
 const midiFiles = midiShareFiles(project, FakeFile);
 assert.ok(midiFiles.length >= 5);
-assert.ok(midiFiles.some((file) => file.name === "Song.mid"));
+assert.ok(midiFiles.some((file) => file.name === "Draft.mid"));
 assert.ok(midiFiles.every((file) => file.type === "audio/midi"));
 
 let sharedPayload = null;
@@ -64,6 +64,6 @@ console.log("Drive export smoke test passed.");
 
 {
   const txt = midiShareFilesAsText(project, FakeFile);
-  assert.ok(txt.some((file) => file.name === "Song.mid.txt"));
+  assert.ok(txt.some((file) => file.name === "Draft.mid.txt"));
   assert.ok(txt.every((file) => file.type === "text/plain"));
 }
