@@ -47,7 +47,13 @@ GitHub側ではArtifact本体を実装・複製せず、この引き渡しプロ
 - scale: major / minor等。未決定可
 - constraints: 今回の制約・やらないこと
 - experiments: 今回試したい作曲上の実験・学習テーマ
+- lyricsTheme: 歌詞のテーマ。歌ものの場合のみ
+- lyricalImage: 言葉・情景のイメージ。未決定可
+- vocalDirection: 声の方向性・歌い方のイメージ。未決定可
+- vocalRange: 想定音域。未決定可
 - notes: 自由メモ
+
+歌詞本文を完成させることは必須ではありません。作曲シートでは、作曲開始前に必要なテーマ・方向性までを扱います。
 
 ### Demo Composerへ渡すJSON
 
@@ -83,6 +89,17 @@ GitHub側ではArtifact本体を実装・複製せず、この引き渡しプロ
     "scale": null,
     "constraints": [],
     "experiments": [],
+    "vocal": {
+      "isVocalSong": null,
+      "lyricsTheme": "",
+      "lyricalImage": "",
+      "direction": "",
+      "range": {
+        "low": null,
+        "high": null,
+        "note": ""
+      }
+    },
     "notes": ""
   }
 }
@@ -98,8 +115,9 @@ GitHub側ではArtifact本体を実装・複製せず、この引き渡しプロ
 6. MIDI Analyzerで分析すべき内容は、このJSONへ分析結果として捏造しない。
 7. ユーザーが明示した値とClaudeの提案候補を区別する。
 8. Demo Composer側ではこのJSONを「初期値・設計メモ」として扱うため、完成済みCompositionとして出力しない。
-9. JSONの外に説明文を付けてもよいが、JSON本体は単独でコピー・保存できる完全な形式にする。
-10. 既存の作曲シート回答は失わず、人間向けまとめとJSON出力を併用する。
+9. Vocal/Lyricsはテーマ・方向・想定音域までを初期情報として渡し、完成Vocalや本歌データとして扱わない。
+10. JSONの外に説明文を付けてもよいが、JSON本体は単独でコピー・保存できる完全な形式にする。
+11. 既存の作曲シート回答は失わず、人間向けまとめとJSON出力を併用する。
 
 ### 参考曲調査が必要な場合
 
@@ -114,6 +132,8 @@ MIDI Analyzerの役割は「素材を集める / 曲を理解する」です。
 Demo ComposerはCompositionの所有者です。
 Claude ArtifactはChord / Melody / Bass / Drum / Counter Melodyの完成データを勝手に作って引き渡さず、まず設計情報を渡します。
 
+Vocal/Lyricsについては、作曲シートがテーマ・方向性を渡し、Demo ComposerがMelodyに紐づくPhrase歌詞・音節・Vocal Range等の作曲情報を担当します。本歌・SynthV本制作・詳細Vocal編集はPC DAW工程です。
+
 Demo Composer側でユーザーが作曲を開始した後、必要に応じて参考素材やAnalyzer結果を利用します。
 
 ### 変更禁止の境界
@@ -127,6 +147,7 @@ Demo Composer側でユーザーが作曲を開始した後、必要に応じて�
 - Reharmonization
 - Voicing設計
 - 編曲密度設計
+- 本格Vocal Editor
 - Mixing / Mastering
 - Plugin Hosting
 
@@ -141,4 +162,6 @@ Claude側へ仕様変更を依頼するときに、このプロンプトを正�
 
 将来Demo Composerに`composition-sheet-handoff` Importを実装する場合も、まずこのSchema v1を基準にする。
 
-Schema変更時はこのファイルを先に更新し、`schemaVersion`を上げ、旧Versionの読み込み互換を検討する。
+Schema v1では`sheet.vocal`をoptional扱いとし、既存のv1 JSONにvocalが無くても受理できるよう実装する。
+
+Schema変更時はこのファイルを先に更新し、必要な場合のみ`schemaVersion`を上げ、旧Versionの読み込み互換を検討する。
