@@ -2,6 +2,9 @@ import { isSongProject, projectValueToSongProject, serializeSongProject } from '
 import { songProjectToArrangementSourceInput, mergeArrangementChangesIntoSongProject } from './song-project-sync.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.4';
+const HANDOFF_KEY = 'music-project-songproject-handoff-v1';
+const HANDOFF_KIND = 'music-project-songproject-handoff';
+const HANDOFF_VERSION = 1;
 const PASSTHROUGH = new WeakSet();
 let currentSongProject = null;
 
@@ -18,6 +21,59 @@ function flash(message, isError = false) {
   el.hidden = false;
   window.clearTimeout(flash.timer);
   flash.timer = window.setTimeout(() => { el.hidden = true; }, 4200);
+}
+
+function readPendingHandoff() {
+  try {
+    const raw = localStorage.getItem(HANDOFF_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (payload?.kind !== HANDOFF_KIND || payload?.schemaVersion !== HANDOFF_VERSION || payload?.targetApp !== 'arrangement-lab') return null;
+    if (!isSongProject(payload.songProject)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingHandoff() {
+  try {
+    const payload = readPendingHandoff();
+    if (payload) localStorage.removeItem(HANDOFF_KEY);
+  } catch {
+    // File fallback remains available.
+  }
+}
+
+function ensureHandoffGuide() {
+  if (!dropZone || document.querySelector('#arranger-handoff-guide')) return;
+  const pending = readPendingHandoff();
+  const requested = new URLSearchParams(window.location.search).get('handoff') === 'demo-composer';
+  if (!pending && !requested) return;
+
+  const guide = document.createElement('section');
+  guide.id = 'arranger-handoff-guide';
+  guide.setAttribute('aria-label', 'Demo Composerからの受け渡し');
+  guide.style.cssText = 'margin:0 0 14px;padding:14px;border:1px solid #4255c7;border-radius:16px;background:rgba(58,72,180,.12);';
+  guide.innerHTML = `
+    <p class="eyebrow" style="margin:0 0 4px">NEXT STEP</p>
+    <h3 style="margin:0 0 6px">Demo Composerから続ける</h3>
+    <p data-handoff-guide-text style="margin:0 0 12px;line-height:1.55">${pending ? `「${escapeHtml(pending.songProject.title || 'Untitled Project')}」を受け取り待ちです。` : 'Demo Composerで保存したSongProject JSONを読み込んでください。'}</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button type="button" data-apply-handoff ${pending ? '' : 'disabled'}>受け取った曲を反映</button>
+      <button type="button" data-pick-handoff-file>保存したJSONを選ぶ</button>
+    </div>
+    <p style="margin:10px 0 0;font-size:.85rem;opacity:.8">反映後は ②A/B/Cを聴く → ③1案選ぶ → ④Section調整 の順で進めます。</p>`;
+  dropZone.insertAdjacentElement('beforebegin', guide);
+  guide.querySelector('[data-apply-handoff]')?.addEventListener('click', applyPendingHandoff);
+  guide.querySelector('[data-pick-handoff-file]')?.addEventListener('click', () => fileInput?.click());
+}
+
+function markHandoffReflected(title) {
+  const text = document.querySelector('#arranger-handoff-guide [data-handoff-guide-text]');
+  if (text) text.textContent = `「${title || 'Untitled Project'}」を反映しました。次は②A/B/Cを聴いてください。`;
+  const button = document.querySelector('#arranger-handoff-guide [data-apply-handoff]');
+  if (button) button.disabled = true;
 }
 
 function dispatchOriginal(file) {
@@ -85,6 +141,26 @@ async function routeFile(file) {
   exportSongButton.disabled = false;
   replaceInputFile(converted);
   flash(`共通SongProject v${currentSongProject.schemaVersion}「${currentSongProject.title}」をArrangement Labへ読み込みました。`);
+  markHandoffReflected(currentSongProject.title);
+}
+
+async function applyPendingHandoff() {
+  const pending = readPendingHandoff();
+  if (!pending) {
+    fileInput?.click();
+    return;
+  }
+  try {
+    const file = new File(
+      [JSON.stringify(pending.songProject, null, 2)],
+      `${safeFileName(pending.songProject.title)}_song_project_v1.json`,
+      { type: 'application/json' }
+    );
+    await routeFile(file);
+    clearPendingHandoff();
+  } catch (error) {
+    flash(error.message || '受け取ったSongProjectの反映に失敗しました。保存したJSONから読み込んでください。', true);
+  }
 }
 
 fileInput?.addEventListener('change', (event) => {
@@ -140,3 +216,9 @@ exportSongButton?.addEventListener('click', () => {
 function safeFileName(value) {
   return String(value || 'untitled').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80);
 }
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+}
+
+ensureHandoffGuide();
