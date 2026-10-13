@@ -12,7 +12,7 @@ on:
       - '.github/workflows/arranger-ci.yml'
 
 jobs:
-  arranger-v05:
+  arranger-v06:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,6 +35,8 @@ jobs:
           node --check arranger/src/v05-tools.js
           node --check arranger/src/v05-workflow.js
           node --check arranger/src/v05-ui.js
+          node --check arranger/src/workflow-boundary-ui.js
+          node --check arranger/src/beginner-flow.js
           for file in arranger/src/*lab*.js; do node --check "$file"; done
 
       - name: Arrangement Lab core regression
@@ -51,11 +53,14 @@ jobs:
           npm run build
           test -f dist/arranger/index.html
           test -f dist/arranger/v05.css
+          test -f dist/arranger/v06.css
           test -f dist/arranger/src/app.js
           test -f dist/arranger/src/core.js
           test -f dist/arranger/src/v05-tools.js
           test -f dist/arranger/src/v05-workflow.js
           test -f dist/arranger/src/v05-ui.js
+          test -f dist/arranger/src/workflow-boundary-ui.js
+          test -f dist/arranger/src/beginner-flow.js
 
       - name: Mobile Chromium end-to-end
         run: |
@@ -65,6 +70,7 @@ jobs:
           node scripts/browser-export-regression.cjs
           node arranger/tests/browser.test.cjs
           node arranger/tests/v05-browser.test.cjs
+          node arranger/tests/v06-browser.test.cjs
           node arranger/tests/pwa-update.test.cjs
 
       - name: Upload mobile evidence
