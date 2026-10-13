@@ -9,6 +9,7 @@ on:
       - 'sheet-app/**'
       - 'src/shared/song-project.js'
       - 'scripts/composition-sheet-app-smoke-test.mjs'
+      - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
       - 'scripts/build-static.mjs'
       - '.github/workflows/sheet-app-ci.yml'
 
@@ -26,6 +27,9 @@ jobs:
 
       - name: Composition Sheet smoke test
         run: node scripts/composition-sheet-app-smoke-test.mjs
+
+      - name: Composition Sheet to Demo Composer roundtrip
+        run: node scripts/song-project-sheet-roundtrip-smoke-test.mjs
 
       - name: Static build
         run: npm run build
