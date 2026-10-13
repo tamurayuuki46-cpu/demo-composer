@@ -153,6 +153,9 @@ jobs:
       - name: Composition sheet handoff smoke test
         run: npm run test:sheet-handoff
 
+      - name: Vocal and lyrics workflow smoke test
+        run: npm run test:vocal-workflow
+
       - name: Music Project Home workflow smoke test
         run: npm run test:project-home
 

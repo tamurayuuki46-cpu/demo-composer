@@ -11,7 +11,7 @@ assert.ok(manifest.icons.some((icon) => icon.type === 'image/svg+xml' && icon.pu
 const index = await readFile('index.html', 'utf8');
 assert.match(index, /src\/core\/pwa-service-worker\.js/);
 assert.match(index, /public\/manifest\.webmanifest/);
-assert.match(index, /v0\.8-dev/);
+assert.match(index, /v0\.9-dev/);
 assert.match(index, /src\/hub\/composition-sheet-handoff-ui\.js/);
 
 const build = JSON.parse(await readFile('dist/build.json', 'utf8'));

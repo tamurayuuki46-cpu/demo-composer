@@ -264,14 +264,29 @@ function newProjectId() {
   return `arranged-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function forkLineage(source, newProjectId) {
+  const parentId = source?.sourceSnapshot?.id || source?.projectId || null;
+  const existing = source?.sourceSnapshot?.metadata?.lineage || null;
+  return {
+    rootProjectId: existing?.rootProjectId || parentId || newProjectId,
+    parentProjectId: parentId,
+    sourceApp: 'arrangement-lab',
+    createdFrom: 'fork',
+    forkReason: 'Arrangement Labで採用した編曲を新しい作曲案として続ける',
+    revision: 1,
+  };
+}
+
 export function createDemoComposerProject(source, candidate) {
   if (!source?.sourceSnapshot) throw new Error('元project.jsonのsnapshotがありません。元Projectを読み直してください。');
   const project = clone(source.sourceSnapshot);
-  project.id = newProjectId();
+  const id = newProjectId();
+  project.id = id;
   project.revision = 1;
   project.metadata ||= {};
   const originalTitle = project.metadata.title || source.title || 'Untitled';
-  project.metadata.title = `${originalTitle} - Arrangement`.slice(0, 100);
+  project.metadata.title = `${originalTitle} - Arrangement`.slice(0, 80);
+  project.metadata.lineage = forkLineage(source, id);
   project.chords = arrangedChords(source, candidate);
 
   const roles = ['melody', 'bass', 'drums', 'counter'];

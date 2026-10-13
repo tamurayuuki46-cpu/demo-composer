@@ -1,6 +1,6 @@
 {
   "name": "demo-composer",
-  "version": "0.8.0-dev",
+  "version": "0.9.0-dev",
   "private": true,
   "description": "Android-first songwriting support PWA",
   "scripts": {
@@ -51,6 +51,7 @@
     "test:clear-all": "node scripts/clear-all-smoke-test.mjs",
     "test:sheet-link": "node scripts/sheet-link-smoke-test.mjs",
     "test:sheet-handoff": "node scripts/composition-sheet-handoff-smoke-test.mjs",
+    "test:vocal-workflow": "node scripts/vocal-workflow-smoke-test.mjs",
     "test:project-home": "node scripts/project-home-claude-link-smoke-test.mjs",
     "test:song-project": "node scripts/song-project-smoke-test.mjs",
     "test:recipes": "node scripts/recipe-smoke-test.mjs",

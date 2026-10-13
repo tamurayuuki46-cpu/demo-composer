@@ -106,3 +106,29 @@ export function sheetInitialValues(handoff) {
     scale: normalized.sheet.scale,
   });
 }
+
+// Claude側はテーマと方向だけを渡す。完成歌詞やVocal Noteは自動生成しない。
+// Demo Composerの「作曲の判断」へ入れるための安全な初期値だけを返す。
+export function sheetDesignValues(handoff) {
+  const normalized = normalizeCompositionSheetHandoff(handoff);
+  const { vocal, references } = normalized.sheet;
+  const rangeText = [vocal.range.low, vocal.range.high].filter(Boolean).join('–');
+  const range = [rangeText, vocal.range.note].filter(Boolean).join(' / ');
+  const vocalDirection = [vocal.lyricalImage, vocal.direction].filter(Boolean).join(' / ');
+  const reference = references
+    .map((item) => [item.title, item.artist, item.note].filter(Boolean).join(' / '))
+    .join('\n')
+    .slice(0, 400);
+
+  return Object.freeze({
+    fields: Object.freeze({
+      reference,
+      lyricsTheme: vocal.lyricsTheme,
+      vocalRange: range,
+      lyricPhrases: '',
+    }),
+    axes: Object.freeze({
+      vocal: vocalDirection,
+    }),
+  });
+}
