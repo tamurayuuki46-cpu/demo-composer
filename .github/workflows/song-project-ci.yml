@@ -11,6 +11,7 @@ on:
       - 'src/shared/**'
       - 'src/hub/song-project-ui.js'
       - 'arranger/**'
+      - 'project-home/**'
       - 'scripts/song-project-smoke-test.mjs'
       - '.github/workflows/song-project-ci.yml'
 
@@ -34,6 +35,7 @@ jobs:
           node --check arranger/src/song-project-ui.js
           node --check arranger/src/song-midi.js
           node --check arranger/src/song-midi-ui.js
+          node --check project-home/app.js
 
       - name: SongProject round-trip smoke test
         run: node scripts/song-project-smoke-test.mjs
@@ -72,3 +74,5 @@ jobs:
           test -f dist/arranger/src/song-project-sync.js
           test -f dist/arranger/src/song-midi.js
           test -f dist/arranger/src/song-midi-ui.js
+          test -f dist/project-home/index.html
+          test -f dist/project-home/app.js
