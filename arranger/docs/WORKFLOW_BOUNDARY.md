@@ -74,6 +74,31 @@ Fork原則:
 
 通常WorkflowではForkを使わずDAW Handoffへ進む。
 
+### SongProject v1を入口にした場合
+
+`新しい作曲ProjectとしてFork`は**Lineage付きSongProject v1**を書き出す。
+
+- 新しいSongProject `projectId`
+- `rootProjectId`を維持
+- `parentProjectId`に元SongProject ID
+- `sourceApp = arrangement-lab`
+- `createdFrom = arrangement-fork`
+- `revision = 1`
+- 採用した編曲結果を新ForkのCompositionへ反映
+- Arrangement evidenceも保持
+- 元SongProjectは変更しない
+
+共通処理:
+- `arranger/src/song-project-sync.js` → `createArrangementForkSongProject()`
+- `arranger/src/song-project-ui.js` → SongProject入力時のFork Download
+
+### legacy Demo Composer project.jsonを入口にした場合
+
+従来どおりDemo Composer `project.json` Forkを出力する。
+`metadata.lineage`にroot / parent / sourceApp / createdFrom / forkReason / revisionを保持する。
+
+この分岐により旧Workflow互換を壊さず、SongProject Workflowでは共通Project系譜を維持する。
+
 ## Vocal / Lyrics
 
 Arrangement Labは歌詞本文を所有しない。
