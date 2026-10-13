@@ -132,6 +132,13 @@ function ensureSectionModeButton() {
   title.after(button);
 }
 
+function bindEmptyStateButton(empty) {
+  const button = empty?.querySelector('[data-go-step]');
+  if (!button || button.dataset.beginnerBound) return;
+  button.dataset.beginnerBound = 'true';
+  button.addEventListener('click', () => goToStep(Number(button.dataset.goStep || 0)));
+}
+
 function ensureSectionEmptyState() {
   const sections = document.querySelector('#sections');
   if (!sections) return;
@@ -156,8 +163,8 @@ function ensureSectionEmptyState() {
     empty.dataset.sectionEmpty = 'true';
     empty.innerHTML = '<strong>④はまだ準備中です</strong><p>まず①で曲を読み込み、②でA / B / Cを作ると、ここにSectionカードが表示されます。</p><button type="button" class="secondary" data-go-step="0">① 曲を読み込むへ</button>';
     sections.append(empty);
-    empty.querySelector('[data-go-step]')?.addEventListener('click', () => goToStep(0));
   }
+  bindEmptyStateButton(empty);
 }
 
 function cleanInjectedHeadings() {
