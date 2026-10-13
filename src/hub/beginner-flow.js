@@ -1,6 +1,7 @@
 export const BEGINNER_MODE_DEFAULT = true;
 
 const STORAGE_KEY = "demo-composer-beginner-mode";
+const EXTRA_SCREENS = { counter: "裏メロ", sound: "Sound" };
 
 export const BEGINNER_FLOW = [
   { screen: "hub", label: "準備", nextLabel: "次：コードを決める" },
@@ -98,6 +99,7 @@ export function installBeginnerFlow() {
 
   let enabled = readMode();
   let moreOpen = false;
+  let lastCoreScreen = "hub";
 
   const panel = document.createElement("section");
   panel.id = "beginner-flow";
@@ -112,11 +114,21 @@ export function installBeginnerFlow() {
 
   const render = () => {
     const current = activeScreen();
-    let index = stepIndex(current);
+    const currentIndex = stepIndex(current);
+    const isExtra = currentIndex < 0 && Boolean(EXTRA_SCREENS[current]);
+    if (currentIndex >= 0) lastCoreScreen = current;
+
+    const guidedScreen = isExtra ? lastCoreScreen : current;
+    let index = stepIndex(guidedScreen);
     if (index < 0) index = 0;
     const step = BEGINNER_FLOW[index];
-    const isFirst = index === 0;
-    const isLast = index === BEGINNER_FLOW.length - 1;
+    const nextCore = BEGINNER_FLOW[index + 1];
+    const isFirst = !isExtra && index === 0;
+    const isLast = !isExtra && index === BEGINNER_FLOW.length - 1;
+    const currentLabel = isExtra ? `寄り道：${EXTRA_SCREENS[current]}` : step.label;
+    const nextLabel = isExtra
+      ? (nextCore ? `次：${nextCore.label}へ進む` : "次：Arrangement Labで育てる")
+      : step.nextLabel;
 
     if (!enabled) {
       panel.innerHTML = `
@@ -145,19 +157,25 @@ export function installBeginnerFlow() {
       </div>
 
       <div class="beginner-steps" aria-label="Demo Composerの基本順序">
-        ${renderSteps(current)}
+        ${renderSteps(guidedScreen)}
       </div>
 
       <div class="beginner-next-card">
-        <small>今ここ：${step.label}</small>
-        <strong>${step.nextLabel}</strong>
+        <small>今ここ：${currentLabel}</small>
+        <strong>${nextLabel}</strong>
         <div class="beginner-actions">
-          ${isFirst
-            ? '<a class="beginner-secondary" href="./sheet-app/">作曲シートへ</a>'
-            : '<button class="beginner-secondary" id="beginner-prev" type="button">← 前へ</button>'}
-          ${isLast
-            ? '<a class="beginner-primary" href="./arranger/">Arrangement Labへ →</a>'
-            : '<button class="beginner-primary" id="beginner-next" type="button">次へ →</button>'}
+          ${isExtra
+            ? `<button class="beginner-secondary" id="beginner-return" type="button">← ${step.label}へ戻る</button>`
+            : isFirst
+              ? '<a class="beginner-secondary" href="./sheet-app/">作曲シートへ</a>'
+              : '<button class="beginner-secondary" id="beginner-prev" type="button">← 前へ</button>'}
+          ${isExtra
+            ? (nextCore
+                ? '<button class="beginner-primary" id="beginner-extra-next" type="button">次の基本工程へ →</button>'
+                : '<a class="beginner-primary" href="./arranger/">Arrangement Labへ →</a>')
+            : isLast
+              ? '<a class="beginner-primary" href="./arranger/">Arrangement Labへ →</a>'
+              : '<button class="beginner-primary" id="beginner-next" type="button">次へ →</button>'}
         </div>
       </div>
 
@@ -167,7 +185,7 @@ export function installBeginnerFlow() {
       ${moreOpen ? `
         <div class="beginner-more-panel">
           <p>今の工程から広げるなら、この5つ。</p>
-          <ol>${renderIdeas(current)}</ol>
+          <ol>${renderIdeas(guidedScreen)}</ol>
           <div class="beginner-extra-links">
             <button type="button" data-beginner-screen="counter">裏メロを開く</button>
             <button type="button" data-beginner-screen="sound">Soundを開く</button>
@@ -190,6 +208,14 @@ export function installBeginnerFlow() {
 
     panel.querySelector("#beginner-next")?.addEventListener("click", () => {
       clickScreen(BEGINNER_FLOW[index + 1]?.screen || "arrange");
+    });
+
+    panel.querySelector("#beginner-return")?.addEventListener("click", () => {
+      clickScreen(step.screen);
+    });
+
+    panel.querySelector("#beginner-extra-next")?.addEventListener("click", () => {
+      if (nextCore) clickScreen(nextCore.screen);
     });
 
     panel.querySelector("#beginner-more")?.addEventListener("click", () => {
