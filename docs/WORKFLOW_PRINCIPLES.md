@@ -48,6 +48,25 @@
 
 作曲シートは軽い入口であり、制作機能を増やして重くしない。
 
+### Claude Artifact連携
+
+作曲シート本体の所有者はClaude Artifactとする。GitHub側へ作曲シート本体を複製・再実装しない。
+
+GitHub側では以下だけを正本管理する。
+
+- Claude Artifactへ渡す仕様変更プロンプト
+- Demo Composerへ渡す構造化Handoff JSONの契約
+- Handoff Schema Version
+
+正本プロンプト:
+`docs/CLAUDE_COMPOSITION_SHEET_HANDOFF_PROMPT.md`
+
+Claude Artifact側には、人間向けの作曲シートまとめに加えて、`kind: composition-sheet-handoff` / `schemaVersion: 1` のJSONを生成できるよう依頼する。
+
+Demo Composerは将来このJSONを初期値・設計メモとしてImportする。Claude Artifact側が完成済みChord / Melody / Bass / Drums等のCompositionを所有・確定しない。
+
+Schemaを変更する場合は、先に上記GitHub正本プロンプトを更新し、旧Versionとの互換方針を決める。
+
 ## Moises
 
 担当:
