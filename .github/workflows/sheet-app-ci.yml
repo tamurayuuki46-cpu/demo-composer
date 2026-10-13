@@ -1,0 +1,38 @@
+name: Composition Sheet CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'sheet-app/**'
+      - 'scripts/composition-sheet-app-smoke-test.mjs'
+      - 'scripts/build-static.mjs'
+      - '.github/workflows/sheet-app-ci.yml'
+
+jobs:
+  sheet-app-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Composition Sheet smoke test
+        run: node scripts/composition-sheet-app-smoke-test.mjs
+
+      - name: Static build
+        run: npm run build
+
+      - name: Verify Composition Sheet build output
+        run: |
+          test -f dist/sheet-app/index.html
+          test -f dist/sheet-app/latest/composition_sheet_latest.html
+          test -f dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
+          grep -q 'まずは、2項目だけ。' dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
+          grep -q 'demo-composer-project' dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
