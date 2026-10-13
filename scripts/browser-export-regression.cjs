@@ -20,6 +20,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       await page.getByRole('button', { name: '適用', exact: true }).click();
       await page.getByRole('button', { name: 'Melody', exact: true }).click();
       await page.getByRole('button', { name: 'キャッチーをBar 1へ適用', exact: true }).click();
+      const moreButton = page.getByRole('button', { name: 'もっと試す — 候補を5つ見る', exact: true });
+      if (await moreButton.count()) await moreButton.click();
       for (const screen of ['裏メロ', 'Rhythm', 'Arrange', 'Sound', 'Hub']) {
         await page.getByRole('navigation').getByRole('button', { name: screen, exact: true }).click();
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${screen} overflows at ${width}px`);
