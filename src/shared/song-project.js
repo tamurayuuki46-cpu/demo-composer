@@ -1,6 +1,8 @@
 export const SONG_PROJECT_SCHEMA_VERSION = 1;
 export const SONG_PROJECT_KIND = 'song-project';
 
+const CORE_ROLES = ['melody', 'counter', 'bass', 'drums'];
+
 function clone(value) {
   return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 }
@@ -66,15 +68,14 @@ export function demoProjectToSongProject(demoProject, { now } = {}) {
     drums: trackNotes(demoProject, 'drums'),
     sections: clone(demoProject.structure.sections || [])
   };
+  // A compatibility snapshot is intentionally retained in v1. It contains only
+  // project/MIDI data (no Audio Blob) and guarantees that fields owned by the
+  // legacy Demo schema survive a SongProject round trip unchanged.
   result.compatibility.demoComposer = {
     schemaVersion: demoProject.schemaVersion ?? null,
     appVersion: demoProject.appVersion ?? null,
     revision: demoProject.revision ?? 1,
-    metadata: clone(demoProject.metadata || {}),
-    instruments: clone(demoProject.instruments || []),
-    progress: clone(demoProject.progress || {}),
-    exportSettings: clone(demoProject.exportSettings || {}),
-    extraTracks: clone((demoProject.tracks || []).filter((item) => !['melody', 'counter', 'bass', 'drums'].includes(item.role)))
+    legacyProject: clone(demoProject)
   };
   validateSongProject(result);
   return result;
@@ -85,31 +86,41 @@ function defaultTrack(role, notes) {
   return { role, name: role === 'counter' ? 'Counter Melody' : role[0].toUpperCase() + role.slice(1), midiChannel: channels[role], instrumentId: null, mute: false, solo: false, volume: 1, pan: 0, ...(role === 'drums' ? { drumMap: { kick: 36, snare: 38, closedHH: 42 } } : {}), notes: clone(notes) };
 }
 
+function mergeCoreTracks(baseTracks, composition) {
+  const notesByRole = {
+    melody: composition.melody,
+    counter: composition.counterMelody,
+    bass: composition.bass,
+    drums: composition.drums
+  };
+  const output = clone(Array.isArray(baseTracks) ? baseTracks : []);
+  for (const role of CORE_ROLES) {
+    const index = output.findIndex((item) => item?.role === role);
+    if (index === -1) output.push(defaultTrack(role, notesByRole[role]));
+    else output[index] = { ...output[index], notes: clone(notesByRole[role]) };
+  }
+  return output;
+}
+
 export function songProjectToDemoProject(songProject) {
   validateSongProject(songProject);
   const legacy = clone(songProject.compatibility?.demoComposer || {});
-  const metadata = legacy.metadata || {};
-  metadata.title = songProject.title;
-  const tracks = [
-    defaultTrack('melody', songProject.composition.melody),
-    defaultTrack('counter', songProject.composition.counterMelody),
-    defaultTrack('bass', songProject.composition.bass),
-    defaultTrack('drums', songProject.composition.drums),
-    ...clone(legacy.extraTracks || [])
-  ];
+  const base = clone(legacy.legacyProject || {});
+  const metadata = { ...(base.metadata || {}), title: songProject.title };
   return {
-    schemaVersion: legacy.schemaVersion ?? 3,
-    appVersion: legacy.appVersion ?? 'v0.3-dev',
+    ...base,
+    schemaVersion: legacy.schemaVersion ?? base.schemaVersion ?? 3,
+    appVersion: legacy.appVersion ?? base.appVersion ?? 'v0.3-dev',
     id: songProject.projectId,
-    revision: legacy.revision ?? 1,
+    revision: legacy.revision ?? base.revision ?? 1,
     metadata,
     basic: clone(songProject.basic),
-    structure: { sections: clone(songProject.composition.sections) },
+    structure: { ...(base.structure || {}), sections: clone(songProject.composition.sections) },
     chords: clone(songProject.composition.chords),
-    tracks,
-    instruments: clone(legacy.instruments || []),
-    progress: clone(legacy.progress || {}),
-    exportSettings: clone(legacy.exportSettings || {})
+    tracks: mergeCoreTracks(base.tracks, songProject.composition),
+    instruments: clone(base.instruments || []),
+    progress: clone(base.progress || {}),
+    exportSettings: clone(base.exportSettings || {})
   };
 }
 
