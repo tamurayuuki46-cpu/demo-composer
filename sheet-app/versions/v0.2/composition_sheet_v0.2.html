@@ -28,12 +28,12 @@
   <details class="section">
     <summary><span>任意項目 — あとで決める</span><span>＋</span></summary>
     <div class="optional-body">
-      <label class="field"><span class="label-row"><span>Project名</span><span class="hint">任意</span></span><input id="title" placeholder="例：夜の帰り道"></label>
+      <label class="field"><span class="label-row"><span>Project名</span><span class="hint">任意・80文字まで</span></span><input id="title" maxlength="80" placeholder="例：夜の帰り道"></label>
       <div class="grid two">
         <label class="field"><span class="label-row"><span>Genre</span><span class="hint">任意</span></span><input id="genre" placeholder="例：J-POP"></label>
         <label class="field"><span class="label-row"><span>Mood</span><span class="hint">カンマ区切り</span></span><input id="mood" placeholder="例：切ない, 浮遊感"></label>
-        <label class="field"><span class="label-row"><span>BPM</span><span class="hint">任意</span></span><input id="bpm" type="number" min="20" max="300" step="1" placeholder="例：128"></label>
-        <label class="field"><span class="label-row"><span>Key</span><span class="hint">任意</span></span><input id="key" placeholder="例：C major"></label>
+        <label class="field"><span class="label-row"><span>BPM</span><span class="hint">40〜240</span></span><input id="bpm" type="number" min="40" max="240" step="1" placeholder="例：128"></label>
+        <label class="field"><span class="label-row"><span>Key</span><span class="hint">major / minor</span></span><input id="key" placeholder="例：C major / E♭ major"></label>
       </div>
       <label class="field"><span class="label-row"><span>メモ</span><span class="hint">任意</span></span><textarea id="notes" placeholder="歌詞の断片、使いたい音、展開のアイデアなど"></textarea></label>
     </div>
