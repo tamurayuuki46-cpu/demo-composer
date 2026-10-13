@@ -26,7 +26,10 @@ jobs:
           node-version: 22
 
       - name: Shared modules syntax
-        run: node --check src/shared/song-project.js && node --check arranger/src/song-project-sync.js
+        run: |
+          node --check src/shared/song-project.js
+          node --check arranger/src/song-project-sync.js
+          node --check arranger/src/song-project-ui.js
 
       - name: SongProject round-trip smoke test
         run: node scripts/song-project-smoke-test.mjs
@@ -39,6 +42,7 @@ jobs:
           node --check arranger/src/core.js
           node --check arranger/src/app.js
           node --check arranger/src/song-project-sync.js
+          node --check arranger/src/song-project-ui.js
           node --check arranger/sw.js
           for file in arranger/src/*lab*.js; do node --check "$file"; done
 
@@ -55,3 +59,5 @@ jobs:
           test -f dist/arranger/index.html
           test -f dist/arranger/src/app.js
           test -f dist/arranger/src/core.js
+          test -f dist/arranger/src/song-project-ui.js
+          test -f dist/arranger/src/song-project-sync.js
