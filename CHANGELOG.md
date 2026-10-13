@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-10-13 — main統合・公開後の整合性修正
+
+- Demo Composer v0.4-dev / Arrangement Lab v0.5-dev / SongProject v1はPR #177でmain統合済み。
+- PR #178でCI gate、PR #179/#180でPages公開元をmainへ変更。main CI / Deploy成功。
+- README / AI_HANDOFF / Arrangement VERSION_HISTORYの旧運用記載と、画面Version表示を修正。Version番号・Schema・音楽処理は維持。
+- Android/Cubasis/Cubase実機確認は未完了、stable tag未作成。
+
+
 ## v0.3-dev
 更新日: 2026-10-12
 
