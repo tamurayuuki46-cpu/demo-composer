@@ -17,6 +17,7 @@ Version: v0.4-dev
 ・既存Demo Composer Schema 3は維持し、共通ProjectはAdapter層として追加
 ・Arrangement Labは既存Demo project.json入力を残したままSongProject v1も受理
 ・異Origin連携の初期正本をJSONファイル交換とした
+・Demo Composerの全体MIDI出口をDraft.midへ変更し、Arrangement Labの最終Song.midと役割を分離
 
 【修正】
 ・SongProject往復時にTrack固有設定・未知Legacyフィールドが落ちないよう互換Snapshot方式へ修正
@@ -24,7 +25,6 @@ Version: v0.4-dev
 ・Demo再編集後もArrangement領域を保持するMergeルールを固定
 
 【未対応】
-・MIDI Analyzer側の一般MIDI Key変更UIとの最終連携
-・Stem metadataをSongProject referenceへ自動同期するUI
 ・Basic Pitch Web Worker化
+・Android実機での長尺Basic Pitchメモリ検証
 ・本番Deploy / main merge（承認が必要なため未実施）
