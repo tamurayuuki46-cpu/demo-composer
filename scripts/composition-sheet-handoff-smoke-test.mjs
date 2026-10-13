@@ -4,6 +4,15 @@ import {
   parseCompositionSheetHandoffJson,
   sheetInitialValues,
 } from '../src/hub/composition-sheet-handoff.js';
+import {
+  normalizeVocalDesign,
+  vocalDesignFromSheetHandoff,
+} from '../src/hub/vocal-design.js';
+import {
+  applyPendingVocalDesign,
+  peekPendingVocalDesign,
+  queuePendingVocalDesign,
+} from '../src/hub/vocal-design-store.js';
 
 const full = normalizeCompositionSheetHandoff({
   kind: 'composition-sheet-handoff',
@@ -36,6 +45,13 @@ const full = normalizeCompositionSheetHandoff({
 assert.equal(full.title, 'Test Song');
 assert.equal(full.sheet.vocal.lyricsTheme, '帰り道');
 assert.deepEqual(sheetInitialValues(full), { title: 'Test Song', bpm: 128, key: 'E', scale: 'major' });
+assert.deepEqual(vocalDesignFromSheetHandoff(full), normalizeVocalDesign({
+  isVocalSong: true,
+  lyricsTheme: '帰り道',
+  lyricalImage: '街灯',
+  direction: '静か→開放',
+  range: { low: 'B3', high: 'E5', note: 'サビで上へ' },
+}));
 
 // Earlier Schema v1 output without vocal remains valid.
 const legacyV1 = parseCompositionSheetHandoffJson(JSON.stringify({
@@ -65,4 +81,49 @@ assert.throws(
   /未対応/,
 );
 
-console.log('Composition sheet handoff smoke test passed.');
+// Vocal design is stored as Project metadata through a one-reload bridge.
+const memory = new Map();
+const storage = {
+  getItem: (key) => memory.get(key) ?? null,
+  setItem: (key, value) => memory.set(key, value),
+  removeItem: (key) => memory.delete(key),
+};
+const queued = queuePendingVocalDesign({
+  projectId: 'p1',
+  vocal: {
+    isVocalSong: true,
+    lyricsTheme: '未来',
+    range: { low: 'A3', high: 'D5', note: 'サビだけ高め' },
+    lyricsDraft: '仮歌詞',
+    phraseNotes: 'Bar1-2: 8音節',
+    syllableNotes: '7-8-7',
+    synthVNotes: '語尾を弱く',
+  },
+}, storage);
+assert.equal(queued.projectId, 'p1');
+assert.equal(peekPendingVocalDesign(storage).vocal.lyricsTheme, '未来');
+
+let saved = null;
+const active = { id: 'p1', revision: 4, metadata: { title: 'Song' } };
+const applied = await applyPendingVocalDesign({
+  storage,
+  load: async () => active,
+  save: async (project) => { saved = project; },
+});
+assert.equal(applied, true);
+assert.equal(saved.metadata.vocal.lyricsDraft, '仮歌詞');
+assert.equal(saved.metadata.vocal.range.high, 'D5');
+assert.equal(saved.revision, 5);
+assert.equal(peekPendingVocalDesign(storage), null);
+
+// A queued edit for another project must never be applied to the active project.
+queuePendingVocalDesign({ projectId: 'other', vocal: { lyricsTheme: 'wrong project' } }, storage);
+const mismatch = await applyPendingVocalDesign({
+  storage,
+  load: async () => active,
+  save: async () => { throw new Error('must not save'); },
+});
+assert.equal(mismatch, false);
+assert.equal(peekPendingVocalDesign(storage).projectId, 'other');
+
+console.log('Composition sheet handoff + vocal design smoke test passed.');
