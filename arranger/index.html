@@ -72,10 +72,11 @@
       </div>
       <div class="sticky-actions">
         <button id="adopt-btn" class="primary">この案を採用</button>
+        <button id="export-song-midi-btn" class="primary">Song.mid（採用案）</button>
         <button id="export-btn" class="secondary" disabled>編曲プランJSONを書き出す</button>
         <button id="export-song-project-btn" class="secondary" disabled>Song Project v1を書き出す</button>
       </div>
-      <p class="hint">Song Project v1の書き戻しはarrangement領域だけを更新し、Demo Composerのcompositionは上書きしません。</p>
+      <p class="hint">Song.midは採用済み編曲案を5トラック（Chords / Melody / Counter Melody / Bass / Drums）で出力します。Tempo / Time Signature / Section Markerも含みます。Song Project v1の書き戻しはarrangement領域だけを更新し、Demo Composerのcompositionは上書きしません。</p>
     </section>
 
     <section class="panel danger-zone">
@@ -87,6 +88,7 @@
 
   <div id="message" role="status" aria-live="polite" class="toast" hidden></div>
   <script type="module" src="./src/song-project-ui.js"></script>
+  <script type="module" src="./src/song-midi-ui.js"></script>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>
