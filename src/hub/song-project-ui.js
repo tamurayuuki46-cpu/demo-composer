@@ -15,6 +15,11 @@ let installed = false;
 
 function delay(ms) { return new Promise((resolve) => window.setTimeout(resolve, ms)); }
 function safeFileName(value) { return String(value || 'untitled').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80); }
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]);
+}
 
 function setStatus(message, isError = false) {
   const status = document.querySelector('#export-status');
@@ -107,7 +112,7 @@ function ensureGuideStyles() {
 
 function handoffGuideHtml(pending) {
   const pendingText = pending
-    ? `MIDI Analyzerから「${String(pending.songProject.title || 'Untitled Project')}」を受け取り待ちです。`
+    ? `MIDI Analyzerから「${escapeHtml(pending.songProject.title || 'Untitled Project')}」を受け取り待ちです。`
     : '前のアプリで保存したSongProjectを読み込み、作曲後はArrangement Labへ渡せます。';
   return `
     <section class="song-project-handoff" id="song-project-handoff-guide" aria-label="曲データの受け渡し">
