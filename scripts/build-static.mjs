@@ -11,6 +11,7 @@ await cp('src', `${outputDir}/src`, { recursive: true });
 await cp('public', `${outputDir}/public`, { recursive: true });
 await cp('arranger', `${outputDir}/arranger`, { recursive: true });
 await cp('project-home', `${outputDir}/project-home`, { recursive: true });
+await cp('sheet-app', `${outputDir}/sheet-app`, { recursive: true });
 
 // 更新の検出用。BUILD_ID はコミットの短縮ID。アプリは build.json を読んで自分のBUILD_IDと比べる
 let commit = (process.env.GITHUB_SHA ?? '').slice(0, 7);
