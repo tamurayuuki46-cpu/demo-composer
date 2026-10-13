@@ -9,19 +9,26 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./v05.css">
+  <link rel="stylesheet" href="./v06.css">
+  <script>
+    try {
+      const requestedMode = new URLSearchParams(location.search).get('mode');
+      if (requestedMode === 'beginner' || requestedMode === 'explore') localStorage.setItem('arrangement-lab-ui-mode-v0.6', requestedMode);
+    } catch {}
+  </script>
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Demo Composer companion</p>
       <h1>Arrangement Lab</h1>
-      <p class="subtitle">複数案を鳴らして比べ、Section単位で混ぜて決める。</p>
+      <p class="subtitle">複数案を鳴らして比べ、Section単位で混ぜて決め、PC DAWへ渡す。</p>
     </div>
     <span id="version" class="version"></span>
   </header>
 
   <main>
-    <section class="panel">
+    <section id="step-import" class="panel" data-flow-step="1">
       <div class="panel-title"><span class="step">1</span><div><h2>曲を読み込む</h2><p>Demo Composerのproject.jsonまたはSong Project v1を使用します。元データは変更しません。</p></div></div>
       <label id="drop-zone" class="drop-zone">
         <input id="project-file" type="file" accept="application/json,.json,.txt">
@@ -31,8 +38,8 @@
       <div id="collision-summary" class="analysis-box"></div>
     </section>
 
-    <section class="panel">
-      <div class="panel-title"><span class="step">2</span><div><h2>編曲の方向</h2><p>StyleからA/B/Cを生成し、試聴して比較します。</p></div></div>
+    <section id="step-direction" class="panel" data-flow-step="2">
+      <div class="panel-title"><span class="step">2</span><div><h2>A / B / Cを聴く</h2><p>Styleから3案を作り、まずは順番に簡易試聴します。</p></div></div>
       <div class="controls-row">
         <label class="field"><span>Style</span><select id="style-select"></select></label>
         <button id="generate-btn" class="secondary">A/B/Cを作り直す</button>
@@ -42,11 +49,11 @@
         <button id="preview-btn" class="primary" disabled>▶ 選択案を簡易試聴</button>
         <button id="stop-btn" class="secondary" disabled>■ 停止</button>
       </div>
-      <p class="hint">選択Sectionから最大16秒。色付けは編曲メモ（試聴・MIDI対象外）。簡易試聴はproject.jsonのコード/ノートをWeb Audioで鳴らす比較用スケッチです。</p>
+      <p class="hint">選択Sectionから最大16秒。簡易試聴はproject.jsonのコード/ノートをWeb Audioで鳴らす比較用スケッチです。</p>
     </section>
 
-    <section class="panel">
-      <div class="panel-title"><span class="step">3</span><div><h2>案を比較・Mix</h2><p>A/B/Cを選び、2案を混ぜたMix案も作れます。</p></div></div>
+    <section id="step-compare" class="panel" data-flow-step="3">
+      <div class="panel-title"><span class="step">3</span><div><h2>残す案を選ぶ</h2><p>初心者モードではA/B/Cから1案を選ぶだけでOK。「もっと試す」ではMixや目隠し比較も使えます。</p></div></div>
       <div id="candidate-tabs" class="candidate-tabs"></div>
       <div class="mix-row">
         <label class="field"><span>Mix元1</span><select id="mix-a"></select></label>
@@ -57,12 +64,18 @@
       <div id="curve" class="curve"></div>
     </section>
 
-    <section class="panel">
-      <div class="panel-title"><span class="step">4</span><div><h2>Sectionごとに調整</h2><p>密度・楽器・リハモに加え、各カードの「Sectionの編曲ラボ」でハーモニー・裏メロ・展開の50手法を生成・試聴。</p></div></div>
-      <div id="sections" class="sections"></div>
+    <section id="step-section" class="panel" data-flow-step="4">
+      <div class="panel-title"><span class="step">4</span><div><h2>Sectionを1つ調整</h2><p>まずは密度・楽器・裏メロ・リハモだけ。高度な50手法や実Note生成は「もっと試す」で開けます。</p></div></div>
+      <div id="sections" class="sections">
+        <div class="section-empty-state" data-section-empty="true">
+          <strong>④はまだ準備中です</strong>
+          <p>まず①で曲を読み込み、②でA / B / Cを作ると、ここにSectionカードが表示されます。</p>
+          <button type="button" class="secondary" data-go-step="0">① 曲を読み込むへ</button>
+        </div>
+      </div>
     </section>
 
-    <section class="panel">
+    <section id="step-daw" class="panel" data-flow-step="6">
       <div class="panel-title"><span class="step">5</span><div><h2>MIDI / Project書き出し</h2><p>現在選択している編曲案のON/OFFとリハモを反映します。Song Project v1から開いた場合は編曲結果だけを書き戻せます。</p></div></div>
       <div id="midi-buttons" class="midi-grid">
         <button data-part="melody" class="secondary">Melody.mid</button>
@@ -92,5 +105,7 @@
   <script type="module" src="./src/song-midi-ui.js"></script>
   <script type="module" src="./src/app.js"></script>
   <script type="module" src="./src/v05-ui.js"></script>
+  <script type="module" src="./src/workflow-boundary-ui.js"></script>
+  <script type="module" src="./src/beginner-flow.js"></script>
 </body>
 </html>
