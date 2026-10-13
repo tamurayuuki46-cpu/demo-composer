@@ -8,7 +8,7 @@ MIDI ModuleはDemo ComposerからCubasis / Cubaseへ渡すMIDIファイル生成
 
 出力:
 
-- `Song.mid`
+- `Draft.mid`
 - `Chord.mid`
 - `Melody.mid`
 - `Bass.mid`
@@ -23,7 +23,7 @@ HubのExport PanelからAll MIDIまたは個別ファイルをダウンロード
 - Program Change: 出力しない
 - CC: v0.1では出力しない
 
-### Song.mid
+### Draft.mid
 
 Tracks:
 
@@ -75,7 +75,7 @@ GM準拠:
 
 ## Android / BandLab
 
-Android版BandLabでSong.midのマルチTrack展開が期待通りにならない場合に備え、Part MIDIを常に生成できる設計にする。
+Android版BandLabでDraft.midのマルチTrack展開が期待通りにならない場合に備え、Part MIDIを常に生成できる設計にする。
 
 All MIDIの複数ダウンロードをブラウザが制限する場合は、Hubから各Partを個別ダウンロードする。
 

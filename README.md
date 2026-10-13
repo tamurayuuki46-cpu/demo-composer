@@ -21,7 +21,7 @@ Demo Composerは「スマホ版DAW」を目指しません。
 
 ## Current Version
 
-`v0.4-dev`
+`v0.5-dev`
 
 ## Status
 
@@ -31,19 +31,19 @@ HubではProject名 / BPM / Key / Scaleを編集できます。Key変更時はCh
 
 Chordでは、HubのKey / Scaleに合うダイアトニックコード7つを五度圏の関係が見やすい扇形ビューで表示します。Majorは `IV / ii ← I / vi → V / iii` と `vii°`、Minorは `VI / iv ← III / i → VII / v` と `ii°` の配置で、各コードをタップすると従来どおり1小節ずつ進行へ追加できます。さらに基準音をC〜Bから選び、`Major / Minor / 7 / Maj7 / m7 / sus2 / sus4 / dim / aug` の9種類を1小節ずつ進行へ追加できます。加えて100種類のChord Preset（王道・明るい / J-POP・切ない / ロック・力強い / バラード・やさしい / ダンス・ループ / ジャズ・おしゃれ / マイナー・暗めの7カテゴリ）を現在のKey / Scaleへ自動変換して適用できます。Preset適用後も個別追加・削除で修正できます。
 
-Chord画面の `Backing Pattern` では、コード進行自体を変えずに `Block / 8分刻み / Arpeggio / Syncopation` の4種類から伴奏の鳴らし方を選べます。選択はAutoSave / Undo / Redo対象で、Demo Playerと `Chord.mid / Song.mid` のChord Trackへ反映されます。既存ProjectはBacking未設定時にBlockへFallbackします。
+Chord画面の `Backing Pattern` では、コード進行自体を変えずに `Block / 8分刻み / Arpeggio / Syncopation` の4種類から伴奏の鳴らし方を選べます。選択はAutoSave / Undo / Redo対象で、Demo Playerと `Chord.mid / Draft.mid` のChord Trackへ反映されます。既存ProjectはBacking未設定時にBlockへFallbackします。
 
 Melodyでは、Androidスマホ向けの簡易Piano Rollを実装しています。左端に白鍵 / 黒鍵が分かる縦ピアノKeyboardを表示し、8分音符 / 16分音符を切り替えてタップ入力できます。16分音符はタップ幅を保つため半小節ずつ表示します。Bar / Octave切替、音の長さ指定、音の役割の色分け（コード構成音=青 / テンション=緑 / スケール外=黄 / アボイド=赤）、度数表示、Copy Bar / Copy 2小節、Melody Analyzerに対応しています。さらに現在Barの `安定 / キャッチー / 浮遊感` の3つのルールベース候補を表示し、1つ選ぶと通常のMelody Noteとして展開します。候補適用後はPiano Rollで1音ずつ修正でき、Undo / AutoSave / Demo Player / MIDI Exportも通常のMelodyと同じ処理を使います。
 
 Rhythmでは、Bass / Kick / Snare / Closed Hi-Hatを同じ画面で入力できます。1小節16 stepを `1 e & a / 2 e & a / 3 e & a / 4 e & a` として1画面に同時表示し、Bassは現在Chordを基準にルート / 3度 / 5度 / 7度 / オクターブ上 / ルート下などを選択できます。現在Beatを次Beatへ、現在Barを次BarへコピーするRhythm Copyにも対応しています。さらに `8ビート 基本 / 4つ打ち / Pop / Rock / Half Time / 16分HH` の6種類のDrum Presetを現在Barへ適用し、適用後に16 stepを手動修正できます。
 
-Arrangeでは、イントロ / Aメロ / Bメロ / サビ / 間奏 / Cメロ / アウトロをSectionとして並べ、構成Template、小節増減、Sectionコピー / 削除、Section単体再生に対応しています。Section操作はChord / Melody / Bass / DrumsをCoreのGlobal Operationでまとめて扱い、Undo / Redoできます。Song.midのConductor TrackにはSection Markerを書き出します。
+Arrangeでは、イントロ / Aメロ / Bメロ / サビ / 間奏 / Cメロ / アウトロをSectionとして並べ、構成Template、小節増減、Sectionコピー / 削除、Section単体再生に対応しています。Section操作はChord / Melody / Bass / DrumsをCoreのGlobal Operationでまとめて扱い、Undo / Redoできます。Draft.midのConductor TrackにはSection Markerを書き出します。
 
 Sound Sketch Liteでは、Chord / Melody / Bassの仮音色方向をスマホで決められます。Chordは `Keys / Pad / Piano`、Melodyは `Lead / Keys / Pluck`、Bassは `Soft Bass / Synth Bass / Deep Bass` から選択でき、さらに `Natural / Bright / Soft / Warm / Dark / Airy / Aggressive` のToneタグを組み合わせられます。選択は `project.instruments[]` に保存され、AutoSaveとUndo / Redoの対象です。Demo PlayerのWeb Audio仮音色へ反映しますが、MIDI Note / Chord Data / Rhythm Dataは変更しません。最終音色はCubasis / Cubase / Plugin側で差し替えます。
 
 Demo Playerは画面下部に常設し、Chord / Melody / Bass / Drumsを軽量な仮音でPlay / Stop / Loop再生できます。パートごとのMute / Soloで聴き分けでき、ArrangeからSectionだけを再生する場合もSound / Backing設定を維持します。
 
-Exportでは `Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `project.json` をダウンロードできます。Song / Part MIDIはSMF Type 1、PPQ 480です。Sound Sketch LiteはMIDI Program Change / CCを出力しませんが、Backing PatternはChord TrackのNote配置としてMIDIへ反映します。Hubからproject.jsonの読み込みもできます。
+Exportでは `Draft.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid` と `project.json` をダウンロードできます。Song / Part MIDIはSMF Type 1、PPQ 480です。Sound Sketch LiteはMIDI Program Change / CCを出力しませんが、Backing PatternはChord TrackのNote配置としてMIDIへ反映します。Hubからproject.jsonの読み込みもできます。
 
 HubのAI相談は、現在のProject情報を相談用テキストへまとめてコピーする方式です。APIへ自動送信せず、ChatGPT / Claudeへユーザーが貼り付けて相談できます。
 
@@ -132,6 +132,6 @@ VercelのDeployment上限・障害時の第二公開先としてGitHub Pagesを�
 
 `develop`は開発統合、`main`は自動テスト・build・回帰CI合格版、GitHub Pages公開元。stable tagはAndroid実機と必要なCubasis/Cubase実機確認後のみ作成します。 mainへの変更はPR経由で行います。
 
-## Song Project v1連携（v0.4-dev）
+## Song Project v1連携（v0.5-dev）
 
 共通SongProject JSONと既存project.jsonを併用。Arrangement Lab v0.5-devとの往復とarrangement書き戻しに対応。Demo ComposerのDraft.midとArrangement Labのfinal Song.midを分離します。詳細は `docs/SONG_PROJECT.md` と `docs/RELEASE_POLICY.md`。

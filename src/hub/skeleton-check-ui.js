@@ -49,7 +49,7 @@ export function skeletonCheckHtml(project) {
   return `
     <div class="skeleton-check">
       <p class="skeleton-lead">${check.complete
-        ? "骨子はそろいました。Song.mid などを書き出して、Cubasis / Cubase に渡せます。"
+        ? "骨子はそろいました。Draft.mid などを書き出して、Cubasis / Cubase に渡せます。"
         : `次に決めるのは「${escapeHtml(check.next.label)}」です。${escapeHtml(check.next.hint)}`}</p>
       <ul class="skeleton-list">${check.items.map((item) => row(item, { isNext: item === check.next })).join("")}</ul>
       <h4>あとで足すもの（任意）</h4>
