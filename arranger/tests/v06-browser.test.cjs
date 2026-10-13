@@ -38,9 +38,9 @@ const fixture={
   await page.click('#beginner-prev');
   await page.waitForFunction(()=>document.querySelector('#beginner-step-label')?.textContent?.includes('①'));
 
-  // Empty-state shortcut returns to import.
+  // Empty-state shortcut returns to import after smooth scroll settles.
   await page.locator('[data-section-empty] [data-go-step]').click();
-  await page.waitForTimeout(150);
+  await page.waitForFunction(()=>document.querySelector('#beginner-step-label')?.textContent?.includes('①'));
   assert.match(await page.locator('#beginner-step-label').textContent(),/①/);
 
   await page.locator('#project-file').setInputFiles({name:'project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});
