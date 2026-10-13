@@ -7,6 +7,9 @@ const html = await readFile(new URL('../project-home/index.html', import.meta.ur
 const app = await readFile(new URL('../project-home/app.js', import.meta.url), 'utf8');
 const build = await readFile(new URL('./build-static.mjs', import.meta.url), 'utf8');
 
+assert.match(html, /id="composition-sheet-card"/);
+assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.1 を開く/);
+assert.ok(html.indexOf('id="composition-sheet-card"') < html.indexOf('id="workflow-card"'), '作曲シート入口がMusic Project Homeの最上部にありません');
 assert.match(html, /id="workflow-card"/);
 assert.match(html, /id="workflow-list"/);
 assert.match(html, /id="next-action"/);
@@ -60,4 +63,4 @@ assert.equal(workflow.nextAction.id, 'pcDaw');
 assert.equal(lineageLabel({ projectId: 'song-1' }), 'このProjectが起点');
 assert.equal(lineageLabel({ projectId: 'song-2', lineage: { rootProjectId: 'song-1', parentProjectId: 'song-1' } }), '親: song-1');
 
-console.log('Project Home workflow + Claude link smoke test passed.');
+console.log('Project Home workflow + Claude link + Composition Sheet top entry smoke test passed.');
