@@ -19,7 +19,15 @@
     small{color:#57534e}
     input[type=file],input[type=url]{box-sizing:border-box;width:100%}
     input[type=url]{min-height:48px;border:1px solid #9ca3af;border-radius:12px;padding:12px 14px;font:inherit;margin:8px 0 10px}
+    .quick-flow{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:2px 0 6px;scroll-snap-type:x proximity}
+    .quick-flow .flow-step{width:auto;min-width:132px;flex:1 0 132px;display:grid;place-content:center;gap:4px;scroll-snap-align:start}
+    .quick-flow .flow-step small{display:block}
+    .quick-flow .flow-end{box-sizing:border-box;border:1px solid #9ca3af;border-radius:12px;padding:13px 14px;text-align:center;background:#fafaf9}
+    .flow-arrow{align-self:center;color:#78716c;font-weight:800}
+    .optional-link{margin:10px 0 0;color:#57534e;font-size:.9rem}
+    .optional-link a{display:inline;width:auto;min-height:0;border:0;padding:0;background:transparent;text-decoration:underline;text-align:left}
     [hidden]{display:none!important}
+    @media(max-width:520px){main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.flow-arrow{display:none}}
   </style>
 </head>
 <body>
@@ -35,6 +43,21 @@
     <p>最初にここから開始します。必須は「どんな場面の曲か」と「参考曲1曲」の2項目だけです。</p>
     <a class="primary" href="../sheet-app/">作曲シート v0.1 を開く</a>
     <p><small>入力内容は共通JSONとして保存し、Demo Composerなどへ引き継げます。</small></p>
+  </section>
+
+  <section id="quick-flow-card" class="card">
+    <h2>使い方</h2>
+    <nav id="quick-flow" class="quick-flow" aria-label="基本の作曲フロー">
+      <a class="flow-step" href="../sheet-app/"><strong>1 決める</strong><small>作曲シート</small></a>
+      <span class="flow-arrow" aria-hidden="true">→</span>
+      <a class="flow-step" href="../"><strong>2 作る</strong><small>Demo Composer</small></a>
+      <span class="flow-arrow" aria-hidden="true">→</span>
+      <a class="flow-step" href="../arranger/"><strong>3 育てる</strong><small>Arrangement Lab</small></a>
+      <span class="flow-arrow" aria-hidden="true">→</span>
+      <div class="flow-step flow-end"><strong>4 仕上げる</strong><small>Cubasis / Cubase</small></div>
+    </nav>
+    <p class="optional-link">必要な時だけ：<a href="https://tamurayuuki46-cpu.github.io/midi-analyzer/">MIDI Analyzerで分析</a></p>
+    <p><small>PC DAWは最終制作の必須工程です。</small></p>
   </section>
 
   <section class="card">
@@ -55,16 +78,6 @@
     <p id="analysis-status"></p>
     <p id="composition-status"></p>
     <p id="arrangement-status"></p>
-  </section>
-
-  <section class="card">
-    <h2>Apps</h2>
-    <div class="actions">
-      <a class="primary" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/">Reference / Analysis — Open MIDI Analyzer</a>
-      <a href="../">Composition — Open Demo Composer</a>
-      <a href="../arranger/">Arrangement — Open Arrangement Lab</a>
-    </div>
-    <p><small>別Origin間のProject受け渡しはSongProject JSONを使用します。</small></p>
   </section>
 
   <section class="card" id="claude-link-card">
