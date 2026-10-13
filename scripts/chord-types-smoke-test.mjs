@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { CHORD_QUALITY_ORDER, chordIntervals } from "../src/core/chord-qualities.js";
 import { migrateProject } from "../src/core/project-migration.js";
+import { APP_VERSION } from "../src/core/project-schema.js";
 import { createDefaultProject, createProjectStore } from "../src/core/project-state.js";
 import { chordSymbol, getChordVariants, rootDegreeName } from "../src/chord/chord-theory.js";
 import { buildMidiExports } from "../src/midi/midi-export.js";
@@ -56,7 +57,7 @@ const legacyProject = {
 
 const migrated = migrateProject(legacyProject);
 assert.equal(migrated.schemaVersion, 3);
-assert.equal(migrated.appVersion, "v0.3-dev");
+assert.equal(migrated.appVersion, APP_VERSION);
 assert.deepEqual(migrated.chords, legacyProject.chords);
 assert.equal(legacyProject.schemaVersion, 1, "migration must not mutate source data");
 
@@ -78,7 +79,6 @@ const midi = buildMidiExports(store.getSnapshot());
 assert.ok(midi["Chord.mid"] instanceof Uint8Array);
 assert.ok(midi["Chord.mid"].length > 100, "expanded chord MIDI should contain note data");
 
-// 基準音の度数名（Key / Scaleごと）
 assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((root) => rootDegreeName(root, "C", "major")), ["I", "♭II", "II", "♭III", "III", "IV", "♯IV", "V", "♭VI", "VI", "♭VII", "VII"]);
 assert.equal(rootDegreeName(7, "G", "major"), "I");
 assert.equal(rootDegreeName(0, "G", "major"), "IV", "C is IV in G major");
