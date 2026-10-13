@@ -150,6 +150,15 @@ jobs:
       - name: Sheet link smoke test
         run: npm run test:sheet-link
 
+      - name: Composition sheet handoff smoke test
+        run: npm run test:sheet-handoff
+
+      - name: Music Project Home workflow smoke test
+        run: npm run test:project-home
+
+      - name: SongProject ownership / lineage / fork smoke test
+        run: npm run test:song-project
+
       - name: Update notice smoke test
         run: npm run test:update-notice
 

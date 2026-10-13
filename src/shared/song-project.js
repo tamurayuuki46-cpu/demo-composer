@@ -14,7 +14,31 @@ function makeId() {
 function track(project, role) { return project?.tracks?.find((item) => item.role === role) || null; }
 function trackNotes(project, role) { return clone(track(project, role)?.notes || []); }
 
-export function createEmptySongProject({ projectId = makeId(), title = 'Untitled Project', now } = {}) {
+function createLineage({ projectId, sourceApp = 'demo-composer', createdFrom = 'new', revision = 1 } = {}) {
+  return {
+    rootProjectId: projectId,
+    parentProjectId: null,
+    sourceApp,
+    createdFrom,
+    forkReason: null,
+    revision,
+  };
+}
+
+function normalizeLineage(lineage, projectId, fallback = {}) {
+  const base = createLineage({ projectId, ...fallback });
+  if (!lineage || typeof lineage !== 'object') return base;
+  return {
+    rootProjectId: typeof lineage.rootProjectId === 'string' && lineage.rootProjectId ? lineage.rootProjectId : base.rootProjectId,
+    parentProjectId: typeof lineage.parentProjectId === 'string' && lineage.parentProjectId ? lineage.parentProjectId : null,
+    sourceApp: typeof lineage.sourceApp === 'string' && lineage.sourceApp ? lineage.sourceApp : base.sourceApp,
+    createdFrom: typeof lineage.createdFrom === 'string' && lineage.createdFrom ? lineage.createdFrom : base.createdFrom,
+    forkReason: typeof lineage.forkReason === 'string' && lineage.forkReason ? lineage.forkReason : null,
+    revision: Number.isInteger(lineage.revision) && lineage.revision >= 1 ? lineage.revision : base.revision,
+  };
+}
+
+export function createEmptySongProject({ projectId = makeId(), title = 'Untitled Project', now, sourceApp = 'demo-composer', createdFrom = 'new' } = {}) {
   const stamp = nowIso(now);
   return {
     kind: SONG_PROJECT_KIND,
@@ -23,13 +47,14 @@ export function createEmptySongProject({ projectId = makeId(), title = 'Untitled
     title,
     createdAt: stamp,
     updatedAt: stamp,
+    lineage: createLineage({ projectId, sourceApp, createdFrom }),
     basic: { bpm: 120, timeSignature: '4/4', key: 'C', scale: 'major', ppq: 480 },
     analysis: { keyCandidates: [], chordCandidates: [], degreeAnalysis: null, melodyAnalysis: null, bassAnalysis: null, rhythmAnalysis: null },
     composition: { chords: [], melody: [], counterMelody: [], bass: [], drums: [], sections: [] },
     arrangement: { reharmonization: null, voicing: null, density: null, instruments: null, selectedAlternatives: null, decisions: [] },
     history: { version: 1, changes: [] },
     reference: { items: [] },
-    export: { lastDraftMidiAt: null, lastSongMidiAt: null },
+    export: { lastDraftMidiAt: null, lastSongMidiAt: null, lastDawHandoffAt: null },
     compatibility: {}
   };
 }
@@ -46,13 +71,28 @@ export function validateSongProject(project) {
   if (!project.composition || !Array.isArray(project.composition.chords) || !Array.isArray(project.composition.sections)) throw new Error('SongProject composition is invalid.');
   for (const key of ['melody', 'counterMelody', 'bass', 'drums']) if (!Array.isArray(project.composition[key])) throw new Error(`SongProject composition.${key} is invalid.`);
   if (!project.analysis || !project.arrangement || !project.history || !project.reference || !project.export) throw new Error('SongProject sections are incomplete.');
+  if (project.lineage !== undefined) {
+    const lineage = project.lineage;
+    if (!lineage || typeof lineage !== 'object') throw new Error('SongProject lineage is invalid.');
+    if (typeof lineage.rootProjectId !== 'string' || !lineage.rootProjectId) throw new Error('SongProject lineage.rootProjectId is invalid.');
+    if (lineage.parentProjectId !== null && lineage.parentProjectId !== undefined && (typeof lineage.parentProjectId !== 'string' || !lineage.parentProjectId)) throw new Error('SongProject lineage.parentProjectId is invalid.');
+    if (typeof lineage.sourceApp !== 'string' || !lineage.sourceApp) throw new Error('SongProject lineage.sourceApp is invalid.');
+    if (typeof lineage.createdFrom !== 'string' || !lineage.createdFrom) throw new Error('SongProject lineage.createdFrom is invalid.');
+    if (!Number.isInteger(lineage.revision) || lineage.revision < 1) throw new Error('SongProject lineage.revision is invalid.');
+  }
   return true;
 }
 
 export function demoProjectToSongProject(demoProject, { now } = {}) {
   if (!demoProject || typeof demoProject !== 'object' || !demoProject.basic || !demoProject.structure) throw new Error('Demo Composer Project is invalid.');
   const stamp = nowIso(now);
-  const result = createEmptySongProject({ projectId: demoProject.id || makeId(), title: demoProject.metadata?.title || 'Untitled Project', now: stamp });
+  const projectId = demoProject.id || makeId();
+  const result = createEmptySongProject({ projectId, title: demoProject.metadata?.title || 'Untitled Project', now: stamp, sourceApp: 'demo-composer', createdFrom: 'demo-project' });
+  result.lineage = normalizeLineage(demoProject.metadata?.lineage, projectId, {
+    sourceApp: 'demo-composer',
+    createdFrom: 'demo-project',
+    revision: demoProject.revision ?? 1,
+  });
   result.basic = {
     bpm: demoProject.basic.bpm,
     timeSignature: demoProject.basic.timeSignature || '4/4',
@@ -68,9 +108,6 @@ export function demoProjectToSongProject(demoProject, { now } = {}) {
     drums: trackNotes(demoProject, 'drums'),
     sections: clone(demoProject.structure.sections || [])
   };
-  // A compatibility snapshot is intentionally retained in v1. It contains only
-  // project/MIDI data (no Audio Blob) and guarantees that fields owned by the
-  // legacy Demo schema survive a SongProject round trip unchanged.
   result.compatibility.demoComposer = {
     schemaVersion: demoProject.schemaVersion ?? null,
     appVersion: demoProject.appVersion ?? null,
@@ -106,7 +143,11 @@ export function songProjectToDemoProject(songProject) {
   validateSongProject(songProject);
   const legacy = clone(songProject.compatibility?.demoComposer || {});
   const base = clone(legacy.legacyProject || {});
-  const metadata = { ...(base.metadata || {}), title: songProject.title };
+  const metadata = {
+    ...(base.metadata || {}),
+    title: songProject.title,
+    lineage: normalizeLineage(songProject.lineage, songProject.projectId, { sourceApp: 'demo-composer', createdFrom: 'song-project' }),
+  };
   return {
     ...base,
     schemaVersion: legacy.schemaVersion ?? base.schemaVersion ?? 3,
@@ -132,7 +173,43 @@ export function mergeDemoChangesIntoSongProject(songProject, demoProject, { now 
   next.updatedAt = nowIso(now);
   next.basic = fresh.basic;
   next.composition = fresh.composition;
+  next.lineage = normalizeLineage(next.lineage, next.projectId, { sourceApp: 'demo-composer', createdFrom: 'song-project' });
   next.compatibility = { ...next.compatibility, demoComposer: fresh.compatibility.demoComposer };
+  return next;
+}
+
+export function forkSongProject(songProject, {
+  projectId = makeId(),
+  title = `${songProject?.title || 'Untitled Project'} Fork`,
+  sourceApp = 'arrangement-lab',
+  createdFrom = 'fork',
+  forkReason = '',
+  now,
+} = {}) {
+  validateSongProject(songProject);
+  const stamp = nowIso(now);
+  const next = clone(songProject);
+  const rootProjectId = songProject.lineage?.rootProjectId || songProject.projectId;
+  next.projectId = projectId;
+  next.title = title;
+  next.createdAt = stamp;
+  next.updatedAt = stamp;
+  next.lineage = {
+    rootProjectId,
+    parentProjectId: songProject.projectId,
+    sourceApp,
+    createdFrom,
+    forkReason: String(forkReason || '').slice(0, 400) || null,
+    revision: 1,
+  };
+  next.history = {
+    ...clone(next.history),
+    changes: [
+      ...(Array.isArray(next.history?.changes) ? clone(next.history.changes) : []),
+      { at: stamp, type: 'fork', fromProjectId: songProject.projectId, sourceApp, reason: next.lineage.forkReason },
+    ],
+  };
+  validateSongProject(next);
   return next;
 }
 

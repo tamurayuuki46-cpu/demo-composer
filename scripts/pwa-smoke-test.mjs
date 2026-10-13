@@ -11,7 +11,8 @@ assert.ok(manifest.icons.some((icon) => icon.type === 'image/svg+xml' && icon.pu
 const index = await readFile('index.html', 'utf8');
 assert.match(index, /src\/core\/pwa-service-worker\.js/);
 assert.match(index, /public\/manifest\.webmanifest/);
-assert.match(index, /v0\.7-dev/);
+assert.match(index, /v0\.8-dev/);
+assert.match(index, /src\/hub\/composition-sheet-handoff-ui\.js/);
 
 const build = JSON.parse(await readFile('dist/build.json', 'utf8'));
 const worker = await readFile('dist/service-worker.js', 'utf8');
@@ -25,7 +26,9 @@ assert.ok(urls.includes('./index.html'));
 assert.ok(urls.includes('./public/manifest.webmanifest'));
 assert.ok(urls.includes('./public/icon.svg'));
 assert.ok(urls.some((url) => url.startsWith('./src/core/pwa-service-worker.js?build=')));
+assert.ok(urls.some((url) => url.startsWith('./src/hub/composition-sheet-handoff-ui.js?build=')));
 assert.ok(urls.some((url) => url.startsWith('./project-home/app.js?build=')));
+assert.ok(urls.some((url) => url.startsWith('./project-home/workflow.js?build=')));
 assert.ok(!urls.some((url) => url.includes('build.json')), 'build.json must stay network-fresh');
 assert.ok(!urls.some((url) => url.startsWith('./arranger/')), 'Arrangement Lab owns its nested PWA cache');
 
