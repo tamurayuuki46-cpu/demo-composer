@@ -11,6 +11,7 @@ await cp('src', `${outputDir}/src`, { recursive: true });
 await cp('public', `${outputDir}/public`, { recursive: true });
 await cp('arranger', `${outputDir}/arranger`, { recursive: true });
 await cp('project-home', `${outputDir}/project-home`, { recursive: true });
+await cp('sheet-app', `${outputDir}/sheet-app`, { recursive: true });
 
 // 更新の検出用。BUILD_ID はコミットの短縮ID。アプリは build.json を読んで自分のBUILD_IDと比べる
 let commit = (process.env.GITHUB_SHA ?? '').slice(0, 7);
@@ -69,7 +70,7 @@ async function collectPrecacheUrls(directory, urlPrefix) {
   return urls;
 }
 
-// Demo Composer本体とProject Homeをオフライン用に事前Cacheする。
+// Demo Composer本体・Project Home・作曲シートをオフライン用に事前Cacheする。
 // Arrangement Labは独自Service Workerを持つため、root workerでは二重管理しない。
 const precacheUrls = Array.from(new Set([
   './',
@@ -77,6 +78,7 @@ const precacheUrls = Array.from(new Set([
   ...await collectPrecacheUrls(`${outputDir}/src`, './src'),
   ...await collectPrecacheUrls(`${outputDir}/public`, './public'),
   ...await collectPrecacheUrls(`${outputDir}/project-home`, './project-home'),
+  ...await collectPrecacheUrls(`${outputDir}/sheet-app`, './sheet-app'),
 ]));
 
 const serviceWorkerSource = await readFile('service-worker.js', 'utf8');
