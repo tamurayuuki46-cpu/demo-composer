@@ -68,7 +68,7 @@ jobs:
           npx playwright install --with-deps chromium
           python3 -m http.server 8080 --directory dist > /tmp/arranger-server.log 2>&1 &
           node scripts/browser-export-regression.cjs
-          node arranger/tests/browser.test.cjs
+          ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=explore' node arranger/tests/browser.test.cjs
           node arranger/tests/v05-browser.test.cjs
           node arranger/tests/v06-browser.test.cjs
           node arranger/tests/pwa-update.test.cjs
