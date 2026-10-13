@@ -9,6 +9,15 @@ const build = await readFile(new URL('./build-static.mjs', import.meta.url), 'ut
 assert.match(html, /id="composition-sheet-card"/);
 assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.1 を開く/);
 assert.match(html, /<h1>Music Project Home<\/h1>/);
+assert.match(html, /id="quick-flow-card"/);
+assert.match(html, /id="quick-flow"/);
+assert.match(html, /<strong>1 決める<\/strong><small>作曲シート<\/small>/);
+assert.match(html, /<strong>2 作る<\/strong><small>Demo Composer<\/small>/);
+assert.match(html, /<strong>3 育てる<\/strong><small>Arrangement Lab<\/small>/);
+assert.match(html, /<strong>4 仕上げる<\/strong><small>Cubasis \/ Cubase<\/small>/);
+assert.match(html, /MIDI Analyzerで分析/);
+assert.match(html, /PC DAWは最終制作の必須工程/);
+assert.ok(html.indexOf('id="composition-sheet-card"') < html.indexOf('id="quick-flow-card"'), '作曲シート入口が一番上にありません');
 assert.match(html, /id="claude-link-input"/);
 assert.match(html, /id="claude-link-open"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
 assert.match(html, /Song Project JSON・MIDI・公開コードには入れません/);
@@ -23,4 +32,4 @@ assert.equal(
 );
 assert.equal(normalizeSheetLink('https://example.com/not-claude'), null);
 
-console.log('Project Home Composition Sheet top link + Claude link smoke test passed.');
+console.log('Project Home quick flow + Composition Sheet top link + Claude link smoke test passed.');
