@@ -1,3 +1,64 @@
+## v0.9-dev
+更新日: 2026-10-13
+
+【追加】
+・Demo Composerの作曲判断へLyrics / Vocal情報を実装。歌詞テーマ、Vocal音域、Phrase歌詞・音節メモ、歌詞/Vocal方針を保存できる。
+・Claude Artifact作曲シートのVocal/Lyrics初期設計と参考曲情報を、完成歌詞やVocal Noteを自動生成せず明示反映できる。
+・Arrangement LabのDemo Composer Forkへ `metadata.lineage` を直接付与し、root / parent / sourceApp / createdFrom / forkReason / revisionを追跡できる。
+・Vocal/Lyrics workflow smoke testを追加。
+
+【変更】
+・Demo Composerをv0.9-devへ更新。
+・Arrangement LabからDemo Composerへ戻す操作を、元Projectを上書きしない明示的なForkとしてデータ上も固定。
+・Lyrics / Vocalはoptionalな作曲情報として既存 `metadata.composition` に保存し、インスト曲には入力を強制しない。
+
+【互換性】
+・Demo Composer Project Schema 3据え置き。
+・SongProject v1据え置き。
+・Arrangement Plan Schema据え置き。
+・旧Schema 3で新Vocal fieldが無いProjectも読み取り時に空値補完して受理する。
+
+【統合】
+・PR #189をdevelopへ統合。
+・merge commit: `d8c04a9163e0228db746f6abbd7806c85da25af3`
+・復元点: `restore/v0.9-vocal-workflow-feature-complete`
+
+【未対応】
+・Android実機でClaude Sheet → Vocal設計反映 → 保存 / reloadの通し確認。
+・Cubasis / Cubase実機取込。
+・stable tag作成（実機確認後のみ）。
+
+## v0.8-dev
+更新日: 2026-10-13
+
+【追加】
+・Music Project Homeを全体Workflow Hubへ拡張。現在工程、次の一手、任意のMIDI Analyzerレーン、Backup / Recoveryを表示。
+・正式Workflowを `作曲シート → 必要なら Moises / MIDI Analyzer → Demo Composer → Arrangement Lab → 必要なら Cubasis → PC DAW（必須）` に固定。
+・Claude Artifact作曲シートの `composition-sheet-handoff` Schema 1をProject Homeで受け入れ、Demo Composerへ再入力せず渡せる導線を追加。
+・SongProject v1へ後方互換のoptional Lineageを追加。
+・明示Forkでroot / parent / sourceApp / createdFrom / forkReason / revisionを追跡。
+・Arrangement LabのDAW Handoff PackageをPC DAWへ渡す正式出口として位置付け。
+
+【変更】
+・作曲シート=決める、MIDI Analyzer=集める・理解する、Demo Composer=作る、Arrangement Lab=育てる、Project Home=案内する・つなぐ、PC DAW=完成させる、と責務を固定。
+・同じ機能を複数アプリで所有せず、他アプリにはPreview / 軽量表示 / 受け渡しだけ残す方針を正本化。
+・Arrangement Labの旧「Demo Composer戻し」を「新しい作曲ProjectとしてFork」に変更。
+
+【互換性】
+・Demo Composer Project Schema 3据え置き。
+・SongProject schemaVersion 1据え置き。lineage欠落旧v1も受理。
+・IndexedDB Schema / MIDI形式変更なし。
+
+【統合】
+・PR #188をdevelopへ統合。
+・復元点: `restore/before-workflow-boundary-2026-10-13`
+・完成復元点: `restore/v0.8-workflow-boundary-feature-complete`
+
+【未対応】
+・Android実機でProject Home → Sheet JSON → Demo → Arrangement → DAW Handoffの通し確認。
+・Cubasis / Cubase実機確認。
+・stable tag作成（実機確認後のみ）。
+
 ## v0.6-dev
 更新日: 2026-10-13
 
