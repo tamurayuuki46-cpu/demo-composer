@@ -41,6 +41,7 @@ jobs:
           node arranger/tests/regression.test.mjs
           node arranger/tests/features.test.mjs
           node arranger/tests/music-labs.test.mjs
+          node arranger/tests/v05.test.mjs
           node arranger/tests/v05-workflow.test.mjs
 
       - name: Static build includes Arrangement Lab
