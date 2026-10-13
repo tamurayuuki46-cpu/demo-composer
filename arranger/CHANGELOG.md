@@ -12,19 +12,23 @@ Version: v0.5-dev
 ・SMF Type 1のSong.mid一括出力、Section Marker、Before/After Song.midを追加
 ・Arrangement結果を反映したDemo Composer用複製project.json出力を追加
 ・DAW引き継ぎZIPを追加。Before/After MIDI、各パートMIDI、Arrangement Plan、Demo Composer JSON、Track/Section指示、判断ログ、比較manifest、DAWチェックリストを同梱
+・SongProject v1入力時の`新しい作曲ProjectとしてFork`をLineage付きSongProject v1出力へ強化。root / parent / sourceApp / createdFrom / forkReason / revisionと採用済みCompositionを新Forkへ保持し、元SongProjectは変更しない
 
 【変更】
 ・Arrangement Plan Schema 4、保存キー `demo-composer-arranger-v0.4` を維持したままv0.5機能を互換レイヤーとして追加
 ・簡易試聴に候補密度差の影響を抑えるエネルギー基準のGain補正を追加
 ・PWA cacheへv0.5 Module / CSSを追加
 ・Version表示をv0.5-devへ更新
+・SongProject v1を入口にしたForkは共通SongProject系譜を維持。legacy Demo Composer project.json入力時は従来のproject.json Forkを維持
 
 【修正】
 ・目隠し比較中にCandidate詳細/曲線/Section内容から案を推測できないように非表示化
 ・PWA更新回帰テストをv0.5表示・cacheへ更新
+・SongProject WorkflowでArrangement Fork後に共通Project側のLineageが途切れる穴を修正
 
 【未対応】
 ・Android Chrome実機での音量感・長時間操作確認
+・Android Chrome実機でSongProject → Arrangement → Lineage付きFork → Demo Composer再読込確認
 ・Cubasis / Cubase実機でのBefore/After Song.mid、DAW ZIP内MIDI取込確認
 
 Version: v0.4.1-dev
@@ -84,7 +88,7 @@ Version: v0.3-dev
 【変更】
 ・Arrangement Plan Schema 3。v0.1/v0.2プランは読込時に既定値で復元
 ・保存キーv0.3。v0.2/v0.1の既存キーを読込互換として保持
-・Harmonyの持続/8分刻み/分散/裏拍を試聴とMIDIで共通化
+・Harmonyの持続/8分刻み/分散/裏拍を試聴とMIDIへ反映
 ・Counterの採用Note/休み指定を試聴とMIDIへ反映
 ・独立PWA cacheに新Moduleを追加
 
@@ -92,7 +96,7 @@ Version: v0.3-dev
 ・読込PlanのSection小節数の表示をHTMLエスケープ
 
 【未対応】
-・Android/Cubasis/Cubase実機の音質・取込確認
+・Android/Cubasis/Cubase実機の音質/取込確認
 ・転調確定の自動判定、全声部最適配置、コードスケールの網羅的判定は対象外
 
 Version: v0.2.1-dev
