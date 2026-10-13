@@ -8,6 +8,12 @@
 - `main`: 自動テスト合格版。build、既存回帰、SongProject関連CI、対象アプリの主要ブラウザCIが成功した統合版を置く。Android実機やCubasis/Cubase実機が未確認でもmainへ統合してよい。
 - `stable tag`: 実機確認済み版。Android実機の保存・再読込・PWA更新・主要操作、およびMIDI出力がある場合はCubasis/Cubase実機取込を確認した版だけに付与する。
 
+## 公開
+
+- GitHub Pagesの公開元は`main`のみとする。
+- `develop`へのpushでは公開しない。
+- main向けPRではPages Buildを確認し、main merge後にPages Deployを実行する。
+
 ## main統合前の必須条件
 
 1. 現在Versionを確認する。
