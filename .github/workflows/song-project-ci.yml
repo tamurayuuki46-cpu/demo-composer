@@ -1,0 +1,41 @@
+name: Song Project Integration CI
+
+on:
+  push:
+    branches:
+      - feature/shared-song-project
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'src/shared/**'
+      - 'arranger/**'
+      - 'scripts/song-project-smoke-test.mjs'
+      - '.github/workflows/song-project-ci.yml'
+
+jobs:
+  song-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Shared modules syntax
+        run: node --check src/shared/song-project.js && node --check arranger/src/song-project-sync.js
+
+      - name: SongProject round-trip smoke test
+        run: node scripts/song-project-smoke-test.mjs
+
+      - name: Existing Demo Composer syntax regression
+        run: npm run test:syntax
+
+      - name: Arrangement Lab regression
+        run: npm run test:arranger
+
+      - name: Static build
+        run: npm run build
