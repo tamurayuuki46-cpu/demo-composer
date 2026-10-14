@@ -10,8 +10,8 @@ const homeWorkflow = await fs.readFile('project-home/workflow.js', 'utf8');
 const arrangerEntry = await fs.readFile('arranger/src/song-data-menu-entry.js', 'utf8');
 const arrangerBoundary = await fs.readFile('arranger/src/workflow-boundary-ui.js', 'utf8');
 const sheetLatest = await fs.readFile('sheet-app/latest/composition_sheet_latest.html', 'utf8');
-const sheetHtml = await fs.readFile('sheet-app/versions/v0.3/composition_sheet_v0.3.html', 'utf8');
-const sheetJs = await fs.readFile('sheet-app/versions/v0.3/composition_sheet_v0.3.js', 'utf8');
+const sheetHtml = await fs.readFile('sheet-app/versions/v0.4/composition_sheet_v0.4.html', 'utf8');
+const sheetJs = await fs.readFile('sheet-app/versions/v0.4/composition_sheet_v0.4.js', 'utf8');
 
 assert.match(shared, /position:fixed/);
 assert.match(shared, /right:10px/);
@@ -28,8 +28,8 @@ assert.doesNotMatch(homeWorkflow, /song-data-menu-entry\.js/, 'workflow.js must 
 assert.match(homeEntry, /次の工程へ進む/);
 assert.match(arrangerBoundary, /song-data-menu-entry\.js/);
 assert.match(arrangerEntry, /DAW書き出しへ進む/);
-assert.match(sheetLatest, /versions\/v0\.3\/composition_sheet_v0\.3\.html/);
-assert.match(sheetHtml, /v0\.3-dev/);
+assert.match(sheetLatest, /versions\/v0\.4\/composition_sheet_v0\.4\.html/);
+assert.match(sheetHtml, /v0\.4-dev/);
 assert.match(sheetJs, /mountSongDataMenu/);
 assert.match(sheetJs, /Demo Composerへ進む/);
 assert.match(sheetJs, /music-project-songproject-handoff-v1/);

@@ -1,5 +1,9 @@
 # AI_HANDOFF
 
+## 2026-10-14 作曲シート全集 v0.4
+
+ユーザー指定により、簡易2項目版ではなく `claude/sheet-markdown-export` の原文31シートを全文アプリ化。正本は `docs/sheet/`、実装は `sheet-app/versions/v0.4/`、入口は `sheet-app/`。既存SongProject v1互換領域に全記入を保存し、Demo Composerへ渡す。旧Artifact所有方針はこの追補で更新する。詳細: `sheet-app/README.md` / `CHANGELOG_v0.4.md`。過去v0.1〜v0.3と曲は保持。Android実機未確認、stable tagなし。
+
 ## 2026-10-14 Arrangement Lab v0.13-dev 追補（以下の旧進捗記録より優先）
 
 - 正本: `arranger/VERSION` / `arranger/CHANGELOG.md` / `arranger/docs/SOUND_PRESERVATION.md`。Demo Composer本体のVersionは今回変更しない。

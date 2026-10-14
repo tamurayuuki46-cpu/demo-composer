@@ -1,32 +1,27 @@
-# 作曲シート
+# 作曲シート全集 v0.4-dev
 
-Demo Composerの前段で使う、入力を最小限にした作曲準備シートです。
+GitHubの `claude/sheet-markdown-export` Branchに保存された原文31シート（目次を含め32 Markdown）を全文収録しています。
+参照元commit: `c43d2484afd3932c68a2a942afc07e2582fa9efc`。`docs/sheet/`に原文を保持します。
 
-## 必須入力
-1. どんな場面の曲か
-2. 参考曲1曲
+- 制作ガイド、記入用、テーマ・場面・心情、キー、アイデア帳16分野、参考アーティスト、ジャンル、理論、構成、いい曲チェック、DAW工程、所有プラグインなど
+- 全文検索、313箇所の記入欄、327チェック、山谷選択、ページメモ
+- 端末内の曲別自動保存・曲切替・新規作成。新しい曲は過去の曲を削除しません
+- JSON保存は未記入でも可能。Demo Composerへ進むときだけ場面・参考曲1曲が必要です
+- `SongProject v1`の既存 `compatibility.compositionSheet.fullWorkbook` に全記入を保持し、他アプリ領域を変更しません
+- 記入用の仮タイトル・場面・参考曲1は受け渡しフォームへ連動します
+- 端末間の移動・バックアップは「全シートのJSONを保存」。ブラウザ保存領域の削除前にも保存してください
 
-Genre / Mood / BPM / Key / メモは任意です。
+## 入口
+`sheet-app/` → `latest/composition_sheet_latest.html` → `versions/v0.4/composition_sheet_v0.4.html`
+過去のversions/v0.1・v0.2・v0.3は保持します。
 
-## 共通JSON
-v0.2から、アプリ間の交換JSONは `SongProject v1` を正本にします。
+## 検証
+```sh
+node scripts/composition-sheet-full-smoke-test.mjs
+node scripts/song-project-sheet-roundtrip-smoke-test.mjs
+npm run build
+# distを8080でHTTP配信し、Playwrightを用意して実行
+node scripts/composition-sheet-full-browser.test.cjs
+```
 
-- 作曲シート: `intent` とBPM/Keyを更新
-- Demo Composer: `composition` を更新
-- Arrangement Lab: `arrangement` を更新
-- MIDI Analyzer: `analysis` を更新
-- MIDI / Audioなど大きな実ファイル: JSONへ埋め込まず `assets.files` で外部参照可能
-
-旧 `demo-composer-project` / `composition-sheet-handoff` / Demo Composer `project.json` はImport互換として読み込めますが、作曲シートからの新規ExportはSongProject v1だけです。
-
-## ファイル構成
-- `versions/v0.1/composition_sheet_v0.1.html` — 旧v0.1（保存）
-- `versions/v0.2/composition_sheet_v0.2.html` — SongProject v1対応版
-- `latest/composition_sheet_latest.html` — 最新版への入口
-- `index.html` — 作曲シートの入口
-- `CHANGELOG_v0.1.md` / `CHANGELOG_v0.2.md` — 変更履歴
-- `VERSION_HISTORY.md` — バージョン履歴
-
-## 復元ポイント
-- `restore/develop-before-sheet-app-20261013`
-- `restore/develop-before-songproject-unification-20261013`
+復元点: `restore/develop-before-sheet-full-v0.4-20261014`。Android実機は未確認、stable tagなし。
