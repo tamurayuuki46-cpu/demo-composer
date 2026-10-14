@@ -8,10 +8,15 @@ const BAR = 1920;
 async function installAudioProbe(page) {
   await page.addInitScript(() => {
     window.__previewStarts = 0;
+    window.__previewTypes = [];
+    window.__previewFilters = [];
     class FakeParam {
-      constructor() { this.value = 0; }
+      constructor(onSet = null) { this._value = 0; this.onSet = onSet; }
+      get value() { return this._value; }
+      set value(value) { this._value = value; this.onSet?.(value); }
       setValueAtTime(value) { this.value = value; }
       exponentialRampToValueAtTime(value) { this.value = value; }
+      linearRampToValueAtTime(value) { this.value = value; }
     }
     class FakeNode {
       connect() { return this; }
@@ -22,9 +27,13 @@ async function installAudioProbe(page) {
         super();
         this.type = 'sine';
         this.frequency = new FakeParam();
+        this.detune = new FakeParam();
         this.onended = null;
       }
-      start() { window.__previewStarts += 1; }
+      start() {
+        window.__previewStarts += 1;
+        window.__previewTypes.push(this.type);
+      }
       stop() {
         const done = this.onended;
         this.onended = null;
@@ -40,6 +49,14 @@ async function installAudioProbe(page) {
       resume() { this.state = 'running'; return Promise.resolve(); }
       close() { this.state = 'closed'; return Promise.resolve(); }
       createGain() { const node = new FakeNode(); node.gain = new FakeParam(); return node; }
+      createBiquadFilter() {
+        const node = new FakeNode();
+        node.type = 'lowpass';
+        node.frequency = new FakeParam((value) => window.__previewFilters.push(value));
+        node.Q = new FakeParam();
+        node.gain = new FakeParam();
+        return node;
+      }
       createDynamicsCompressor() {
         const node = new FakeNode();
         node.threshold = new FakeParam(); node.knee = new FakeParam(); node.ratio = new FakeParam();
@@ -110,8 +127,37 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `horizontal overflow at ${width}px`);
 }
 
+async function assertSoundPreserved(page, width, songProject) {
+  await page.goto(arrangerUrl);
+  await page.evaluate(({ key, payload }) => localStorage.setItem(key, JSON.stringify(payload)), {
+    key: handoffKey,
+    payload: {
+      kind: 'music-project-songproject-handoff',
+      schemaVersion: 1,
+      targetApp: 'arrangement-lab',
+      songProject,
+    },
+  });
+  const handoffUrl = new URL(arrangerUrl);
+  handoffUrl.searchParams.set('handoff', 'demo-composer');
+  await page.goto(handoffUrl.href);
+  await page.locator('[data-apply-handoff]').click();
+  await page.getByText(/A\/B\/Cの準備も完了しています/).waitFor();
+  await page.evaluate(() => { window.__previewTypes = []; window.__previewFilters = []; window.__previewStarts = 0; });
+  await page.locator('#preview-btn').click();
+  await page.waitForFunction(() => window.__previewStarts >= 3);
+  const audio = await page.evaluate(() => ({ types: [...window.__previewTypes], filters: [...window.__previewFilters] }));
+  assert.ok(audio.types.includes('sine'), `Chord Pad waveform preserved at ${width}px: ${audio.types.join(',')}`);
+  assert.ok(audio.types.includes('square'), `Melody Pluck waveform preserved at ${width}px: ${audio.types.join(',')}`);
+  assert.ok(audio.types.includes('sawtooth'), `Bass Synth waveform preserved at ${width}px: ${audio.types.join(',')}`);
+  assert.ok(audio.filters.some((value) => Math.abs(value - 912) < 1), `Chord Dark filter preserved at ${width}px: ${audio.filters.join(',')}`);
+  assert.ok(audio.filters.some((value) => Math.abs(value - 3720) < 1), `Melody Bright filter preserved at ${width}px: ${audio.filters.join(',')}`);
+  assert.ok(audio.filters.some((value) => Math.abs(value - 639.6) < 1), `Bass Warm filter preserved at ${width}px: ${audio.filters.join(',')}`);
+  await page.locator('#stop-btn').click();
+}
+
 (async () => {
-  const { createEmptySongProject } = await import('../../src/shared/song-project.js');
+  const { createEmptySongProject, demoProjectToSongProject } = await import('../../src/shared/song-project.js');
   const melodySketch = createEmptySongProject({
     projectId: 'onebar-reharm-browser',
     title: '1小節リハモテスト',
@@ -135,6 +181,26 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
   chordSketch.composition.chords.push({
     id: 'c1', root: 0, quality: 'major', degree: 'I', startTick: BAR * 4, durationTick: BAR,
   });
+
+  const soundSketch = demoProjectToSongProject({
+    id: 'sound-preserve-browser', schemaVersion: 3, appVersion: 'v0.12-dev', revision: 1,
+    metadata: { title: '音色保持テスト', genre: 'J-POP', mood: [] },
+    basic: { bpm: 120, key: 'C', scale: 'major', timeSignature: '4/4', ppq: 480 },
+    structure: { sections: [{ id: 'sound-section', kind: 'verse', name: '音色保持', bars: 1, energy: 'mid', transition: 'keep' }] },
+    chords: [{ id: 'sound-c1', root: 0, quality: 'major', degree: 'I', startTick: 0, durationTick: BAR }],
+    tracks: [
+      { role: 'melody', name: 'Melody', midiChannel: 2, notes: [{ id: 'sm1', pitch: 67, startTick: 0, durationTick: 960, velocity: 96 }] },
+      { role: 'bass', name: 'Bass', midiChannel: 3, notes: [{ id: 'sb1', pitch: 36, startTick: 0, durationTick: 960, velocity: 96 }] },
+      { role: 'counter', name: 'Counter', midiChannel: 4, notes: [] },
+      { role: 'drums', name: 'Drums', midiChannel: 10, notes: [] },
+    ],
+    instruments: [
+      { part: 'chord', preset: 'pad', tone: 'dark' },
+      { part: 'melody', preset: 'pluck', tone: 'bright' },
+      { part: 'bass', preset: 'synth-bass', tone: 'warm' },
+    ],
+    progress: {}, exportSettings: {},
+  }, { now: '2026-10-14T00:00:00.000Z' });
 
   const browser = await chromium.launch({ headless: true });
   try {
@@ -185,8 +251,20 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
         assert.deepEqual(errors, [], `chord-only handoff console errors at ${width}px: ${errors.join(' | ')}`);
         await context.close();
       }
+
+      {
+        const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true });
+        const page = await context.newPage();
+        await installAudioProbe(page);
+        const errors = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+        page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+        await assertSoundPreserved(page, width, soundSketch);
+        assert.deepEqual(errors, [], `sound-preserve console errors at ${width}px: ${errors.join(' | ')}`);
+        await context.close();
+      }
     }
-    console.log('Arrangement Lab section + reharm audition flows passed at 360/390/430px without auto-adopt');
+    console.log('Arrangement Lab section/reharm audition + Demo Composer sound preservation passed at 360/390/430px');
   } finally {
     await browser.close();
   }
