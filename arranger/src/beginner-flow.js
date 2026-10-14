@@ -1,9 +1,9 @@
-const UI_VERSION = 'v0.6-dev';
+const UI_VERSION = 'v0.7-dev';
 const MODE_KEY = 'arrangement-lab-ui-mode-v0.6';
 const MODES = new Set(['beginner', 'explore']);
 
 const STEPS = [
-  { selector: '#step-import', label: '① 読み込む', next: '曲のJSONを開く' },
+  { selector: '#step-import', label: '① 読み込む', next: '曲のJSONを開く（1小節だけでもOK）' },
   { selector: '#step-direction', label: '② 聴く', next: 'A / B / Cを順番に聴く' },
   { selector: '#step-compare', label: '③ 選ぶ', next: '残したい案を1つ選ぶ' },
   { selector: '#step-section', label: '④ Section調整', next: 'まず1つのSectionだけ調整する' },
@@ -65,7 +65,7 @@ function guideMarkup() {
         <span>次にやること</span>
         <strong id="beginner-next-action">${escapeHtml(STEPS[0].next)}</strong>
       </div>
-      <p class="beginner-guide-note">仮決めでOK。いつでも「前へ」で戻って直せます。完了条件はありません。</p>
+      <p class="beginner-guide-note">1小節だけでも試せます。仮決めでOK。いつでも「前へ」で戻って直せます。</p>
     </section>`;
 }
 
