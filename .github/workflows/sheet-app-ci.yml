@@ -8,6 +8,7 @@ on:
     paths:
       - 'sheet-app/**'
       - 'src/shared/song-project.js'
+      - 'src/shared/song-data-menu.js'
       - 'scripts/composition-sheet-app-smoke-test.mjs'
       - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
       - 'scripts/build-static.mjs'
@@ -41,5 +42,8 @@ jobs:
           test -f dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
           test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
           test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.js
-          grep -q 'まずは、2項目だけ。' dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
-          grep -q 'SongProject v1' dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
+          test -f dist/sheet-app/versions/v0.3/composition_sheet_v0.3.html
+          test -f dist/sheet-app/versions/v0.3/composition_sheet_v0.3.js
+          grep -q 'まずは、2項目だけ。' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.html
+          grep -q 'SongProject v1' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.html
+          grep -q 'song-data-menu.js?build=' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.js
