@@ -8,7 +8,9 @@ on:
     paths:
       - 'arranger/**'
       - 'src/**'
+      - 'project-home/**'
       - 'scripts/browser-export-regression.cjs'
+      - 'scripts/song-data-menu-public-smoke-test.mjs'
       - '.github/workflows/arranger-ci.yml'
 
 jobs:
@@ -38,6 +40,10 @@ jobs:
           node --check arranger/src/workflow-boundary-ui.js
           node --check arranger/src/beginner-flow.js
           node --check arranger/src/song-project-sync.js
+          node --check src/shared/song-data-menu.js
+          node --check src/hub/song-data-menu-entry.js
+          node --check project-home/song-data-menu-entry.js
+          node --check arranger/src/song-data-menu-entry.js
           for file in arranger/src/*lab*.js; do node --check "$file"; done
 
       - name: Arrangement Lab core regression
@@ -49,6 +55,7 @@ jobs:
           node arranger/tests/v05.test.mjs
           node arranger/tests/v05-workflow.test.mjs
           node arranger/tests/song-project-quick-sketch.test.mjs
+          node scripts/song-data-menu-public-smoke-test.mjs
 
       - name: Static build includes Arrangement Lab
         run: |
