@@ -9,6 +9,20 @@ on:
       - 'sheet-app/**'
       - 'src/shared/song-project.js'
       - 'scripts/composition-sheet-app-smoke-test.mjs'
+      - 'scripts/composition-sheet-v08-manual-ideas.test.mjs'
+      - 'scripts/composition-sheet-v08-browser.test.cjs'
+      - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
+      - 'scripts/build-static.mjs'
+      - '.github/workflows/sheet-app-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'sheet-app/**'
+      - 'src/shared/song-project.js'
+      - 'scripts/composition-sheet-app-smoke-test.mjs'
+      - 'scripts/composition-sheet-v08-manual-ideas.test.mjs'
+      - 'scripts/composition-sheet-v08-browser.test.cjs'
       - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
       - 'scripts/build-static.mjs'
       - '.github/workflows/sheet-app-ci.yml'
@@ -31,6 +45,9 @@ jobs:
       - name: Composition Sheet to Demo Composer roundtrip
         run: node scripts/song-project-sheet-roundtrip-smoke-test.mjs
 
+      - name: Manual idea model test
+        run: node scripts/composition-sheet-v08-manual-ideas.test.mjs
+
       - name: Static build
         run: npm run build
 
@@ -40,12 +57,24 @@ jobs:
           test -f dist/sheet-app/latest/composition_sheet_latest.html
           test -f dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
           test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
-          test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.js
           test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.html
           test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.css
           test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.js
-          test -f dist/sheet-app/versions/v0.7/sheet_content_v0.7.js
-          test -f dist/sheet-app/versions/v0.7/sheet_model_v0.7.js
-          grep -q 'composition_sheet_v0.7.html' dist/sheet-app/latest/composition_sheet_latest.html
-          grep -q 'The Cardigans' dist/sheet-app/versions/v0.7/composition_sheet_v0.7.js
-          grep -q 'The Weeknd' dist/sheet-app/versions/v0.7/composition_sheet_v0.7.js
+          test -f dist/sheet-app/versions/v0.4/sheet_content_v0.4.js
+          test -f dist/sheet-app/versions/v0.4/sheet_model_v0.4.js
+          test -f dist/sheet-app/versions/v0.6/composition_sheet_v0.6.css
+          test -f dist/sheet-app/versions/v0.8/composition_sheet_v0.8.html
+          test -f dist/sheet-app/versions/v0.8/composition_sheet_v0.8.css
+          test -f dist/sheet-app/versions/v0.8/composition_sheet_v0.8.js
+          test -f dist/sheet-app/versions/v0.8/manual_ideas_v0.8.js
+          grep -q 'composition_sheet_v0.8.html' dist/sheet-app/latest/composition_sheet_latest.html
+          grep -q '自分のアイデアを追加' dist/sheet-app/versions/v0.8/composition_sheet_v0.8.html
+          grep -q 'The Cardigans' dist/sheet-app/versions/v0.8/composition_sheet_v0.8.js
+          grep -q 'The Weeknd' dist/sheet-app/versions/v0.8/composition_sheet_v0.8.js
+
+      - name: Chromium mobile and desktop regression
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8080 --directory dist > /tmp/sheet-server.log 2>&1 &
+          node scripts/composition-sheet-v08-browser.test.cjs
