@@ -8,6 +8,7 @@ html[data-arranger-mode="beginner"] #v05-comparison-room,html[data-arranger-mode
 html[data-arranger-mode="beginner"] .section-card .roles,html[data-arranger-mode="beginner"] .section-card .transition{display:none!important}
 html[data-arranger-mode="beginner"] .toggle-chip:has(input[data-role="color"]){display:none!important}
 html[data-arranger-mode="beginner"] #step-compare .candidate-meta{margin-top:12px}
+html[data-arranger-mode="beginner"] .toast{bottom:calc(92px + max(8px,env(safe-area-inset-bottom)));z-index:70}
 html[data-arranger-mode="explore"] .beginner-section-hint{display:none}
 @media(max-width:600px){.beginner-guide{width:calc(100% - 24px);padding:14px}.beginner-guide-head{display:grid;gap:12px}.mode-switch{min-width:0;width:100%}.beginner-bottom-nav{grid-template-columns:84px 1fr 84px}.beginner-bottom-nav button{padding:9px 7px;font-size:.86rem}.beginner-step-label{font-size:.8rem}.section-more-toggle{font-size:.9rem}}
 @media(min-width:900px){.beginner-guide{width:min(980px,calc(100% - 44px))}.beginner-bottom-nav{width:min(780px,calc(100% - 24px))}}
