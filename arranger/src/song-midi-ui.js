@@ -37,7 +37,12 @@ button?.addEventListener('click', () => {
     const { source, candidate } = restoreArrangerProject(saved);
     if (!source || !candidate) throw new Error('採用済み編曲案からSong.midを復元できませんでした。');
     const bytes = buildSongMidi(source, candidate);
-    downloadBytes(bytes, `${safeFileName(source.title)}_Song.mid`);
+    const filename = `${safeFileName(source.title)}_Song.mid`;
+    downloadBytes(bytes, filename);
+    const exportedAt = new Date().toISOString();
+    window.dispatchEvent(new CustomEvent('arrangement-lab:song-midi-exported', {
+      detail: { at: exportedAt, filename },
+    }));
     flash('採用済み編曲案から5トラックのSong.midを書き出しました。');
   } catch (error) {
     flash(error instanceof Error ? error.message : 'Song.midを書き出せませんでした。', true);
