@@ -10,6 +10,14 @@
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./v05.css">
   <link rel="stylesheet" href="./v06.css">
+  <style>
+    .app-flow-strip{max-width:1180px;margin:0 auto 12px;padding:0 16px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+    .app-flow-step{border:1px solid rgba(148,163,184,.45);border-radius:12px;padding:9px 8px;text-align:center;font-size:.78rem;line-height:1.35;background:rgba(255,255,255,.04);color:inherit;text-decoration:none}
+    .app-flow-step.current{border-width:2px;font-weight:800;background:rgba(79,70,229,.15)}
+    .app-flow-step.optional{border-style:dashed;opacity:.78}
+    .one-bar-hint{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:rgba(79,70,229,.10);line-height:1.55}
+    @media(max-width:560px){.app-flow-strip{grid-template-columns:1fr;padding:0 12px}.app-flow-step{display:flex;justify-content:space-between;text-align:left}.app-flow-step:not(.current){padding-block:7px}.app-flow-step.current{order:-1}}
+  </style>
   <script>
     try {
       const requestedMode = new URLSearchParams(location.search).get('mode');
@@ -22,10 +30,18 @@
     <div>
       <p class="eyebrow">Demo Composer companion</p>
       <h1>Arrangement Lab</h1>
-      <p class="subtitle">複数案を鳴らして比べ、Section単位で混ぜて決め、PC DAWへ渡す。</p>
+      <p class="subtitle">1小節のフレーズからでも、複数案を鳴らして比べて編曲を試せます。</p>
     </div>
     <span id="version" class="version"></span>
   </header>
+
+  <nav class="app-flow-strip" aria-label="曲づくり全体の流れ">
+    <a class="app-flow-step" href="../sheet-app/"><span>⓪ 作曲シート</span><small>方向を決める</small></a>
+    <a class="app-flow-step optional" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/"><span>① MIDI解析</span><small>任意</small></a>
+    <a class="app-flow-step" href="../"><span>② 作曲</span><small>Demo Composer</small></a>
+    <span class="app-flow-step current" aria-current="step"><span>③ 編曲</span><small>今ここ</small></span>
+    <span class="app-flow-step"><span>④ DAWへ</span><small>Cubasis / Cubase</small></span>
+  </nav>
 
   <main>
     <section id="step-import" class="panel" data-flow-step="1">
@@ -34,6 +50,7 @@
         <input id="project-file" type="file" accept="application/json,.json,.txt">
         <strong>project.json / song_project_v1.json / 編曲プランを選ぶ</strong><span>またはここへドロップ</span>
       </label>
+      <p class="one-bar-hint"><strong>1小節だけでもOK。</strong> Demo Composerでメロディやコードを1小節作ってSongProject v1で渡せば、Section未作成でも「1小節スケッチ」として編曲を始められます。</p>
       <div id="source-summary" class="source-summary"></div>
       <div id="collision-summary" class="analysis-box"></div>
     </section>
@@ -65,7 +82,7 @@
     </section>
 
     <section id="step-section" class="panel" data-flow-step="4">
-      <div class="panel-title"><span class="step">4</span><div><h2>Sectionを1つ調整</h2><p>まずは密度・楽器・裏メロ・リハモだけ。高度な50手法や実Note生成は「もっと試す」で開けます。</p></div></div>
+      <div class="panel-title"><span class="step">4</span><div><h2>Sectionを1つ調整</h2><p>まずは密度・楽器・裏メロ・リハモだけ。1小節スケッチでもこの操作を試せます。</p></div></div>
       <div id="sections" class="sections">
         <div class="section-empty-state" data-section-empty="true">
           <strong>④はまだ準備中です</strong>
@@ -86,7 +103,7 @@
       </div>
       <div class="sticky-actions">
         <button id="adopt-btn" class="primary">この案を採用</button>
-        <button id="export-song-midi-btn" class="primary">Song.mid（採用案）</button>
+        <button id="export-song-midi-btn" class="secondary">Song.mid（採用案）</button>
         <button id="export-btn" class="secondary" disabled>編曲プランJSONを書き出す</button>
         <button id="export-song-project-btn" class="secondary" disabled>Song Project v1を書き出す</button>
       </div>

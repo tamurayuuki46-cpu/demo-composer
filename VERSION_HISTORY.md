@@ -1,3 +1,31 @@
+## v0.11-dev
+更新日: 2026-10-14
+
+【追加】
+・スマホ向けの全体導線を `⓪ 作曲シート → ① MIDI解析（任意） → ② 作曲 → ③ 編曲 → ④ DAW` の5段階へ整理。
+・各工程で「今やること」を1つだけ主ボタンとして強調する方式へ統一。
+・Arrangement Labで、Section未作成でもメロディ/コード等があれば1〜32小節のスケッチSectionを補完して編曲を開始できるAdapterを追加。1小節なら「1小節スケッチ」と表示。
+・1小節SongProjectからArrangement Labへ進める回帰テストを追加。
+
+【変更】
+・Music Project Homeの旧6段階表示を5段階へ簡略化し、MIDI Analyzerを明確に任意工程として表示。
+・Demo ComposerのSongProject受け渡しカードは、状態に応じて `受け取った曲を反映` → `Arrangement Labへ渡す` → `Arrangement Labを開く` のいずれか1つだけを主操作として強調。
+・Arrangement Lab v0.7-devへ更新し、モバイル画面に全体Workflowと「1小節だけでもOK」を表示。
+
+【互換性】
+・Demo Composer Project Schema 3据え置き。
+・SongProject schemaVersion 1据え置き。
+・Arrangement Plan Schema 4据え置き。
+・1小節対応は変換Adapter内だけで行い、SongProjectのcomposition自体にはSectionを自動書き戻ししない。
+
+【復元ポイント】
+・`restore/develop-before-mobile-first-flow-20261014`
+
+【未対応】
+・Android実機で5段階Workflowの表示・操作確認。
+・Cubasis / Cubase実機確認。
+・stable tag作成（実機確認後のみ）。
+
 ## v0.10-dev
 更新日: 2026-10-14
 

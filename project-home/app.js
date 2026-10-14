@@ -42,9 +42,9 @@ function workflowStatusLabel(statusValue) {
   return ({
     done: '完了',
     pending: '次に進める',
-    optional: '任意',
+    optional: '任意・飛ばしてOK',
     locked: '前工程待ち',
-    external: 'PC工程',
+    external: 'DAW工程',
   })[statusValue] || statusValue;
 }
 
@@ -54,12 +54,15 @@ function renderWorkflow() {
   const sheetReady = Boolean(sheetLink || sheetHandoff);
   if (!current) {
     workflowCard.hidden = false;
-    workflowList.innerHTML = `<li class="workflow-step ${sheetReady ? 'done' : 'pending'}"><strong>1. 作曲シート</strong><span>${sheetHandoff ? '引き継ぎJSON保存済み' : sheetLink ? 'Artifact登録済み' : 'まず曲の方向性を決めます。'}</span></li>`;
-    nextAction.textContent = sheetHandoff ? 'Demo Composerで曲を作る' : sheetLink ? '作曲シートを開く' : 'Claude Artifact / 作曲シートを登録する';
-    nextAction.removeAttribute('href');
-    if (sheetHandoff) nextAction.href = '../';
-    else if (sheetLink) nextAction.href = sheetLink;
-    optionalAnalysis.hidden = true;
+    workflowList.innerHTML = `
+      <li class="workflow-step ${sheetReady ? 'done' : 'pending'}"><strong>⓪ 作曲シート</strong><span>${sheetHandoff ? '引き継ぎJSON保存済み' : sheetLink ? '旧Artifact登録済み' : '曲の方向性を決めます。'}</span></li>
+      <li class="workflow-step optional"><strong>① MIDI解析</strong><span>任意・必要な時だけ</span></li>
+      <li class="workflow-step pending"><strong>② 作曲</strong><span>Demo Composerで1フレーズから開始できます。</span></li>
+      <li class="workflow-step locked"><strong>③ 編曲</strong><span>1小節のフレーズだけでもArrangement Labを試せます。</span></li>
+      <li class="workflow-step locked"><strong>④ DAWへ</strong><span>Cubasis / Cubaseで仕上げます。</span></li>`;
+    nextAction.textContent = sheetReady ? '今やること：Demo Composerで1フレーズ作る' : '今やること：作曲シートで方向を決める';
+    nextAction.href = sheetReady ? '../' : '../sheet-app/';
+    optionalAnalysis.hidden = !sheetReady;
     return;
   }
 
@@ -77,8 +80,7 @@ function renderWorkflow() {
 
   nextAction.textContent = workflow.nextAction.label;
   nextAction.removeAttribute('href');
-  if (workflow.nextAction.id === 'sheet' && sheetLink) nextAction.href = sheetLink;
-  else if (workflow.nextAction.href) nextAction.href = workflow.nextAction.href;
+  if (workflow.nextAction.href) nextAction.href = workflow.nextAction.href;
 
   optionalAnalysis.hidden = !workflow.optionalAnalysisSuggested;
   workflowCard.hidden = false;
