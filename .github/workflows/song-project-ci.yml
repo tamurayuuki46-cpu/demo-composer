@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/shared-song-project
+      - 'chatgpt/**'
   pull_request:
     branches:
       - develop
@@ -16,6 +17,7 @@ on:
       - 'project-home/**'
       - 'docs/JSON_HANDOFF_GUIDE.md'
       - 'scripts/song-project-smoke-test.mjs'
+      - 'scripts/song-project-ownership-contract-test.mjs'
       - 'scripts/json-handoff-guide-smoke-test.mjs'
       - 'scripts/project-home-claude-link-smoke-test.mjs'
       - '.github/workflows/song-project-ci.yml'
@@ -42,6 +44,9 @@ jobs:
           node --check arranger/src/song-midi.js
           node --check arranger/src/song-midi-ui.js
           node --check project-home/app.js
+
+      - name: SongProject ownership/data retention contract
+        run: node scripts/song-project-ownership-contract-test.mjs
 
       - name: SongProject round-trip smoke test
         run: node scripts/song-project-smoke-test.mjs
