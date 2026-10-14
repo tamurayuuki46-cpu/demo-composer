@@ -10,6 +10,7 @@ async function installAudioProbe(page) {
     window.__previewStarts = 0;
     window.__previewTypes = [];
     window.__previewFilters = [];
+    window.__previewNoiseStarts = 0;
     class FakeParam {
       constructor(onSet = null) { this._value = 0; this.onSet = onSet; }
       get value() { return this._value; }
@@ -40,11 +41,17 @@ async function installAudioProbe(page) {
         if (done) queueMicrotask(done);
       }
     }
+    class FakeBufferSource extends FakeNode {
+      constructor() { super(); this.buffer = null; this.onended = null; }
+      start() { window.__previewStarts += 1; window.__previewNoiseStarts += 1; }
+      stop() { const done = this.onended; this.onended = null; if (done) queueMicrotask(done); }
+    }
     class FakeAudioContext {
       constructor() {
         this.state = 'running';
         this.currentTime = 0;
         this.destination = {};
+        this.sampleRate = 48000;
       }
       resume() { this.state = 'running'; return Promise.resolve(); }
       close() { this.state = 'closed'; return Promise.resolve(); }
@@ -63,6 +70,8 @@ async function installAudioProbe(page) {
         return node;
       }
       createOscillator() { return new FakeOscillator(); }
+      createBuffer(_channels, length) { const data = new Float32Array(length); return { getChannelData: () => data }; }
+      createBufferSource() { return new FakeBufferSource(); }
     }
     window.AudioContext = FakeAudioContext;
     window.webkitAudioContext = FakeAudioContext;
@@ -143,16 +152,17 @@ async function assertSoundPreserved(page, width, songProject) {
   await page.goto(handoffUrl.href);
   await page.locator('[data-apply-handoff]').click();
   await page.getByText(/A\/B\/Cの準備も完了しています/).waitFor();
-  await page.evaluate(() => { window.__previewTypes = []; window.__previewFilters = []; window.__previewStarts = 0; });
+  await page.evaluate(() => { window.__previewTypes = []; window.__previewFilters = []; window.__previewStarts = 0; window.__previewNoiseStarts = 0; });
   await page.locator('#preview-btn').click();
-  await page.waitForFunction(() => window.__previewStarts >= 3);
-  const audio = await page.evaluate(() => ({ types: [...window.__previewTypes], filters: [...window.__previewFilters] }));
+  await page.waitForFunction(() => window.__previewStarts >= 4);
+  const audio = await page.evaluate(() => ({ types: [...window.__previewTypes], filters: [...window.__previewFilters], noiseStarts: window.__previewNoiseStarts }));
   assert.ok(audio.types.includes('sine'), `Chord Pad waveform preserved at ${width}px: ${audio.types.join(',')}`);
   assert.ok(audio.types.includes('square'), `Melody Pluck waveform preserved at ${width}px: ${audio.types.join(',')}`);
   assert.ok(audio.types.includes('sawtooth'), `Bass Synth waveform preserved at ${width}px: ${audio.types.join(',')}`);
   assert.ok(audio.filters.some((value) => Math.abs(value - 912) < 1), `Chord Dark filter preserved at ${width}px: ${audio.filters.join(',')}`);
   assert.ok(audio.filters.some((value) => Math.abs(value - 3720) < 1), `Melody Bright filter preserved at ${width}px: ${audio.filters.join(',')}`);
   assert.ok(audio.filters.some((value) => Math.abs(value - 639.6) < 1), `Bass Warm filter preserved at ${width}px: ${audio.filters.join(',')}`);
+  assert.ok(audio.noiseStarts > 0, `Demo Composer snare/noise synthesis preserved at ${width}px`);
   await page.locator('#stop-btn').click();
 }
 
@@ -192,7 +202,7 @@ async function assertSoundPreserved(page, width, songProject) {
       { role: 'melody', name: 'Melody', midiChannel: 2, notes: [{ id: 'sm1', pitch: 67, startTick: 0, durationTick: 960, velocity: 96 }] },
       { role: 'bass', name: 'Bass', midiChannel: 3, notes: [{ id: 'sb1', pitch: 36, startTick: 0, durationTick: 960, velocity: 96 }] },
       { role: 'counter', name: 'Counter', midiChannel: 4, notes: [] },
-      { role: 'drums', name: 'Drums', midiChannel: 10, notes: [] },
+      { role: 'drums', name: 'Drums', midiChannel: 10, notes: [{ id: 'sd1', pitch: 38, startTick: 0, durationTick: 120, velocity: 100 }] },
     ],
     instruments: [
       { part: 'chord', preset: 'pad', tone: 'dark' },
