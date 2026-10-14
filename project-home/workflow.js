@@ -1,10 +1,9 @@
 export const WORKFLOW_STEPS = Object.freeze([
-  { id: 'sheet', label: '1. 作曲シート', role: '決める', required: true },
-  { id: 'materials', label: '2. 参考曲 / 素材', role: '集める・理解する', required: false },
-  { id: 'composition', label: '3. Demo Composer', role: '作る', required: true },
-  { id: 'arrangement', label: '4. Arrangement Lab', role: '育てる', required: true },
-  { id: 'dawReady', label: '5. DAW引き継ぎ', role: '渡す準備', required: true },
-  { id: 'pcDaw', label: '6. PC DAW', role: '完成させる', required: true },
+  { id: 'sheet', label: '⓪ 作曲シート', role: '方向を決める', required: true },
+  { id: 'analysis', label: '① MIDI解析', role: '必要なら素材を理解する', required: false },
+  { id: 'composition', label: '② 作曲', role: 'Demo Composer', required: true },
+  { id: 'arrangement', label: '③ 編曲', role: 'Arrangement Lab', required: true },
+  { id: 'daw', label: '④ DAWへ', role: 'Cubasis / Cubase', required: true },
 ]);
 
 export function hasAnalysis(project) {
@@ -57,37 +56,36 @@ export function isDawReady(project) {
 }
 
 export function buildWorkflowState(project, { sheetLinked = false } = {}) {
-  const materialDone = hasReferenceMaterial(project);
+  const analysisDone = hasReferenceMaterial(project);
   const compositionDone = hasComposition(project);
   const arrangementDone = hasArrangement(project);
   const dawReady = isDawReady(project);
 
   const steps = [
     { ...WORKFLOW_STEPS[0], status: sheetLinked ? 'done' : 'pending' },
-    { ...WORKFLOW_STEPS[1], status: materialDone ? 'done' : 'optional' },
+    { ...WORKFLOW_STEPS[1], status: analysisDone ? 'done' : 'optional' },
     { ...WORKFLOW_STEPS[2], status: compositionDone ? 'done' : 'pending' },
     { ...WORKFLOW_STEPS[3], status: arrangementDone ? 'done' : (compositionDone ? 'pending' : 'locked') },
     { ...WORKFLOW_STEPS[4], status: dawReady ? 'done' : (arrangementDone ? 'pending' : 'locked') },
-    { ...WORKFLOW_STEPS[5], status: 'external' },
   ];
 
   let nextAction;
   if (!sheetLinked) {
-    nextAction = { id: 'sheet', label: '作曲シートで方向性を決める', href: null };
+    nextAction = { id: 'sheet', label: '今やること：作曲シートで方向を決める', href: '../sheet-app/' };
   } else if (!compositionDone) {
-    nextAction = { id: 'composition', label: 'Demo Composerで曲を作る', href: '../' };
+    nextAction = { id: 'composition', label: '今やること：Demo Composerで1フレーズ作る', href: '../' };
   } else if (!arrangementDone) {
-    nextAction = { id: 'arrangement', label: 'Arrangement Labで編曲する', href: '../arranger/' };
+    nextAction = { id: 'arrangement', label: '今やること：Arrangement Labで編曲を試す', href: '../arranger/' };
   } else if (!dawReady) {
-    nextAction = { id: 'dawReady', label: 'Arrangement LabでDAW引き継ぎを作る', href: '../arranger/' };
+    nextAction = { id: 'daw', label: '今やること：DAWへ渡すデータを書き出す', href: '../arranger/' };
   } else {
-    nextAction = { id: 'pcDaw', label: 'PC DAWへ渡して本制作する', href: null };
+    nextAction = { id: 'complete', label: '次：Cubasis / Cubaseで仕上げる', href: null };
   }
 
   return {
     steps,
     nextAction,
-    optionalAnalysisSuggested: sheetLinked && !materialDone && !compositionDone,
+    optionalAnalysisSuggested: sheetLinked && !analysisDone && !compositionDone,
   };
 }
 
