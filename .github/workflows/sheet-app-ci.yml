@@ -77,18 +77,27 @@ jobs:
           grep -q 'id="beginner-card"' dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.html
           grep -q 'data-sheet-embed="1"' dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.css
 
-      - name: Full workbook Chromium mobile and desktop
+      - name: Install Chromium test runtime
         run: |
           npm install --no-save --package-lock=false playwright@1.58.2
           npx playwright install --with-deps chromium
           python3 -m http.server 8080 --directory dist > /tmp/sheet-server.log 2>&1 &
+
+      - name: Preserved workbook browser regressions
+        run: |
           node scripts/composition-sheet-full-browser.test.cjs
           node scripts/composition-sheet-tabs-browser.test.cjs
           node scripts/composition-sheet-v06-browser.test.cjs
           node scripts/composition-sheet-v08-browser.test.cjs
-          node scripts/composition-sheet-v09-browser.test.cjs
-          node scripts/composition-sheet-v091-browser.test.cjs
-          node arranger/tests/song-data-menu-browser.test.cjs
+
+      - name: v0.9 browser regression
+        run: node scripts/composition-sheet-v09-browser.test.cjs
+
+      - name: v0.9.1 beginner and embed regression
+        run: node scripts/composition-sheet-v091-browser.test.cjs
+
+      - name: Song data menu browser regression
+        run: node arranger/tests/song-data-menu-browser.test.cjs
 
       - name: Upload full workbook browser evidence
         if: always()
