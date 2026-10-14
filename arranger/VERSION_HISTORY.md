@@ -13,6 +13,7 @@
 | v0.7-dev | restore/develop-before-mobile-first-flow-20261014 / feature/mobile-first-flow-v0.11 | スマホ5段階Workflow、主操作1つ、1小節スケッチから編曲開始 |
 | v0.8-dev | restore/develop-before-song-data-menu-20261014 / feature/song-data-menu-v0.12 | 右上「📦 曲データ」常設、SongProject読込/保存/DAW入口統一 |
 | v0.9-dev | restore/develop-before-onebar-reharm-20261014 / feature/onebar-reharm-20261014 | コード0件の1小節メロディから仮コードを付け、既存リハモ3案を試聴・採用可能 |
+| v0.10-dev | restore/develop-before-onebar-chordonly-20261014 / feature/onebar-chordonly-reharm-20261014 | 1小節コードだけのhandoffを正式対応。A/B/C準備完了を待ってから反映済みにし、固定ナビに隠れる通知も修正 |
 
 最新は `arranger/VERSION`。本体mainは自動テスト・build・回帰CI合格版。Arrangement LabのAndroid/Cubasis/Cubase実機DAW確認済みstableは未認定。
 各過去版のbranch/archiveを削除・上書きしない。
@@ -24,3 +25,4 @@
 2026-10-14: v0.7-devはSection未作成でも音符/コードがあればArrangement入力時だけスケッチSectionを補完する。SongProject v1 / Arrangement Plan Schema 4は変更しない。
 2026-10-14: v0.8-devは画面右上に共通「📦 曲データ」を常設し、SongProject v1の入口をスクロール位置に依存しない共通操作へ整理。Schemaは変更しない。
 2026-10-14: v0.9-devはコードを持たない1小節SongProjectに限り、Arrangement Labの入力変換内でKeyと主旋律から2つの仮コードを補完する。元SongProjectのcompositionは変更せず、既存コードがある曲・2小節以上には自動補完しない。
+2026-10-14: v0.10-devは1小節コードだけのSongProjectをDemo Composer handoff経由で360/390/430px回帰し、A/B/C候補が準備できるまでhandoffを完了扱いにしない。SongProject v1 / Arrangement Plan Schema 4は変更しない。
