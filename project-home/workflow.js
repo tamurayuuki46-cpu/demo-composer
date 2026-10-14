@@ -1,4 +1,5 @@
 import { PRIVATE_SHEET_URL } from './sheet-connection.js';
+
 export const WORKFLOW_STEPS = Object.freeze([
   { id: 'sheet', label: '⓪ 作曲シート', role: '方向を決める', required: true },
   { id: 'analysis', label: '① MIDI解析', role: '必要なら素材を理解する', required: false },
@@ -56,6 +57,51 @@ export function isDawReady(project) {
   );
 }
 
+function pushUnique(items, item) {
+  if (!items.some((existing) => existing.id === item.id)) items.push(item);
+}
+
+export function buildUndecidedItems(project, { sheetLinked = false, limit = 3 } = {}) {
+  const items = [];
+  const composition = project?.composition || {};
+  const composed = hasComposition(project);
+  const arranged = hasArrangement(project);
+  const dawReady = isDawReady(project);
+
+  // First show the decision that belongs to the stage the user is currently in.
+  if (!sheetLinked) pushUnique(items, { id: 'direction', label: '曲の方向性' });
+  else if (!composed) {
+    if (!composition.chords?.length) pushUnique(items, { id: 'chords', label: 'コード進行' });
+    if (!composition.melody?.length) pushUnique(items, { id: 'melody', label: '主旋律' });
+  } else if (!arranged) {
+    pushUnique(items, { id: 'arrangement', label: '編曲方針' });
+  } else if (!dawReady) {
+    pushUnique(items, { id: 'daw-export', label: 'DAWへ渡すデータ' });
+  }
+
+  // Then surface important unfinished composition decisions without blocking forward progress.
+  if (!composition.chords?.length) pushUnique(items, { id: 'chords', label: 'コード進行' });
+  if (!composition.melody?.length) pushUnique(items, { id: 'melody', label: '主旋律' });
+
+  if (composed) {
+    if (!composition.sections?.length) pushUnique(items, { id: 'sections', label: '曲構成' });
+    if (!composition.counterMelody?.length) pushUnique(items, { id: 'counter', label: '裏メロ（必要なら）' });
+    if (!composition.bass?.length) pushUnique(items, { id: 'bass', label: 'ベース（必要なら）' });
+  }
+
+  return items.slice(0, Math.max(1, limit));
+}
+
+function currentStageFor(nextActionId) {
+  return ({
+    sheet: { id: 'sheet', label: '作曲シートで方向を決める' },
+    composition: { id: 'composition', label: 'Demo Composerで作曲中' },
+    arrangement: { id: 'arrangement', label: 'Arrangement Labで編曲中' },
+    daw: { id: 'daw', label: 'DAWへ渡す準備中' },
+    complete: { id: 'complete', label: 'Cubasis / Cubaseで仕上げる段階' },
+  })[nextActionId] || { id: 'sheet', label: '作曲シートで方向を決める' };
+}
+
 export function buildWorkflowState(project, { sheetLinked = false } = {}) {
   const analysisDone = hasReferenceMaterial(project);
   const compositionDone = hasComposition(project);
@@ -72,20 +118,22 @@ export function buildWorkflowState(project, { sheetLinked = false } = {}) {
 
   let nextAction;
   if (!sheetLinked) {
-    nextAction = { id: 'sheet', label: '今やること：作曲シートで方向を決める', href: PRIVATE_SHEET_URL };
+    nextAction = { id: 'sheet', label: '次にやること：作曲シートで方向を決める', href: PRIVATE_SHEET_URL };
   } else if (!compositionDone) {
-    nextAction = { id: 'composition', label: '今やること：Demo Composerで1フレーズ作る', href: '../' };
+    nextAction = { id: 'composition', label: '次にやること：Demo Composerで1フレーズ作る', href: '../' };
   } else if (!arrangementDone) {
-    nextAction = { id: 'arrangement', label: '今やること：Arrangement Labで編曲を試す', href: '../arranger/' };
+    nextAction = { id: 'arrangement', label: '次にやること：Arrangement Labで編曲を試す', href: '../arranger/' };
   } else if (!dawReady) {
-    nextAction = { id: 'daw', label: '今やること：DAWへ渡すデータを書き出す', href: '../arranger/' };
+    nextAction = { id: 'daw', label: '次にやること：DAWへ渡すデータを書き出す', href: '../arranger/' };
   } else {
-    nextAction = { id: 'complete', label: '次：Cubasis / Cubaseで仕上げる', href: null };
+    nextAction = { id: 'complete', label: '次にやること：Cubasis / Cubaseで仕上げる', href: null };
   }
 
   return {
     steps,
     nextAction,
+    currentStage: currentStageFor(nextAction.id),
+    undecidedItems: buildUndecidedItems(project, { sheetLinked }),
     optionalAnalysisSuggested: sheetLinked && !analysisDone && !compositionDone,
   };
 }
