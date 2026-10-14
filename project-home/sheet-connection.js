@@ -5,6 +5,12 @@ export function resolveLatestSheetUrl(baseHref = globalThis.location?.href || 'h
   return new URL(PRIVATE_SHEET_URL, baseHref).href;
 }
 
+export function resolveEmbeddedSheetUrl(baseHref = globalThis.location?.href || 'http://localhost/project-home/') {
+  const url = new URL(PRIVATE_SHEET_URL, baseHref);
+  url.searchParams.set('embed', '1');
+  return url.href;
+}
+
 export async function loadLatestSheetManifest({ fetcher = globalThis.fetch, baseHref = globalThis.location?.href || 'http://localhost/project-home/' } = {}) {
   if (typeof fetcher !== 'function') throw new Error('fetch is unavailable');
   const response = await fetcher(new URL(LATEST_SHEET_MANIFEST_URL, baseHref));
@@ -17,6 +23,7 @@ export async function loadLatestSheetManifest({ fetcher = globalThis.fetch, base
 export async function mountLatestSheetCard({ doc = globalThis.document, fetcher = globalThis.fetch, baseHref = globalThis.location?.href || 'http://localhost/project-home/' } = {}) {
   if (!doc) return null;
   const canonicalUrl = resolveLatestSheetUrl(baseHref);
+  const embeddedUrl = resolveEmbeddedSheetUrl(baseHref);
   const quickSheetLink = doc.querySelector('#quick-flow .flow-step');
   if (quickSheetLink) quickSheetLink.href = canonicalUrl;
 
@@ -42,11 +49,11 @@ export async function mountLatestSheetCard({ doc = globalThis.document, fetcher 
     frame = doc.createElement('iframe');
     frame.id = 'latest-sheet-frame';
     frame.title = '最新版の作曲シート';
-    frame.src = canonicalUrl;
+    frame.src = embeddedUrl;
     frame.loading = 'lazy';
     frame.style.cssText = 'display:block;width:100%;min-height:680px;margin-top:14px;border:1px solid #d6d3d1;border-radius:14px;background:#fff;';
     card.append(frame);
-  } else if (frame.src !== canonicalUrl) frame.src = canonicalUrl;
+  } else if (frame.src !== embeddedUrl) frame.src = embeddedUrl;
 
   try {
     const manifest = await loadLatestSheetManifest({ fetcher, baseHref });
