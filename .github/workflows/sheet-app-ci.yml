@@ -8,9 +8,11 @@ on:
     paths:
       - 'sheet-app/**'
       - 'src/shared/song-project.js'
+      - 'src/shared/song-data-menu.js'
       - 'scripts/composition-sheet-app-smoke-test.mjs'
       - 'scripts/composition-sheet-v08-manual-ideas.test.mjs'
       - 'scripts/composition-sheet-v08-browser.test.cjs'
+      - 'scripts/composition-sheet-v09-browser.test.cjs'
       - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
       - 'scripts/build-static.mjs'
       - '.github/workflows/sheet-app-ci.yml'
@@ -20,9 +22,11 @@ on:
     paths:
       - 'sheet-app/**'
       - 'src/shared/song-project.js'
+      - 'src/shared/song-data-menu.js'
       - 'scripts/composition-sheet-app-smoke-test.mjs'
       - 'scripts/composition-sheet-v08-manual-ideas.test.mjs'
       - 'scripts/composition-sheet-v08-browser.test.cjs'
+      - 'scripts/composition-sheet-v09-browser.test.cjs'
       - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
       - 'scripts/build-static.mjs'
       - '.github/workflows/sheet-app-ci.yml'
@@ -55,6 +59,7 @@ jobs:
         run: |
           test -f dist/sheet-app/index.html
           test -f dist/sheet-app/latest/composition_sheet_latest.html
+          test -f dist/sheet-app/latest/manifest.json
           test -f dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
           test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
           test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.html
@@ -67,14 +72,25 @@ jobs:
           test -f dist/sheet-app/versions/v0.8/composition_sheet_v0.8.css
           test -f dist/sheet-app/versions/v0.8/composition_sheet_v0.8.js
           test -f dist/sheet-app/versions/v0.8/manual_ideas_v0.8.js
-          grep -q 'composition_sheet_v0.8.html' dist/sheet-app/latest/composition_sheet_latest.html
-          grep -q '自分のアイデアを追加' dist/sheet-app/versions/v0.8/composition_sheet_v0.8.html
-          grep -q 'The Cardigans' dist/sheet-app/versions/v0.8/composition_sheet_v0.8.js
-          grep -q 'The Weeknd' dist/sheet-app/versions/v0.8/composition_sheet_v0.8.js
+          test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.html
+          test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.css
+          test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.js
+          grep -q 'versions/v0.9/composition_sheet_v0.9.html' dist/sheet-app/latest/composition_sheet_latest.html
+          grep -q '"version": "v0.9-dev"' dist/sheet-app/latest/manifest.json
+          grep -q 'id="beginner-card"' dist/sheet-app/versions/v0.9/composition_sheet_v0.9.html
+          grep -q '自分のアイデアを追加' dist/sheet-app/versions/v0.9/composition_sheet_v0.9.html
 
-      - name: Chromium mobile and desktop regression
+      - name: Chromium v0.8 preservation and v0.9 beginner regression
         run: |
           npm install --no-save --package-lock=false playwright@1.58.2
           npx playwright install --with-deps chromium
           python3 -m http.server 8080 --directory dist > /tmp/sheet-server.log 2>&1 &
           node scripts/composition-sheet-v08-browser.test.cjs
+          node scripts/composition-sheet-v09-browser.test.cjs
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: composition-sheet-public-evidence
+          path: test-results/

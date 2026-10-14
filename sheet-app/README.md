@@ -1,18 +1,44 @@
 # 作曲シート全集
 
-現在の最新版: **v0.8-dev**
+現在の最新版: **v0.9-dev**
 
-入口: `sheet-app/index.html` → `latest/composition_sheet_latest.html` → `versions/v0.8/composition_sheet_v0.8.html`
+Canonical入口: `sheet-app/`
 
-## v0.8 の主な機能
+内部導線:
+`sheet-app/index.html` → `latest/composition_sheet_latest.html` → 現在の最新版
+
+最新版情報:
+`sheet-app/latest/manifest.json`
+
+Music Project HomeはVersion付きURLを直接参照せず、このCanonical入口とmanifestだけを参照します。そのため次回v0.10以降へ更新しても、Home側のVersion固定コードを変更する必要はありません。
+
+## v0.9 の初心者導線
+
+初期表示は**かんたん入力**です。
+
+まず決める必須項目は2つだけです。
+
+1. 場面・気持ち
+2. 参考曲1曲
+
+以下は分からなければ空欄で進めます。
+
+- 曲名
+- BPM
+- Key
+- ジャンル
+- 気分・雰囲気
+- 歌もの / インスト
+- 自由メモ
+
+「もっと詳しく決める」または「31シート詳細」で、従来の31シート全集へ切り替えられます。詳細機能を削除せず、初心者が最初から全項目を判断しなくてよい段階式UIにしています。
+
+## 継続して使える機能
 
 - 原文31シートをタブで移動
 - 各表の記入欄 / チェック / シートごとのメモ
-- **各シートへ手動アイデアを追加**
-  - 見出し + 本文
-  - 編集 / 削除
-  - 「このシート」 / 「全シートのアイデア」切替
-  - 全シート表示から元シートへ移動
+- 各シートへ手動アイデアを追加 / 編集 / 削除
+- 「このシート / 全シートのアイデア」切替
 - 曲ごとに端末へ自動保存
 - 複数曲の切替
 - SongProject v1 JSON保存 / 読込
@@ -20,20 +46,32 @@
 - Demo ComposerへのSongProject受け渡し
 - 右上「📦 曲データ」共通メニュー
 
-## 手動アイデアの保存場所
+## データ互換性
 
-手動アイデアはSongProject v1の既存互換領域
+SongProject v1 (`schemaVersion: 1`)を維持します。
 
+既存localStorage key:
+`composition-sheet-full-library-v0.4`
+
+手動アイデア:
 `compatibility.compositionSheet.fullWorkbook.customIdeas`
 
-へ保存します。SongProjectの`schemaVersion`は1のままで、既存の31シート記入内容・作曲データ・編曲データを壊しません。
-
-旧v0.1〜v0.7は`versions/`に残し、上書きしません。
+v0.1〜v0.8は`versions/`に残し、削除・上書きしません。
 
 ## 保存とバックアップ
 
-普段の記入内容と手動アイデアは端末のlocalStorageへ自動保存されます。別端末へ移る前や大きな変更前は「端末へJSONを保存」でSongProject JSONをバックアップしてください。
+普段の記入内容は端末のlocalStorageへ自動保存されます。別端末へ移る前や大きな変更前は「端末へJSONを保存」でSongProject JSONをバックアップしてください。v0.9のJSONバックアップ名には`composition_sheet_v0.9`を含めます。
 
 ## 開発・検証
 
-Composition Sheet CIでは、静的smoke、SongProject round-trip、Production build、Chromium 360 / 390 / 430 / desktop幅での主要導線を確認します。v0.8では手動アイデアの追加・再読込・編集・複数シート・JSON・曲切替・Demo Composer受け渡しも回帰対象です。
+`npm run test:project-home`からv0.9初心者導線とHomeのcanonical latest契約も回帰確認します。
+
+確認対象:
+- 初心者モードが標準表示
+- 必須2項目とBPM/Key任意表示
+- 31シート詳細モードの保持
+- SongProject v1 / localStorage互換
+- latest manifest / latest redirect
+- Music Project HomeがVersion付きURLを固定参照しないこと
+- v0.9 JavaScript構文
+- Production build / 既存CI
