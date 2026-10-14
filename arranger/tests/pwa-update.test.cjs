@@ -32,8 +32,8 @@ const server=http.createServer(async(req,res)=>{
   assert.equal(await page.locator('#version').textContent(),'v0.3-dev');
   await page.evaluate(async()=>{localStorage.setItem('demo-composer-arranger-v0.3','old-data-kept');await caches.open('another-pwa-sentinel')});
   phase='current';
-  // The old cache still owns the normal URL. A fresh entry must not reuse its core module.
-  await page.goto(base+'?v=0.9');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.9-dev');
+  // The old cache owns `/arranger/`; use an uncached index entry to discover the new worker, then verify normal URL recovery below.
+  await page.goto(base+'index.html?v=0.9');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.9-dev');
   const buildWorkerUrl=await page.evaluate(async()=>{
    const deadline=Date.now()+30000;
    while(Date.now()<deadline){
