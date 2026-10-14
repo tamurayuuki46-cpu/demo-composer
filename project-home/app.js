@@ -119,3 +119,5 @@ document.querySelector('#open-demo-with-project').addEventListener('click', () =
   try { queueDemoHandoff(current); window.location.href = new URL('../?handoff=project-home', window.location.href).href; }
   catch { document.querySelector('#sheet-transfer-status').textContent = '一時受け渡しを保存できませんでした。Demo Composerの曲データメニューから同じJSONを開いてください。'; }
 });
+
+export function getSheetSongProject(){return current;}

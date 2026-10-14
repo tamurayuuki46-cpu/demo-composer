@@ -91,3 +91,6 @@ Git運用を以下へ変更。
 - SongProject統合後: `backup/v0.4-dev_v0.5-dev_songproject-integrated`
 
 実機確認が終わるまでstable tagは作成しない。
+
+## 記入シート簡易表示 v0.6 — 2026-10-14
+Home / Demo / Arrangementの右上「曲データ」に、現在のSongProjectの記入内容を表示。記入シート本体の非公開範囲を保持。

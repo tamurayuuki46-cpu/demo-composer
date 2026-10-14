@@ -1,3 +1,4 @@
+import { getSheetSongProject } from './song-project-ui.js';
 import { mountSongDataMenu } from '../../src/shared/song-data-menu.js';
 
 const fileInput = document.querySelector('#project-file');
@@ -21,6 +22,7 @@ function syncMenu() {
 
 controller = mountSongDataMenu({
   id: 'arrangement-lab-song-data-menu',
+  getSheetProject: getSheetSongProject,
   currentLabel: currentLabel(),
   saveEnabled: Boolean(exportButton && !exportButton.disabled),
   nextLabel: 'DAW書き出しへ進む',

@@ -450,3 +450,6 @@ Harmony14/Counter16/Development15/連動5の実音楽変換を追加。実Voicin
 
 ## Companion Arrangement Lab v0.4.1-dev — 2026-10-13
 PWAの旧画面が残る更新問題を修正。arranger入口/依存のbuild固定、build別SW/cache、network-first/offline fallback、旧保存保持の更新テストを追加。本体Moduleのstampは維持。
+
+## 記入シート簡易表示 v0.6 — 2026-10-14
+Home / Demo / Arrangementの右上「曲データ」に、現在のSongProjectの記入内容を表示。記入シート本体の非公開範囲を保持。
