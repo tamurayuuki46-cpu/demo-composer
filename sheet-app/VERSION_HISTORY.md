@@ -1,5 +1,13 @@
 # 作曲シート Version History
 
+## v0.8-dev — 2026-10-14
+- 各シートへ曲ごとの手動アイデアを追加・編集・削除できる機能を追加
+- 「このシート / 全シートのアイデア」切替と元シート移動を追加
+- 手動アイデアをSongProject v1の`compatibility.compositionSheet.fullWorkbook.customIdeas`へ保存し、JSON / Drive / Demo Composer受け渡しで保持
+- 旧JSONはcustomIdeasなしでも読み込み可能。31シートと既存データを維持
+- 復元点: `restore/develop-before-sheet-manual-ideas-v0.8-20261014`
+- 詳細: `CHANGELOG_v0.8.md`
+
 ## v0.7-dev — 2026-10-14
 - アイデア帳「ベース」に The Cardigans / The Weeknd の共通するベース発想を追加
 - 「裏メロ兼グルーヴ・フック」として整理し、休符・裏拍、3度/5度/経過音、短いモチーフ反復、キックとのずらしを記載
@@ -11,7 +19,6 @@
 - 31シートとv0.4の保存内容を保持。詳細: `CHANGELOG_v0.5.md`
 - 復元点: `restore/develop-before-sheet-tabs-v0.5-20261014`
 
-
 ## v0.4-dev — 2026-10-14
 - 原文31シート全文、検索、記入欄・チェック・メモ、複数曲の保存・復元
 - SongProject v1のcompatibilityに全シートの記入内容を保持
@@ -19,7 +26,6 @@
 - 復元点: `restore/develop-before-sheet-full-v0.4-20261014`
 - Branch: `feature/composition-sheet-full-v0.4`
 - 詳細: `CHANGELOG_v0.4.md`
-
 
 ## v0.3-dev — 2026-10-14
 - 画面右上に全アプリ共通の「📦 曲データ」を常設
