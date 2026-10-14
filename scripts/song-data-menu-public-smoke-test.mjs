@@ -21,18 +21,25 @@ const [shared, demoEntry, appEntry, homeApp, homeEntry, arrangerHtml, arrangerEn
   readFile('index.html', 'utf8'),
 ]);
 
-assert.match(shared, /position:fixed/);
-assert.match(shared, /right:10px/);
 assert.match(shared, /📦 曲データ/);
-assert.match(shared, /保存した曲を開く/);
-assert.match(shared, /今の曲を保存/);
+for (const label of ['全アプリ遷移', 'MIDI保存', 'JSON保存', '作曲シート成果物']) assert.match(shared, new RegExp(label));
+assert.match(shared, /保存JSONを開く/);
+assert.match(shared, /song-data-primary-action/);
+assert.match(shared, /Music Project Home/);
+assert.match(shared, /MIDI Analyzer/);
+assert.match(shared, /Demo Composer/);
+assert.match(shared, /Arrangement Lab/);
+assert.match(shared, /setMidiEnabled/);
 assert.match(appEntry, /song-data-menu-entry\.js/);
-assert.match(demoEntry, /Arrangement Labへ進む/);
+assert.match(demoEntry, /downloadMidiBundle/);
+assert.match(demoEntry, /onMidi/);
 assert.match(demoEntry, /music-project-songproject-handoff-v1/);
 assert.match(homeApp, /song-data-menu-entry\.js/);
-assert.match(homeEntry, /Demo Composerへ進む/);
+assert.match(homeEntry, /songProjectToDemoProject/);
+assert.match(homeEntry, /onMidi/);
 assert.match(arrangerHtml, /song-data-menu-entry\.js/);
-assert.match(arrangerEntry, /DAW書き出しへ進む/);
-assert.match(index, /v0\.8-dev/);
+assert.match(arrangerEntry, /export-song-midi-btn/);
+assert.match(arrangerEntry, /onMidi/);
+assert.match(index, /v0\.9-dev/);
 
-console.log('Public top-right song data menu wiring passed.');
+console.log('Public four-action song data menu wiring passed.');
