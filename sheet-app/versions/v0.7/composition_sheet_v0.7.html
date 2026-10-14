@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f7f4ee"><title>作曲シート全集 v0.7</title><link rel="stylesheet" href="../v0.6/composition_sheet_v0.6.css"></head>
+<body>
+<header class="topbar"><a class="brand" href="../../../project-home/">♫ <span>Music Project</span></a><span class="version">作曲シート全集 · v0.7</span><a href="../../../project-home/">ホームへ ↗</a></header>
+<main class="layout">
+<aside class="sidebar"><div class="eyebrow">YOUR SONGWRITING NOTEBOOK</div><h1>曲の種を、<br>一曲につなぐ。</h1><p class="intro">31シートの引き出し。<br>今の自分に必要なページから。</p><h2 class="tab-heading">シートを選ぶ</h2><div id="sheet-groups" class="sheet-groups" aria-label="シートの種類"></div><p id="sheet-count" class="muted" aria-live="polite"></p><nav id="sheet-nav" role="tablist" aria-label="シート切り替え"></nav></aside>
+<div class="workspace">
+<section class="project-card"><div class="card-top"><span class="eyebrow">MY SONG</span><span id="save-status" role="status">この端末に自動保存</span></div><label class="title-label" for="song-title">曲の名前（任意）</label><input id="song-title" maxlength="80" placeholder="まだ名前のない曲"><label class="title-label" for="project-picker">保存した曲</label><select id="project-picker" aria-label="保存した曲"></select><div class="toolbar"><button id="save-now" class="primary">記入内容を保存</button><button id="backup">端末へJSONを保存</button><button id="drive-save">Driveに保存</button><button id="open">JSONを開く</button><button id="new-project">新しい曲</button><input id="file-input" type="file" accept=".json,.txt,application/json,text/plain" hidden></div><p id="message" role="status"></p><details id="handoff-form"><summary>Demo Composerへ渡す曲の方向性</summary><p class="muted">受け渡すときだけ「場面」と「参考曲1曲」を入力。その他のシートは自由に使えます。</p><div class="form-grid"><label>場面 <span class="required">受け渡し時に必須</span><textarea id="scene" placeholder="夜の帰り道。寂しさから前向きに"></textarea></label><label>参考曲 <span class="required">受け渡し時に必須</span><input id="reference1" placeholder="曲名 / アーティスト"></label><label>BPM（任意・40〜240）<input id="bpm" type="number" min="40" max="240" step="1" placeholder="未定"></label><label>Key（任意）<input id="key" placeholder="C major / E minor"></label></div><button id="handoff" class="primary">曲データを保存してDemo Composerへ</button></details></section>
+<article id="sheet-panel" class="sheet-card" role="tabpanel" tabindex="0"><div class="page-bar"><span id="page-position" class="eyebrow"></span><div><button id="show-tabs" type="button">シートを選ぶ ↑</button><button id="previous" aria-label="前のシート">←</button><button id="next" aria-label="次のシート">→</button></div></div><div id="sheet-body"></div><div class="toolbar"><button type="button" id="sheet-save-bottom">記入内容を保存</button><button type="button" id="sheet-drive-bottom">Driveに保存</button></div><section class="personal-note"><label for="page-note">このシートから、自分の曲に使うこと</label><p class="muted">思いついた一言だけでOK。空欄のままでも進めます。</p><textarea id="page-note" placeholder="例：サビの語尾に短い裏メロで返す"></textarea></section><details class="original"><summary>元の文章を表示</summary><pre id="original-text"></pre></details></article>
+<footer>作曲シート全集 v0.7-dev · 2026-10-14<br>v0.6の機能を保持し、アイデア帳「ベース」にThe Cardigans / The Weekndのベース発想を追加。<br>別の端末へ移す前に「全シートのJSONを保存」を使ってください。</footer>
+</div></main>
+<script type="module">
+import '../v0.6/composition_sheet_v0.6.js';
+const BASS_ID='04_アイデア帳/03_ベース';
+const MARKER='bass-cardigans-weeknd-v07';
+function patchBassIdea(){
+  const activeButton=document.querySelector('#sheet-nav button[aria-selected="true"]');
+  if(!activeButton||activeButton.dataset.page!==BASS_ID)return;
+  const body=document.getElementById('sheet-body');
+  if(!body||body.querySelector(`#${MARKER}`))return;
+  const section=document.createElement('section');
+  section.id=MARKER;
+  section.innerHTML=`<h2>参考アイデア: The Cardigans / The Weeknd</h2>
+  <p>共通して、ベースを単なるルート支えではなく、<strong>裏メロ兼グルーヴ・フック</strong>として使う発想がある。</p>
+  <ul>
+    <li>音を詰めすぎず、休符や裏拍を使う</li>
+    <li>3度・5度・経過音まで使って動く</li>
+    <li>短いベースモチーフを反復して曲のキャラクターを作る</li>
+    <li>キックと完全に同じ動きにせず、少しずらして会話させる</li>
+    <li>The Cardigans寄り: 生ベース的なニュアンス、ポップ / ジャズ寄りのコード感と絡める</li>
+    <li>The Weeknd寄り: 80s synth-pop / disco / funk寄りで、反復性の強いグルーヴにする</li>
+  </ul>
+  <p>作るときは「ルート型」だけで考えず、<strong>グルーヴ型 / 裏メロ型 / フック反復型</strong>として考えると近づけやすい。</p>`;
+  body.append(section);
+}
+const observer=new MutationObserver(patchBassIdea);
+observer.observe(document.getElementById('sheet-panel'),{childList:true,subtree:true});
+requestAnimationFrame(patchBassIdea);
+window.addEventListener('hashchange',()=>requestAnimationFrame(patchBassIdea));
+</script>
+</body></html>
