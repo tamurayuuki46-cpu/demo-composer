@@ -1,3 +1,4 @@
+import './sheet-beginner-latest-home-smoke-test.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { normalizeSheetLink } from '../src/hub/sheet-link.js';
@@ -31,7 +32,10 @@ assert.match(html, /id="next-session"/);
 assert.match(html, /id="session-notes-save"/);
 assert.match(html, /min-height:48px/);
 assert.match(html, /id="composition-sheet-card"/);
-assert.ok(html.includes('href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html"'));
+assert.ok(html.includes('href="../sheet-app/"'));
+assert.match(html, /id="latest-sheet-version"/);
+assert.match(html, /id="latest-sheet-frame"/);
+assert.match(html, /作曲シート・常に最新版/);
 assert.match(html, /id="claude-link-input"/);
 assert.match(html, /id="claude-link-open"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
 assert.match(html, /Song Project JSON・MIDI・公開コードには入れません/);
