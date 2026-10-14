@@ -65,6 +65,17 @@ async function assertMemoRoundTrip(page, menu, width) {
   await dialog.locator('.song-memo-close').click();
 }
 
+async function fillSheetRequiredFields(page) {
+  if (await page.locator('#beginner-scene').count()) {
+    await page.locator('#beginner-scene').fill('夜の帰り道');
+    await page.locator('#beginner-reference').fill('Reference Song');
+    return;
+  }
+  if (await page.locator('#handoff-form').count()) await page.locator('#handoff-form').evaluate(node => { node.open = true; });
+  await page.locator('#scene').fill('夜の帰り道');
+  await page.locator('#reference1').fill('Reference Song');
+}
+
 (async () => {
   const browser = await chromium.launch({ headless: true });
   try {
@@ -83,9 +94,7 @@ async function assertMemoRoundTrip(page, menu, width) {
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="midi"]').isEnabled(), true, 'Workbook MIDI action should be available');
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="next"]').isDisabled(), true, 'Composition Sheet next must be disabled before required fields');
       await page.locator('.song-data-close').click();
-      if(await page.locator('#handoff-form').count()) await page.locator('#handoff-form').evaluate(node=>{node.open=true;});
-      await page.locator('#scene').fill('夜の帰り道');
-      await page.locator('#reference1').fill('Reference Song');
+      await fillSheetRequiredFields(page);
       await sheetMenu.trigger.click();
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="save"]').isEnabled(), true);
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="next"]').isEnabled(), true);
@@ -120,7 +129,7 @@ async function assertMemoRoundTrip(page, menu, width) {
       assert.deepEqual(errors, []);
       await context.close();
     }
-    console.log('Four-action song data menu + song memo passed on Sheet / Demo / Home / Arrangement at 360/390/430px');
+    console.log('Four-action song data menu + song memo passed on beginner-first Sheet / Demo / Home / Arrangement at 360/390/430px');
   } finally {
     await browser.close();
   }
