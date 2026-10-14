@@ -21,6 +21,9 @@ jobs:
       - name: JavaScript syntax check
         run: npm run test:syntax
 
+      - name: Public song data menu smoke test
+        run: node scripts/song-data-menu-public-smoke-test.mjs
+
       - name: Beginner guided flow smoke test
         run: node scripts/beginner-flow-smoke-test.mjs
 
