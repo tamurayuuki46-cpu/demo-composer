@@ -43,14 +43,19 @@ function writeSource(songProject) {
 }
 
 function writeHandoff(songProject, targetApp, sourceApp = 'demo-composer') {
-  localStorage.setItem(HANDOFF_KEY, JSON.stringify({
-    kind: HANDOFF_KIND,
-    schemaVersion: HANDOFF_VERSION,
-    sourceApp,
-    targetApp,
-    createdAt: new Date().toISOString(),
-    songProject,
-  }));
+  try {
+    localStorage.setItem(HANDOFF_KEY, JSON.stringify({
+      kind: HANDOFF_KIND,
+      schemaVersion: HANDOFF_VERSION,
+      sourceApp,
+      targetApp,
+      createdAt: new Date().toISOString(),
+      songProject,
+    }));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function getCurrentSongProject() {
@@ -65,17 +70,23 @@ async function getCurrentSongProject() {
 }
 
 async function applyImportedSongProject(songProject) {
-  writeHandoff(songProject, 'demo-composer', 'song-data-menu');
   document.querySelector('.nav-btn[data-screen="hub"]')?.click();
-  for (let i = 0; i < 12; i += 1) {
+  for (let i = 0; i < 16; i += 1) {
     await delay(50);
-    const button = document.querySelector('#handoff-import-song');
-    if (button) {
-      button.click();
-      return;
-    }
+    const input = document.querySelector('#import-song-project-file');
+    if (!input || typeof DataTransfer !== 'function') continue;
+    const file = new File(
+      [serializeSongProject(songProject)],
+      `${safeFileName(songProject.title)}_song_project_v1.json`,
+      { type: 'application/json' },
+    );
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
   }
-  throw new Error('曲データの受け取り画面を開けませんでした。Hubからもう一度お試しください。');
+  throw new Error('曲データの受け取り画面を開けませんでした。Hubから保存したJSONを選んでください。');
 }
 
 const picker = document.createElement('input');
@@ -118,9 +129,14 @@ controller = mountSongDataMenu({
   async onNext() {
     const songProject = await getCurrentSongProject();
     downloadSongProject(songProject);
-    writeHandoff(songProject, 'arrangement-lab');
+    const shared = writeHandoff(songProject, 'arrangement-lab');
     controller.setCurrent(songProject.title);
-    controller.setStatus('曲データを保存しました。Arrangement Labを開きます。', 'success');
+    controller.setStatus(
+      shared
+        ? '曲データを保存しました。Arrangement Labを開きます。'
+        : '曲データを保存しました。一時受け渡しが使えないため、Arrangement Labで保存したJSONを選んでください。',
+      shared ? 'success' : 'neutral',
+    );
     await delay(180);
     window.location.href = new URL('/demo-composer/arranger/?handoff=demo-composer', window.location.origin).href;
   },
