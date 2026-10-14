@@ -41,5 +41,11 @@ jobs:
           test -f dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
           test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
           test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.js
-          grep -q 'まずは、2項目だけ。' dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
-          grep -q 'SongProject v1' dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
+          test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.html
+          test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.css
+          test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.js
+          test -f dist/sheet-app/versions/v0.7/sheet_content_v0.7.js
+          test -f dist/sheet-app/versions/v0.7/sheet_model_v0.7.js
+          grep -q 'composition_sheet_v0.7.html' dist/sheet-app/latest/composition_sheet_latest.html
+          grep -q 'The Cardigans' dist/sheet-app/versions/v0.7/composition_sheet_v0.7.js
+          grep -q 'The Weeknd' dist/sheet-app/versions/v0.7/composition_sheet_v0.7.js
