@@ -1,4 +1,5 @@
 import { sheetSummary } from './composition-sheet-summary.js';
+import { attachSongMemoPad } from './song-memo-pad.js';
 const STYLE_ID = 'song-data-menu-style';
 
 function ensureStyles() {
@@ -134,6 +135,12 @@ export function mountSongDataMenu(options = {}) {
     },
   });
   root.songDataController = controller;
+
+  attachSongMemoPad({
+    menuId: id,
+    getProject: options.getSheetProject,
+    onError(error) { setStatus(error?.message || 'メモ帳を開けませんでした。', 'error'); },
+  });
 
   controller.setOpenEnabled(options.openEnabled !== false);
   controller.setSaveEnabled(options.saveEnabled !== false);
