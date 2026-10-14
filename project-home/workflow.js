@@ -1,5 +1,3 @@
-import './song-data-menu-entry.js';
-
 export const WORKFLOW_STEPS = Object.freeze([
   { id: 'sheet', label: '⓪ 作曲シート', role: '方向を決める', required: true },
   { id: 'analysis', label: '① MIDI解析', role: '必要なら素材を理解する', required: false },
