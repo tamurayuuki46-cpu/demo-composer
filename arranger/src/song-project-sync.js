@@ -106,17 +106,11 @@ function overlapTicks(note, startTick, endTick) {
 }
 
 function melodyNotes(songProject, demoProject) {
-  const direct = Array.isArray(songProject?.composition?.melody) ? songProject.composition.melody : [];
-  if (direct.length) {
-    const bounds = demoMusicalBounds(demoProject);
-    if (bounds?.minStart > 0) {
-      return direct.map((note) => ({ ...note, startTick: Math.max(0, (Number(note?.startTick) || 0) - bounds.minStart) }));
-    }
-    return direct;
-  }
-  return (demoProject?.tracks || [])
+  const converted = (demoProject?.tracks || [])
     .filter((track) => track?.role === 'melody')
     .flatMap((track) => Array.isArray(track.notes) ? track.notes : []);
+  if (converted.length) return converted;
+  return Array.isArray(songProject?.composition?.melody) ? songProject.composition.melody : [];
 }
 
 function chordIntervals(quality) {
