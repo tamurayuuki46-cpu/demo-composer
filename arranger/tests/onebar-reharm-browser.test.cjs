@@ -33,7 +33,7 @@ const arrangerUrl = process.env.ARRANGER_URL || 'http://127.0.0.1:8080/arranger/
         buffer: Buffer.from(JSON.stringify(sketch)),
       });
 
-      await page.getByText('1小節スケッチ（仮コード付き）', { exact: true }).waitFor();
+      await page.getByRole('heading', { name: '1小節スケッチ（仮コード付き）', exact: true }).waitFor();
       await page.waitForFunction(() => {
         const preview = document.querySelector('#preview-btn');
         return Boolean(preview && !preview.disabled && document.querySelectorAll('.candidate-tab').length >= 3);
