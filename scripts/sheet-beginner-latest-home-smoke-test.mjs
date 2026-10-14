@@ -6,6 +6,7 @@ import {
   PRIVATE_SHEET_URL,
   LATEST_SHEET_MANIFEST_URL,
   resolveLatestSheetUrl,
+  resolveEmbeddedSheetUrl,
   loadLatestSheetManifest,
 } from '../project-home/sheet-connection.js';
 import { buildWorkflowState } from '../project-home/workflow.js';
@@ -26,6 +27,7 @@ const manifest = JSON.parse(manifestText);
 assert.equal(PRIVATE_SHEET_URL, '../sheet-app/');
 assert.equal(LATEST_SHEET_MANIFEST_URL, '../sheet-app/latest/manifest.json');
 assert.equal(resolveLatestSheetUrl('https://example.com/project-home/'), 'https://example.com/sheet-app/');
+assert.equal(resolveEmbeddedSheetUrl('https://example.com/project-home/'), 'https://example.com/sheet-app/?embed=1');
 assert.ok(!PRIVATE_SHEET_URL.includes('/versions/'), 'Home must not pin a sheet version');
 
 assert.equal(manifest.kind, 'composition-sheet-latest');
