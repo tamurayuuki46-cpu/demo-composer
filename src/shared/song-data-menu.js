@@ -1,4 +1,5 @@
 import { sheetSummary } from './composition-sheet-summary.js';
+import { openSongMemoPad } from './song-memo-pad.js';
 
 const STYLE_ID = 'song-data-menu-style';
 const DEFAULT_APPS = Object.freeze([
@@ -28,8 +29,8 @@ function ensureStyles() {
     .song-data-primary-action span{display:block;font-size:1rem;line-height:1.25}.song-data-primary-action small{display:block;margin-top:7px;color:#6b7280;font-size:.73rem;font-weight:500;line-height:1.35}
     .song-data-primary-action.featured{background:#111827!important;color:#fff!important;border-color:#111827!important}.song-data-primary-action.featured small{color:#d1d5db}
     .song-data-primary-action:disabled{opacity:.42!important;cursor:not-allowed!important}
-    .song-data-secondary-actions{display:flex;gap:8px;margin-top:10px}
-    .song-data-secondary-action{flex:1;width:auto!important;min-height:42px!important;margin:0!important;padding:8px 10px!important;border:1px solid #d1d5db!important;border-radius:10px!important;background:#f9fafb!important;color:#374151!important;font:inherit!important;font-size:.78rem!important;font-weight:750!important;cursor:pointer!important}
+    .song-data-secondary-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .song-data-secondary-action{flex:1 1 120px;width:auto!important;min-height:42px!important;margin:0!important;padding:8px 10px!important;border:1px solid #d1d5db!important;border-radius:10px!important;background:#f9fafb!important;color:#374151!important;font:inherit!important;font-size:.78rem!important;font-weight:750!important;cursor:pointer!important}
     .song-data-secondary-action:disabled{opacity:.42!important;cursor:not-allowed!important}
     .song-data-status{min-height:1.25em;margin:10px 0 0;color:#4b5563;font-size:.78rem;line-height:1.45}.song-data-status[data-tone="error"]{color:#b91c1c}.song-data-status[data-tone="success"]{color:#166534}
     .song-data-dialog{box-sizing:border-box;width:min(620px,calc(100vw - 24px));max-height:88dvh;overflow:auto;border:1px solid #cbd5e1;border-radius:18px;padding:18px;background:#fff;color:#111827;font:16px system-ui;box-shadow:0 24px 70px rgba(15,23,42,.3)}
@@ -93,10 +94,11 @@ export function mountSongDataMenu(options = {}) {
         <button type="button" class="song-data-primary-action" data-song-data-action="sheet"><span>📝 作曲シート成果物</span><small>書き出し済みの記入内容を確認</small></button>
       </div>
       <div class="song-data-secondary-actions">
+        <button type="button" class="song-data-secondary-action" data-song-data-action="memo">📓 メモ帳</button>
         <button type="button" class="song-data-secondary-action" data-song-data-action="open">保存JSONを開く</button>
         <button type="button" class="song-data-secondary-action" data-song-data-action="next" hidden><span data-song-data-next-label>${normalizeLabel(options.nextLabel, '次の工程へ')}</span></button>
       </div>
-      <p class="song-data-status" data-song-data-status aria-live="polite">4つの大きなボタンから、移動・MIDI・JSON・作曲シートを操作できます。</p>
+      <p class="song-data-status" data-song-data-status aria-live="polite">4つの大きなボタンに加え、曲別メモもここから開けます。</p>
     </section>`;
   document.body.append(root);
 
@@ -108,6 +110,7 @@ export function mountSongDataMenu(options = {}) {
   const appsButton = root.querySelector('[data-song-data-action="apps"]');
   const midiButton = root.querySelector('[data-song-data-action="midi"]');
   const sheetButton = root.querySelector('[data-song-data-action="sheet"]');
+  const memoButton = root.querySelector('[data-song-data-action="memo"]');
   const openButton = root.querySelector('[data-song-data-action="open"]');
   const saveButton = root.querySelector('[data-song-data-action="save"]');
   const nextButton = root.querySelector('[data-song-data-action="next"]');
@@ -122,7 +125,7 @@ export function mountSongDataMenu(options = {}) {
   };
   const setBusy = (value) => {
     busy = Boolean(value);
-    [appsButton, midiButton, sheetButton, openButton, saveButton, nextButton].forEach((button) => {
+    [appsButton, midiButton, sheetButton, memoButton, openButton, saveButton, nextButton].forEach((button) => {
       if (button) button.dataset.songDataBusy = busy ? 'true' : 'false';
     });
   };
@@ -227,6 +230,16 @@ export function mountSongDataMenu(options = {}) {
       close.focus();
     } catch (error) {
       setStatus(error?.message || '作曲シート成果物を表示できませんでした。', 'error');
+    }
+  });
+
+  memoButton.addEventListener('click', async () => {
+    try {
+      const project = await options.getSheetProject?.();
+      openSongMemoPad(project);
+      closePanel();
+    } catch (error) {
+      setStatus(error?.message || 'メモ帳を開けませんでした。', 'error');
     }
   });
 
