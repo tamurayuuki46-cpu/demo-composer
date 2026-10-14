@@ -1,7 +1,8 @@
 import { SHEETS as SOURCE_SHEETS } from '../v0.4/sheet_content_v0.4.js';
 import { normalizeWorkbook, renderMarkdown, escapeHtml } from '../v0.4/sheet_model_v0.4.js';
 import { mountSongDataMenu } from '../../../src/shared/song-data-menu.js';
-import { createEmptySongProject, mergeSheetChangesIntoSongProject, parseProjectJsonToSongProject, serializeSongProject } from '../../../src/shared/song-project.js';
+import { createEmptySongProject, mergeSheetChangesIntoSongProject, parseProjectJsonToSongProject, serializeSongProject, songProjectToDemoProject } from '../../../src/shared/song-project.js';
+import { downloadMidiBundle } from '../../../src/midi/midi-export.js';
 const SHEETS=[...SOURCE_SHEETS.filter(p=>p.id==='01_作曲シート_記入用'),...SOURCE_SHEETS.filter(p=>p.id!=='01_作曲シート_記入用')].map(page=>({...page,group:page.id.includes('/')?'アイデア帳':'制作ガイド'}));
 let songDataMenu=null;
 const $=id=>document.getElementById(id), STORAGE='composition-sheet-full-library-v0.4';
@@ -24,7 +25,7 @@ function snapshot(){
 }
 function save(){
   const ready=Boolean($('scene').value.trim()&&$('reference1').value.trim());
-  songDataMenu?.setSaveEnabled(true);songDataMenu?.setNextEnabled(ready);songDataMenu?.setCurrent($('song-title').value||'名前のない曲');
+  songDataMenu?.setSaveEnabled(true);songDataMenu?.setMidiEnabled(true);songDataMenu?.setNextEnabled(ready);songDataMenu?.setCurrent($('song-title').value||'名前のない曲');
   try {snapshot();library.activeId=project.projectId;library.projects[project.projectId]=project;localStorage.setItem(STORAGE,JSON.stringify(library));$('save-status').textContent='✓ この端末に保存済み';return true;}
   catch{$('save-status').textContent='保存できません。JSONを保存してください';return false;}
 }
@@ -73,7 +74,6 @@ $('open').addEventListener('click',()=>$('file-input').click());
 $('file-input').addEventListener('change',async()=>{
  const file=$('file-input').files?.[0];if(!file)return;
  try{if(file.size>10*1024*1024)throw Error('10MB以下のJSONを選んでください。');const next=parseProjectJsonToSongProject(await file.text());
- // Save a restore copy when importing a different revision with the same Project ID.
  if(library.projects[next.projectId]){const old=structuredClone(library.projects[next.projectId]);old.projectId=`${old.projectId}-backup-${Date.now()}`;old.title=`${old.title}（読み込み前）`;library.projects[old.projectId]=old;}
  project=next;readWorkbook();fillForm();save();picker();renderPage();message('JSONを読み込みました。既存の作曲・編曲データも保持します。');
  }catch(e){message(`読み込めませんでした：${e.message}`);}finally{$('file-input').value='';}
@@ -87,7 +87,7 @@ function handoff(){
  catch{message('一時受け渡しが使えません。JSONを保存し、Demo Composerで読み込んでください。');}
 }
 $('handoff').addEventListener('click',handoff);
-songDataMenu=mountSongDataMenu({getSheetProject:()=>snapshot(),id:'composition-sheet-full-menu',currentLabel:'名前のない曲',saveEnabled:true,nextEnabled:false,nextLabel:'Demo Composerへ進む',nextNote:'全シートの記入を含む曲データを渡します',onOpen(){ $('file-input').click(); },onSave(){ download(); },onNext(){ handoff(); }});
+songDataMenu=mountSongDataMenu({getSheetProject:()=>snapshot(),id:'composition-sheet-full-menu',currentLabel:'名前のない曲',midiEnabled:true,saveEnabled:true,nextEnabled:false,nextLabel:'Demo Composerへ進む',nextNote:'全シートの記入を含む曲データを渡します',onOpen(){ $('file-input').click(); },onMidi(){downloadMidiBundle(songProjectToDemoProject(snapshot()));return '現在の曲のMIDIを保存しました。';},onSave(){ download(); },onNext(){ handoff(); }});
 readWorkbook();fillForm();if(!library.activeId){$('bpm').value='';$('key').value='';}save();picker();hashPage();renderPage();
 
 $('sheet-save-bottom').addEventListener('click',()=>$('save-now').click());
