@@ -19,9 +19,32 @@ Music Project Home はアプリ一覧ではなく、**曲の現在地と次の�
 - 今日決めたこと
 - 次回やること
 
+## 作曲シート最新版の扱い
+
+Homeは作曲シートのVersion付きURLを保持しません。
+
+Canonical入口:
+
+`../sheet-app/`
+
+最新版情報:
+
+`../sheet-app/latest/manifest.json`
+
+`sheet-app/index.html` → `latest/composition_sheet_latest.html` → 現在の最新版、という1本の導線に統一します。
+
+Homeでは次を行います。
+
+- 制作フローの「⓪ 作曲シート」をcanonical入口へ接続
+- 「次にやること：作曲シート」も同じcanonical入口へ接続
+- 作曲シートカードに最新版Versionをmanifestから表示
+- Home内iframeにもcanonical入口を表示
+
+このため、作曲シートがv0.10、v0.11へ更新されても、`latest` redirectとmanifestを更新するだけでHomeが自動追従します。Home側へVersion番号を直書きしません。
+
 ## 制作フロー
 
-- 作曲シート: 曲の方向を決める
+- 作曲シート: 曲の方向を決める。初心者は「かんたん入力」から開始
 - MIDI Analyzer: 必要な場合だけ素材を理解する。必須工程にしない
 - Demo Composer: コード・メロディなど作曲判断を進める
 - Arrangement Lab: 編曲案を比較して選ぶ
@@ -44,13 +67,11 @@ Music Project Home はアプリ一覧ではなく、**曲の現在地と次の�
 - 編曲方針
 - DAWへ渡すデータ
 
-最大3件まで表示し、ユーザーを責める表現や完成度スコアにはしません。
+最大3件まで表示し、完成度スコアにはしません。
 
 ## 次にやること
 
-AIに丸投げせず、まずルールベースで判定します。
-
-1. 作曲シート未完了 → 作曲シート
+1. 作曲シート未完了 → canonical latest作曲シート
 2. 作曲データなし → Demo Composer
 3. 編曲データなし → Arrangement Lab
 4. DAW引き継ぎ未完了 → 書き出し
@@ -67,27 +88,29 @@ SongProject v1 の所有権境界は変更しません。
 - Arrangement Lab: `arrangement`
 - 共通: `basic` / `lineage`
 
+作曲シートは`intent`と明示的に選んだ`basic`を更新し、他アプリ所有領域を保持します。
+
 「今日決めたこと」「次回やること」はProject HomeだけのUI補助メモです。`SongProject v1`へ新しい所有領域を追加せず、端末のlocalStorageに保存します。
 
 保存キー:
 
 `demo-composer.project-home.notes.v1:<project-id>`
 
-これによりHomeの補助メモ追加がSongProject互換性や他アプリのデータを壊さないようにします。
-
 ## モバイルUI
 
-- 主操作は48px以上のタップ領域を維持する
-- 最上段に「今ここ / 未決定 / 次にやること」を置く
-- 制作フローはその下
-- 詳細データ、旧Claudeリンク、バックアップは主判断より下に置く
+- 主操作は48px以上のタップ領域を維持
+- 最上段に「今ここ / 未決定 / 次にやること」
+- 作曲シート最新版をHome内で確認可能
+- 作曲シート本体は初心者モードを初期表示
 - 360px級の画面でも縦1列で読めること
 
 ## 完了条件
 
 - Homeを開いて5秒以内に次の行動が分かる
+- Homeに表示される作曲シートがcanonical latestである
+- Homeのコードに作曲シートVersion固定URLがない
+- manifestから現在Versionを確認できる
 - SongProject未読込でも安全に案内できる
-- SongProject v1読込後に現在地・未決定・次行動が更新される
 - MIDI Analyzerを飛ばしても進行可能
 - 今日/次回メモがSongProject本体を変更しない
 - 既存JSON受け渡し、Backup、Claude旧リンクを壊さない
