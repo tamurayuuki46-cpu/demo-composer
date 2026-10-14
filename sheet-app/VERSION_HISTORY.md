@@ -1,5 +1,11 @@
 # 作曲シート Version History
 
+## v0.5-dev — 2026-10-14
+- 検索から制作ガイド／アイデア帳のタブ移動へ変更。スマホは2列表示
+- 31シートとv0.4の保存内容を保持。詳細: `CHANGELOG_v0.5.md`
+- 復元点: `restore/develop-before-sheet-tabs-v0.5-20261014`
+
+
 ## v0.4-dev — 2026-10-14
 - 原文31シート全文、検索、記入欄・チェック・メモ、複数曲の保存・復元
 - SongProject v1のcompatibilityに全シートの記入内容を保持

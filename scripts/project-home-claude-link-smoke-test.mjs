@@ -22,7 +22,7 @@ assert.match(html, /NEXT ACTION/);
 assert.match(html, /id="workflow-list"/);
 assert.match(html, /id="next-action" class="primary"/);
 assert.match(html, /id="composition-sheet-card"/);
-assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート全集 v0\.4 を開く/);
+assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート全集 v0\.5 を開く/);
 assert.match(html, /id="claude-link-input"/);
 assert.match(html, /id="claude-link-open"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
 assert.match(html, /Song Project JSON・MIDI・公開コードには入れません/);
