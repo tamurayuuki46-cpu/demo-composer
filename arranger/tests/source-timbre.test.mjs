@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { demoProjectToSongProject } from '../../src/shared/song-project.js';
 import { resolveSoundProfile } from '../../src/core/sound-presets.js';
+import { normalizeSourceProject } from '../src/core.js';
 import { songProjectToArrangementSourceInput } from '../src/song-project-sync.js';
 import { resolvePreviewSoundProfile } from '../src/preview.js';
 
@@ -27,7 +28,8 @@ const demoProject = {
 };
 
 const songProject = demoProjectToSongProject(demoProject, { now: '2026-10-14T00:00:00.000Z' });
-const source = songProjectToArrangementSourceInput(songProject);
+const arrangementInput = songProjectToArrangementSourceInput(songProject);
+const source = normalizeSourceProject(arrangementInput);
 
 assert.deepEqual(source.sourceSnapshot.instruments, demoProject.instruments, 'Demo Composer instruments survive SongProject handoff');
 assert.deepEqual(resolvePreviewSoundProfile(source, 'harmony'), resolveSoundProfile(demoProject.instruments, 'chord'), 'Harmony keeps Chord preset/tone');
