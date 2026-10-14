@@ -1,4 +1,4 @@
-const UI_VERSION = 'v0.11-dev';
+const UI_VERSION = 'v0.12-dev';
 const MODE_KEY = 'arrangement-lab-ui-mode-v0.6';
 const MODES = new Set(['beginner', 'explore']);
 
@@ -6,7 +6,7 @@ const STEPS = [
   { selector: '#step-import', label: '① 読み込む', next: '曲のJSONを開く（1小節のコード / メロディだけでもOK）' },
   { selector: '#step-direction', label: '② 聴く', next: 'A / B / Cを順番に聴く' },
   { selector: '#step-compare', label: '③ 選ぶ', next: '残したい案を1つ選ぶ' },
-  { selector: '#step-section', label: '④ Section調整', next: 'リハモ「3案を提案」など、まず1つだけ試す' },
+  { selector: '#step-section', label: '④ Section調整', next: '調整後に「このSectionを試聴」。リハモは聴いてから採用' },
   { selector: '#v05-decision-panel', label: '⑤ 記録', next: '判断を1つメモする' },
   { selector: '#step-daw', label: '⑥ DAWへ', next: 'MIDI / ZIPを書き出してCubasis・Cubaseへ渡す' },
 ];
@@ -76,7 +76,7 @@ function guideMarkup() {
         <span>次にやること</span>
         <strong id="beginner-next-action">${escapeHtml(STEPS[0].next)}</strong>
       </div>
-      <p class="beginner-guide-note">1小節だけでも試せます。コードだけならそのコードからA/B/Cとリハモ3案を作れます。コードが無い1小節メロディには仮コードを付けます。仮決めでOK。いつでも「前へ」で戻って直せます。</p>
+      <p class="beginner-guide-note">1小節だけでも試せます。コードだけならそのコードからA/B/Cとリハモ3案を作れます。コードが無い1小節メロディには仮コードを付けます。④では調整後のSectionやリハモ候補を採用前に試聴できます。仮決めでOK。いつでも「前へ」で戻って直せます。</p>
     </section>`;
 }
 
@@ -167,7 +167,7 @@ function ensureSectionEmptyState() {
       const hint = document.createElement('p');
       hint.className = 'beginner-section-hint';
       hint.dataset.beginnerSectionHint = 'true';
-      hint.textContent = '初心者モードは、まず1つのSectionだけ触ればOK。1小節スケッチなら「リハモ → 3案を提案」から試せます。';
+      hint.textContent = '初心者モードは、まず1つのSectionだけ触ればOK。調整したら「このSectionを試聴」。リハモは「3案を提案」→「試聴」→「採用」の順で比べられます。';
       sections.before(hint);
     }
     return;
