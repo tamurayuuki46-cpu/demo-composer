@@ -61,6 +61,7 @@ jobs:
           npx playwright install --with-deps chromium
           python3 -m http.server 8080 --directory dist > /tmp/sheet-server.log 2>&1 &
           node scripts/composition-sheet-full-browser.test.cjs
+          node scripts/composition-sheet-tabs-browser.test.cjs
           node arranger/tests/song-data-menu-browser.test.cjs
 
       - name: Upload full workbook browser evidence
