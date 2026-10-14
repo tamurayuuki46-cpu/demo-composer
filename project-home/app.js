@@ -1,3 +1,4 @@
+import './song-data-menu-entry.js';
 import { loadSheetLink, saveSheetLink } from '../src/hub/sheet-link.js';
 import {
   loadCompositionSheetHandoff,
