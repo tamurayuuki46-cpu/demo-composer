@@ -7,6 +7,7 @@ let phase='legacy';
 const legacyHtml='<!doctype html><html><head><link rel="icon" href="data:,"></head><body><span id="version">v0.3-dev</span><script>navigator.serviceWorker.register("./sw.js")</script></body></html>';
 const legacyWorker=`const CACHE='arrangement-lab-legacy-test';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','./src/core.js'])).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request))));`;
 const types={'.js':'text/javascript','.css':'text/css','.html':'text/html','.png':'image/png','.webmanifest':'application/manifest+json'};
+const distRoot=path.resolve('dist');
 const server=http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost'),p=url.pathname;
@@ -14,8 +15,12 @@ const server=http.createServer(async(req,res)=>{
   if(phase==='legacy'&&(p==='/arranger/'||p==='/arranger/index.html')){res.setHeader('Content-Type','text/html');return res.end(legacyHtml)}
   if(phase==='legacy'&&p==='/arranger/sw.js'){res.setHeader('Content-Type','text/javascript');return res.end(legacyWorker)}
   if(phase==='legacy'&&p==='/arranger/src/core.js'){res.setHeader('Content-Type','text/javascript');return res.end("export const ARRANGER_VERSION='v0.3-dev';")}
-  if(!p.startsWith('/arranger/')||p.includes('..')){res.writeHead(404);return res.end()}
-  const file=path.resolve('dist',p.slice(1)+(p.endsWith('/')?'index.html':''));res.setHeader('Content-Type',types[path.extname(file)]||'text/plain');res.setHeader('Cache-Control','no-store');res.end(await fs.readFile(file));
+  const relative=p.replace(/^\/+/, '')+(p.endsWith('/')?'index.html':'');
+  const file=path.resolve(distRoot,relative);
+  if(file!==distRoot&&!file.startsWith(`${distRoot}${path.sep}`)){res.writeHead(404);return res.end()}
+  res.setHeader('Content-Type',types[path.extname(file)]||'text/plain');
+  res.setHeader('Cache-Control','no-store');
+  res.end(await fs.readFile(file));
  }catch{res.writeHead(404);res.end()}
 });
 (async()=>{
@@ -27,8 +32,8 @@ const server=http.createServer(async(req,res)=>{
   assert.equal(await page.locator('#version').textContent(),'v0.3-dev');
   await page.evaluate(async()=>{localStorage.setItem('demo-composer-arranger-v0.3','old-data-kept');await caches.open('another-pwa-sentinel')});
   phase='current';
-  // The old cache still owns the normal URL. A fresh entry must not reuse its core module.
-  await page.goto(base+'?v=0.6');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.6-dev');
+  // The old cache owns `/arranger/`; use an uncached index entry to discover the new worker, then verify normal URL recovery below.
+  await page.goto(base+'index.html?v=0.9');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.9-dev');
   const buildWorkerUrl=await page.evaluate(async()=>{
    const deadline=Date.now()+30000;
    while(Date.now()<deadline){
@@ -40,12 +45,13 @@ const server=http.createServer(async(req,res)=>{
    throw new Error(`build worker did not activate: active=${r?.active?.scriptURL||'none'} waiting=${r?.waiting?.scriptURL||'none'} installing=${r?.installing?.scriptURL||'none'}`);
   });
   assert.ok(buildWorkerUrl.includes('?build='));
-  await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.6-dev');
+  await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.9-dev');
   assert.equal(await page.evaluate(()=>localStorage.getItem('demo-composer-arranger-v0.3')),'old-data-kept');
   assert.ok((await page.evaluate(()=>caches.keys())).includes('another-pwa-sentinel'));
-  await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.6-dev');
-  await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.6-dev');
+  await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.9-dev');
+  await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.9-dev');
   assert.equal(await page.locator('#beginner-guide').count(),1);
-  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.6 beginner flow -> normal URL -> offline; saved data and other caches preserved');
+  assert.equal(await page.locator('.song-data-trigger').textContent(),'📦 曲データ');
+  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.9 one-bar reharm -> normal URL -> offline; shared SongProject/menu modules, saved data and other caches preserved');
  }finally{await browser.close();await new Promise(r=>server.close(r))}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1});
