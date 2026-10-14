@@ -36,11 +36,12 @@ async function assertCommonMenu(page, width, nextText) {
   await panel.locator('[data-song-data-action="apps"]').click();
   const appsDialog = page.locator('[id$="-apps-dialog"]');
   await appsDialog.waitFor({ state: 'visible' });
-  for (const app of ['Music Project Home', '作曲シート', 'MIDI Analyzer', 'Demo Composer', 'Arrangement Lab']) {
-    const appLink = appsDialog.getByText(app, { exact: true });
+  for (const appId of ['home', 'sheet', 'analyzer', 'composer', 'arranger']) {
+    const appLink = appsDialog.locator(`[data-app-id="${appId}"]`);
     await appLink.scrollIntoViewIfNeeded();
     await appLink.waitFor({ state: 'visible' });
   }
+  assert.match(await appsDialog.locator('[data-app-id="analyzer"]').textContent(), /MIDI.*Analyzer/);
   await appsDialog.locator('.song-data-dialog-close').scrollIntoViewIfNeeded();
   await appsDialog.locator('.song-data-dialog-close').click();
 
