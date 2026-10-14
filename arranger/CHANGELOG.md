@@ -1,5 +1,26 @@
 # CHANGELOG
 
+Version: v0.11-dev
+更新日: 2026-10-14
+
+【追加】
+・「選択案を簡易試聴」を実際に押し、AudioContextへ発音イベントが1音以上予約されることを360 / 390 / 430px Mobile Chromiumで確認する回帰テストを追加
+・曲中の絶対tickを保持した1小節抜粋を、Arrangement Lab入力時だけ0基準へ補正するcompact sketch timeline変換を追加
+
+【変更】
+・コードだけのHarmony試聴をスマホスピーカーでも聞き取りやすい音域・波形・Gainへ調整
+・Bass単独試聴で元Bass Noteが無い場合は、現在コードのRootを一時ガイド音として鳴らす
+・PWA cacheをv0.11へ更新。SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4は変更しない
+
+【修正】
+・1小節コードが曲中の後ろのtick位置を持っているとSection 0〜1小節と重ならず、「選択案を簡易試聴」を押しても無音になる問題を修正
+・発音イベント0件でも再生中扱いになる問題を修正し、素材が本当に無い場合は理由を表示するよう変更
+・理論LabのBass単独試聴でBass素材0件の場合に無音再生になる既存不具合を修正
+
+【未対応】
+・Android実機スピーカーでの最終音量・タップ操作確認
+・Cubasis / Cubase実機でのリハモHarmony MIDI取込確認
+
 Version: v0.10-dev
 更新日: 2026-10-14
 
