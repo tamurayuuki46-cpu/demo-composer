@@ -50,7 +50,7 @@
   <section id="quick-flow-card" class="card">
     <h2>曲づくりの5段階</h2>
     <nav id="quick-flow" class="quick-flow" aria-label="基本の作曲フロー">
-      <a class="flow-step" href="../sheet-app/"><strong>⓪ 方向を決める</strong><small>作曲シート</small></a>
+      <a class="flow-step" href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html"><strong>⓪ 方向を決める</strong><small>作曲シート</small></a>
       <a class="flow-step flow-optional" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/"><strong>① 必要なら解析</strong><small>MIDI Analyzer・任意</small></a>
       <a class="flow-step" href="../"><strong>② 作曲</strong><small>Demo Composer</small></a>
       <a class="flow-step" href="../arranger/"><strong>③ 編曲</strong><small>Arrangement Lab</small></a>
@@ -70,7 +70,7 @@
   <section id="composition-sheet-card" class="card">
     <h2>⓪ 作曲シート</h2>
     <p>曲の場面・参考曲など、音を鳴らす前に決められることを短時間で整理します。</p>
-    <a href="../sheet-app/">作曲シート全集 v0.5 を開く</a>
+    <a href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html">作曲シート全集 v0.5 を開く</a>
     <p><small>入力内容は共通JSONとして保存し、Demo Composerへ引き継げます。</small></p>
   </section>
 
@@ -79,6 +79,8 @@
     <input id="project-file" type="file" accept="application/json,.json">
     <p id="message" aria-live="polite"></p>
   </section>
+
+  <section class="card" id="sheet-transfer-guide"><h2>シートから曲データを受け取る</h2><ol><li>非公開の作曲シートで「全シートのJSONを保存」</li><li>このHomeの「Song Projectを開く」で、そのJSONを選ぶ</li><li>「読み込んだ曲をDemo Composerへ」で渡し、内容を確認して反映</li></ol><p><small>サイトが異なるため、自動同期にはなりません。JSONで全シートの記入内容を引き継ぎます。シートの閲覧は本人のChatGPTアカウントのみです。</small></p><button id="open-demo-with-project" type="button" hidden>読み込んだ曲をDemo Composerへ</button><p id="sheet-transfer-status" role="status"></p></section>
 
   <section id="summary" class="card" hidden>
     <h2 id="title">My Song</h2>
@@ -95,7 +97,7 @@
     <p id="arrangement-status"></p>
   </section>
 
-  <section class="card" id="claude-link-card">
+  <details class="card" id="claude-link-card"><summary>以前のClaudeリンク（任意）</summary>
     <h2>Claude Artifact 作曲シート（旧リンク）</h2>
     <p>必要な場合だけ、Claude Artifact版の作曲シートを登録して開けます。</p>
     <label for="claude-link-input"><small>claude.ai のリンク</small></label>
@@ -112,7 +114,7 @@
     <p id="sheet-json-status" aria-live="polite"></p>
     <p><small>作曲シートで「Demo Composerへ渡すJSON」を出力し、ここで読み込むと同一端末のDemo Composerへ引き継げます。Chord / Melody等を自動生成しません。</small></p>
     <p><small>ArtifactリンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p>
-  </section>
+  </details>
 
   <section id="export-card" class="card" hidden>
     <h2>Backup / Recovery</h2>

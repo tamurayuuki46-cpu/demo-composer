@@ -22,7 +22,7 @@ assert.match(html, /NEXT ACTION/);
 assert.match(html, /id="workflow-list"/);
 assert.match(html, /id="next-action" class="primary"/);
 assert.match(html, /id="composition-sheet-card"/);
-assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート全集 v0\.5 を開く/);
+assert.ok(html.includes('href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html"'));
 assert.match(html, /id="claude-link-input"/);
 assert.match(html, /id="claude-link-open"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
 assert.match(html, /Song Project JSON・MIDI・公開コードには入れません/);
@@ -77,3 +77,8 @@ assert.equal(lineageLabel({ projectId: 'song-1' }), 'このProjectが起点');
 assert.equal(lineageLabel({ projectId: 'song-2', lineage: { rootProjectId: 'song-1', parentProjectId: 'song-1' } }), '親: song-1');
 
 console.log('Project Home mobile-first five-stage workflow + song data menu smoke test passed.');
+
+assert.match(html, /id="sheet-transfer-guide"/);
+assert.match(html, /id="open-demo-with-project"/);
+assert.match(html, /<details class="card" id="claude-link-card">/);
+assert.match(app, /queueDemoHandoff\(current\)/);

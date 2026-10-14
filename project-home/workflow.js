@@ -1,3 +1,4 @@
+import { PRIVATE_SHEET_URL } from './sheet-connection.js';
 export const WORKFLOW_STEPS = Object.freeze([
   { id: 'sheet', label: '⓪ 作曲シート', role: '方向を決める', required: true },
   { id: 'analysis', label: '① MIDI解析', role: '必要なら素材を理解する', required: false },
@@ -71,7 +72,7 @@ export function buildWorkflowState(project, { sheetLinked = false } = {}) {
 
   let nextAction;
   if (!sheetLinked) {
-    nextAction = { id: 'sheet', label: '今やること：作曲シートで方向を決める', href: '../sheet-app/' };
+    nextAction = { id: 'sheet', label: '今やること：作曲シートで方向を決める', href: PRIVATE_SHEET_URL };
   } else if (!compositionDone) {
     nextAction = { id: 'composition', label: '今やること：Demo Composerで1フレーズ作る', href: '../' };
   } else if (!arrangementDone) {
