@@ -6,18 +6,19 @@ const html = await readFile(new URL('../project-home/index.html', import.meta.ur
 const app = await readFile(new URL('../project-home/app.js', import.meta.url), 'utf8');
 const build = await readFile(new URL('./build-static.mjs', import.meta.url), 'utf8');
 
-assert.match(html, /id="composition-sheet-card"/);
-assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.1 を開く/);
 assert.match(html, /<h1>Music Project Home<\/h1>/);
+assert.match(html, /id="now-card"/);
+assert.match(html, /今やること：作曲シート/);
+assert.match(html, /href="#claude-link-card"[^>]*>作曲シートを開く \/ 登録する/);
+assert.doesNotMatch(html, /href="\.\.\/sheet-app\//, '公開mainから未公開sheet-appを参照してはいけません');
 assert.match(html, /id="quick-flow-card"/);
-assert.match(html, /id="quick-flow"/);
-assert.match(html, /<strong>1 決める<\/strong><small>作曲シート<\/small>/);
-assert.match(html, /<strong>2 作る<\/strong><small>Demo Composer<\/small>/);
-assert.match(html, /<strong>3 育てる<\/strong><small>Arrangement Lab<\/small>/);
-assert.match(html, /<strong>4 仕上げる<\/strong><small>Cubasis \/ Cubase<\/small>/);
-assert.match(html, /MIDI Analyzerで分析/);
-assert.match(html, /PC DAWは最終制作の必須工程/);
-assert.ok(html.indexOf('id="composition-sheet-card"') < html.indexOf('id="quick-flow-card"'), '作曲シート入口が一番上にありません');
+assert.match(html, /<strong>⓪ 方向を決める<\/strong><small>作曲シート<\/small>/);
+assert.match(html, /<strong>① 必要なら解析<\/strong><small>MIDI Analyzer・任意<\/small>/);
+assert.match(html, /<strong>② 作曲<\/strong><small>Demo Composer<\/small>/);
+assert.match(html, /<strong>③ 編曲<\/strong><small>Arrangement Lab<\/small>/);
+assert.match(html, /<strong>④ DAWへ<\/strong><small>Cubasis \/ Cubase<\/small>/);
+assert.match(html, /1小節のフレーズだけでも③の編曲を試せます/);
+assert.match(html, /id="claude-link-card"/);
 assert.match(html, /id="claude-link-input"/);
 assert.match(html, /id="claude-link-open"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
 assert.match(html, /Song Project JSON・MIDI・公開コードには入れません/);
@@ -32,4 +33,4 @@ assert.equal(
 );
 assert.equal(normalizeSheetLink('https://example.com/not-claude'), null);
 
-console.log('Project Home quick flow + Composition Sheet top link + Claude link smoke test passed.');
+console.log('Project Home 5-stage mobile-first flow + Claude sheet link smoke test passed.');
