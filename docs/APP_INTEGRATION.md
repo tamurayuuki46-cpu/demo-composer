@@ -6,7 +6,7 @@
 
 ## 現在の配置
 
-- 作曲シート: Claude Artifact / 外部シート。Demo Composerから端末保存リンクで開く
+- 作曲シート: Repository内の作曲シート全集 v0.4（31シート）を標準とする。Claude Artifactは旧参照として保持
 - Demo Composer: `demo-composer` repository root
 - Arrangement Lab: `demo-composer/arranger/`
 - MIDI Analyzer: separate `midi-analyzer` repository

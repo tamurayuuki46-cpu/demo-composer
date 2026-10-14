@@ -1,5 +1,14 @@
 # 作曲シート Version History
 
+## v0.4-dev — 2026-10-14
+- 原文31シート全文、検索、記入欄・チェック・メモ、複数曲の保存・復元
+- SongProject v1のcompatibilityに全シートの記入内容を保持
+- 原文: `claude/sheet-markdown-export` / `c43d248`
+- 復元点: `restore/develop-before-sheet-full-v0.4-20261014`
+- Branch: `feature/composition-sheet-full-v0.4`
+- 詳細: `CHANGELOG_v0.4.md`
+
+
 ## v0.3-dev — 2026-10-14
 - 画面右上に全アプリ共通の「📦 曲データ」を常設
 - 右上からSongProject v1の読込 / 保存 / Demo Composerへの受け渡しを実行可能化

@@ -46,6 +46,7 @@ async function assertCommonMenu(page, width, nextText) {
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="save"]').isDisabled(), true, 'Composition Sheet save must be disabled before required fields');
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="next"]').isDisabled(), true, 'Composition Sheet next must be disabled before required fields');
       await page.locator('.song-data-close').click();
+      if(await page.locator('#handoff-form').count()) await page.locator('#handoff-form').evaluate(node=>{node.open=true;});
       await page.locator('#scene').fill('夜の帰り道');
       await page.locator('#reference1').fill('Reference Song');
       await sheetMenu.trigger.click();

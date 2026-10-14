@@ -31,7 +31,7 @@ assert.match(script, /music-project-songproject-handoff-v1/, 'SongProject一時�
 assert.doesNotMatch(script, /demo-composer-project/, 'v0.3が旧交換形式を新規Exportしようとしています');
 assert.match(app, /@media\(min-width:620px\)/, 'スマホ優先の1カラム設計を確認できません');
 assert.match(app, /viewport-fit=cover/, 'モバイルviewport設定がありません');
-assert.match(latest, /composition_sheet_v0\.3\.html/, 'latest が v0.3 を参照していません');
+assert.match(latest, /composition_sheet_v0\.4\.html/, 'latest が v0.4 を参照していません');
 assert.match(entry, /latest\/composition_sheet_latest\.html/, 'sheet-app 入口が latest を参照していません');
 assert.match(previous, /作曲シート v0\.2/, '過去v0.2が保持されていません');
 

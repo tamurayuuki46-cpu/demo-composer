@@ -50,7 +50,7 @@
 
 ### Claude Artifact連携
 
-作曲シート本体の所有者はClaude Artifactとする。GitHub側へ作曲シート本体を複製・再実装しない。
+2026-10-14のユーザー指定により、GitHubの `docs/sheet/` 原文31シートを `sheet-app/versions/v0.4/` に全文収録し、Codexで編集できる作曲シート全集を正規の入口にする。原文Markdownと過去の版は保持する。Claude Artifactは旧参照として残す。
 
 GitHub側では以下だけを正本管理する。
 

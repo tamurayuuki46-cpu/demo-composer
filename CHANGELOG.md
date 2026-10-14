@@ -17,6 +17,11 @@
 
 # CHANGELOG
 
+## 2026-10-14 作曲シート全集 v0.4-dev
+- 原文31シートを全文収録。検索・記入・チェック・メモと曲別保存、SongProject v1での受け渡しに対応。
+- 詳細: `sheet-app/CHANGELOG_v0.4.md`。Demo Composer本体・Arrangement LabのVersionは変更しない。
+
+
 ## 2026-10-13 — main統合・公開後の整合性修正
 
 - Demo Composer v0.4-dev / Arrangement Lab v0.5-dev / SongProject v1はPR #177でmain統合済み。
