@@ -69,11 +69,21 @@ function ensureHandoffGuide() {
   guide.querySelector('[data-pick-handoff-file]')?.addEventListener('click', () => fileInput?.click());
 }
 
+function setHandoffBusy(busy) {
+  const button = document.querySelector('#arranger-handoff-guide [data-apply-handoff]');
+  if (!button) return;
+  button.disabled = busy;
+  button.textContent = busy ? '反映中…' : '受け取った曲を反映';
+}
+
 function markHandoffReflected(title) {
   const text = document.querySelector('#arranger-handoff-guide [data-handoff-guide-text]');
-  if (text) text.textContent = `「${title || 'Untitled Project'}」を反映しました。次は②A/B/Cを聴いてください。`;
+  if (text) text.textContent = `「${title || 'Untitled Project'}」を反映しました。A/B/Cの準備も完了しています。次は②で聴き比べてください。`;
   const button = document.querySelector('#arranger-handoff-guide [data-apply-handoff]');
-  if (button) button.disabled = true;
+  if (button) {
+    button.disabled = true;
+    button.textContent = '反映済み';
+  }
 }
 
 function dispatchOriginal(file) {
@@ -81,13 +91,52 @@ function dispatchOriginal(file) {
   fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-function replaceInputFile(file) {
+function waitForArrangementReady(expectedTitle, timeoutMs = 5000) {
+  const sourceSummary = document.querySelector('#source-summary');
+  const candidateTabs = document.querySelector('#candidate-tabs');
+  const preview = document.querySelector('#preview-btn');
+  if (!sourceSummary || !candidateTabs || !preview) {
+    return Promise.reject(new Error('Arrangement Labの読み込み画面を初期化できませんでした。ページを再読み込みしてください。'));
+  }
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+    };
+    const check = () => {
+      const summaryText = sourceSummary.textContent || '';
+      const titleReady = !expectedTitle || summaryText.includes(expectedTitle);
+      const candidatesReady = candidateTabs.querySelectorAll('.candidate-tab').length >= 3;
+      if (titleReady && candidatesReady && !preview.disabled) {
+        settled = true;
+        cleanup();
+        resolve();
+      }
+    };
+    const observer = new MutationObserver(check);
+    observer.observe(sourceSummary, { childList: true, subtree: true, characterData: true });
+    observer.observe(candidateTabs, { childList: true, subtree: true });
+    observer.observe(preview, { attributes: true, attributeFilter: ['disabled'] });
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error('曲データは受け取りましたが、A/B/Cの準備が完了しませんでした。もう一度「受け取った曲を反映」を押してください。'));
+    }, timeoutMs);
+  });
+}
+
+async function replaceInputFile(file, expectedTitle) {
   if (typeof DataTransfer !== 'function') throw new Error('このブラウザではSongProjectのファイル変換を利用できません。');
   const transfer = new DataTransfer();
   transfer.items.add(file);
   fileInput.files = transfer.files;
   PASSTHROUGH.add(file);
+  const ready = waitForArrangementReady(expectedTitle);
   fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+  await ready;
 }
 
 function isLegacyDemoProject(data) {
@@ -139,8 +188,8 @@ async function routeFile(file) {
     { type: 'application/json' }
   );
   exportSongButton.disabled = false;
-  replaceInputFile(converted);
-  flash(`共通SongProject v${currentSongProject.schemaVersion}「${currentSongProject.title}」をArrangement Labへ読み込みました。`);
+  await replaceInputFile(converted, currentSongProject.title);
+  flash(`共通SongProject v${currentSongProject.schemaVersion}「${currentSongProject.title}」をArrangement Labへ読み込み、A/B/Cを準備しました。`);
   markHandoffReflected(currentSongProject.title);
 }
 
@@ -150,6 +199,7 @@ async function applyPendingHandoff() {
     fileInput?.click();
     return;
   }
+  setHandoffBusy(true);
   try {
     const file = new File(
       [JSON.stringify(pending.songProject, null, 2)],
@@ -159,6 +209,7 @@ async function applyPendingHandoff() {
     await routeFile(file);
     clearPendingHandoff();
   } catch (error) {
+    setHandoffBusy(false);
     flash(error.message || '受け取ったSongProjectの反映に失敗しました。保存したJSONから読み込んでください。', true);
   }
 }

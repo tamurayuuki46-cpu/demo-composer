@@ -1,5 +1,26 @@
 # CHANGELOG
 
+Version: v0.10-dev
+更新日: 2026-10-14
+
+【追加】
+・1小節のコードだけをDemo Composerから渡す実handoffを360 / 390 / 430px Mobile Chromiumで回帰テスト
+・SongProject反映時にA/B/C候補の生成完了まで待つreadiness guardを追加
+
+【変更】
+・初心者ガイドに「1小節のコード / メロディだけでもOK」を明示
+・handoffボタンを「反映中…」→「反映済み」と状態表示し、A/B/C準備完了後だけ完了表示にする
+・PWA cacheをv0.10へ更新し、旧保存データと他PWA cacheを維持したまま更新
+・Arrangement Plan Schema 4 / SongProject v1 / Demo Project Schema 3は変更しない
+
+【修正】
+・コードだけ1小節の受け渡し直後にA/B/Cへ進むと、元Projectの読み込み完了前に操作できて赤エラーになる競合を修正
+・初心者モードの固定下部ナビが赤いエラー/成功トーストを覆い、内容が読めなかった問題を修正
+
+【未対応】
+・Android実機での試聴音量・タップ操作確認
+・Cubasis / Cubase実機でのリハモHarmony MIDI取込確認
+
 Version: v0.9-dev
 更新日: 2026-10-14
 

@@ -1,9 +1,9 @@
-const UI_VERSION = 'v0.9-dev';
+const UI_VERSION = 'v0.10-dev';
 const MODE_KEY = 'arrangement-lab-ui-mode-v0.6';
 const MODES = new Set(['beginner', 'explore']);
 
 const STEPS = [
-  { selector: '#step-import', label: '① 読み込む', next: '曲のJSONを開く（1小節だけでもOK）' },
+  { selector: '#step-import', label: '① 読み込む', next: '曲のJSONを開く（1小節のコード / メロディだけでもOK）' },
   { selector: '#step-direction', label: '② 聴く', next: 'A / B / Cを順番に聴く' },
   { selector: '#step-compare', label: '③ 選ぶ', next: '残したい案を1つ選ぶ' },
   { selector: '#step-section', label: '④ Section調整', next: 'リハモ「3案を提案」など、まず1つだけ試す' },
@@ -76,7 +76,7 @@ function guideMarkup() {
         <span>次にやること</span>
         <strong id="beginner-next-action">${escapeHtml(STEPS[0].next)}</strong>
       </div>
-      <p class="beginner-guide-note">1小節だけでも試せます。コードが無い1小節メロディには仮コードを付け、リハモ3案を比較できます。仮決めでOK。いつでも「前へ」で戻って直せます。</p>
+      <p class="beginner-guide-note">1小節だけでも試せます。コードだけならそのコードからA/B/Cとリハモ3案を作れます。コードが無い1小節メロディには仮コードを付けます。仮決めでOK。いつでも「前へ」で戻って直せます。</p>
     </section>`;
 }
 

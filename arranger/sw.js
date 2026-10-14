@@ -1,5 +1,5 @@
 const BUILD = new URL(self.location.href).searchParams.get('build') || 'local';
-const CACHE = `arrangement-lab-v0.9-dev-${BUILD}`;
+const CACHE = `arrangement-lab-v0.10-dev-${BUILD}`;
 const EXTERNAL_ASSETS = [
   '../src/shared/song-data-menu.js',
   '../src/shared/song-project.js',
