@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createEmptySongProject } from '../../src/shared/song-project.js';
-import { buildReharmSuggestions, normalizeSourceProject } from '../src/core.js';
+import { buildReharmSuggestions, buildThreeCandidates, normalizeSourceProject } from '../src/core.js';
+import { buildPreviewEvents } from '../src/preview.js';
 import { songProjectToArrangementSourceInput } from '../src/song-project-sync.js';
 
 const BAR = 1920;
@@ -48,6 +49,28 @@ const withChordInput = songProjectToArrangementSourceInput(withChord);
 assert.equal(withChordInput.chords.length, 1, '既存コードがある場合は仮コードで上書きしない');
 assert.equal(withChordInput.chords[0].root, 0);
 
+const offsetChord = createEmptySongProject({
+  projectId: 'offset-onebar-chord',
+  title: '途中位置の1小節コード',
+  now: '2026-10-14T00:00:00.000Z',
+});
+offsetChord.composition.sections.push({
+  id: 'offset-section', kind: 'verse', name: 'スケッチ', bars: 1, energy: 'mid', transition: 'keep',
+});
+offsetChord.composition.chords.push({
+  id: 'offset-c1', root: 7, quality: 'major', degree: 'V', startTick: BAR * 4, durationTick: BAR,
+});
+const offsetInput = songProjectToArrangementSourceInput(offsetChord);
+assert.equal(offsetInput.structure.sections.length, 1);
+assert.equal(offsetInput.structure.sections[0].bars, 1);
+assert.equal(offsetInput.chords[0].startTick, 0, '曲中の絶対tickを1小節スケッチ先頭へ補正する');
+assert.equal(offsetChord.composition.chords[0].startTick, BAR * 4, '元のSongProjectは変更しない');
+const offsetNormalized = normalizeSourceProject(offsetInput);
+const offsetCandidate = buildThreeCandidates(offsetNormalized, 'jpop-band')[1];
+const offsetPreview = buildPreviewEvents(offsetNormalized, offsetCandidate, 0);
+assert.ok(offsetPreview.events.length > 0, 'コードだけ1小節でも簡易試聴イベントを生成する');
+assert.ok(offsetPreview.events.every((event) => event.part === 'harmony'), 'コードだけではharmonyを鳴らす');
+
 const twoBarSketch = structuredClone(sketch);
 twoBarSketch.composition.melody.push({
   id: 'm2',
@@ -67,4 +90,4 @@ const emptyInput = songProjectToArrangementSourceInput(empty);
 assert.deepEqual(emptyInput.structure.sections, []);
 assert.deepEqual(emptyInput.chords, []);
 
-console.log('SongProject quick-sketch one-bar reharm adapter: OK');
+console.log('SongProject quick-sketch one-bar reharm + chord-only preview adapter: OK');
