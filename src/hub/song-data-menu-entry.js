@@ -1,4 +1,5 @@
 import { loadActiveProject } from '../storage/indexeddb-storage.js';
+import { downloadMidiBundle } from '../midi/midi-export.js';
 import {
   demoProjectToSongProject,
   mergeDemoChangesIntoSongProject,
@@ -58,11 +59,16 @@ function writeHandoff(songProject, targetApp, sourceApp = 'demo-composer') {
   }
 }
 
-async function getCurrentSongProject() {
+async function getCurrentDemoProject() {
   document.querySelector('#save-project')?.click();
   await delay(120);
   const project = await loadActiveProject();
   if (!project) throw new Error('現在の曲を取得できませんでした。先にProjectを作成してください。');
+  return project;
+}
+
+async function getCurrentSongProject() {
+  const project = await getCurrentDemoProject();
   const source = readSource(project.id);
   const songProject = source ? mergeDemoChangesIntoSongProject(source, project) : demoProjectToSongProject(project);
   writeSource(songProject);
@@ -121,11 +127,17 @@ controller = mountSongDataMenu({
     picker.click();
     return 'SongProject JSONを選んでください。';
   },
+  async onMidi() {
+    const project = await getCurrentDemoProject();
+    downloadMidiBundle(project);
+    controller.setCurrent(project.metadata?.title || 'Untitled Project');
+    return 'Draft / Chord / Melody / Bass / Drums のMIDIを保存しました。';
+  },
   async onSave() {
     const songProject = await getCurrentSongProject();
     downloadSongProject(songProject);
     controller.setCurrent(songProject.title);
-    return `「${songProject.title || 'Untitled Project'}」を保存しました。`;
+    return `「${songProject.title || 'Untitled Project'}」のJSONを保存しました。`;
   },
   async onNext() {
     const songProject = await getCurrentSongProject();

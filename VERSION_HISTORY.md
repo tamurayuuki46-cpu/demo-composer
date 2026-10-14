@@ -1,3 +1,20 @@
+## v0.9-dev — 公開版曲データ4操作
+更新日: 2026-10-14
+
+【追加】
+・公開Demo Composer右上「📦 曲データ」を、全アプリ遷移 / MIDI保存 / JSON保存 / 作曲シート成果物の4操作へ整理。
+・既存MIDI WriterとSongProject v1を再利用し、保存形式を変更せずに操作導線だけを追加。
+
+【公開範囲】
+・31枚の作曲シート本体は非公開Siteのまま。公開Pagesには本体を追加しない。
+
+【復元ポイント】
+・`restore/main-before-song-data-four-actions-public-20261014`
+
+【未対応】
+・Android / Cubasis / Cubase実機確認。
+・stable tag作成（実機確認後のみ）。
+
 ## v0.7-dev
 更新日: 2026-10-14
 
