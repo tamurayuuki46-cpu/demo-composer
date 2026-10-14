@@ -8,9 +8,11 @@ const BAR = 1920;
 async function installAudioProbe(page) {
   await page.addInitScript(() => {
     window.__previewStarts = 0;
+    window.__previewTypes = [];
     class FakeParam {
       constructor() { this.value = 0; }
       setValueAtTime(value) { this.value = value; }
+      linearRampToValueAtTime(value) { this.value = value; }
       exponentialRampToValueAtTime(value) { this.value = value; }
     }
     class FakeNode {
@@ -22,9 +24,26 @@ async function installAudioProbe(page) {
         super();
         this.type = 'sine';
         this.frequency = new FakeParam();
+        this.detune = new FakeParam();
         this.onended = null;
       }
-      start() { window.__previewStarts += 1; }
+      start() {
+        window.__previewStarts += 1;
+        window.__previewTypes.push(this.type);
+      }
+      stop() {
+        const done = this.onended;
+        this.onended = null;
+        if (done) queueMicrotask(done);
+      }
+    }
+    class FakeBufferSource extends FakeNode {
+      constructor() {
+        super();
+        this.buffer = null;
+        this.onended = null;
+      }
+      start() { window.__previewStarts += 1; window.__previewTypes.push('noise'); }
       stop() {
         const done = this.onended;
         this.onended = null;
@@ -36,6 +55,7 @@ async function installAudioProbe(page) {
         this.state = 'running';
         this.currentTime = 0;
         this.destination = {};
+        this.sampleRate = 48000;
       }
       resume() { this.state = 'running'; return Promise.resolve(); }
       close() { this.state = 'closed'; return Promise.resolve(); }
@@ -45,6 +65,19 @@ async function installAudioProbe(page) {
         node.threshold = new FakeParam(); node.knee = new FakeParam(); node.ratio = new FakeParam();
         return node;
       }
+      createBiquadFilter() {
+        const node = new FakeNode();
+        node.type = 'lowpass';
+        node.frequency = new FakeParam();
+        node.Q = new FakeParam();
+        node.gain = new FakeParam();
+        return node;
+      }
+      createBuffer(channels, length) {
+        const data = Array.from({ length: channels }, () => new Float32Array(length));
+        return { getChannelData(index) { return data[index]; } };
+      }
+      createBufferSource() { return new FakeBufferSource(); }
       createOscillator() { return new FakeOscillator(); }
     }
     window.AudioContext = FakeAudioContext;
@@ -186,7 +219,7 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
         await context.close();
       }
     }
-    console.log('Arrangement Lab section + reharm audition flows passed at 360/390/430px without auto-adopt');
+    console.log('Arrangement Lab section + reharm audition flows passed at 360/390/430px with rich audio probe and without auto-adopt');
   } finally {
     await browser.close();
   }
