@@ -9,25 +9,28 @@
     body{font-family:system-ui,sans-serif;margin:0;background:#f5f5f4;color:#111827}
     main{max-width:760px;margin:auto;padding:20px}
     .card{background:white;border:1px solid #d6d3d1;border-radius:16px;padding:18px;margin:14px 0}
+    .now-card{border:2px solid #111827}
+    .now-label{margin:0 0 8px;font-size:.8rem;font-weight:800;letter-spacing:.08em;color:#57534e}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
     .stat{background:#f5f5f4;border-radius:12px;padding:12px}
     .actions{display:grid;gap:10px}
     .actions.split{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
     a,button,.file{display:block;box-sizing:border-box;width:100%;min-height:48px;border-radius:12px;padding:13px 14px;border:1px solid #9ca3af;background:white;color:#111827;text-decoration:none;font:inherit;text-align:center;cursor:pointer}
-    .primary{background:#111827;color:white;border-color:#111827}
+    .primary{background:#111827;color:white;border-color:#111827;font-weight:800}
     .ok{color:#166534}.pending{color:#92400e}
     small{color:#57534e}
     input[type=file],input[type=url]{box-sizing:border-box;width:100%}
     input[type=url]{min-height:48px;border:1px solid #9ca3af;border-radius:12px;padding:12px 14px;font:inherit;margin:8px 0 10px}
-    .quick-flow{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:2px 0 6px;scroll-snap-type:x proximity}
-    .quick-flow .flow-step{width:auto;min-width:132px;flex:1 0 132px;display:grid;place-content:center;gap:4px;scroll-snap-align:start}
+    .quick-flow{display:grid;grid-template-columns:repeat(5,minmax(118px,1fr));gap:8px;overflow-x:auto;padding:2px 0 6px;scroll-snap-type:x proximity}
+    .quick-flow .flow-step{width:auto;min-width:118px;display:grid;place-content:center;gap:4px;scroll-snap-align:start}
     .quick-flow .flow-step small{display:block}
     .quick-flow .flow-end{box-sizing:border-box;border:1px solid #9ca3af;border-radius:12px;padding:13px 14px;text-align:center;background:#fafaf9}
-    .flow-arrow{align-self:center;color:#78716c;font-weight:800}
-    .optional-link{margin:10px 0 0;color:#57534e;font-size:.9rem}
-    .optional-link a{display:inline;width:auto;min-height:0;border:0;padding:0;background:transparent;text-decoration:underline;text-align:left}
+    .flow-optional{border-style:dashed!important;background:#fffbeb!important}
     [hidden]{display:none!important}
-    @media(max-width:520px){main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.flow-arrow{display:none}}
+    @media(max-width:520px){
+      main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}
+      .quick-flow{grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}.quick-flow .flow-step{min-width:0;min-height:58px;text-align:left;place-content:center start;padding-left:16px}
+    }
   </style>
 </head>
 <body>
@@ -35,29 +38,26 @@
   <header>
     <p>SONG PROJECT v1</p>
     <h1>Music Project Home</h1>
-    <p>作曲シートから各制作アプリへ進むための入口です。</p>
+    <p>迷ったら上から順番でOK。MIDI解析だけは必要な時だけ使います。</p>
   </header>
 
-  <section id="composition-sheet-card" class="card">
-    <h2>1. 作曲シート — 決める</h2>
-    <p>最初にここから開始します。必須は「どんな場面の曲か」と「参考曲1曲」の2項目だけです。</p>
-    <a class="primary" href="../sheet-app/">作曲シート v0.1 を開く</a>
-    <p><small>入力内容は共通JSONとして保存し、Demo Composerなどへ引き継げます。</small></p>
+  <section class="card now-card" id="now-card">
+    <p class="now-label">NEXT ACTION</p>
+    <h2>今やること：作曲シート</h2>
+    <p>まず曲の場面や参考曲など、音を鳴らす前に決められることを整理します。</p>
+    <a class="primary" href="#claude-link-card">作曲シートを開く / 登録する</a>
   </section>
 
   <section id="quick-flow-card" class="card">
-    <h2>使い方</h2>
+    <h2>曲づくりの5段階</h2>
     <nav id="quick-flow" class="quick-flow" aria-label="基本の作曲フロー">
-      <a class="flow-step" href="../sheet-app/"><strong>1 決める</strong><small>作曲シート</small></a>
-      <span class="flow-arrow" aria-hidden="true">→</span>
-      <a class="flow-step" href="../"><strong>2 作る</strong><small>Demo Composer</small></a>
-      <span class="flow-arrow" aria-hidden="true">→</span>
-      <a class="flow-step" href="../arranger/"><strong>3 育てる</strong><small>Arrangement Lab</small></a>
-      <span class="flow-arrow" aria-hidden="true">→</span>
-      <div class="flow-step flow-end"><strong>4 仕上げる</strong><small>Cubasis / Cubase</small></div>
+      <a class="flow-step" href="#claude-link-card"><strong>⓪ 方向を決める</strong><small>作曲シート</small></a>
+      <a class="flow-step flow-optional" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/"><strong>① 必要なら解析</strong><small>MIDI Analyzer・任意</small></a>
+      <a class="flow-step" href="../"><strong>② 作曲</strong><small>Demo Composer</small></a>
+      <a class="flow-step" href="../arranger/"><strong>③ 編曲</strong><small>Arrangement Lab</small></a>
+      <div class="flow-step flow-end"><strong>④ DAWへ</strong><small>Cubasis / Cubase</small></div>
     </nav>
-    <p class="optional-link">必要な時だけ：<a href="https://tamurayuuki46-cpu.github.io/midi-analyzer/">MIDI Analyzerで分析</a></p>
-    <p><small>PC DAWは最終制作の必須工程です。</small></p>
+    <p><small>① MIDI解析は飛ばしてかまいません。1小節のフレーズだけでも③の編曲を試せます。</small></p>
   </section>
 
   <section class="card">
@@ -81,13 +81,13 @@
   </section>
 
   <section class="card" id="claude-link-card">
-    <h2>Claude Artifact 作曲シート（旧リンク）</h2>
-    <p>必要な場合だけ、Claude Artifact版の作曲シートをこの端末に登録して開けます。</p>
+    <h2>⓪ 作曲シート（Claude Artifact）</h2>
+    <p>作曲シートのClaude Artifactリンクをこの端末に登録すると、ここから1タップで開けます。</p>
     <label for="claude-link-input"><small>claude.ai のリンク</small></label>
     <input id="claude-link-input" type="url" inputmode="url" autocomplete="off" placeholder="https://claude.ai/artifact/…">
     <div class="actions split">
       <button id="claude-link-save" type="button">この端末に保存</button>
-      <a id="claude-link-open" class="primary" target="_blank" rel="noopener noreferrer" hidden>Claude Artifactを開く</a>
+      <a id="claude-link-open" target="_blank" rel="noopener noreferrer" hidden>作曲シートを開く</a>
     </div>
     <button id="claude-link-clear" type="button" hidden>リンクを消す</button>
     <p id="claude-link-message" aria-live="polite"></p>
@@ -95,8 +95,8 @@
   </section>
 
   <section id="export-card" class="card" hidden>
-    <h2>Export</h2>
-    <button id="backup" class="primary">Project Backup (.json)</button>
+    <h2>Backup / Recovery</h2>
+    <button id="backup">Song Projectをバックアップ (.json)</button>
   </section>
 </main>
 <script type="module" src="./app.js"></script>

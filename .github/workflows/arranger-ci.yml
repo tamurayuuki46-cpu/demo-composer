@@ -37,6 +37,7 @@ jobs:
           node --check arranger/src/v05-ui.js
           node --check arranger/src/workflow-boundary-ui.js
           node --check arranger/src/beginner-flow.js
+          node --check arranger/src/song-project-sync.js
           for file in arranger/src/*lab*.js; do node --check "$file"; done
 
       - name: Arrangement Lab core regression
@@ -47,6 +48,7 @@ jobs:
           node arranger/tests/music-labs.test.mjs
           node arranger/tests/v05.test.mjs
           node arranger/tests/v05-workflow.test.mjs
+          node arranger/tests/song-project-quick-sketch.test.mjs
 
       - name: Static build includes Arrangement Lab
         run: |
@@ -61,6 +63,7 @@ jobs:
           test -f dist/arranger/src/v05-ui.js
           test -f dist/arranger/src/workflow-boundary-ui.js
           test -f dist/arranger/src/beginner-flow.js
+          test -f dist/arranger/src/song-project-sync.js
 
       - name: Mobile Chromium end-to-end
         run: |
