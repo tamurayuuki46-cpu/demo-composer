@@ -5,15 +5,18 @@ const appPath = 'sheet-app/versions/v0.3/composition_sheet_v0.3.html';
 const scriptPath = 'sheet-app/versions/v0.3/composition_sheet_v0.3.js';
 const previousPath = 'sheet-app/versions/v0.2/composition_sheet_v0.2.html';
 const latestPath = 'sheet-app/latest/composition_sheet_latest.html';
+const manifestPath = 'sheet-app/latest/manifest.json';
 const entryPath = 'sheet-app/index.html';
 
-const [app, script, previous, latest, entry] = await Promise.all([
+const [app, script, previous, latest, manifestText, entry] = await Promise.all([
   readFile(appPath, 'utf8'),
   readFile(scriptPath, 'utf8'),
   readFile(previousPath, 'utf8'),
   readFile(latestPath, 'utf8'),
+  readFile(manifestPath, 'utf8'),
   readFile(entryPath, 'utf8'),
 ]);
+const manifest = JSON.parse(manifestText);
 
 assert.match(app, /まずは、2項目だけ。/, '必須2項目の案内がありません');
 assert.match(app, /id="scene"/, '場面入力欄がありません');
@@ -31,8 +34,11 @@ assert.match(script, /music-project-songproject-handoff-v1/, 'SongProject一時�
 assert.doesNotMatch(script, /demo-composer-project/, 'v0.3が旧交換形式を新規Exportしようとしています');
 assert.match(app, /@media\(min-width:620px\)/, 'スマホ優先の1カラム設計を確認できません');
 assert.match(app, /viewport-fit=cover/, 'モバイルviewport設定がありません');
-assert.match(latest, /composition_sheet_v0\.8\.html/, 'latest が v0.8 を参照していません');
+assert.equal(manifest.kind, 'composition-sheet-latest', 'latest manifest kindが不正です');
+assert.equal(manifest.schemaVersion, 1, 'latest manifest schemaが不正です');
+assert.equal(manifest.version, 'v0.9-dev', 'latest manifestがv0.9-devではありません');
+assert.match(latest, /composition_sheet_v0\.9\.html/, 'latest redirectがmanifestの最新版v0.9を参照していません');
 assert.match(entry, /latest\/composition_sheet_latest\.html/, 'sheet-app 入口が latest を参照していません');
 assert.match(previous, /作曲シート v0\.2/, '過去v0.2が保持されていません');
 
-console.log('Composition Sheet legacy + latest v0.8 smoke test: OK');
+console.log('Composition Sheet legacy preservation + canonical latest v0.9 smoke test: OK');
