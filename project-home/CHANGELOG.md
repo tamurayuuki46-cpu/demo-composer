@@ -4,11 +4,13 @@
 更新日: 2026-10-15
 
 【変更】
-- Home内の作曲シートiframeは`sheet-app/latest/composition_sheet_latest.html?embed=1`を開くよう変更。
-- 作曲シートの最新版追従は維持しつつ、埋め込み表示専用モードを明示。
+- Home内の作曲シートiframeはcanonical `../sheet-app/?embed=1`を開くよう変更。
+- `sheet-app/index.html`→`latest/composition_sheet_latest.html`→最新版の各リダイレクトでqueryを保持し、Version固定せず埋め込み表示専用モードを渡す構成に変更。
+- 作曲シートの最新版追従を維持。
 
 【修正】
 - Home内の作曲シートに内側の「📦 曲データ」メニューが重複表示される問題を修正。
+- Home側の動的latest同期でも`embed=1`を失わないよう修正。
 - 作曲シートを開くたびに「かんたん入力」が初期表示されるv0.9.1へ接続。
 
 【互換性】
