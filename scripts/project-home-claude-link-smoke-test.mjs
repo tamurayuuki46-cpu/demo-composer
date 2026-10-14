@@ -7,6 +7,7 @@ import { buildWorkflowState, buildUndecidedItems, lineageLabel } from '../projec
 const html = await readFile(new URL('../project-home/index.html', import.meta.url), 'utf8');
 const app = await readFile(new URL('../project-home/app.js', import.meta.url), 'utf8');
 const build = await readFile(new URL('./build-static.mjs', import.meta.url), 'utf8');
+const songMidiUi = await readFile(new URL('../arranger/src/song-midi-ui.js', import.meta.url), 'utf8');
 
 assert.match(html, /id="workflow-card"/);
 assert.match(html, /<h2>今ここ<\/h2>/);
@@ -46,6 +47,8 @@ assert.match(app, /loadSheetLink, saveSheetLink/);
 assert.match(app, /song-data-menu-entry\.js/);
 assert.match(build, /stampModules\(`\$\{outputDir\}\/project-home`\)/);
 assert.match(build, /stampModules\(`\$\{outputDir\}\/sheet-app`\)/);
+assert.match(songMidiUi, /getSheetSongProject/);
+assert.match(songMidiUi, /lastSongMidiAt/);
 
 assert.equal(
   normalizeSheetLink('https://claude.ai/artifact/A7Fmc5gD8HwgyrqWt4RzfG#c753d41d-9227'),
@@ -89,7 +92,13 @@ assert.equal(workflow.nextAction.id, 'daw');
 assert.equal(workflow.currentStage.id, 'daw');
 assert.equal(workflow.undecidedItems[0].id, 'daw-export');
 
-arranged.export.lastDawHandoffAt = '2026-10-13T00:00:00.000Z';
+// Merely adopting an Arrangement Lab project is not proof that Song.mid was exported.
+arranged.compatibility = { arrangementLab: { arrangerProjectId: 'arranger-1' } };
+workflow = buildWorkflowState(arranged, { sheetLinked: true });
+assert.equal(workflow.nextAction.id, 'daw');
+assert.equal(workflow.currentStage.id, 'daw');
+
+arranged.export.lastSongMidiAt = '2026-10-15T00:00:00.000Z';
 workflow = buildWorkflowState(arranged, { sheetLinked: true });
 assert.equal(workflow.nextAction.id, 'complete');
 assert.equal(workflow.currentStage.id, 'complete');
