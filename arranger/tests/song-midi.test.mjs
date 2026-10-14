@@ -48,6 +48,49 @@ function readTrackBodies(bytes) {
   return bodies;
 }
 
+function readVlq(bytes, offset) {
+  let value = 0;
+  let cursor = offset;
+  for (let count = 0; count < 4; count += 1) {
+    const byte = bytes[cursor++];
+    assert.notEqual(byte, undefined, 'unexpected end of track while reading VLQ');
+    value = (value << 7) | (byte & 0x7f);
+    if ((byte & 0x80) === 0) return { value, next: cursor };
+  }
+  throw new Error('invalid VLQ longer than four bytes');
+}
+
+function parseTrackEvents(body) {
+  const events = [];
+  let offset = 0;
+  let tick = 0;
+  while (offset < body.length) {
+    const delta = readVlq(body, offset);
+    tick += delta.value;
+    offset = delta.next;
+    const status = body[offset++];
+    if (status === 0xff) {
+      const type = body[offset++];
+      const length = readVlq(body, offset);
+      offset = length.next;
+      const data = body.slice(offset, offset + length.value);
+      offset += length.value;
+      events.push({ kind: 'meta', type, tick, data });
+      if (type === 0x2f) break;
+      continue;
+    }
+    const kind = status & 0xf0;
+    if (kind === 0x80 || kind === 0x90) {
+      const pitch = body[offset++];
+      const velocity = body[offset++];
+      events.push({ kind: kind === 0x90 && velocity > 0 ? 'note-on' : 'note-off', status, channel: status & 0x0f, tick, pitch, velocity });
+      continue;
+    }
+    throw new Error(`unexpected MIDI status 0x${status.toString(16)} in generated Song.mid`);
+  }
+  return events;
+}
+
 function hasSequence(bytes, sequence) {
   return bytes.some((_, index) => sequence.every((value, i) => bytes[index + i] === value));
 }
@@ -60,10 +103,16 @@ function countSequence(bytes, sequence) {
   return count;
 }
 
+function assertNoteSpan(events, { pitch, channel, startTick, endTick, label }) {
+  assert.ok(events.some((event) => event.kind === 'note-on' && event.channel === channel && event.pitch === pitch && event.tick === startTick), `${label} Note On moved from tick ${startTick}`);
+  assert.ok(events.some((event) => event.kind === 'note-off' && event.channel === channel && event.pitch === pitch && event.tick === endTick), `${label} Note Off moved from tick ${endTick}`);
+}
+
 const midi = buildSongMidi(source, candidate);
 const bytes = [...midi];
 const binaryText = Buffer.from(midi).toString('utf8');
 const tracks = readTrackBodies(bytes);
+const trackEvents = tracks.map(parseTrackEvents);
 
 assert.equal(binaryText.slice(0, 4), 'MThd');
 assert.deepEqual(bytes.slice(4, 8), [0, 0, 0, 6]);
@@ -100,6 +149,12 @@ for (const [index, channel] of [0, 1, 3, 2, 9].entries()) {
   assert.ok(tracks[index].includes(0x80 | channel), `track ${index + 1} is missing Note Off for MIDI channel ${channel + 1}`);
 }
 
+// Preserve concrete note timing through MIDI serialization. These are the values a DAW must recover.
+assertNoteSpan(trackEvents[1], { label: 'Melody C4', pitch: 64, channel: 1, startTick: 0, endTick: 480 });
+assertNoteSpan(trackEvents[2], { label: 'Counter B4', pitch: 71, channel: 3, startTick: 480, endTick: 960 });
+assertNoteSpan(trackEvents[3], { label: 'Bass E2', pitch: 40, channel: 2, startTick: 0, endTick: 960 });
+assertNoteSpan(trackEvents[4], { label: 'Kick', pitch: 36, channel: 9, startTick: 0, endTick: 120 });
+
 assert.ok(midi.length > 100, 'Song.mid unexpectedly small');
 
-console.log('Arrangement Lab Song.mid DAW handoff test passed: SMF1, 5 tracks, PPQ480, BPM128, 4/4, markers, channels 1/2/4/3/10.');
+console.log('Arrangement Lab Song.mid DAW handoff test passed: SMF1, 5 tracks, PPQ480, BPM128, 4/4, markers, channels, and note timing.');
