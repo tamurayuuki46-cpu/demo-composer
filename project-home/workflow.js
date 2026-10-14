@@ -50,10 +50,11 @@ export function hasArrangement(project) {
 
 export function isDawReady(project) {
   if (!hasArrangement(project)) return false;
+  // An Arrangement Lab project ID only proves that an arrangement was adopted.
+  // DAW readiness requires an actual Song.mid export or an explicit DAW handoff record.
   return Boolean(
     project?.export?.lastSongMidiAt
-    || project?.export?.lastDawHandoffAt
-    || project?.compatibility?.arrangementLab?.arrangerProjectId,
+    || project?.export?.lastDawHandoffAt,
   );
 }
 
