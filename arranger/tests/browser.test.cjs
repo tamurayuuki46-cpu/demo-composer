@@ -43,9 +43,9 @@ const fixture = {
    await page.locator('[data-action=density]').first().selectOption('full');
    await page.locator('[data-action=toggle][data-role=bass]').first().uncheck();
    await page.locator('[data-action=reharm-show]').first().click();assert.equal(await page.locator('.reharm-option').count(),3);
-   await page.locator('[data-reharm=natural]').click();
+   await page.locator('[data-action=reharm-apply][data-reharm=natural]').click();
    await page.locator('[data-action=reharm-clear]').click();
-   await page.locator('[data-reharm=bold]').click();
+   await page.locator('[data-action=reharm-apply][data-reharm=bold]').click();
    assert.equal(await page.locator('.curve-row').count(),2);
    await page.click('#adopt-btn');
    const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.4')));

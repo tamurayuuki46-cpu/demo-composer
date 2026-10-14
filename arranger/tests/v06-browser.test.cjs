@@ -23,8 +23,8 @@ const fixture={
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
   await page.goto(base);
-  await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.11-dev');
-  assert.equal(await page.evaluate(()=>document.documentElement.dataset.arrangerUiVersion),'v0.11-dev');
+  await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.12-dev');
+  assert.equal(await page.evaluate(()=>document.documentElement.dataset.arrangerUiVersion),'v0.12-dev');
   assert.equal(await page.evaluate(()=>document.documentElement.dataset.arrangerMode),'beginner');
   assert.equal(await page.locator('#beginner-guide').count(),1);
   assert.equal(await page.locator('#beginner-bottom-nav').count(),1);
@@ -49,9 +49,10 @@ const fixture={
   assert.equal(await page.locator('[data-section-empty]').count(),0);
   assert.equal(await page.locator('[data-beginner-section-hint]').isVisible(),true);
 
-  // Beginner mode keeps the four basic Section controls visible and hides advanced paths.
+  // Beginner mode keeps the basic Section controls and direct audition visible while hiding advanced paths.
   assert.equal(await page.locator('.section-card').first().locator('[data-action=density]').isVisible(),true);
   assert.equal(await page.locator('.section-card').first().locator('[data-role=counter]').isVisible(),true);
+  assert.equal(await page.locator('.section-card').first().locator('[data-action=section-preview]').isVisible(),true);
   assert.equal(await page.locator('.section-card').first().locator('.reharm-block').first().isVisible(),true);
   assert.equal(await page.locator('.section-card').first().locator('.section-workshop').isHidden(),true);
   assert.equal(await page.locator('.section-card').first().locator('.v05-note-generator').isHidden(),true);
@@ -74,13 +75,13 @@ const fixture={
   await page.waitForFunction(()=>document.documentElement.dataset.arrangerMode==='beginner');
   assert.equal(await page.locator('.section-card').first().locator('.section-workshop').isHidden(),true);
   assert.equal(await page.locator('#v05-decision-panel .panel-title h2').textContent(),'判断の記録と復元');
-  assert.equal(await page.locator('#version').textContent(),'v0.11-dev');
+  assert.equal(await page.locator('#version').textContent(),'v0.12-dev');
 
   const navPosition=await page.locator('#beginner-bottom-nav').evaluate(el=>getComputedStyle(el).position);
   assert.equal(navPosition,'fixed');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'horizontal overflow');
   assert.deepEqual(errors,[]);
-  console.log('PASS v0.11 browser: current version guard, beginner default, audible one-bar chord/melody flow, ungated nav, Section controls, explore toggle, mobile fixed nav');
+  console.log('PASS v0.12 browser: current version guard, beginner default, Section audition control, explore toggle, mobile fixed nav');
   await context.close();
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
