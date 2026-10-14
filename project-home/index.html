@@ -76,7 +76,7 @@
 
   <section class="card">
     <h2>Song Projectを開く</h2>
-    <input id="project-file" type="file" accept="application/json,.json">
+    <input id="project-file" type="file" accept="application/json,text/plain,.json,.txt">
     <p id="message" aria-live="polite"></p>
   </section>
 
@@ -110,7 +110,7 @@
     <p id="claude-link-message" aria-live="polite"></p>
     <hr>
     <label for="sheet-json-file"><strong>Demo Composer引き継ぎJSON</strong></label>
-    <input id="sheet-json-file" type="file" accept="application/json,.json">
+    <input id="sheet-json-file" type="file" accept="application/json,text/plain,.json,.txt">
     <p id="sheet-json-status" aria-live="polite"></p>
     <p><small>作曲シートで「Demo Composerへ渡すJSON」を出力し、ここで読み込むと同一端末のDemo Composerへ引き継げます。Chord / Melody等を自動生成しません。</small></p>
     <p><small>ArtifactリンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p>
