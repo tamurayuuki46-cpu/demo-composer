@@ -14,6 +14,8 @@ import {
   lineageLabel,
 } from './workflow.js';
 
+const NOTES_STORAGE_PREFIX = 'demo-composer.project-home.notes.v1';
+
 let current = null;
 const file = document.querySelector('#project-file');
 const message = document.querySelector('#message');
@@ -21,8 +23,14 @@ const summary = document.querySelector('#summary');
 const exportCard = document.querySelector('#export-card');
 const workflowCard = document.querySelector('#workflow-card');
 const workflowList = document.querySelector('#workflow-list');
+const currentStage = document.querySelector('#current-stage');
+const undecidedList = document.querySelector('#undecided-list');
 const nextAction = document.querySelector('#next-action');
 const optionalAnalysis = document.querySelector('#optional-analysis');
+const todayDecisions = document.querySelector('#today-decisions');
+const nextSession = document.querySelector('#next-session');
+const sessionNotesSave = document.querySelector('#session-notes-save');
+const sessionNotesStatus = document.querySelector('#session-notes-status');
 const claudeInput = document.querySelector('#claude-link-input');
 const claudeOpen = document.querySelector('#claude-link-open');
 const claudeClear = document.querySelector('#claude-link-clear');
@@ -50,25 +58,61 @@ function workflowStatusLabel(statusValue) {
   })[statusValue] || statusValue;
 }
 
+function notesStorageKey() {
+  const identity = current?.projectId || current?.title || 'local-draft';
+  return `${NOTES_STORAGE_PREFIX}:${safeName(identity)}`;
+}
+
+function loadSessionNotes() {
+  let notes = {};
+  try {
+    notes = JSON.parse(localStorage.getItem(notesStorageKey()) || '{}');
+  } catch {
+    notes = {};
+  }
+  todayDecisions.value = notes.today || '';
+  nextSession.value = notes.next || '';
+  sessionNotesStatus.textContent = current
+    ? 'この曲のHomeメモをこの端末に保存します。Song Project本体は変更しません。'
+    : '曲データ未読込時は、この端末の仮メモとして保存します。';
+}
+
+function saveSessionNotes() {
+  try {
+    localStorage.setItem(notesStorageKey(), JSON.stringify({
+      today: todayDecisions.value.trim(),
+      next: nextSession.value.trim(),
+      updatedAt: new Date().toISOString(),
+    }));
+    sessionNotesStatus.textContent = '保存しました。Song Project本体は変更していません。';
+  } catch {
+    sessionNotesStatus.textContent = 'この端末にメモを保存できませんでした。';
+  }
+}
+
+function renderUndecided(items) {
+  undecidedList.replaceChildren();
+  if (!items.length) {
+    const item = document.createElement('li');
+    item.className = 'undecided-item done';
+    item.textContent = '主要な未決定はありません';
+    undecidedList.append(item);
+    return;
+  }
+  items.forEach((decision) => {
+    const item = document.createElement('li');
+    item.className = 'undecided-item';
+    item.textContent = decision.label;
+    undecidedList.append(item);
+  });
+}
+
 function renderWorkflow() {
   const sheetLink = loadSheetLink();
   const sheetHandoff = loadCompositionSheetHandoff();
   const sheetReady = Boolean(sheetHandoff || current?.compatibility?.compositionSheet?.fullWorkbook || current?.intent?.scene);
-  if (!current) {
-    workflowCard.hidden = false;
-    workflowList.innerHTML = `
-      <li class="workflow-step ${sheetReady ? 'done' : 'pending'}"><strong>⓪ 作曲シート</strong><span>${sheetHandoff ? '引き継ぎJSON保存済み' : sheetLink ? '旧Artifact登録済み' : '曲の方向性を決めます。'}</span></li>
-      <li class="workflow-step optional"><strong>① MIDI解析</strong><span>任意・必要な時だけ</span></li>
-      <li class="workflow-step pending"><strong>② 作曲</strong><span>Demo Composerで1フレーズから開始できます。</span></li>
-      <li class="workflow-step locked"><strong>③ 編曲</strong><span>1小節のフレーズだけでもArrangement Labを試せます。</span></li>
-      <li class="workflow-step locked"><strong>④ DAWへ</strong><span>Cubasis / Cubaseで仕上げます。</span></li>`;
-    nextAction.textContent = sheetReady ? '今やること：Demo Composerで1フレーズ作る' : '今やること：作曲シートで方向を決める';
-    nextAction.href = sheetReady ? '../' : PRIVATE_SHEET_URL;
-    optionalAnalysis.hidden = !sheetReady;
-    return;
-  }
-
   const workflow = buildWorkflowState(current, { sheetLinked: sheetReady });
+
   workflowList.replaceChildren(...workflow.steps.map((step) => {
     const item = document.createElement('li');
     item.className = `workflow-step ${step.status}`;
@@ -80,9 +124,13 @@ function renderWorkflow() {
     return item;
   }));
 
+  currentStage.textContent = workflow.currentStage.label;
+  renderUndecided(workflow.undecidedItems);
   nextAction.textContent = workflow.nextAction.label;
   nextAction.removeAttribute('href');
+  nextAction.removeAttribute('aria-disabled');
   if (workflow.nextAction.href) nextAction.href = workflow.nextAction.href;
+  else nextAction.setAttribute('aria-disabled', 'true');
 
   optionalAnalysis.hidden = !workflow.optionalAnalysisSuggested;
   workflowCard.hidden = false;
@@ -102,6 +150,7 @@ function show(p) {
   summary.hidden = false;
   exportCard.hidden = false;
   renderWorkflow();
+  loadSessionNotes();
 }
 
 function renderClaudeLink({ keepInput = false } = {}) {
@@ -132,6 +181,7 @@ file.addEventListener('change', async () => {
     exportCard.hidden = true;
     message.textContent = `読み込み失敗: ${error.message}`;
     renderWorkflow();
+    loadSessionNotes();
   }
 });
 
@@ -183,7 +233,10 @@ claudeClear.addEventListener('click', () => {
   renderClaudeLink();
 });
 
+sessionNotesSave?.addEventListener('click', saveSessionNotes);
+
 renderClaudeLink();
+loadSessionNotes();
 
 // Explicit transfer after the user opens a workbook JSON in this origin.
 document.querySelector('#open-demo-with-project').addEventListener('click', () => {
