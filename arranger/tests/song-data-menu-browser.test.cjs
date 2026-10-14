@@ -26,7 +26,9 @@ async function assertCommonMenu(page, width, nextText) {
   await panel.getByText('今の曲を保存', { exact: true }).waitFor();
   await panel.getByText(nextText, { exact: true }).waitFor();
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `menu overflow at ${width}px`);
-  await page.locator('.song-data-close').click();
+  await panel.locator('[data-song-data-action="sheet"]').click();
+  await page.locator('#composition-sheet-summary-dialog').waitFor({state:'visible'});
+  await page.locator('#composition-sheet-summary-dialog button').click();
   return { trigger, panel };
 }
 
@@ -43,7 +45,7 @@ async function assertCommonMenu(page, width, nextText) {
       await page.goto(sheetBase);
       const sheetMenu = await assertCommonMenu(page, width, 'Demo Composerへ進む');
       await sheetMenu.trigger.click();
-      assert.equal(await sheetMenu.panel.locator('[data-song-data-action="save"]').isDisabled(), true, 'Composition Sheet save must be disabled before required fields');
+      assert.equal(await sheetMenu.panel.locator('[data-song-data-action="save"]').isEnabled(), true, 'Workbook must allow saving partially filled sheets');
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="next"]').isDisabled(), true, 'Composition Sheet next must be disabled before required fields');
       await page.locator('.song-data-close').click();
       if(await page.locator('#handoff-form').count()) await page.locator('#handoff-form').evaluate(node=>{node.open=true;});

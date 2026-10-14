@@ -28,7 +28,7 @@ assert.doesNotMatch(homeWorkflow, /song-data-menu-entry\.js/, 'workflow.js must 
 assert.match(homeEntry, /次の工程へ進む/);
 assert.match(arrangerBoundary, /song-data-menu-entry\.js/);
 assert.match(arrangerEntry, /DAW書き出しへ進む/);
-assert.match(sheetLatest, /versions\/v0\.5\/composition_sheet_v0\.5\.html/);
+assert.match(sheetLatest, /versions\/v0\.6\/composition_sheet_v0\.6\.html/);
 assert.match(sheetHtml, /v0\.4-dev/);
 assert.match(sheetJs, /mountSongDataMenu/);
 assert.match(sheetJs, /Demo Composerへ進む/);

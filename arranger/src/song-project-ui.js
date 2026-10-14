@@ -273,3 +273,5 @@ function escapeHtml(value) {
 }
 
 ensureHandoffGuide();
+
+export function getSheetSongProject(){return currentSongProject;}

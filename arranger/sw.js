@@ -2,6 +2,7 @@ const BUILD = new URL(self.location.href).searchParams.get('build') || 'local';
 const CACHE = `arrangement-lab-v0.13-dev-${BUILD}`;
 const EXTERNAL_ASSETS = [
   '../src/shared/song-data-menu.js',
+  '../src/shared/composition-sheet-summary.js',
   '../src/shared/song-project.js',
   '../src/core/decision-design.js',
   '../src/core/sound-presets.js',

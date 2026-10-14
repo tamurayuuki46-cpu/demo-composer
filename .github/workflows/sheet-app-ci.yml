@@ -35,7 +35,9 @@ jobs:
         run: node scripts/song-project-sheet-roundtrip-smoke-test.mjs
 
       - name: Full workbook source and round-trip
-        run: node scripts/composition-sheet-full-smoke-test.mjs
+        run: |
+          node scripts/composition-sheet-full-smoke-test.mjs
+          node scripts/composition-sheet-summary-smoke-test.mjs
 
       - name: Static build
         run: npm run build
@@ -62,6 +64,7 @@ jobs:
           python3 -m http.server 8080 --directory dist > /tmp/sheet-server.log 2>&1 &
           node scripts/composition-sheet-full-browser.test.cjs
           node scripts/composition-sheet-tabs-browser.test.cjs
+          node scripts/composition-sheet-v06-browser.test.cjs
           node arranger/tests/song-data-menu-browser.test.cjs
 
       - name: Upload full workbook browser evidence

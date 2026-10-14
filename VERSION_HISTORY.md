@@ -180,3 +180,6 @@ Git運用を以下へ変更。
 - SongProject統合後: `backup/v0.4-dev_v0.5-dev_songproject-integrated`
 
 実機確認が終わるまでstable tagは作成しない。
+
+## 作曲シート v0.6-dev — 2026-10-14
+記入用を先頭へ。保存・Drive共有と各アプリ簡易表示。旧v0.1〜v0.5保持。stable未認定。
