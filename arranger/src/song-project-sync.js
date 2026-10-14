@@ -6,9 +6,47 @@ function clone(value) {
 
 function nowIso(now) { return now || new Date().toISOString(); }
 
+function maxMusicalEndTick(songProject) {
+  const composition = songProject?.composition || {};
+  const items = [
+    ...(composition.chords || []),
+    ...(composition.melody || []),
+    ...(composition.counterMelody || []),
+    ...(composition.bass || []),
+    ...(composition.drums || []),
+  ];
+  return items.reduce((max, item) => {
+    const start = Number(item?.startTick) || 0;
+    const duration = Math.max(1, Number(item?.durationTick) || 1);
+    return Math.max(max, start + duration);
+  }, 0);
+}
+
+export function ensureArrangementSections(songProject, demoProject) {
+  const next = clone(demoProject);
+  next.structure = next.structure && typeof next.structure === 'object' ? next.structure : { sections: [] };
+  if (Array.isArray(next.structure.sections) && next.structure.sections.length) return next;
+
+  const maxEndTick = maxMusicalEndTick(songProject);
+  if (maxEndTick <= 0) return next;
+
+  const ppq = Number(songProject?.basic?.ppq) || 480;
+  const ticksPerBar = Math.max(1, ppq * 4);
+  const bars = Math.max(1, Math.min(32, Math.ceil(maxEndTick / ticksPerBar)));
+  next.structure.sections = [{
+    id: 'quick-sketch-1',
+    kind: 'verse',
+    name: bars === 1 ? '1小節スケッチ' : 'スケッチ',
+    bars,
+    energy: 'mid',
+    transition: 'keep',
+  }];
+  return next;
+}
+
 export function songProjectToArrangementSourceInput(songProject) {
   validateSongProject(songProject);
-  return songProjectToDemoProject(songProject);
+  return ensureArrangementSections(songProject, songProjectToDemoProject(songProject));
 }
 
 function arrangementSummary(candidate) {
