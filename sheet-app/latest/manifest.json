@@ -1,10 +1,12 @@
 {
   "kind": "composition-sheet-latest",
   "schemaVersion": 1,
-  "version": "v0.9-dev",
+  "version": "v0.9.1-dev",
   "updatedAt": "2026-10-15",
-  "entry": "../versions/v0.9/composition_sheet_v0.9.html",
+  "entry": "../versions/v0.9.1/composition_sheet_v0.9.1.html",
   "canonical": "../",
   "beginnerMode": true,
+  "alwaysOpenBeginner": true,
+  "embeddedSongDataMenu": false,
   "songProjectSchemaVersion": 1
 }

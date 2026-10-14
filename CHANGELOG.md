@@ -1,3 +1,6 @@
+## 作曲シート v0.6-dev — 2026-10-14
+記入用を先頭へ、保存/Drive共有、曲データメニューの簡易版表示。詳細 sheet-app/CHANGELOG_v0.6.md。
+
 ## v0.5-dev
 更新日: 2026-10-13
 
@@ -16,6 +19,11 @@
 ・Cloud Browserはviewport変更APIがないためスマホ幅の直接確認は未実施（390pxはCIで確認）。
 
 # CHANGELOG
+
+## 2026-10-14 作曲シート全集 v0.4-dev
+- 原文31シートを全文収録。検索・記入・チェック・メモと曲別保存、SongProject v1での受け渡しに対応。
+- 詳細: `sheet-app/CHANGELOG_v0.4.md`。Demo Composer本体・Arrangement LabのVersionは変更しない。
+
 
 ## 2026-10-13 — main統合・公開後の整合性修正
 

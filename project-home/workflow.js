@@ -50,10 +50,11 @@ export function hasArrangement(project) {
 
 export function isDawReady(project) {
   if (!hasArrangement(project)) return false;
+  // An Arrangement Lab project ID only proves that an arrangement was adopted.
+  // DAW readiness requires an actual Song.mid export or an explicit DAW handoff record.
   return Boolean(
     project?.export?.lastSongMidiAt
-    || project?.export?.lastDawHandoffAt
-    || project?.compatibility?.arrangementLab?.arrangerProjectId,
+    || project?.export?.lastDawHandoffAt,
   );
 }
 
@@ -68,6 +69,7 @@ export function buildUndecidedItems(project, { sheetLinked = false, limit = 3 } 
   const arranged = hasArrangement(project);
   const dawReady = isDawReady(project);
 
+  // First show the decision that belongs to the stage the user is currently in.
   if (!sheetLinked) pushUnique(items, { id: 'direction', label: '曲の方向性' });
   else if (!composed) {
     if (!composition.chords?.length) pushUnique(items, { id: 'chords', label: 'コード進行' });
@@ -78,6 +80,7 @@ export function buildUndecidedItems(project, { sheetLinked = false, limit = 3 } 
     pushUnique(items, { id: 'daw-export', label: 'DAWへ渡すデータ' });
   }
 
+  // Then surface important unfinished composition decisions without blocking forward progress.
   if (!composition.chords?.length) pushUnique(items, { id: 'chords', label: 'コード進行' });
   if (!composition.melody?.length) pushUnique(items, { id: 'melody', label: '主旋律' });
 

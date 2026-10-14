@@ -1,0 +1,6 @@
+@import url("../v0.9/composition_sheet_v0.9.css");
+
+/* Home内の埋め込みでは、外側の曲データメニューだけを使う。 */
+html[data-sheet-embed="1"] #composition-sheet-full-menu {
+  display: none !important;
+}

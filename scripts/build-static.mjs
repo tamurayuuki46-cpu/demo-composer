@@ -29,6 +29,7 @@ const htmlPath = `${outputDir}/index.html`;
 const html = await readFile(htmlPath, 'utf8');
 await writeFile(htmlPath, html.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
   (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
+
 async function stampModules(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = `${directory}/${entry.name}`;
@@ -41,16 +42,50 @@ async function stampModules(directory) {
     }
   }
 }
+
 await stampModules(`${outputDir}/src`);
+
 const arrangerHtmlPath = `${outputDir}/arranger/index.html`;
 const arrangerHtml = await readFile(arrangerHtmlPath, 'utf8');
 await writeFile(arrangerHtmlPath, arrangerHtml.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
   (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
 await stampModules(`${outputDir}/arranger/src`);
+
 const projectHomeHtmlPath = `${outputDir}/project-home/index.html`;
 const projectHomeHtml = await readFile(projectHomeHtmlPath, 'utf8');
 await writeFile(projectHomeHtmlPath, projectHomeHtml.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
   (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
 await stampModules(`${outputDir}/project-home`);
 await stampModules(`${outputDir}/sheet-app`);
-console.log('Built Demo Composer static site into dist/');
+
+async function collectPrecacheUrls(directory, urlPrefix) {
+  const urls = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const filePath = `${directory}/${entry.name}`;
+    const url = `${urlPrefix}/${entry.name}`;
+    if (entry.isDirectory()) urls.push(...await collectPrecacheUrls(filePath, url));
+    else if (entry.name !== 'service-worker.js' && entry.name !== 'build.json') {
+      urls.push(/\.(?:js|css)$/.test(url) ? stamp(url) : url);
+    }
+  }
+  return urls;
+}
+
+// Demo Composer本体・Project Home・作曲シートをオフライン用に事前Cacheする。
+// Arrangement Labは独自Service Workerを持つため、root workerでは二重管理しない。
+const precacheUrls = Array.from(new Set([
+  './',
+  './index.html',
+  ...await collectPrecacheUrls(`${outputDir}/src`, './src'),
+  ...await collectPrecacheUrls(`${outputDir}/public`, './public'),
+  ...await collectPrecacheUrls(`${outputDir}/project-home`, './project-home'),
+  ...await collectPrecacheUrls(`${outputDir}/sheet-app`, './sheet-app'),
+]));
+
+const serviceWorkerSource = await readFile('service-worker.js', 'utf8');
+const serviceWorker = serviceWorkerSource
+  .replace('const CACHE_VERSION = "dev";', `const CACHE_VERSION = ${JSON.stringify(commit)};`)
+  .replace(/const PRECACHE_URLS = \[[\s\S]*?\];/, `const PRECACHE_URLS = ${JSON.stringify(precacheUrls, null, 2)};`);
+await writeFile(`${outputDir}/service-worker.js`, serviceWorker);
+
+console.log(`Built Demo Composer static site into dist/ with ${precacheUrls.length} PWA precache entries`);

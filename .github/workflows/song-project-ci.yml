@@ -16,6 +16,7 @@ on:
       - 'project-home/**'
       - 'docs/JSON_HANDOFF_GUIDE.md'
       - 'scripts/song-project-smoke-test.mjs'
+      - 'scripts/song-project-cross-app-boundary-smoke-test.mjs'
       - 'scripts/json-handoff-guide-smoke-test.mjs'
       - 'scripts/project-home-claude-link-smoke-test.mjs'
       - '.github/workflows/song-project-ci.yml'
@@ -45,6 +46,9 @@ jobs:
 
       - name: SongProject round-trip smoke test
         run: node scripts/song-project-smoke-test.mjs
+
+      - name: Cross-app ownership boundary smoke test
+        run: node scripts/song-project-cross-app-boundary-smoke-test.mjs
 
       - name: JSON handoff guide smoke test
         run: node scripts/json-handoff-guide-smoke-test.mjs

@@ -1,6 +1,8 @@
 import { BUILD_ID, BUILD_TIME } from "./build-info.js";
+import { activateWaitingServiceWorker } from "./pwa-service-worker.js";
 
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
+export const DEMO_CACHE_PREFIX = "demo-composer-shell-";
 let latestSeen = null;
 
 function jst(iso) {
@@ -25,6 +27,39 @@ async function fetchRemoteBuild() {
   return response.json();
 }
 
+export async function clearDemoComposerShellCaches() {
+  if (typeof caches === "undefined") return;
+  const keys = await caches.keys();
+  await Promise.all(
+    keys
+      .filter((key) => key.startsWith(DEMO_CACHE_PREFIX))
+      .map((key) => caches.delete(key)),
+  );
+}
+
+async function applyUpdate() {
+  let reloading = false;
+  const reloadOnce = () => {
+    if (reloading) return;
+    reloading = true;
+    location.reload();
+  };
+
+  if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("controllerchange", reloadOnce, { once: true });
+    const activated = await activateWaitingServiceWorker();
+    if (activated) {
+      setTimeout(reloadOnce, 1500);
+      return;
+    }
+  }
+
+  try {
+    await clearDemoComposerShellCaches();
+  } catch { /* Cache APIが使えなくても再読み込みはできる */ }
+  reloadOnce();
+}
+
 function showBanner(remote) {
   let banner = document.querySelector("#update-banner");
   if (!banner) {
@@ -37,12 +72,7 @@ function showBanner(remote) {
     <span>🔄 新しい版があります（${remote.id}）</span>
     <button type="button" id="update-apply">更新する</button>
     <button type="button" id="update-later" aria-label="あとで">×</button>`;
-  banner.querySelector("#update-apply").addEventListener("click", async () => {
-    try {
-      if (window.caches) await Promise.all((await caches.keys()).map((key) => caches.delete(key)));
-    } catch { /* 無くても再読み込みはできる */ }
-    location.reload();
-  });
+  banner.querySelector("#update-apply").addEventListener("click", applyUpdate);
   banner.querySelector("#update-later").addEventListener("click", () => banner.remove());
 }
 
@@ -58,8 +88,12 @@ export async function checkForUpdate({ manual = false } = {}) {
   try {
     const remote = await fetchRemoteBuild();
     latestSeen = remote;
-    if (isNewerBuild(BUILD_ID, remote.id)) showBanner(remote);
-    else if (manual) toast(BUILD_ID === "dev" ? "開発版です" : "最新の版です");
+    if (isNewerBuild(BUILD_ID, remote.id)) {
+      showBanner(remote);
+      if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistration("./").then((registration) => registration?.update()).catch(() => {});
+      }
+    } else if (manual) toast(BUILD_ID === "dev" ? "開発版です" : "最新の版です");
   } catch {
     if (manual) toast("更新を確認できませんでした（通信を確認）");
   }

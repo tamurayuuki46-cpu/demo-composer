@@ -1,6 +1,11 @@
-import { queueDemoHandoff } from './sheet-connection.js';
+import { PRIVATE_SHEET_URL, queueDemoHandoff } from './sheet-connection.js';
 import './song-data-menu-entry.js';
 import { loadSheetLink, saveSheetLink } from '../src/hub/sheet-link.js';
+import {
+  loadCompositionSheetHandoff,
+  parseCompositionSheetHandoffJson,
+  saveCompositionSheetHandoff,
+} from '../src/hub/composition-sheet-handoff.js';
 import {
   buildWorkflowState,
   hasAnalysis,
@@ -30,6 +35,8 @@ const claudeInput = document.querySelector('#claude-link-input');
 const claudeOpen = document.querySelector('#claude-link-open');
 const claudeClear = document.querySelector('#claude-link-clear');
 const claudeMessage = document.querySelector('#claude-link-message');
+const sheetJsonFile = document.querySelector('#sheet-json-file');
+const sheetJsonStatus = document.querySelector('#sheet-json-status');
 
 function status(id, label, done) {
   const el = document.querySelector(id);
@@ -101,7 +108,9 @@ function renderUndecided(items) {
 }
 
 function renderWorkflow() {
-  const sheetReady = Boolean(current?.compatibility?.compositionSheet?.fullWorkbook || current?.intent?.scene);
+  const sheetLink = loadSheetLink();
+  const sheetHandoff = loadCompositionSheetHandoff();
+  const sheetReady = Boolean(sheetHandoff || current?.compatibility?.compositionSheet?.fullWorkbook || current?.intent?.scene);
   const workflow = buildWorkflowState(current, { sheetLinked: sheetReady });
 
   workflowList.replaceChildren(...workflow.steps.map((step) => {
@@ -151,6 +160,8 @@ function renderClaudeLink({ keepInput = false } = {}) {
   claudeClear.hidden = !link;
   if (link) claudeOpen.href = link;
   else claudeOpen.removeAttribute('href');
+  const handoff = loadCompositionSheetHandoff();
+  if (handoff) sheetJsonStatus.textContent = `引き継ぎJSON保存済み: ${handoff.title || 'Untitled'}。Demo Composerで初期値を確認できます。`;
   renderWorkflow();
 }
 
@@ -171,6 +182,21 @@ file.addEventListener('change', async () => {
     message.textContent = `読み込み失敗: ${error.message}`;
     renderWorkflow();
     loadSessionNotes();
+  }
+});
+
+sheetJsonFile?.addEventListener('change', async () => {
+  const selected = sheetJsonFile.files?.[0];
+  if (!selected) return;
+  try {
+    const handoff = parseCompositionSheetHandoffJson(await selected.text());
+    saveCompositionSheetHandoff(handoff);
+    sheetJsonStatus.textContent = `「${handoff.title || 'Untitled'}」の作曲シート引き継ぎJSONをこの端末に保存しました。`;
+    renderWorkflow();
+  } catch (error) {
+    sheetJsonStatus.textContent = `作曲シートJSONを読み込めませんでした: ${error.message}`;
+  } finally {
+    sheetJsonFile.value = '';
   }
 });
 
@@ -212,7 +238,7 @@ sessionNotesSave?.addEventListener('click', saveSessionNotes);
 renderClaudeLink();
 loadSessionNotes();
 
-// Explicit transfer after the user opens a Song Project JSON in this origin.
+// Explicit transfer after the user opens a workbook JSON in this origin.
 document.querySelector('#open-demo-with-project').addEventListener('click', () => {
   if (!current) return;
   try { queueDemoHandoff(current); window.location.href = new URL('../?handoff=project-home', window.location.href).href; }

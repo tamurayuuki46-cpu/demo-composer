@@ -1,6 +1,32 @@
 # Music Project Home CHANGELOG
 
-Version: v0.17-dev
+## Version: v0.18-dev
+更新日: 2026-10-15
+
+【変更】
+- Home内の作曲シートiframeはcanonical `../sheet-app/?embed=1`を開くよう変更。
+- `sheet-app/index.html`→`latest/composition_sheet_latest.html`→最新版の各リダイレクトでqueryを保持し、Version固定せず埋め込み表示専用モードを渡す構成に変更。
+- 作曲シートの最新版追従を維持。
+
+【修正】
+- Home内の作曲シートに内側の「📦 曲データ」メニューが重複表示される問題を修正。
+- Home側の動的latest同期でも`embed=1`を失わないよう修正。
+- 作曲シートを開くたびに「かんたん入力」が初期表示されるv0.9.1へ接続。
+
+【互換性】
+- Home上部の「📦 曲データ」メニューは維持。
+- SongProject v1、既存のHomeメモ、JSON読込 / Backup、旧Claudeリンクを変更しない。
+
+【復元ポイント】
+- `backup/sheet-home-before-inner-songdata-beginner-fix-20261015`
+
+【未対応】
+- Android実機での縦画面最終確認。
+- stable tag（実機確認後のみ）。
+
+---
+
+## Version: v0.17-dev
 更新日: 2026-10-15
 
 【追加】

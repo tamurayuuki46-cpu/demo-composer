@@ -21,8 +21,16 @@ jobs:
       - name: JavaScript syntax check
         run: npm run test:syntax
 
-      - name: Public song data menu smoke test
-        run: node scripts/song-data-menu-public-smoke-test.mjs
+      - name: AI monitoring smoke test
+        run: npm run test:ai-monitoring
+
+      - name: Published assets and song data menu regression
+        run: |
+          node scripts/reconciliation-preservation-smoke-test.mjs
+          node scripts/song-data-menu-public-smoke-test.mjs
+
+      - name: Composition Sheet v0.3 syntax check
+        run: node --check sheet-app/versions/v0.3/composition_sheet_v0.3.js
 
       - name: Beginner guided flow smoke test
         run: node scripts/beginner-flow-smoke-test.mjs
@@ -155,6 +163,21 @@ jobs:
 
       - name: Sheet link smoke test
         run: npm run test:sheet-link
+
+      - name: Composition sheet handoff smoke test
+        run: npm run test:sheet-handoff
+
+      - name: Vocal and lyrics workflow smoke test
+        run: npm run test:vocal-workflow
+
+      - name: Music Project Home workflow smoke test
+        run: npm run test:project-home
+
+      - name: SongProject ownership / lineage / fork smoke test
+        run: npm run test:song-project
+
+      - name: Shared song data menu smoke test
+        run: npm run test:song-data-menu
 
       - name: Update notice smoke test
         run: npm run test:update-notice
