@@ -83,12 +83,17 @@ jobs:
           npx playwright install --with-deps chromium
           python3 -m http.server 8080 --directory dist > /tmp/sheet-server.log 2>&1 &
 
-      - name: Preserved workbook browser regressions
-        run: |
-          node scripts/composition-sheet-full-browser.test.cjs
-          node scripts/composition-sheet-tabs-browser.test.cjs
-          node scripts/composition-sheet-v06-browser.test.cjs
-          node scripts/composition-sheet-v08-browser.test.cjs
+      - name: Full workbook v0.4 browser regression
+        run: node scripts/composition-sheet-full-browser.test.cjs
+
+      - name: Sheet tabs browser regression
+        run: node scripts/composition-sheet-tabs-browser.test.cjs
+
+      - name: v0.6 browser regression
+        run: node scripts/composition-sheet-v06-browser.test.cjs
+
+      - name: v0.8 browser regression
+        run: node scripts/composition-sheet-v08-browser.test.cjs
 
       - name: v0.9 browser regression
         run: node scripts/composition-sheet-v09-browser.test.cjs
