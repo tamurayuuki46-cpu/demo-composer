@@ -76,14 +76,14 @@ composed.composition.melody.push({ id: 'm1' });
 workflow = buildWorkflowState(composed, { sheetLinked: true });
 assert.equal(workflow.nextAction.id, 'arrangement');
 assert.equal(workflow.currentStage.id, 'arrangement');
-assert.deepEqual(workflow.undecidedItems.map((item) => item.id), ['chords', 'sections', 'counter']);
+assert.deepEqual(workflow.undecidedItems.map((item) => item.id), ['arrangement', 'chords', 'sections']);
 
 const arranged = structuredClone(composed);
 arranged.arrangement.selectedAlternatives = { id: 'B' };
 workflow = buildWorkflowState(arranged, { sheetLinked: true });
 assert.equal(workflow.nextAction.id, 'daw');
 assert.equal(workflow.currentStage.id, 'daw');
-assert.ok(workflow.undecidedItems.some((item) => item.id === 'daw-export'));
+assert.equal(workflow.undecidedItems[0].id, 'daw-export');
 
 arranged.export.lastDawHandoffAt = '2026-10-13T00:00:00.000Z';
 workflow = buildWorkflowState(arranged, { sheetLinked: true });
