@@ -15,6 +15,7 @@ let mode = readMode();
 let currentStep = 0;
 let scrollQueued = false;
 let mutationQueued = false;
+let versionObserver = null;
 
 function readMode() {
   try {
@@ -46,6 +47,16 @@ function enforceVersion() {
   const version = document.querySelector('#version');
   setText(version, UI_VERSION);
   document.documentElement.dataset.arrangerUiVersion = UI_VERSION;
+}
+
+function guardVersion() {
+  const version = document.querySelector('#version');
+  if (!version || versionObserver) return;
+  versionObserver = new MutationObserver(() => {
+    if (version.textContent !== UI_VERSION) enforceVersion();
+  });
+  versionObserver.observe(version, { childList: true, characterData: true, subtree: true });
+  enforceVersion();
 }
 
 function guideMarkup() {
@@ -261,7 +272,7 @@ function queueDynamicRefresh() {
 
 function init() {
   injectGuide();
-  enforceVersion();
+  guardVersion();
   setMode(mode, { persist: false });
   ensureSectionModeButton();
   ensureSectionEmptyState();
