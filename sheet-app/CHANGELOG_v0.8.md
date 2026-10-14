@@ -18,7 +18,9 @@ Version: v0.8-dev
 - v0.7のThe Cardigans / The Weekndベース参考アイデアをv0.8でも維持。
 
 【修正】
-- なし。
+- 旧CIがlatestをv0.6固定で期待していたため、最新版v0.8を検証するよう更新。
+- v0.7で追記済みのベース資料をv0.4原文と完全一致で比較していた回帰テストを、原文保持＋追記保持を確認する検証へ修正。
+- Chromium回帰で折りたたみ状態のDemo Composer受け渡し欄へ入力しようとしていたテスト操作順を修正。
 
 【互換性】
 - SongProject `schemaVersion: 1`を維持。
