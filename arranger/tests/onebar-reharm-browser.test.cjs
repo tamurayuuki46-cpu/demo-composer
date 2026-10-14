@@ -52,6 +52,12 @@ async function installAudioProbe(page) {
   });
 }
 
+async function waitForNewPreview(page, before, label) {
+  await page.waitForFunction((previous) => window.__previewStarts > previous, before);
+  assert.ok(await page.evaluate(() => window.__previewStarts), label);
+  assert.equal(await page.locator('#stop-btn').isEnabled(), true, `${label}: stop enabled`);
+}
+
 async function assertCandidatesAndReharm(page, width, expectedHeading) {
   await page.getByRole('heading', { name: expectedHeading, exact: true }).waitFor();
   await page.waitForFunction(() => {
@@ -67,25 +73,38 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
   assert.equal(await page.locator('.candidate-tab').count(), 3, `A/B/C candidates at ${width}px`);
   assert.equal(await page.locator('#preview-btn').isEnabled(), true, `preview enabled at ${width}px`);
 
+  let before = await page.evaluate(() => window.__previewStarts);
   await page.locator('#preview-btn').click();
-  await page.waitForFunction(() => window.__previewStarts > 0);
-  assert.ok(await page.evaluate(() => window.__previewStarts), `preview scheduled audible notes at ${width}px`);
-  assert.equal(await page.locator('#stop-btn').isEnabled(), true, `stop enabled during preview at ${width}px`);
+  await waitForNewPreview(page, before, `whole candidate preview at ${width}px`);
   await page.locator('#stop-btn').click();
 
   const errorToast = page.locator('#message.is-error');
   assert.equal(await errorToast.isVisible().catch(() => false), false, `no red error toast at ${width}px`);
 
   const section = page.locator('.section-card').first();
+  assert.equal(await section.locator('[data-action="section-preview"]').count(), 1, `section preview control at ${width}px`);
+  before = await page.evaluate(() => window.__previewStarts);
+  await section.locator('[data-action="section-preview"]').click();
+  await waitForNewPreview(page, before, `section-only preview at ${width}px`);
+  await page.locator('#stop-btn').click();
+
   const reharmButton = section.locator('button[data-action="reharm-show"]');
   await reharmButton.click();
   await section.locator('.reharm-option').first().waitFor();
   assert.equal(await section.locator('.reharm-option').count(), 3, `reharm choices at ${width}px`);
 
-  const labels = await section.locator('.reharm-option strong').allTextContents();
+  const labels = await section.locator('.reharm-option > strong').allTextContents();
   assert.deepEqual(labels, ['自然', '色付け', '大胆']);
+  assert.equal(await section.locator('[data-action="reharm-preview"]').count(), 3, `reharm preview buttons at ${width}px`);
+  assert.equal(await section.locator('[data-action="reharm-apply"]').count(), 3, `reharm apply buttons at ${width}px`);
 
-  await section.locator('.reharm-option').first().click();
+  before = await page.evaluate(() => window.__previewStarts);
+  await section.locator('[data-action="reharm-preview"]').first().click();
+  await waitForNewPreview(page, before, `natural reharm preview at ${width}px`);
+  assert.equal(await page.getByText('採用: 自然', { exact: true }).count(), 0, `preview must not auto-adopt at ${width}px`);
+  await page.locator('#stop-btn').click();
+
+  await section.locator('[data-action="reharm-apply"]').first().click();
   await page.getByText('採用: 自然', { exact: true }).waitFor();
   assert.equal(await page.locator('#preview-btn').isEnabled(), true, `preview remains enabled at ${width}px`);
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `horizontal overflow at ${width}px`);
@@ -167,7 +186,7 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
         await context.close();
       }
     }
-    console.log('Arrangement Lab one-bar melody-only and offset chord-only audition/reharm flows passed at 360/390/430px');
+    console.log('Arrangement Lab section + reharm audition flows passed at 360/390/430px without auto-adopt');
   } finally {
     await browser.close();
   }

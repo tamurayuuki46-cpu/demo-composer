@@ -110,7 +110,7 @@ async function importFile(file) {
     state.source = source;
     state.arrangerProject = null;
     state.reharmSuggestions = {};
-  state.features = {};
+    state.features = {};
     renderSource();
     renderCollisionSummary();
     generateCandidates();
@@ -283,6 +283,7 @@ function sectionCard(section, index) {
           </select>
         </label>
         <div class="toggle-row">${toggles}</div>
+        <button class="section-preview secondary" data-action="section-preview" data-section="${escapeAttr(section.sectionId)}">▶ このSectionを試聴</button>
       </div>
       <div class="roles">${roleRows}</div>
       <div class="reharm-block">
@@ -290,9 +291,13 @@ function sectionCard(section, index) {
           <button class="mini secondary" data-action="reharm-show" data-section="${escapeAttr(section.sectionId)}">3案を提案</button>
         </div>
         ${suggestions.length ? `<div class="reharm-options">${suggestions.map((item) => `
-          <button class="reharm-option ${selectedReharm?.id === item.id ? 'selected' : ''}" data-action="reharm-apply" data-section="${escapeAttr(section.sectionId)}" data-reharm="${item.id}">
+          <div class="reharm-option ${selectedReharm?.id === item.id ? 'selected' : ''}">
             <strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(item.description)}</span><small>${escapeHtml(item.display)}</small>
-          </button>`).join('')}</div>` : ''}
+            <div class="reharm-actions">
+              <button class="mini secondary" data-action="reharm-preview" data-section="${escapeAttr(section.sectionId)}" data-reharm="${item.id}">▶ 試聴</button>
+              <button class="mini" data-action="reharm-apply" data-section="${escapeAttr(section.sectionId)}" data-reharm="${item.id}">採用</button>
+            </div>
+          </div>`).join('')}</div>` : ''}
         ${selectedReharm ? `<button class="text-button" data-action="reharm-clear" data-section="${escapeAttr(section.sectionId)}">リハモを解除</button>` : ''}
       </div>
 ${sectionFeatures(state.source,currentCandidate(),state.candidates,section,state.features[section.sectionId])}
@@ -326,6 +331,21 @@ function handleSectionChange(event) {
   }
 }
 
+function sectionBounds(sectionId) {
+  return state.source?.sections.find((section) => section.id === sectionId) || null;
+}
+
+function previewSectionCandidate(candidate, sectionId, label) {
+  const section = sectionBounds(sectionId);
+  if (!section || !candidate) return;
+  return playSketch({
+    source: state.source,
+    candidate,
+    startTick: section.startTick,
+    endTick: section.endTick,
+  }, label);
+}
+
 function handleSectionClick(event) {
   const button = event.target.closest('button[data-action]');
   if (!button || !state.source) return;
@@ -341,7 +361,15 @@ function handleSectionClick(event) {
   }
   const candidate = currentCandidate();
   if (!candidate) return;
-  if (action === 'reharm-apply') {
+  if (action === 'section-preview') {
+    previewSectionCandidate(candidate, sectionId, '現在のSection調整');
+  } else if (action === 'reharm-preview') {
+    const list = state.reharmSuggestions[sectionId] || buildReharmSuggestions(state.source, sectionId);
+    const selected = list.find((item) => item.id === button.dataset.reharm);
+    if (!selected) return;
+    const auditionCandidate = updateCandidateSection(candidate, sectionId, { reharmonization: selected });
+    previewSectionCandidate(auditionCandidate, sectionId, `${selected.label}リハモ`);
+  } else if (action === 'reharm-apply') {
     const list = state.reharmSuggestions[sectionId] || buildReharmSuggestions(state.source, sectionId);
     const selected = list.find((item) => item.id === button.dataset.reharm);
     if (!selected) return;
@@ -554,7 +582,6 @@ function restoreSavedPlan() {
     restorePlan(JSON.parse(text));
     flash(state.source ? '前回の採用プランを復元しました。' : '旧プランを保持しています。同じrevisionの元project.jsonで編集を再開できます。');
   } catch {
-    // Preserve unreadable data for recovery; never silently delete either version.
     flash('保存プランを読み込めませんでした。保存データは消去せず保持しています。', true);
   }
 }
