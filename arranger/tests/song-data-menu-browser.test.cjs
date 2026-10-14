@@ -25,9 +25,10 @@ async function assertCommonMenu(page, width, nextText) {
   for (const label of ['🧭 全アプリ遷移', '🎹 MIDI保存', '💾 JSON保存', '📝 作曲シート成果物']) {
     await panel.getByText(label, { exact: true }).waitFor();
   }
+  await panel.getByText('📓 メモ帳', { exact: true }).waitFor();
   await panel.getByText('保存JSONを開く', { exact: true }).waitFor();
   if (nextText) await panel.getByText(nextText, { exact: true }).waitFor();
-  assert.equal(await panel.locator('.song-data-primary-action').count(), 4, 'must show exactly four primary actions');
+  assert.equal(await panel.locator('.song-data-primary-action').count(), 4, 'must keep exactly four primary actions');
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `menu overflow at ${width}px`);
 
   await panel.locator('[data-song-data-action="apps"]').click();
@@ -40,9 +41,28 @@ async function assertCommonMenu(page, width, nextText) {
 
   await trigger.click();
   await panel.locator('[data-song-data-action="sheet"]').click();
-  await page.locator('#composition-sheet-summary-dialog').waitFor({state:'visible'});
+  await page.locator('#composition-sheet-summary-dialog').waitFor({ state: 'visible' });
   await page.locator('#composition-sheet-summary-dialog .song-data-dialog-close').click();
   return { trigger, panel };
+}
+
+async function assertMemoRoundTrip(page, menu, width) {
+  await menu.trigger.click();
+  await menu.panel.locator('[data-song-data-action="memo"]').click();
+  const dialog = page.locator('#song-memo-dialog');
+  await dialog.waitFor({ state: 'visible' });
+  const textarea = dialog.locator('.song-memo-textarea');
+  const memo = `mobile memo ${width}`;
+  await textarea.fill(memo);
+  await page.waitForTimeout(350);
+  await dialog.locator('.song-memo-close').click();
+
+  await menu.trigger.click();
+  await menu.panel.locator('[data-song-data-action="memo"]').click();
+  await dialog.waitFor({ state: 'visible' });
+  assert.equal(await textarea.inputValue(), memo, 'memo must persist for the current song');
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `memo overflow at ${width}px`);
+  await dialog.locator('.song-memo-close').click();
 }
 
 (async () => {
@@ -57,6 +77,7 @@ async function assertCommonMenu(page, width, nextText) {
 
       await page.goto(sheetBase);
       const sheetMenu = await assertCommonMenu(page, width, 'Demo Composerへ進む');
+      await assertMemoRoundTrip(page, sheetMenu, width);
       await sheetMenu.trigger.click();
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="save"]').isEnabled(), true, 'Workbook must allow saving partially filled sheets');
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="midi"]').isEnabled(), true, 'Workbook MIDI action should be available');
@@ -99,7 +120,7 @@ async function assertCommonMenu(page, width, nextText) {
       assert.deepEqual(errors, []);
       await context.close();
     }
-    console.log('Four-action song data menu passed on Sheet / Demo / Home / Arrangement at 360/390/430px');
+    console.log('Four-action song data menu + song memo passed on Sheet / Demo / Home / Arrangement at 360/390/430px');
   } finally {
     await browser.close();
   }
