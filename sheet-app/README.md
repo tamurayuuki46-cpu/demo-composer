@@ -1,30 +1,39 @@
-## v0.6（最新版）
-記入用シートを先頭に配置。端末保存・JSON保存・共有からDrive保存。各アプリ右上「曲データ」から記入シートの簡易版を表示します。別アプリでは同じJSONを読み込んでください。
+# 作曲シート全集
 
-# 作曲シート全集 v0.5-dev
+現在の最新版: **v0.8-dev**
 
-GitHubの `claude/sheet-markdown-export` Branchに保存された原文31シート（目次を含め32 Markdown）を全文収録しています。
-参照元commit: `c43d2484afd3932c68a2a942afc07e2582fa9efc`。`docs/sheet/`に原文を保持します。
+入口: `sheet-app/index.html` → `latest/composition_sheet_latest.html` → `versions/v0.8/composition_sheet_v0.8.html`
 
-- 制作ガイド、記入用、テーマ・場面・心情、キー、アイデア帳16分野、参考アーティスト、ジャンル、理論、構成、いい曲チェック、DAW工程、所有プラグインなど
-- 制作ガイド／アイデア帳のタブ移動、313箇所の記入欄、327チェック、山谷選択、ページメモ
-- 端末内の曲別自動保存・曲切替・新規作成。新しい曲は過去の曲を削除しません
-- JSON保存は未記入でも可能。Demo Composerへ進むときだけ場面・参考曲1曲が必要です
-- `SongProject v1`の既存 `compatibility.compositionSheet.fullWorkbook` に全記入を保持し、他アプリ領域を変更しません
-- 記入用の仮タイトル・場面・参考曲1は受け渡しフォームへ連動します
-- 端末間の移動・バックアップは「全シートのJSONを保存」。ブラウザ保存領域の削除前にも保存してください
+## v0.8 の主な機能
 
-## 入口
-`sheet-app/` → `latest/composition_sheet_latest.html` → `versions/v0.5/composition_sheet_v0.5.html`
-過去のversions/v0.1・v0.2・v0.3は保持します。
+- 原文31シートをタブで移動
+- 各表の記入欄 / チェック / シートごとのメモ
+- **各シートへ手動アイデアを追加**
+  - 見出し + 本文
+  - 編集 / 削除
+  - 「このシート」 / 「全シートのアイデア」切替
+  - 全シート表示から元シートへ移動
+- 曲ごとに端末へ自動保存
+- 複数曲の切替
+- SongProject v1 JSON保存 / 読込
+- Android共有画面からGoogle Driveへ保存
+- Demo ComposerへのSongProject受け渡し
+- 右上「📦 曲データ」共通メニュー
 
-## 検証
-```sh
-node scripts/composition-sheet-full-smoke-test.mjs
-node scripts/song-project-sheet-roundtrip-smoke-test.mjs
-npm run build
-# distを8080でHTTP配信し、Playwrightを用意して実行
-node scripts/composition-sheet-full-browser.test.cjs
-```
+## 手動アイデアの保存場所
 
-復元点: `restore/develop-before-sheet-full-v0.4-20261014`。Android実機は未確認、stable tagなし。
+手動アイデアはSongProject v1の既存互換領域
+
+`compatibility.compositionSheet.fullWorkbook.customIdeas`
+
+へ保存します。SongProjectの`schemaVersion`は1のままで、既存の31シート記入内容・作曲データ・編曲データを壊しません。
+
+旧v0.1〜v0.7は`versions/`に残し、上書きしません。
+
+## 保存とバックアップ
+
+普段の記入内容と手動アイデアは端末のlocalStorageへ自動保存されます。別端末へ移る前や大きな変更前は「端末へJSONを保存」でSongProject JSONをバックアップしてください。
+
+## 開発・検証
+
+Composition Sheet CIでは、静的smoke、SongProject round-trip、Production build、Chromium 360 / 390 / 430 / desktop幅での主要導線を確認します。v0.8では手動アイデアの追加・再読込・編集・複数シート・JSON・曲切替・Demo Composer受け渡しも回帰対象です。
