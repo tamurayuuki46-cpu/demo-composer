@@ -1,40 +1,63 @@
 # Current Release
 
-更新日: 2026-10-14
+更新日: 2026-10-15
 
-- 公開候補Version: `v0.8-dev`
-- main統合PR: `#212`
-- 現行ReleaseのCHANGELOG正本: `versions/v0.8-dev/CHANGELOG_v0.8-dev.md`
-- 現行Version履歴: `versions/v0.8-dev/VERSION_HISTORY.md`
+## Published main
+
+- Demo Composer: `v0.15-dev`
+- remote main head: `28f85e64adeed26da1d40fc491723438ffecd2f9`
+- main統合PR: #249
+- Arrangement Lab: `v0.13-dev`
+- Music Project Home: `v0.16-dev`
+- Composition Sheet latest: `v0.9-dev`
+- GitHub Pages公開元: `main`
+
+この節は現在remote `main`から公開されているlineageを示します。
+
+## Development candidate
+
+- Demo Composer: `v0.15-dev`
+- branch: `integration/main-develop-reconcile-20261015`
+- reconciliation merge: `de64a3323e35cc4915dd1adba8471c296557033f`
+- Arrangement Lab: `v0.13-dev`
+- Music Project Home: `v0.18-dev`
+- Composition Sheet latest: `v0.9.1-dev`
+- includes: PR #252 / #253 / #254
+
+Development candidateはまだ`main`へ統合・公開されていません。同じDemo Composer Version名でもpublished mainと内容が異なるため、branch / commitを併記します。
+
+## Contracts
+
 - Demo Composer Project Schema: 3
 - SongProject: v1 (`schemaVersion: 1`)
 - Arrangement Plan Schema: 4
+- PPQ: 480
+- time signature: 4/4固定
 - 一時受け渡しKey: `music-project-songproject-handoff-v1`
 
-## 公開候補の導線
+## Workflow
 
-`⓪ 作曲シート → ① MIDI解析（任意） → ② Demo Composer → ③ Arrangement Lab → ④ DAW`
+`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → Cubasis / Cubase → 完成`
 
-- Project Home: 作曲シートは公開済みClaude Artifact登録欄へ案内し、未公開の内蔵Sheet Moduleへはリンクしない。
-- MIDI Analyzer → Demo Composer: SongProject v1を保存してからDemo Composerを開き、受け取り側で明示的に反映する。
-- Demo Composer: 状態に応じて「受け取った曲を反映」「Arrangement Labへ渡す」「Arrangement Labを開く」のうち、次に必要な操作だけを主ボタンとして強調する。
-- Arrangement Lab: Section未作成でもメロディ/コード等があれば、変換時だけ1〜32小節のスケッチSectionを補完する。1小節の場合は「1小節スケッチ」として編曲を開始できる。
-- JSONは端末バックアップとして保存し、同じChromeのlocalStorageは補助的な一時受け渡しだけに使う。自動反映は行わない。
+- Composition Sheet: 決める
+- MIDI Analyzer: 集める・理解する（任意）
+- Demo Composer: 作る
+- Arrangement Lab: 育てる / Final Song.midを書き出す
+- Music Project Home: 案内する / 次にやることを示す
+- Cubasis / Cubase: 本制作・完成
 
-## 互換性
+## Candidate validation
 
-- Demo Composer Project Schema 3据え置き。
-- SongProject v1据え置き。
-- Arrangement Plan Schema 4据え置き。
-- 1小節用SectionはArrangement Labへの変換Adapter内だけで生成し、SongProjectのcompositionへ自動書き戻ししない。
-- 既存Project / SongProject / MIDI / IndexedDBとの互換性を維持する。
+- Local static checks: 178 PASS
+- Browser invocations: 17 PASS
+  - 初回は旧Composition Sheet v0.6とv0.8が失敗し、コード無変更の単独rerunでPASS
+  - intermittent causeは未確定
+- Published version assets: 38 preserved
+- Existing remote restore / backup / tag refs: 162 preserved
+- Candidate hosted CI: 未実行
 
-## 検証
+push / PR作成後、同一candidate headのhosted CIを確認してからmainへ統合します。
 
-PR #212でDemo Composer CI / Song Project Integration CI / Arrangement Lab CI / Mobile Chromium E2E / GitHub Pages PR buildを合格させてからmainへ統合する。
+## Stable
 
-## stable tag
-
-未作成。Android実機および必要なCubasis/Cubase実機確認後のみ作成する。
-
-> `CHANGELOG.md` は過去履歴を保持する累積ログ。現行v0.8-devのRelease記録はVersion別CHANGELOGを正本とする。
+未認定です。Android実機での保存・PWA・主要操作・Song.mid書き出しと、Cubasis / Cubase実機でのImport / 再生 / MIDI構造確認が完了し、結果をRepositoryへ記録した場合のみstable tagを作成します。

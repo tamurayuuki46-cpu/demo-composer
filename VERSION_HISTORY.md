@@ -1,3 +1,17 @@
+# VERSION_HISTORY
+
+## 2026-10-15 — v0.15-dev reconciliation candidate
+
+- Development candidate: `integration/main-develop-reconcile-20261015`。公開済みmainへは未統合。
+- Published main: `v0.15-dev` / `28f85e64adeed26da1d40fc491723438ffecd2f9`。同じVersion名でも候補側には未公開のdevelop変更を含むため、commit / branchも併記する。
+- Stable: 未認定。Android、Cubasis、Cubaseの実機gateが未完了。
+- PR #252（SongProject v1 cross-app boundary）、#253（実MIDI書き出しに基づくHome DAW-ready）、#254（Song.mid exact regression）をdevelopから統合。
+- Demo Composer `v0.15-dev` / package `0.15.0-dev` / Project Schema 3。
+- Arrangement Lab `v0.13-dev` / Arrangement Plan Schema 4。
+- Music Project Home `v0.18-dev`。
+- Composition Sheet latest `v0.9.1-dev` / SongProject v1。
+- 統合時に静的178件、ブラウザ17件、公開済みversion資産38件、保護対象remote refs 162件を確認。過去versionファイルとrestore / backup / tagは変更していない。
+
 ## v0.13-dev
 更新日: 2026-10-14
 
@@ -175,8 +189,6 @@
 【未対応】
 ・Android実機とCubasis/Cubase実機確認。
 ・Cloud Browserはviewport変更APIがないためスマホ幅の直接確認は未実施（390pxはCIで確認）。
-
-# VERSION_HISTORY
 
 ## 2026-10-13 — main統合・公開後の整合性修正
 

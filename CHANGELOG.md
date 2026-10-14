@@ -1,3 +1,26 @@
+## 2026-10-15 — v0.15-dev lineage reconciliation candidate
+
+【状態】
+- Development candidate: `integration/main-develop-reconcile-20261015`。公開済みmainへは未統合。
+- Published main: `v0.15-dev` / `28f85e64adeed26da1d40fc491723438ffecd2f9`。
+- Stable: 未認定。Android / Cubasis / Cubase実機確認は未実施。
+
+【統合】
+- main系の公開・復元資産を保持し、develop `b322cb47282261db720bf3b74caf455cb56c9cf7`を通常の2-parent mergeで統合。
+- PR #252: SongProject v1のcross-app boundary回帰を追加。
+- PR #253: Project HomeのDAW-ready判定を実際のSong.mid書き出し記録に連動。
+- PR #254: Song.midのFormat / Track / PPQ / Tempo / 拍子 / Channel / Marker / Note timing回帰を強化。
+- SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4 / PPQ 480 / 4/4を維持。
+
+【Version同期】
+- Demo Composerを`v0.15-dev`へ統一し、package `0.15.0-dev`とAPP_VERSIONを同期。
+- Arrangement Lab `v0.13-dev`、Music Project Home `v0.18-dev`、Composition Sheet latest `v0.9.1-dev`を現行lineageに同期。
+- 過去versionファイルは変更せず保持。
+
+【検証】
+- reconciliation工程で静的178件、ブラウザ17件、公開済みversion資産38件、保護対象remote refs 162件の保持確認に成功。
+- 統合候補のhosted CIはpush / PR作成後に必要。ローカル結果はhosted CIの代替ではない。
+
 ## 作曲シート v0.6-dev — 2026-10-14
 記入用を先頭へ、保存/Drive共有、曲データメニューの簡易版表示。詳細 sheet-app/CHANGELOG_v0.6.md。
 

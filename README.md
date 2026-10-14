@@ -2,15 +2,15 @@
 
 Androidスマホ中心の作曲支援PWAです。
 
-## Current Version
+## Version status
 
-`v0.14-dev`
-
-公開中Version: `v0.9-dev`
+- Development candidate: `v0.15-dev` (`integration/main-develop-reconcile-20261015`)
+- Published main: `v0.15-dev` (`main` / `28f85e64adeed26da1d40fc491723438ffecd2f9`)
+- Stable: 未認定
 
 GitHub Pages: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
-`develop`は開発統合、`main`はCI合格版かつGitHub Pages公開元です。stable tagはAndroid実機と必要なCubasis/Cubase実機確認後のみ作成します。
+Development candidateはPR #252 / #253 / #254を含むmain/develop統合候補で、まだ`main`へ統合・公開されていません。`main`はCI合格版かつGitHub Pages公開元です。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
 
 ## コンセプト
 
@@ -22,19 +22,31 @@ PC DAWは最終工程として必須です。
 
 ## 正式Workflow
 
-`作曲シート → 必要なら Moises → MIDI Analyzer → Demo Composer → Arrangement Lab → 必要なら Cubasis → PC DAW（必須） → 完成`
+`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → Cubasis / Cubase → 完成`
 
 役割:
 
 - 作曲シート = 決める
-- Moises = 分ける
-- MIDI Analyzer = 集める・理解する
+- MIDI Analyzer = 集める・理解する（任意）
 - Demo Composer = 作る
 - Arrangement Lab = 育てる
-- Music Project Home = 案内する・つなぐ
-- PC DAW = 完成させる
+- Music Project Home = 案内する・次にやることを示す
+- Cubasis / Cubase = 本制作・完成
 
 正本: `docs/WORKFLOW_PRINCIPLES.md`
+
+## v0.15-dev
+
+### Reconciled development candidate
+
+- 公開済みmainの資産を保持しながら、developの検証済み機能を通常の2-parent mergeで統合
+- PR #252: SongProject v1のMIDI Analyzer → Demo Composer → Arrangement Lab → Composition Sheet境界回帰を追加
+- PR #253: Music Project HomeのDAW-ready判定を実際のSong.mid書き出し記録に連動
+- PR #254: Song.midのFormat 1、5 Track、PPQ 480、Tempo、4/4、Channel、Marker、Note timingを固定する回帰を強化
+- Composition Sheet latestはv0.9.1-dev、Music Project Homeはv0.18-dev、Arrangement Labはv0.13-dev
+- SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4 / PPQ 480 / 4/4は維持
+- ローカル静的178件・ブラウザ17件・公開済みversion資産38件の保持検証が成功。統合候補そのもののhosted CIは未実施
+- Android / Cubasis / Cubase実機確認は未実施のためstable未認定
 
 ## v0.14-dev
 
