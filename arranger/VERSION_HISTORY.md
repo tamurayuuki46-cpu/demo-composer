@@ -32,3 +32,5 @@
 2026-10-14: v0.11-devは曲中絶対tickを持つ1小節抜粋をArrangement Lab入力時だけ0基準へ補正し、「選択案を簡易試聴」押下で実際のAudioイベントが生成されることをMobile Chromiumで確認する。元SongProject compositionと各Schemaは変更しない。
 2026-10-14: v0.12-devは④Sectionの現在調整を対象Sectionだけ試聴でき、リハモ「自然 / 色付け / 大胆」も採用前に個別試聴できる。試聴は候補を変更・保存せず、採用操作だけがstateへ反映する。各Schemaは変更しない。
 2026-10-14: v0.13-devはDemo ComposerのSound Preset/Toneを既存のSongProject v1互換情報から復元し、Arrangement LabのHarmony/Chord・Melody/Counter・Bass・Drums試聴で同じ音色方向を維持する。Sound選択情報が無いデータはDemo Composerの既定Presetへフォールバックする。SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4は変更しない。
+
+2026-10-14: v0.13メタデータ確定はPR #228。旧v0.5互換export名を維持し、書き出し・判断記録も現在版へ統一。追補前復元点: `restore/arranger-v0.13-metadata-before-finalize-20261014`。main公開・stable tag作成なし。Android / Cubasis / Cubase実機未確認。

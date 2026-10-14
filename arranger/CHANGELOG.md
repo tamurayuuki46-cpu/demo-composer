@@ -16,6 +16,8 @@ Version: v0.13-dev
 ・SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4は変更しない
 
 【修正】
+・旧v0.5互換の書き出し・判断ログ経路でv0.6-dev固定だった版番号を現在版へ同期
+・古い版番号を待って停止していたブラウザ回帰テストを更新
 ・Demo ComposerからArrangement Labへ曲を渡すと、Chord / Melody / Bassの音色が固定の簡易波形へ変わってしまう問題を修正
 ・DrumsがArrangement Labでは簡易square波形へ変わってしまう問題を修正
 
@@ -280,3 +282,8 @@ Version: v0.2-dev
 【修正】
 ・localStorage保存失敗時もJSON書き出しを継続できるようにした
 ・MIDI書き出し時にSectionの楽器ON/OFFを反映
+
+【未対応】
+・Cubasis / Cubase実機での全MIDI取り込み確認
+・Demo Composerへの編曲結果の戻し書き
+・高品質な音源による完成形プレビュー

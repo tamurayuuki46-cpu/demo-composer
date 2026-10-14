@@ -1,7 +1,7 @@
 # Demo Composer → Arrangement Lab 音色保持
 
 更新日: 2026-10-14
-対象: Arrangement Lab v0.12-dev
+対象: Arrangement Lab v0.13-dev
 
 ## 目的
 

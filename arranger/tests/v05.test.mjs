@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { normalizeSourceProject, buildThreeCandidates, createArrangerProject } from '../src/core.js';
+import { normalizeSourceProject, buildThreeCandidates, createArrangerProject, ARRANGER_VERSION } from '../src/core.js';
 import {
   ARRANGER_V05_VERSION,
   createSongMidi,
@@ -51,6 +51,7 @@ const project = {
   instruments: [], progress: {}, exportSettings: {},
 };
 
+assert.equal(ARRANGER_V05_VERSION, ARRANGER_VERSION, 'legacy exports use current build version');
 const source = normalizeSourceProject(project);
 const candidate = buildThreeCandidates(source, 'jpop-band')[1];
 

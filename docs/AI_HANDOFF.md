@@ -1,5 +1,14 @@
 # AI_HANDOFF
 
+## 2026-10-14 Arrangement Lab v0.13-dev 追補（以下の旧進捗記録より優先）
+
+- 正本: `arranger/VERSION` / `arranger/CHANGELOG.md` / `arranger/docs/SOUND_PRESERVATION.md`。Demo Composer本体のVersionは今回変更しない。
+- 音色保持本体はPR #227（develop merge `de3cec41903358f2ac681d117dbafef354a2991e`）。重複PR #226はclosed・未mergeであり重ねて統合しない。
+- PR #228 / `chore/arranger-v0.13-metadata`: VERSION・画面・PWA・書き出し・判断記録の版番号をv0.13-devへ同期。共有Sound Profileと既存SongProject互換情報を利用し、Schema 1 / 3 / 4を維持。
+- 復元点: `restore/develop-before-preserve-demo-sound-v0.13-20261014`、追補前 `restore/arranger-v0.13-metadata-before-finalize-20261014`。
+- 今回の統合先はdevelopのみ。main公開とstable tag作成は行わない。Android聴感 / PWA実機、およびCubasis / Cubase取込確認は未実施。
+
+
 現在Version: `v0.9-dev`
 
 公開中Version: `v0.6-dev`
