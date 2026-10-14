@@ -9,7 +9,10 @@ async function installAudioProbe(page) {
   await page.addInitScript(() => {
     window.__previewStarts = 0;
     window.__previewOscillatorTypes = [];
+    window.__previewFrequencies = [];
     window.__previewFilters = [];
+    window.__previewNoiseBuffers = 0;
+    window.__previewClosedContexts = 0;
     class FakeParam {
       constructor() { this.value = 0; }
       setValueAtTime(value) { this.value = value; }
@@ -31,6 +34,7 @@ async function installAudioProbe(page) {
       start() {
         window.__previewStarts += 1;
         window.__previewOscillatorTypes.push(this.type);
+        window.__previewFrequencies.push(this.frequency.value);
       }
       stop() {
         const done = this.onended;
@@ -65,10 +69,11 @@ async function installAudioProbe(page) {
         this.sampleRate = 48000;
       }
       resume() { this.state = 'running'; return Promise.resolve(); }
-      close() { this.state = 'closed'; return Promise.resolve(); }
+      close() { this.state = 'closed'; window.__previewClosedContexts += 1; return Promise.resolve(); }
       createGain() { const node = new FakeNode(); node.gain = new FakeParam(); return node; }
       createBiquadFilter() { return new FakeFilter(); }
       createBuffer(_channels, length) {
+        window.__previewNoiseBuffers += 1;
         const data = new Float32Array(length);
         return { getChannelData() { return data; } };
       }
@@ -165,7 +170,9 @@ async function assertTransferredTimbre(page, width, soundProject) {
   await applyHandoff(page, soundProject);
   await page.evaluate(() => {
     window.__previewOscillatorTypes = [];
+    window.__previewFrequencies = [];
     window.__previewFilters.length = 0;
+    window.__previewNoiseBuffers = 0;
   });
   const before = await page.evaluate(() => window.__previewStarts);
   await page.locator('#preview-btn').click();
@@ -179,13 +186,22 @@ async function assertTransferredTimbre(page, width, soundProject) {
   const probe = await page.evaluate(() => ({
     types: [...window.__previewOscillatorTypes],
     filters: window.__previewFilters.map((item) => Math.round(item.frequency.value)),
+    noiseBuffers: window.__previewNoiseBuffers,
+    frequencies: window.__previewFrequencies,
   }));
   assert.ok(probe.types.includes('sawtooth'), `Vocal Bright waveform preserved at ${width}px`);
   assert.ok(probe.types.includes('square'), `Pluck Bass waveform preserved at ${width}px`);
   assert.ok(probe.filters.includes(5580), `Vocal Bright + Bright filter preserved at ${width}px`);
   assert.ok(probe.filters.includes(2460), `Organ + Warm filter preserved at ${width}px`);
   assert.ok(probe.filters.includes(432), `Pluck Bass + Dark filter preserved at ${width}px`);
+  assert.ok(probe.frequencies.includes(55), `Kick pitch envelope preserved at ${width}px`);
+  assert.ok(probe.filters.includes(900), `Snare highpass preserved at ${width}px`);
+  assert.ok(probe.filters.includes(5000), `Hi-Hat highpass preserved at ${width}px`);
+  assert.ok(probe.noiseBuffers >= 2, `Snare/Hi-Hat noise buffers generated at ${width}px`);
+  const closedBefore = await page.evaluate(() => window.__previewClosedContexts);
   await page.locator('#stop-btn').click();
+  assert.equal(await page.evaluate(() => window.__previewClosedContexts), closedBefore + 1, 'stop closes audio context');
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `sound handoff overflow at ${width}px`);
 }
 
 (async () => {
@@ -227,7 +243,7 @@ async function assertTransferredTimbre(page, width, soundProject) {
       { role: 'melody', name: 'Melody', midiChannel: 2, notes: [{ id: 'sm1', pitch: 72, startTick: 0, durationTick: 960, velocity: 100 }] },
       { role: 'counter', name: 'Counter Melody', midiChannel: 4, notes: [] },
       { role: 'bass', name: 'Bass', midiChannel: 3, notes: [{ id: 'sb1', pitch: 36, startTick: 0, durationTick: 960, velocity: 96 }] },
-      { role: 'drums', name: 'Drums', midiChannel: 10, notes: [{ id: 'sd1', pitch: 36, startTick: 0, durationTick: 120, velocity: 100 }] },
+      { role: 'drums', name: 'Drums', midiChannel: 10, notes: [36, 38, 42].map((pitch) => ({ id: `sd-${pitch}`, pitch, startTick: 0, durationTick: 120, velocity: 100 })) },
     ],
     instruments: [
       { part: 'chord', preset: 'organ', tone: 'warm' },

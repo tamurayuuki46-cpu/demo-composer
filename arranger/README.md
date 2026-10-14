@@ -2,6 +2,14 @@
 
 Demo Composer companion PWA.
 
+## Current Version
+
+`v0.13-dev`（開発版・実機未確認）
+
+Demo ComposerのChord / Melody / Bass Preset・ToneとDrumsの発音方式を試聴へ引き継ぎます。詳細: `docs/SOUND_PRESERVATION.md`。
+SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4は維持します。
+mainへの公開とstable tag作成は今回行いません。
+
 ## Flow
 Demo Composer → Arrangement Lab → Cubasis → Cubase
 
