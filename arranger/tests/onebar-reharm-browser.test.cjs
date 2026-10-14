@@ -3,6 +3,54 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
 const arrangerUrl = process.env.ARRANGER_URL || 'http://127.0.0.1:8080/arranger/?mode=beginner';
 const handoffKey = 'music-project-songproject-handoff-v1';
+const BAR = 1920;
+
+async function installAudioProbe(page) {
+  await page.addInitScript(() => {
+    window.__previewStarts = 0;
+    class FakeParam {
+      constructor() { this.value = 0; }
+      setValueAtTime(value) { this.value = value; }
+      exponentialRampToValueAtTime(value) { this.value = value; }
+    }
+    class FakeNode {
+      connect() { return this; }
+      disconnect() {}
+    }
+    class FakeOscillator extends FakeNode {
+      constructor() {
+        super();
+        this.type = 'sine';
+        this.frequency = new FakeParam();
+        this.onended = null;
+      }
+      start() { window.__previewStarts += 1; }
+      stop() {
+        const done = this.onended;
+        this.onended = null;
+        if (done) queueMicrotask(done);
+      }
+    }
+    class FakeAudioContext {
+      constructor() {
+        this.state = 'running';
+        this.currentTime = 0;
+        this.destination = {};
+      }
+      resume() { this.state = 'running'; return Promise.resolve(); }
+      close() { this.state = 'closed'; return Promise.resolve(); }
+      createGain() { const node = new FakeNode(); node.gain = new FakeParam(); return node; }
+      createDynamicsCompressor() {
+        const node = new FakeNode();
+        node.threshold = new FakeParam(); node.knee = new FakeParam(); node.ratio = new FakeParam();
+        return node;
+      }
+      createOscillator() { return new FakeOscillator(); }
+    }
+    window.AudioContext = FakeAudioContext;
+    window.webkitAudioContext = FakeAudioContext;
+  });
+}
 
 async function assertCandidatesAndReharm(page, width, expectedHeading) {
   await page.getByRole('heading', { name: expectedHeading, exact: true }).waitFor();
@@ -18,6 +66,12 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
   });
   assert.equal(await page.locator('.candidate-tab').count(), 3, `A/B/C candidates at ${width}px`);
   assert.equal(await page.locator('#preview-btn').isEnabled(), true, `preview enabled at ${width}px`);
+
+  await page.locator('#preview-btn').click();
+  await page.waitForFunction(() => window.__previewStarts > 0);
+  assert.ok(await page.evaluate(() => window.__previewStarts), `preview scheduled audible notes at ${width}px`);
+  assert.equal(await page.locator('#stop-btn').isEnabled(), true, `stop enabled during preview at ${width}px`);
+  await page.locator('#stop-btn').click();
 
   const errorToast = page.locator('#message.is-error');
   assert.equal(await errorToast.isVisible().catch(() => false), false, `no red error toast at ${width}px`);
@@ -56,8 +110,11 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
     title: '1小節コードだけテスト',
     now: '2026-10-14T00:00:00.000Z',
   });
+  chordSketch.composition.sections.push({
+    id: 'onebar-section', kind: 'verse', name: '1小節スケッチ', bars: 1, energy: 'mid', transition: 'keep',
+  });
   chordSketch.composition.chords.push({
-    id: 'c1', root: 0, quality: 'major', degree: 'I', startTick: 0, durationTick: 1920,
+    id: 'c1', root: 0, quality: 'major', degree: 'I', startTick: BAR * 4, durationTick: BAR,
   });
 
   const browser = await chromium.launch({ headless: true });
@@ -66,6 +123,7 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
       {
         const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true });
         const page = await context.newPage();
+        await installAudioProbe(page);
         const errors = [];
         page.on('pageerror', (error) => errors.push(error.message));
         page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
@@ -84,6 +142,7 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
       {
         const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true });
         const page = await context.newPage();
+        await installAudioProbe(page);
         const errors = [];
         page.on('pageerror', (error) => errors.push(error.message));
         page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
@@ -108,7 +167,7 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
         await context.close();
       }
     }
-    console.log('Arrangement Lab one-bar melody-only and chord-only SongProject reharm flows passed at 360/390/430px');
+    console.log('Arrangement Lab one-bar melody-only and offset chord-only audition/reharm flows passed at 360/390/430px');
   } finally {
     await browser.close();
   }
