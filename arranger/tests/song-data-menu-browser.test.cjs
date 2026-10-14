@@ -37,8 +37,11 @@ async function assertCommonMenu(page, width, nextText) {
   const appsDialog = page.locator('[id$="-apps-dialog"]');
   await appsDialog.waitFor({ state: 'visible' });
   for (const app of ['Music Project Home', '作曲シート', 'MIDI Analyzer', 'Demo Composer', 'Arrangement Lab']) {
-    await appsDialog.getByText(app, { exact: true }).waitFor();
+    const appLink = appsDialog.getByText(app, { exact: true });
+    await appLink.scrollIntoViewIfNeeded();
+    await appLink.waitFor({ state: 'visible' });
   }
+  await appsDialog.locator('.song-data-dialog-close').scrollIntoViewIfNeeded();
   await appsDialog.locator('.song-data-dialog-close').click();
 
   await trigger.click();
