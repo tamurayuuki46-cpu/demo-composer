@@ -8,9 +8,11 @@ const BAR = 1920;
 async function installAudioProbe(page) {
   await page.addInitScript(() => {
     window.__previewStarts = 0;
+    window.__previewTypes = [];
     class FakeParam {
       constructor() { this.value = 0; }
       setValueAtTime(value) { this.value = value; }
+      linearRampToValueAtTime(value) { this.value = value; }
       exponentialRampToValueAtTime(value) { this.value = value; }
     }
     class FakeNode {
@@ -22,30 +24,50 @@ async function installAudioProbe(page) {
         super();
         this.type = 'sine';
         this.frequency = new FakeParam();
+        this.detune = new FakeParam();
         this.onended = null;
       }
-      start() { window.__previewStarts += 1; }
+      start() {
+        window.__previewStarts += 1;
+        window.__previewTypes.push(this.type);
+      }
       stop() {
         const done = this.onended;
         this.onended = null;
         if (done) queueMicrotask(done);
       }
     }
+    class FakeBufferSource extends FakeNode {
+      constructor() { super(); this.buffer = null; }
+      start() { window.__previewStarts += 1; }
+      stop() {}
+    }
     class FakeAudioContext {
       constructor() {
         this.state = 'running';
         this.currentTime = 0;
         this.destination = {};
+        this.sampleRate = 44100;
       }
       resume() { this.state = 'running'; return Promise.resolve(); }
       close() { this.state = 'closed'; return Promise.resolve(); }
       createGain() { const node = new FakeNode(); node.gain = new FakeParam(); return node; }
+      createBiquadFilter() {
+        const node = new FakeNode();
+        node.frequency = new FakeParam(); node.Q = new FakeParam(); node.gain = new FakeParam();
+        return node;
+      }
       createDynamicsCompressor() {
         const node = new FakeNode();
         node.threshold = new FakeParam(); node.knee = new FakeParam(); node.ratio = new FakeParam();
         return node;
       }
       createOscillator() { return new FakeOscillator(); }
+      createBuffer(_channels, length) {
+        const data = new Float32Array(length);
+        return { getChannelData: () => data };
+      }
+      createBufferSource() { return new FakeBufferSource(); }
     }
     window.AudioContext = FakeAudioContext;
     window.webkitAudioContext = FakeAudioContext;
@@ -58,7 +80,7 @@ async function waitForNewPreview(page, before, label) {
   assert.equal(await page.locator('#stop-btn').isEnabled(), true, `${label}: stop enabled`);
 }
 
-async function assertCandidatesAndReharm(page, width, expectedHeading) {
+async function assertCandidatesAndReharm(page, width, expectedHeading, expectedWaveform = null) {
   await page.getByRole('heading', { name: expectedHeading, exact: true }).waitFor();
   await page.waitForFunction(() => {
     const preview = document.querySelector('#preview-btn');
@@ -76,6 +98,13 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
   let before = await page.evaluate(() => window.__previewStarts);
   await page.locator('#preview-btn').click();
   await waitForNewPreview(page, before, `whole candidate preview at ${width}px`);
+  if (expectedWaveform) {
+    assert.equal(
+      await page.evaluate((type) => window.__previewTypes.includes(type), expectedWaveform),
+      true,
+      `source Sound Sketch waveform ${expectedWaveform} is preserved at ${width}px`
+    );
+  }
   await page.locator('#stop-btn').click();
 
   const errorToast = page.locator('#message.is-error');
@@ -135,6 +164,20 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
   chordSketch.composition.chords.push({
     id: 'c1', root: 0, quality: 'major', degree: 'I', startTick: BAR * 4, durationTick: BAR,
   });
+  // Demo Composer Sound Sketch is carried inside SongProject compatibility. Arrangement Lab must
+  // preserve this timbre instead of replacing it with its former fixed triangle/sine preview.
+  chordSketch.compatibility.demoComposer = {
+    schemaVersion: 3,
+    appVersion: 'v0.12-dev',
+    revision: 1,
+    legacyProject: {
+      instruments: [
+        { part: 'chord', preset: 'strings', tone: 'bright' },
+        { part: 'melody', preset: 'vocal', tone: 'soft' },
+        { part: 'bass', preset: 'pluck-bass', tone: 'warm' },
+      ],
+    },
+  };
 
   const browser = await chromium.launch({ headless: true });
   try {
@@ -181,12 +224,12 @@ async function assertCandidatesAndReharm(page, width, expectedHeading) {
         await page.goto(handoffUrl.href);
         await page.locator('[data-apply-handoff]').click();
         await page.getByText(/A\/B\/Cの準備も完了しています/).waitFor();
-        await assertCandidatesAndReharm(page, width, '1小節スケッチ');
+        await assertCandidatesAndReharm(page, width, '1小節スケッチ', 'sawtooth');
         assert.deepEqual(errors, [], `chord-only handoff console errors at ${width}px: ${errors.join(' | ')}`);
         await context.close();
       }
     }
-    console.log('Arrangement Lab section + reharm audition flows passed at 360/390/430px without auto-adopt');
+    console.log('Arrangement Lab section/reharm audition + Demo Composer Sound Sketch preservation passed at 360/390/430px');
   } finally {
     await browser.close();
   }
