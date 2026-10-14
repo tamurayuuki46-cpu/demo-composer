@@ -9,14 +9,16 @@
     body{font-family:system-ui,sans-serif;margin:0;background:#f5f5f4;color:#111827}
     main{max-width:760px;margin:auto;padding:20px}
     .card{background:white;border:1px solid #d6d3d1;border-radius:16px;padding:18px;margin:14px 0}
+    .now-card{border:2px solid #111827}
+    .now-label{margin:0 0 8px;font-size:.8rem;font-weight:800;letter-spacing:.08em;color:#57534e}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-    .stat{background:#f5f5f4;border-radius:12px;padding:12px;display:grid;gap:4px}
+    .stat{background:#f5f5f4;border-radius:12px;padding:12px}
     .actions{display:grid;gap:10px}
     .actions.split{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
     a,button,.file{display:block;box-sizing:border-box;width:100%;min-height:48px;border-radius:12px;padding:13px 14px;border:1px solid #9ca3af;background:white;color:#111827;text-decoration:none;font:inherit;text-align:center;cursor:pointer}
     .primary{background:#111827;color:white;border-color:#111827;font-weight:800}
-    .ok,.workflow-step.done{color:#166534}.pending,.workflow-step.pending{color:#92400e}
-    small,.workflow-step span{color:#57534e}
+    .ok{color:#166534}.pending{color:#92400e}
+    small{color:#57534e}
     input[type=file],input[type=url]{box-sizing:border-box;width:100%}
     input[type=url]{min-height:48px;border:1px solid #9ca3af;border-radius:12px;padding:12px 14px;font:inherit;margin:8px 0 10px}
     .quick-flow{display:grid;grid-template-columns:repeat(5,minmax(118px,1fr));gap:8px;overflow-x:auto;padding:2px 0 6px;scroll-snap-type:x proximity}
@@ -24,16 +26,16 @@
     .quick-flow .flow-step small{display:block}
     .quick-flow .flow-end{box-sizing:border-box;border:1px solid #9ca3af;border-radius:12px;padding:13px 14px;text-align:center;background:#fafaf9}
     .flow-optional{border-style:dashed!important;background:#fffbeb!important}
-    .workflow-list{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
-    .workflow-step{border:1px solid #e7e5e4;border-radius:12px;padding:12px;display:grid;gap:4px;background:#fafaf9}
-    .workflow-step.optional{border-style:dashed;background:#fffbeb}.workflow-step.locked{opacity:.58}.workflow-step.external{border-color:#111827}
-    .hint{background:#eff6ff;border-radius:10px;padding:10px 12px;line-height:1.55}
-    .now-card{border:2px solid #111827}
-    .now-label{margin:0 0 8px;font-size:.8rem;font-weight:800;letter-spacing:.08em;color:#57534e}
+    .workflow-list{display:grid;gap:8px;padding:0;margin:12px 0;list-style:none}
+    .workflow-step{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #d6d3d1;border-radius:12px;background:#fafaf9}
+    .workflow-step.done{border-color:#86efac;background:#f0fdf4}.workflow-step.optional{border-style:dashed}.workflow-step.locked{opacity:.55}.workflow-step span{color:#57534e;font-size:.84rem;text-align:right}
+    .hint{color:#57534e;line-height:1.55}
+    hr{border:0;border-top:1px solid #e7e5e4;margin:18px 0}
     [hidden]{display:none!important}
     @media(max-width:520px){
       main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}
       .quick-flow{grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}.quick-flow .flow-step{min-width:0;min-height:58px;text-align:left;place-content:center start;padding-left:16px}
+      .workflow-step{display:grid}.workflow-step span{text-align:left}
     }
   </style>
 </head>
@@ -68,7 +70,7 @@
   <section id="composition-sheet-card" class="card">
     <h2>⓪ 作曲シート</h2>
     <p>曲の場面・参考曲など、音を鳴らす前に決められることを短時間で整理します。</p>
-    <a href="../sheet-app/">作曲シート v0.1 を開く</a>
+    <a href="../sheet-app/">作曲シート v0.3 を開く</a>
     <p><small>入力内容は共通JSONとして保存し、Demo Composerへ引き継げます。</small></p>
   </section>
 

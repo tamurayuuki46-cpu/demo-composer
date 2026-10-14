@@ -1,5 +1,17 @@
 # 作曲シート Version History
 
+## v0.3-dev — 2026-10-14
+- 画面右上に全アプリ共通の「📦 曲データ」を常設
+- 右上からSongProject v1の読込 / 保存 / Demo Composerへの受け渡しを実行可能化
+- 「次へ」はJSONバックアップを必ず保存してから一時受け渡しを行い、失敗時は保存JSONから復帰可能
+- v0.1 / v0.2は変更せず保持し、latestのみv0.3へ更新
+
+復元ポイント:
+- `restore/develop-before-song-data-menu-20261014`
+
+開発Branch:
+- `feature/song-data-menu-v0.12`
+
 ## v0.2-dev — 2026-10-13
 - アプリ間の交換JSONを `SongProject v1` に統一
 - 作曲シートは `intent` とBPM/Keyだけを更新し、他アプリ領域を保持

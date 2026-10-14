@@ -56,6 +56,7 @@ const projectHomeHtml = await readFile(projectHomeHtmlPath, 'utf8');
 await writeFile(projectHomeHtmlPath, projectHomeHtml.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
   (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
 await stampModules(`${outputDir}/project-home`);
+await stampModules(`${outputDir}/sheet-app`);
 
 async function collectPrecacheUrls(directory, urlPrefix) {
   const urls = [];
