@@ -1,41 +1,39 @@
-# 作曲シート
+# 作曲シート全集
 
-Demo Composerの前段で使う、入力を最小限にした作曲準備シートです。
+現在の最新版: **v0.8-dev**
 
-## 必須入力
-1. どんな場面の曲か
-2. 参考曲1曲
+入口: `sheet-app/index.html` → `latest/composition_sheet_latest.html` → `versions/v0.8/composition_sheet_v0.8.html`
 
-Genre / Mood / BPM / Key / メモは任意です。
+## v0.8 の主な機能
 
-## 最新版
-公開版は `v0.7` です。31シートの制作ガイド／アイデア帳をタブで切り替え、記入内容を端末保存・JSON保存・Drive共有できます。
+- 原文31シートをタブで移動
+- 各表の記入欄 / チェック / シートごとのメモ
+- **各シートへ手動アイデアを追加**
+  - 見出し + 本文
+  - 編集 / 削除
+  - 「このシート」 / 「全シートのアイデア」切替
+  - 全シート表示から元シートへ移動
+- 曲ごとに端末へ自動保存
+- 複数曲の切替
+- SongProject v1 JSON保存 / 読込
+- Android共有画面からGoogle Driveへ保存
+- Demo ComposerへのSongProject受け渡し
+- 右上「📦 曲データ」共通メニュー
 
-v0.7では、アイデア帳「ベース」に The Cardigans / The Weeknd の共通するベース発想を「裏メロ兼グルーヴ・フック」として追加しました。
+## 手動アイデアの保存場所
 
-## 共通JSON
-v0.2から、アプリ間の交換JSONは `SongProject v1` を正本にします。
+手動アイデアはSongProject v1の既存互換領域
 
-- 作曲シート: `intent` とBPM/Keyを更新
-- Demo Composer: `composition` を更新
-- Arrangement Lab: `arrangement` を更新
-- MIDI Analyzer: `analysis` を更新
-- MIDI / Audioなど大きな実ファイル: JSONへ埋め込まず `assets.files` で外部参照可能
+`compatibility.compositionSheet.fullWorkbook.customIdeas`
 
-旧 `demo-composer-project` / `composition-sheet-handoff` / Demo Composer `project.json` はImport互換として読み込めますが、作曲シートからの新規ExportはSongProject v1だけです。
+へ保存します。SongProjectの`schemaVersion`は1のままで、既存の31シート記入内容・作曲データ・編曲データを壊しません。
 
-## ファイル構成
-- `versions/v0.1/composition_sheet_v0.1.html` — 旧v0.1（保存）
-- `versions/v0.2/composition_sheet_v0.2.html` — SongProject v1対応版
-- `versions/v0.7/composition_sheet_v0.7.html` — 31シート公開版
-- `latest/composition_sheet_latest.html` — 最新版への入口
-- `index.html` — 作曲シートの入口
-- `CHANGELOG_v0.1.md` / `CHANGELOG_v0.2.md` / `CHANGELOG_v0.7.md` — 変更履歴
-- `VERSION_HISTORY.md` — バージョン履歴
+旧v0.1〜v0.7は`versions/`に残し、上書きしません。
 
-## 復元ポイント
-- `restore/develop-before-sheet-app-20261013`
-- `restore/develop-before-songproject-unification-20261013`
-- `restore/main-before-sheet-v0.7-20261014`
+## 保存とバックアップ
 
-`stable` タグはAndroid実機＋必要なCubasis/Cubase実機確認後に作成します。
+普段の記入内容と手動アイデアは端末のlocalStorageへ自動保存されます。別端末へ移る前や大きな変更前は「端末へJSONを保存」でSongProject JSONをバックアップしてください。
+
+## 開発・検証
+
+Composition Sheet CIでは、静的smoke、SongProject round-trip、Production build、Chromium 360 / 390 / 430 / desktop幅での主要導線を確認します。v0.8では手動アイデアの追加・再読込・編集・複数シート・JSON・曲切替・Demo Composer受け渡しも回帰対象です。

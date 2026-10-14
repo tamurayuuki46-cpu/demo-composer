@@ -1,18 +1,43 @@
 # 作曲シート Version History
 
-## v0.7 — 2026-10-14
-- 31シート版を公開用の自己完結版として公開
+## v0.8-dev — 2026-10-14
+- 各シートへ曲ごとの手動アイデアを追加・編集・削除できる機能を追加
+- 「このシート / 全シートのアイデア」切替と元シート移動を追加
+- 手動アイデアをSongProject v1の`compatibility.compositionSheet.fullWorkbook.customIdeas`へ保存し、JSON / Drive / Demo Composer受け渡しで保持
+- 旧JSONはcustomIdeasなしでも読み込み可能。31シートと既存データを維持
+- 復元点: `restore/develop-before-sheet-manual-ideas-v0.8-20261014`
+- 詳細: `CHANGELOG_v0.8.md`
+
+## v0.7-dev — 2026-10-14
 - アイデア帳「ベース」に The Cardigans / The Weeknd の共通するベース発想を追加
 - 「裏メロ兼グルーヴ・フック」として整理し、休符・裏拍、3度/5度/経過音、短いモチーフ反復、キックとのずらしを記載
-- SongProject v1、JSON保存、Drive共有、Demo Composer受け渡しを維持
-- v0.3〜v0.6は開発過程の版としてmain公開版には残さず、v0.1/v0.2はそのまま保持
-- stableタグはAndroid実機＋Cubasis/Cubase確認後まで保留
+- v0.6の機能・保存仕様を継承。過去Versionは未変更
+- 詳細: `CHANGELOG_v0.7.md`
+
+## v0.5-dev — 2026-10-14
+- 検索から制作ガイド／アイデア帳のタブ移動へ変更。スマホは2列表示
+- 31シートとv0.4の保存内容を保持。詳細: `CHANGELOG_v0.5.md`
+- 復元点: `restore/develop-before-sheet-tabs-v0.5-20261014`
+
+## v0.4-dev — 2026-10-14
+- 原文31シート全文、検索、記入欄・チェック・メモ、複数曲の保存・復元
+- SongProject v1のcompatibilityに全シートの記入内容を保持
+- 原文: `claude/sheet-markdown-export` / `c43d248`
+- 復元点: `restore/develop-before-sheet-full-v0.4-20261014`
+- Branch: `feature/composition-sheet-full-v0.4`
+- 詳細: `CHANGELOG_v0.4.md`
+
+## v0.3-dev — 2026-10-14
+- 画面右上に全アプリ共通の「📦 曲データ」を常設
+- 右上からSongProject v1の読込 / 保存 / Demo Composerへの受け渡しを実行可能化
+- 「次へ」はJSONバックアップを必ず保存してから一時受け渡しを行い、失敗時は保存JSONから復帰可能
+- v0.1 / v0.2は変更せず保持し、latestのみv0.3へ更新
 
 復元ポイント:
-- `restore/main-before-sheet-v0.7-20261014`
+- `restore/develop-before-song-data-menu-20261014`
 
-公開Branch:
-- `chatgpt/public-sheet-v0.7-cardigans-weeknd`
+開発Branch:
+- `feature/song-data-menu-v0.12`
 
 ## v0.2-dev — 2026-10-13
 - アプリ間の交換JSONを `SongProject v1` に統一
@@ -37,3 +62,6 @@
 
 開発Branch:
 - `feature/composition-sheet-json-v0.1`
+
+## 作曲シート v0.6-dev — 2026-10-14
+記入用を先頭へ。保存・Drive共有と各アプリ簡易表示。旧v0.1〜v0.5保持。stable未認定。
