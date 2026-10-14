@@ -7,28 +7,30 @@ const html = await readFile(new URL('../project-home/index.html', import.meta.ur
 const app = await readFile(new URL('../project-home/app.js', import.meta.url), 'utf8');
 const build = await readFile(new URL('./build-static.mjs', import.meta.url), 'utf8');
 
-assert.match(html, /id="composition-sheet-card"/);
-assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.1 を開く/);
-assert.ok(html.indexOf('id="composition-sheet-card"') < html.indexOf('id="quick-flow-card"'), '作曲シート入口がMusic Project Homeの最上部にありません');
 assert.match(html, /id="quick-flow-card"/);
 assert.match(html, /id="quick-flow"/);
-assert.match(html, /<strong>1 決める<\/strong><small>作曲シート<\/small>/);
-assert.match(html, /<strong>2 作る<\/strong><small>Demo Composer<\/small>/);
-assert.match(html, /<strong>3 育てる<\/strong><small>Arrangement Lab<\/small>/);
-assert.match(html, /<strong>4 仕上げる<\/strong><small>Cubasis \/ Cubase<\/small>/);
-assert.match(html, /MIDI Analyzerで分析/);
-assert.ok(html.indexOf('id="quick-flow-card"') < html.indexOf('id="workflow-card"'), '簡易フローが現在地表示より後ろにあります');
+assert.match(html, /⓪ 方向を決める/);
+assert.match(html, /① 必要なら解析/);
+assert.match(html, /MIDI Analyzer・任意/);
+assert.match(html, /② 作曲/);
+assert.match(html, /③ 編曲/);
+assert.match(html, /④ DAWへ/);
+assert.match(html, /1小節のフレーズだけでも③の編曲を試せます/);
+assert.ok(html.indexOf('id="quick-flow-card"') < html.indexOf('id="workflow-card"'), '5段階フローが現在地表示より後ろにあります');
 assert.match(html, /id="workflow-card"/);
+assert.match(html, /NEXT ACTION/);
 assert.match(html, /id="workflow-list"/);
-assert.match(html, /id="next-action"/);
+assert.match(html, /id="next-action" class="primary"/);
+assert.match(html, /id="composition-sheet-card"/);
+assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.1 を開く/);
 assert.match(html, /id="claude-link-input"/);
 assert.match(html, /id="claude-link-open"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
-assert.match(html, /PC DAWは最終制作の必須工程/);
 assert.match(html, /Song Project JSON・MIDI・公開コードには入れません/);
 assert.match(app, /buildWorkflowState/);
 assert.match(app, /loadSheetLink, saveSheetLink/);
-assert.match(app, /\.\.\/src\/hub\/sheet-link\.js/);
-assert.match(app, /claude-link-save/);
+assert.match(app, /⓪ 作曲シート/);
+assert.match(app, /① MIDI解析/);
+assert.match(app, /1小節のフレーズだけでもArrangement Labを試せます/);
 assert.match(build, /stampModules\(`\$\{outputDir\}\/project-home`\)/);
 
 assert.equal(
@@ -48,7 +50,8 @@ const base = {
 
 let workflow = buildWorkflowState(base, { sheetLinked: false });
 assert.equal(workflow.nextAction.id, 'sheet');
-assert.equal(workflow.steps.find((step) => step.id === 'materials').status, 'optional');
+assert.equal(workflow.steps.length, 5);
+assert.equal(workflow.steps.find((step) => step.id === 'analysis').status, 'optional');
 
 workflow = buildWorkflowState(base, { sheetLinked: true });
 assert.equal(workflow.nextAction.id, 'composition');
@@ -62,13 +65,13 @@ assert.equal(workflow.nextAction.id, 'arrangement');
 const arranged = structuredClone(composed);
 arranged.arrangement.selectedAlternatives = { id: 'B' };
 workflow = buildWorkflowState(arranged, { sheetLinked: true });
-assert.equal(workflow.nextAction.id, 'dawReady');
+assert.equal(workflow.nextAction.id, 'daw');
 
 arranged.export.lastDawHandoffAt = '2026-10-13T00:00:00.000Z';
 workflow = buildWorkflowState(arranged, { sheetLinked: true });
-assert.equal(workflow.nextAction.id, 'pcDaw');
+assert.equal(workflow.nextAction.id, 'complete');
 
 assert.equal(lineageLabel({ projectId: 'song-1' }), 'このProjectが起点');
 assert.equal(lineageLabel({ projectId: 'song-2', lineage: { rootProjectId: 'song-1', parentProjectId: 'song-1' } }), '親: song-1');
 
-console.log('Project Home workflow + quick flow + Claude link smoke test passed.');
+console.log('Project Home mobile-first five-stage workflow smoke test passed.');
