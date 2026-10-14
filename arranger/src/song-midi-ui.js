@@ -29,7 +29,20 @@ function downloadBytes(bytes, filename) {
   window.setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 
-button?.addEventListener('click', () => {
+async function markSongProjectMidiExported(exportedAt) {
+  try {
+    const { getSheetSongProject } = await import('./song-project-ui.js');
+    const project = getSheetSongProject?.();
+    if (!project) return;
+    project.export = { ...(project.export || {}), lastSongMidiAt: exportedAt };
+    project.updatedAt = exportedAt;
+  } catch {
+    // Song.mid itself was already generated successfully. JSON export remains usable even if
+    // this optional in-memory progress marker cannot be updated in an older browser.
+  }
+}
+
+button?.addEventListener('click', async () => {
   try {
     const savedText = localStorage.getItem(STORAGE_KEY);
     if (!savedText) throw new Error('先に編曲案を「この案を採用」で保存してください。');
@@ -40,9 +53,7 @@ button?.addEventListener('click', () => {
     const filename = `${safeFileName(source.title)}_Song.mid`;
     downloadBytes(bytes, filename);
     const exportedAt = new Date().toISOString();
-    window.dispatchEvent(new CustomEvent('arrangement-lab:song-midi-exported', {
-      detail: { at: exportedAt, filename },
-    }));
+    await markSongProjectMidiExported(exportedAt);
     flash('採用済み編曲案から5トラックのSong.midを書き出しました。');
   } catch (error) {
     flash(error instanceof Error ? error.message : 'Song.midを書き出せませんでした。', true);
