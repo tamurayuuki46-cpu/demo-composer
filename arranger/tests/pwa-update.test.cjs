@@ -14,7 +14,8 @@ const server=http.createServer(async(req,res)=>{
   if(phase==='legacy'&&(p==='/arranger/'||p==='/arranger/index.html')){res.setHeader('Content-Type','text/html');return res.end(legacyHtml)}
   if(phase==='legacy'&&p==='/arranger/sw.js'){res.setHeader('Content-Type','text/javascript');return res.end(legacyWorker)}
   if(phase==='legacy'&&p==='/arranger/src/core.js'){res.setHeader('Content-Type','text/javascript');return res.end("export const ARRANGER_VERSION='v0.3-dev';")}
-  if(!p.startsWith('/arranger/')||p.includes('..')){res.writeHead(404);return res.end()}
+  const allowed=p.startsWith('/arranger/')||p==='/src/shared/song-data-menu.js';
+  if(!allowed||p.includes('..')){res.writeHead(404);return res.end()}
   const file=path.resolve('dist',p.slice(1)+(p.endsWith('/')?'index.html':''));res.setHeader('Content-Type',types[path.extname(file)]||'text/plain');res.setHeader('Cache-Control','no-store');res.end(await fs.readFile(file));
  }catch{res.writeHead(404);res.end()}
 });
@@ -46,6 +47,7 @@ const server=http.createServer(async(req,res)=>{
   await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.9-dev');
   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.9-dev');
   assert.equal(await page.locator('#beginner-guide').count(),1);
-  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.9 one-bar reharm -> normal URL -> offline; saved data and other caches preserved');
+  assert.equal(await page.locator('.song-data-trigger').textContent(),'📦 曲データ');
+  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.9 one-bar reharm -> normal URL -> offline; shared song-data menu, saved data and other caches preserved');
  }finally{await browser.close();await new Promise(r=>server.close(r))}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1});
