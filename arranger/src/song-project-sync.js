@@ -47,6 +47,58 @@ function maxMusicalEndTick(songProject) {
   }, 0);
 }
 
+function demoMusicalItems(demoProject) {
+  return [
+    ...(Array.isArray(demoProject?.chords) ? demoProject.chords : []),
+    ...(Array.isArray(demoProject?.tracks) ? demoProject.tracks.flatMap((track) => Array.isArray(track?.notes) ? track.notes : []) : []),
+  ];
+}
+
+function demoMusicalBounds(demoProject) {
+  const items = demoMusicalItems(demoProject);
+  if (!items.length) return null;
+  let minStart = Infinity;
+  let maxEnd = 0;
+  for (const item of items) {
+    const start = Math.max(0, Number(item?.startTick) || 0);
+    const duration = Math.max(1, Number(item?.durationTick) || 1);
+    minStart = Math.min(minStart, start);
+    maxEnd = Math.max(maxEnd, start + duration);
+  }
+  return Number.isFinite(minStart) ? { minStart, maxEnd, span: Math.max(0, maxEnd - minStart) } : null;
+}
+
+function rebaseCompactSketchTimeline(songProject, demoProject) {
+  const next = clone(demoProject);
+  const bounds = demoMusicalBounds(next);
+  if (!bounds || bounds.minStart <= 0) return next;
+
+  const ppq = Number(songProject?.basic?.ppq) || Number(next.basic?.ppq) || 480;
+  const ticksPerBar = Math.max(1, ppq * 4);
+  if (bounds.span > ticksPerBar) return next;
+
+  const sections = Array.isArray(next.structure?.sections) ? next.structure.sections : [];
+  const declaredBars = sections.reduce((sum, section) => sum + Math.max(1, Number(section?.bars) || 1), 0);
+  const declaredTicks = declaredBars * ticksPerBar;
+  const isOneBarExcerpt = declaredBars === 1 && bounds.maxEnd > declaredTicks;
+  const isSectionlessCompactSketch = sections.length === 0;
+  if (!isOneBarExcerpt && !isSectionlessCompactSketch) return next;
+
+  const shift = bounds.minStart;
+  next.chords = (Array.isArray(next.chords) ? next.chords : []).map((chord) => ({
+    ...chord,
+    startTick: Math.max(0, (Number(chord?.startTick) || 0) - shift),
+  }));
+  next.tracks = (Array.isArray(next.tracks) ? next.tracks : []).map((track) => ({
+    ...track,
+    notes: (Array.isArray(track?.notes) ? track.notes : []).map((note) => ({
+      ...note,
+      startTick: Math.max(0, (Number(note?.startTick) || 0) - shift),
+    })),
+  }));
+  return next;
+}
+
 function overlapTicks(note, startTick, endTick) {
   const noteStart = Number(note?.startTick) || 0;
   const noteEnd = noteStart + Math.max(1, Number(note?.durationTick) || 1);
@@ -54,11 +106,11 @@ function overlapTicks(note, startTick, endTick) {
 }
 
 function melodyNotes(songProject, demoProject) {
-  const direct = Array.isArray(songProject?.composition?.melody) ? songProject.composition.melody : [];
-  if (direct.length) return direct;
-  return (demoProject?.tracks || [])
+  const converted = (demoProject?.tracks || [])
     .filter((track) => track?.role === 'melody')
     .flatMap((track) => Array.isArray(track.notes) ? track.notes : []);
+  if (converted.length) return converted;
+  return Array.isArray(songProject?.composition?.melody) ? songProject.composition.melody : [];
 }
 
 function chordIntervals(quality) {
@@ -99,7 +151,7 @@ export function inferOneBarSketchChords(songProject, demoProject) {
 
   const ppq = Number(songProject?.basic?.ppq) || Number(next.basic?.ppq) || 480;
   const ticksPerBar = Math.max(1, ppq * 4);
-  const maxEndTick = maxMusicalEndTick(songProject);
+  const maxEndTick = demoMusicalBounds(next)?.maxEnd ?? maxMusicalEndTick(songProject);
   if (maxEndTick <= 0 || maxEndTick > ticksPerBar) return next;
 
   const notes = melodyNotes(songProject, next);
@@ -128,7 +180,7 @@ export function ensureArrangementSections(songProject, demoProject) {
   next.structure = next.structure && typeof next.structure === 'object' ? next.structure : { sections: [] };
   if (Array.isArray(next.structure.sections) && next.structure.sections.length) return next;
 
-  const maxEndTick = maxMusicalEndTick(songProject);
+  const maxEndTick = demoMusicalBounds(next)?.maxEnd ?? maxMusicalEndTick(songProject);
   if (maxEndTick <= 0) return next;
 
   const ppq = Number(songProject?.basic?.ppq) || 480;
@@ -148,7 +200,7 @@ export function ensureArrangementSections(songProject, demoProject) {
 
 export function songProjectToArrangementSourceInput(songProject) {
   validateSongProject(songProject);
-  const demoProject = songProjectToDemoProject(songProject);
+  const demoProject = rebaseCompactSketchTimeline(songProject, songProjectToDemoProject(songProject));
   return ensureArrangementSections(songProject, inferOneBarSketchChords(songProject, demoProject));
 }
 

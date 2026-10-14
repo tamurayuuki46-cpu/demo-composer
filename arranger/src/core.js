@@ -1,5 +1,5 @@
 import { CHORD_QUALITY_DEFINITIONS as QUALITIES } from './chord-qualities.js';
-export const ARRANGER_VERSION = 'v0.4.1-dev';
+export const ARRANGER_VERSION = 'v0.11-dev';
 export const ARRANGER_SCHEMA_VERSION = 4;
 
 export const STYLE_PROFILES = {
