@@ -1,3 +1,4 @@
+import { getSheetSongProject } from './app.js';
 import { mountSongDataMenu } from '../src/shared/song-data-menu.js';
 
 const fileInput = document.querySelector('#project-file');
@@ -22,6 +23,7 @@ function syncMenu() {
 
 controller = mountSongDataMenu({
   id: 'project-home-song-data-menu',
+  getSheetProject: getSheetSongProject,
   currentLabel: '未選択',
   saveEnabled: false,
   nextLabel: '次の工程へ進む',

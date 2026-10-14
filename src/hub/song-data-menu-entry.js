@@ -91,7 +91,7 @@ async function applyImportedSongProject(songProject) {
 
 const picker = document.createElement('input');
 picker.type = 'file';
-picker.accept = '.json,application/json';
+picker.accept = '.json,.txt,application/json,text/plain';
 picker.hidden = true;
 picker.setAttribute('aria-hidden', 'true');
 document.body.append(picker);
@@ -113,6 +113,7 @@ picker.addEventListener('change', async () => {
 
 controller = mountSongDataMenu({
   id: 'demo-composer-song-data-menu',
+  getSheetProject: getCurrentSongProject,
   currentLabel: document.querySelector('.topbar h1')?.textContent || '現在のProject',
   nextLabel: 'Arrangement Labへ進む',
   nextNote: 'JSONを保存して編曲へ渡します',

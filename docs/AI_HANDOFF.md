@@ -1,3 +1,6 @@
+# 2026-10-14 作曲シート v0.6追補
+記入用を先頭へ。詳細 `COMPOSITION_SHEET_SUMMARY.md`。本体VersionとSchemaは維持。
+
 # AI_HANDOFF
 
 ## 2026-10-14 作曲シート全集 v0.4

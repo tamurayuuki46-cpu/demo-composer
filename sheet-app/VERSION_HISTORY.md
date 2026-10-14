@@ -50,3 +50,6 @@
 
 開発Branch:
 - `feature/composition-sheet-json-v0.1`
+
+## 作曲シート v0.6-dev — 2026-10-14
+記入用を先頭へ。保存・Drive共有と各アプリ簡易表示。旧v0.1〜v0.5保持。stable未認定。
