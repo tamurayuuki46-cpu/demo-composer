@@ -11,6 +11,7 @@ import {
 import { buildWorkflowState } from '../project-home/workflow.js';
 
 const homeHtml = await readFile(new URL('../project-home/index.html', import.meta.url), 'utf8');
+const homeMenuEntry = await readFile(new URL('../project-home/song-data-menu-entry.js', import.meta.url), 'utf8');
 const latestHtml = await readFile(new URL('../sheet-app/latest/composition_sheet_latest.html', import.meta.url), 'utf8');
 const manifestText = await readFile(new URL('../sheet-app/latest/manifest.json', import.meta.url), 'utf8');
 const sheetHtml = await readFile(new URL('../sheet-app/versions/v0.9/composition_sheet_v0.9.html', import.meta.url), 'utf8');
@@ -45,6 +46,9 @@ assert.match(homeHtml, /id="latest-sheet-frame"/);
 assert.match(homeHtml, /src="\.\.\/sheet-app\/"/);
 assert.ok(!homeHtml.includes('songwriting-full-workbook-31.yoshitamura.chatgpt.site'));
 assert.ok(!homeHtml.includes('composition_sheet_v0.5.html'));
+assert.match(homeMenuEntry, /id: 'sheet'[\s\S]*href: '\.\.\/sheet-app\/'/);
+assert.ok(!homeMenuEntry.includes('composition_sheet_v0.5.html'));
+assert.ok(!homeMenuEntry.includes('/versions/'), 'Home song-data menu must not pin a sheet version');
 
 const workflow = buildWorkflowState(null, { sheetLinked: false });
 assert.equal(workflow.nextAction.id, 'sheet');
