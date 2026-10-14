@@ -22,16 +22,18 @@ assert.match(html, /NEXT ACTION/);
 assert.match(html, /id="workflow-list"/);
 assert.match(html, /id="next-action" class="primary"/);
 assert.match(html, /id="composition-sheet-card"/);
-assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.1 を開く/);
+assert.match(html, /href="\.\.\/sheet-app\/"[^>]*>作曲シート v0\.3 を開く/);
 assert.match(html, /id="claude-link-input"/);
 assert.match(html, /id="claude-link-open"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
 assert.match(html, /Song Project JSON・MIDI・公開コードには入れません/);
 assert.match(app, /buildWorkflowState/);
 assert.match(app, /loadSheetLink, saveSheetLink/);
+assert.match(app, /song-data-menu-entry\.js/);
 assert.match(app, /⓪ 作曲シート/);
 assert.match(app, /① MIDI解析/);
 assert.match(app, /1小節のフレーズだけでもArrangement Labを試せます/);
 assert.match(build, /stampModules\(`\$\{outputDir\}\/project-home`\)/);
+assert.match(build, /stampModules\(`\$\{outputDir\}\/sheet-app`\)/);
 
 assert.equal(
   normalizeSheetLink('https://claude.ai/artifact/A7Fmc5gD8HwgyrqWt4RzfG#c753d41d-9227'),
@@ -74,4 +76,4 @@ assert.equal(workflow.nextAction.id, 'complete');
 assert.equal(lineageLabel({ projectId: 'song-1' }), 'このProjectが起点');
 assert.equal(lineageLabel({ projectId: 'song-2', lineage: { rootProjectId: 'song-1', parentProjectId: 'song-1' } }), '親: song-1');
 
-console.log('Project Home mobile-first five-stage workflow smoke test passed.');
+console.log('Project Home mobile-first five-stage workflow + song data menu smoke test passed.');
