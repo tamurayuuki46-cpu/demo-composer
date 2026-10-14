@@ -2,6 +2,7 @@ import { arrangedNotes } from './core.js';
 import { resolveSoundProfile } from '../../src/core/sound-presets.js';
 
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+const PERCUSSION_ATTACK_SECONDS = 0.003;
 
 function rootGuideEvents(source, candidate, startTick, endTick, secondsPerTick) {
   const section = source.sections.find((item) => item.startTick <= startTick && item.endTick > startTick)
@@ -36,8 +37,6 @@ export function buildPreviewEvents(source, candidate, startTick = 0, options = {
     .map((note) => ({ ...note, part, time: (Math.max(startTick, note.startTick) - startTick) * secondsPerTick,
       duration: (Math.min(endTick, note.startTick + note.durationTick) - Math.max(startTick, note.startTick)) * secondsPerTick })))
     .sort((a, b) => a.time - b.time);
-  // Theory/part-only bass audition should not pretend to play silence when the source has no Bass Note.
-  // In that case, use the current chord roots as a temporary comparison guide without mutating SongProject data.
   if (!events.length && parts.length === 1 && parts[0] === 'bass') {
     events = rootGuideEvents(source, candidate, startTick, endTick, secondsPerTick);
   }
@@ -69,9 +68,6 @@ function trackSource(active, source) {
   };
 }
 
-// Keep the synthesis path aligned with Demo Composer's scheduleTone implementation.
-// Arrangement Lab only changes what is played; when the source Project carries Sound selections,
-// the oscillator/filter/envelope/layers/vibrato/formants remain the same as Demo Composer.
 function scheduleProfileTone(ctx, destination, active, note, when, duration, profile) {
   const voiceGain = ctx.createGain();
   const toneFilter = ctx.createBiquadFilter();
@@ -148,6 +144,66 @@ function scheduleProfileTone(ctx, destination, active, note, when, duration, pro
   voiceGain.gain.linearRampToValueAtTime(0.0001, when + safeDuration);
 }
 
+function createGain(ctx, destination, amount) {
+  const gain = ctx.createGain();
+  gain.gain.value = amount;
+  gain.connect(destination);
+  return gain;
+}
+
+function scheduleKick(ctx, destination, active, when) {
+  const oscillator = ctx.createOscillator();
+  const gain = createGain(ctx, destination, 0.34);
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(150, when);
+  oscillator.frequency.exponentialRampToValueAtTime(55, when + 0.12);
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.34, when + PERCUSSION_ATTACK_SECONDS);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.14);
+  oscillator.connect(gain);
+  trackSource(active, oscillator);
+  oscillator.start(when);
+  oscillator.stop(when + 0.16);
+}
+
+function scheduleNoiseHit(ctx, destination, active, when, { duration, gainAmount, highpass }) {
+  const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const channel = buffer.getChannelData(0);
+  for (let index = 0; index < length; index += 1) channel[index] = Math.random() * 2 - 1;
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.value = highpass;
+  const gain = createGain(ctx, destination, gainAmount);
+  const attackEnd = Math.min(when + PERCUSSION_ATTACK_SECONDS, when + duration * 0.35);
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(gainAmount, attackEnd);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+  source.connect(filter);
+  filter.connect(gain);
+  trackSource(active, source);
+  source.start(when);
+  source.stop(when + duration);
+}
+
+function scheduleDemoComposerDrum(ctx, destination, active, note, when) {
+  if (note.pitch === 36) {
+    scheduleKick(ctx, destination, active, when);
+    return true;
+  }
+  if (note.pitch === 38) {
+    scheduleNoiseHit(ctx, destination, active, when, { duration: 0.12, gainAmount: 0.18, highpass: 900 });
+    return true;
+  }
+  if (note.pitch === 42) {
+    scheduleNoiseHit(ctx, destination, active, when, { duration: 0.045, gainAmount: 0.11, highpass: 5000 });
+    return true;
+  }
+  return false;
+}
+
 function scheduleFallbackTone(ctx, destination, active, note, when, duration, harmonyOnly) {
   const types = { melody: 'triangle', counter: 'triangle', bass: 'sine', drums: 'square', harmony: 'triangle', guide: 'sine' };
   const osc = ctx.createOscillator();
@@ -167,8 +223,6 @@ function scheduleFallbackTone(ctx, destination, active, note, when, duration, ha
   osc.stop(when + safeDuration);
 }
 
-// Short lookahead bounds mobile oscillator allocation; MIDI and preview share notes.
-// Comparison playback uses a simple energy proxy so dense candidates do not win only by being louder.
 export function startPreview(ctx, source, candidate, startTick = 0, onEnd = () => {}, options = {}) {
   const { events, endTick, secondsPerTick } = buildPreviewEvents(source, candidate, startTick, options);
   if (!events.length) throw new Error('このSectionに試聴できるコード / Noteがありません。曲データの位置を確認してください。');
@@ -200,8 +254,9 @@ export function startPreview(ctx, source, candidate, startTick = 0, onEnd = () =
       const end = origin + note.time + note.duration;
       if (end <= when) continue;
       const duration = Math.min(end - when, note.part === 'drums' ? .07 : 16);
+      if (note.part === 'drums' && scheduleDemoComposerDrum(ctx, master, active, note, when)) continue;
       const profile = resolvePreviewSoundProfile(source, note.part);
-      if (profile && note.part !== 'drums') scheduleProfileTone(ctx, master, active, note, when, duration, profile);
+      if (profile) scheduleProfileTone(ctx, master, active, note, when, duration, profile);
       else scheduleFallbackTone(ctx, master, active, note, when, duration, harmonyOnly);
     }
   }
@@ -214,6 +269,6 @@ export function startPreview(ctx, source, candidate, startTick = 0, onEnd = () =
   }
   pump();
   stop.eventCount = events.length;
-  stop.preservedSound = events.some((note) => Boolean(resolvePreviewSoundProfile(source, note.part)));
+  stop.preservedSound = events.some((note) => note.part === 'drums' || Boolean(resolvePreviewSoundProfile(source, note.part)));
   return stop;
 }
