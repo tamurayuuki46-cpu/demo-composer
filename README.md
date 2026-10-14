@@ -4,9 +4,9 @@ Androidスマホ中心の作曲支援PWAです。
 
 ## Current Version
 
-`v0.9-dev`
+`v0.14-dev`
 
-公開中Version: `v0.6-dev`
+公開中Version: `v0.9-dev`
 
 GitHub Pages: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
@@ -35,6 +35,21 @@ PC DAWは最終工程として必須です。
 - PC DAW = 完成させる
 
 正本: `docs/WORKFLOW_PRINCIPLES.md`
+
+## v0.14-dev
+
+### 曲データ共通メモ帳
+
+右上の `📦 曲データ` に `📓 メモ帳` を追加しました。v0.13-devの4大操作はそのまま維持し、メモ帳は補助操作として配置しています。
+
+- Project IDごとの端末保存 / 自動保存
+- Android共有画面から Google Drive / Notion へTXT共有
+- Android共有画面から ChatGPT へメモ共有
+- Web Share API非対応時はTXT保存、コピー、ChatGPT起動へフォールバック
+- 作曲シート / Music Project Home / Demo Composer / Arrangement Labで共通利用
+- SongProject v1 / Project Schema 3 / IndexedDB Schemaは変更なし
+
+詳細: `docs/SONG_MEMO.md`
 
 ## Demo Composerの責務
 
@@ -148,6 +163,7 @@ Forkは新Project IDを作り、元Projectを変更せず、root / parent / sour
 - Claude composition-sheet handoff
 - Project Lineage / explicit Fork
 - Root PWA / offline shell / versioned cache
+- 曲データ共通メモ帳 / Drive・Notion・ChatGPT共有
 
 ## Arrangement Lab
 
@@ -222,6 +238,7 @@ python -m http.server 8080
 8. `docs/DATA_SCHEMA.md`
 9. `arranger/docs/WORKFLOW_BOUNDARY.md`
 10. `CHANGELOG.md`
+11. `docs/SONG_MEMO.md`
 
 ## Git / Release
 
@@ -233,7 +250,8 @@ python -m http.server 8080
 
 ## 実機継続課題
 
-- Android: Project Home → Claude handoff → Demo Vocal設計 → Arrangement Lab → DAW Handoffの通し確認
+- Android: Project Home → Sheet → MIDI Analyzer → Demo Composer → Arrangement Lab → DAW Handoffの通し確認
+- Android: メモ帳 → Drive / Notion / ChatGPT共有先の実機確認
 - Android PWA install / standalone / offline / update
 - Cubasis / CubaseでMIDI / DAW ZIP取込
 - SynthV / 本歌はPC DAW工程として確認
