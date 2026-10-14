@@ -4,6 +4,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const arrangerBase = process.env.ARRANGER_URL || 'http://127.0.0.1:8080/arranger/';
 const rootBase = new URL('../', arrangerBase).href;
 const homeBase = new URL('project-home/', rootBase).href;
+const sheetBase = new URL('sheet-app/', rootBase).href;
 const fixture = {
   id: 'song-data-menu-test',
   revision: 1,
@@ -39,6 +40,19 @@ async function assertCommonMenu(page, width, nextText) {
       page.on('pageerror', (error) => errors.push(error.message));
       page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
 
+      await page.goto(sheetBase);
+      const sheetMenu = await assertCommonMenu(page, width, 'Demo Composerへ進む');
+      await sheetMenu.trigger.click();
+      assert.equal(await sheetMenu.panel.locator('[data-song-data-action="save"]').isDisabled(), true, 'Composition Sheet save must be disabled before required fields');
+      assert.equal(await sheetMenu.panel.locator('[data-song-data-action="next"]').isDisabled(), true, 'Composition Sheet next must be disabled before required fields');
+      await page.locator('.song-data-close').click();
+      await page.locator('#scene').fill('夜の帰り道');
+      await page.locator('#reference1').fill('Reference Song');
+      await sheetMenu.trigger.click();
+      assert.equal(await sheetMenu.panel.locator('[data-song-data-action="save"]').isEnabled(), true);
+      assert.equal(await sheetMenu.panel.locator('[data-song-data-action="next"]').isEnabled(), true);
+      await page.locator('.song-data-close').click();
+
       await page.goto(rootBase);
       await assertCommonMenu(page, width, 'Arrangement Labへ進む');
 
@@ -62,7 +76,7 @@ async function assertCommonMenu(page, width, nextText) {
       assert.deepEqual(errors, []);
       await context.close();
     }
-    console.log('Demo Composer / Project Home / Arrangement Lab 360/390/430px song data menu passed');
+    console.log('Composition Sheet / Demo Composer / Project Home / Arrangement Lab 360/390/430px song data menu passed');
   } finally {
     await browser.close();
   }
