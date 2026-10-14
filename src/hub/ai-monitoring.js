@@ -90,6 +90,17 @@ export function buildFeedback(summary) {
   return { positive, negative, suggestions };
 }
 
+export function beginnerRecommendation(summary) {
+  const feedback = buildFeedback(summary);
+  const next = feedback.suggestions[0] || null;
+  return {
+    positive: feedback.positive,
+    improvement: feedback.negative,
+    next,
+    nextTitle: next ? `まずは「${next.name}」を1回試す` : "主要機能を一通り使えています"
+  };
+}
+
 function readState() {
   try {
     return normalizeState(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"));
@@ -129,21 +140,52 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function monitoringHtml() {
-  const summary = summarizeUsage(readState());
-  const feedback = buildFeedback(summary);
+function detailedUsageHtml(summary) {
   const categoryRows = summary.categories.map((item) => `
     <div class="ai-monitoring-category">
       <span>${escapeHtml(item.category)}</span>
       <div class="ai-monitoring-mini-bar"><i style="width:${item.percent}%"></i></div>
       <strong>${item.percent}%</strong>
     </div>`).join("");
-  const suggestions = feedback.suggestions.length
-    ? feedback.suggestions.map((feature) => `<li><strong>${escapeHtml(feature.name)}</strong><span>${escapeHtml(feature.tip)}</span></li>`).join("")
-    : "<li><strong>主要機能を一通り使用済みです</strong><span>今後は使用回数と偏りを見ながら、必要な機能だけを残して使えます。</span></li>";
   const unusedList = summary.unused.length
     ? summary.unused.map((feature) => `<span class="ai-monitoring-chip">${escapeHtml(feature.name)}</span>`).join("")
     : '<span class="ai-monitoring-chip">未使用なし</span>';
+  return `
+    <div class="ai-monitoring-categories">${categoryRows}</div>
+    <details class="ai-monitoring-unused"><summary>未使用機能を全部見る（${summary.unused.length}）</summary><div>${unusedList}</div></details>`;
+}
+
+function beginnerMonitoringHtml(summary) {
+  const beginner = beginnerRecommendation(summary);
+  const nextHtml = beginner.next
+    ? `<strong>${escapeHtml(beginner.nextTitle)}</strong><p>${escapeHtml(beginner.next.tip)}</p>`
+    : `<strong>${escapeHtml(beginner.nextTitle)}</strong><p>次は使用回数の偏りを見て、自分に必要な機能を絞っていきましょう。</p>`;
+
+  return `
+    <section class="ai-monitoring beginner" data-ai-monitoring-panel>
+      <div class="ai-monitoring-heading">
+        <div><p class="eyebrow">Usage Monitor</p><h3>AIモニタリング</h3></div>
+        <span class="ai-monitoring-local">初心者表示</span>
+      </div>
+      <p class="hint">難しい数字は後回し。今は「できていること」と「次の1つ」だけ見ればOKです。</p>
+      <div class="ai-monitoring-beginner-meter">
+        <div><span>使った機能</span><strong>${summary.usedPercent}%</strong></div>
+        <div><span>まだ未使用</span><strong>${summary.unusedPercent}%</strong></div>
+      </div>
+      <div class="ai-monitoring-progress" role="progressbar" aria-label="主要機能の使用率" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${summary.usedPercent}"><i style="width:${summary.usedPercent}%"></i></div>
+      <div class="ai-monitoring-feedback positive"><strong>できていること</strong><p>${escapeHtml(beginner.positive)}</p></div>
+      <div class="ai-monitoring-feedback negative"><strong>改善ポイント</strong><p>${escapeHtml(beginner.improvement)}</p></div>
+      <div class="ai-monitoring-beginner-next"><small>次はこれだけ</small>${nextHtml}</div>
+      <details class="ai-monitoring-details"><summary>詳しい使用状況を見る</summary>${detailedUsageHtml(summary)}</details>
+      <p class="ai-monitoring-note">記録はこの端末内だけです。音声・MIDI内容・曲データは外部送信しません。</p>
+    </section>`;
+}
+
+function fullMonitoringHtml(summary) {
+  const feedback = buildFeedback(summary);
+  const suggestions = feedback.suggestions.length
+    ? feedback.suggestions.map((feature) => `<li><strong>${escapeHtml(feature.name)}</strong><span>${escapeHtml(feature.tip)}</span></li>`).join("")
+    : "<li><strong>主要機能を一通り使用済みです</strong><span>今後は使用回数と偏りを見ながら、必要な機能だけを残して使えます。</span></li>";
 
   return `
     <section class="ai-monitoring" data-ai-monitoring-panel>
@@ -157,13 +199,18 @@ function monitoringHtml() {
         <div class="ai-monitoring-score unused"><span>未使用</span><strong>${summary.unusedPercent}%</strong><small>${summary.unused.length} / ${AI_MONITORING_FEATURES.length}機能</small></div>
       </div>
       <div class="ai-monitoring-progress" role="progressbar" aria-label="主要機能の使用率" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${summary.usedPercent}"><i style="width:${summary.usedPercent}%"></i></div>
-      <div class="ai-monitoring-categories">${categoryRows}</div>
+      ${detailedUsageHtml(summary)}
       <div class="ai-monitoring-feedback positive"><strong>ポジティブフィードバック</strong><p>${escapeHtml(feedback.positive)}</p></div>
       <div class="ai-monitoring-feedback negative"><strong>ネガティブフィードバック</strong><p>${escapeHtml(feedback.negative)}</p></div>
       <div class="ai-monitoring-suggestions"><strong>次に試す使い方</strong><ol>${suggestions}</ol></div>
-      <details class="ai-monitoring-unused"><summary>未使用機能を全部見る（${summary.unused.length}）</summary><div>${unusedList}</div></details>
       <p class="ai-monitoring-note">記録対象はこのDemo Composer内の主要操作です。音声・MIDI内容・入力した曲データを外部送信しません。</p>
     </section>`;
+}
+
+function monitoringHtml() {
+  const summary = summarizeUsage(readState());
+  const beginnerMode = document.body.classList.contains("beginner-mode");
+  return beginnerMode ? beginnerMonitoringHtml(summary) : fullMonitoringHtml(summary);
 }
 
 let renderQueued = false;
@@ -217,6 +264,7 @@ function startAiMonitoring() {
     if (feature) recordFeature(feature.id, "change");
   }, true);
 
+  new MutationObserver(scheduleRender).observe(document.body, { attributes: true, attributeFilter: ["class"] });
   installPanel();
 }
 
