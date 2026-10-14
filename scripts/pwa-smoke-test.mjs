@@ -9,10 +9,13 @@ assert.ok(Array.isArray(manifest.icons) && manifest.icons.length > 0, 'manifest 
 assert.ok(manifest.icons.some((icon) => icon.type === 'image/svg+xml' && icon.purpose.includes('maskable')));
 
 const index = await readFile('index.html', 'utf8');
+const version = (await readFile('VERSION', 'utf8')).trim();
 assert.match(index, /src\/core\/pwa-service-worker\.js/);
 assert.match(index, /public\/manifest\.webmanifest/);
-assert.match(index, /v0\.12-dev/);
+assert.ok(index.includes(version), `index must display current VERSION: ${version}`);
 assert.match(index, /src\/hub\/composition-sheet-handoff-ui\.js/);
+assert.match(index, /src\/hub\/ai-monitoring\.js/);
+assert.match(index, /src\/hub\/ai-monitoring\.css/);
 
 const build = JSON.parse(await readFile('dist/build.json', 'utf8'));
 const worker = await readFile('dist/service-worker.js', 'utf8');
@@ -27,6 +30,8 @@ assert.ok(urls.includes('./public/manifest.webmanifest'));
 assert.ok(urls.includes('./public/icon.svg'));
 assert.ok(urls.some((url) => url.startsWith('./src/core/pwa-service-worker.js?build=')));
 assert.ok(urls.some((url) => url.startsWith('./src/hub/composition-sheet-handoff-ui.js?build=')));
+assert.ok(urls.some((url) => url.startsWith('./src/hub/ai-monitoring.js?build=')));
+assert.ok(urls.some((url) => url.startsWith('./src/hub/ai-monitoring.css?build=')));
 assert.ok(urls.some((url) => url.startsWith('./src/shared/song-data-menu.js?build=')));
 assert.ok(urls.some((url) => url.startsWith('./src/hub/song-data-menu-entry.js?build=')));
 assert.ok(urls.some((url) => url.startsWith('./project-home/app.js?build=')));
