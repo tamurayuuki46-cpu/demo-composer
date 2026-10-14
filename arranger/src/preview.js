@@ -2,16 +2,44 @@ import { arrangedNotes } from './core.js';
 
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
 
+function rootGuideEvents(source, candidate, startTick, endTick, secondsPerTick) {
+  const section = source.sections.find((item) => item.startTick <= startTick && item.endTick > startTick)
+    || source.sections.find((item) => item.startTick < endTick && item.endTick > startTick);
+  const plan = section ? candidate.sections.find((item) => item.sectionId === section.id) : null;
+  const chords = plan?.reharmonization?.chords?.length ? plan.reharmonization.chords : source.chords;
+  return chords
+    .filter((chord) => chord.startTick < endTick && chord.startTick + chord.durationTick > startTick)
+    .map((chord) => {
+      const noteStart = Math.max(startTick, chord.startTick);
+      const noteEnd = Math.min(endTick, chord.startTick + chord.durationTick);
+      return {
+        pitch: 36 + ((Number(chord.root) % 12) + 12) % 12,
+        velocity: 78,
+        startTick: noteStart,
+        durationTick: Math.max(1, noteEnd - noteStart),
+        part: 'bass',
+        time: (noteStart - startTick) * secondsPerTick,
+        duration: (noteEnd - noteStart) * secondsPerTick,
+        previewFallback: 'chord-root',
+      };
+    });
+}
+
 export function buildPreviewEvents(source, candidate, startTick = 0, options = {}) {
   const secondsPerTick = 60 / source.basic.bpm / source.basic.ppq;
   const songEnd = source.sections.at(-1).endTick;
   const endTick = Math.min(songEnd, options.endTick ?? songEnd, startTick + 16 / secondsPerTick);
   const parts = options.parts || ['melody','counter','bass','drums','harmony'];
-  const events = parts.flatMap((part) => arrangedNotes(source, candidate, part)
+  let events = parts.flatMap((part) => arrangedNotes(source, candidate, part)
     .filter((note) => note.startTick < endTick && note.startTick + note.durationTick > startTick)
     .map((note) => ({ ...note, part, time: (Math.max(startTick, note.startTick) - startTick) * secondsPerTick,
       duration: (Math.min(endTick, note.startTick + note.durationTick) - Math.max(startTick, note.startTick)) * secondsPerTick })))
     .sort((a, b) => a.time - b.time);
+  // Theory/part-only bass audition should not pretend to play silence when the source has no Bass Note.
+  // In that case, use the current chord roots as a temporary comparison guide without mutating SongProject data.
+  if (!events.length && parts.length === 1 && parts[0] === 'bass') {
+    events = rootGuideEvents(source, candidate, startTick, endTick, secondsPerTick);
+  }
   return { events, endTick, secondsPerTick };
 }
 
