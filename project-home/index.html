@@ -45,13 +45,13 @@
     <p class="now-label">NEXT ACTION</p>
     <h2>今やること：作曲シート</h2>
     <p>まず曲の場面や参考曲など、音を鳴らす前に決められることを整理します。</p>
-    <a class="primary" href="#claude-link-card">作曲シートを開く / 登録する</a>
+    <a class="primary" href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html">作曲シート全集を開く</a>
   </section>
 
   <section id="quick-flow-card" class="card">
     <h2>曲づくりの5段階</h2>
     <nav id="quick-flow" class="quick-flow" aria-label="基本の作曲フロー">
-      <a class="flow-step" href="#claude-link-card"><strong>⓪ 方向を決める</strong><small>作曲シート</small></a>
+      <a class="flow-step" href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html"><strong>⓪ 方向を決める</strong><small>作曲シート</small></a>
       <a class="flow-step flow-optional" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/"><strong>① 必要なら解析</strong><small>MIDI Analyzer・任意</small></a>
       <a class="flow-step" href="../"><strong>② 作曲</strong><small>Demo Composer</small></a>
       <a class="flow-step" href="../arranger/"><strong>③ 編曲</strong><small>Arrangement Lab</small></a>
@@ -65,6 +65,8 @@
     <input id="project-file" type="file" accept="application/json,.json">
     <p id="message" aria-live="polite"></p>
   </section>
+
+  <section class="card" id="sheet-transfer-guide"><h2>シートから曲データを受け取る</h2><ol><li>非公開の作曲シートで「全シートのJSONを保存」</li><li>このHomeの「Song Projectを開く」で、そのJSONを選ぶ</li><li>「読み込んだ曲をDemo Composerへ」で渡し、内容を確認して反映</li></ol><p><small>サイトが異なるため、自動同期にはなりません。JSONで全シートの記入内容を引き継ぎます。シートの閲覧は本人のChatGPTアカウントのみです。</small></p><button id="open-demo-with-project" type="button" hidden>読み込んだ曲をDemo Composerへ</button><p id="sheet-transfer-status" role="status"></p></section>
 
   <section id="summary" class="card" hidden>
     <h2 id="title">My Song</h2>
@@ -80,7 +82,9 @@
     <p id="arrangement-status"></p>
   </section>
 
-  <section class="card" id="claude-link-card">
+  <section class="card" id="composition-sheet-card"><h2>⓪ 作曲シート全集</h2><p>31シートをタブで移動して、曲の方向性を整理します。</p><a href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html">作曲シート全集 v0.5 を開く</a></section>
+
+  <details class="card" id="claude-link-card"><summary>以前のClaudeリンク（任意）</summary>
     <h2>⓪ 作曲シート（Claude Artifact）</h2>
     <p>作曲シートのClaude Artifactリンクをこの端末に登録すると、ここから1タップで開けます。</p>
     <label for="claude-link-input"><small>claude.ai のリンク</small></label>
@@ -92,7 +96,7 @@
     <button id="claude-link-clear" type="button" hidden>リンクを消す</button>
     <p id="claude-link-message" aria-live="polite"></p>
     <p><small>リンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p>
-  </section>
+  </details>
 
   <section id="export-card" class="card" hidden>
     <h2>Backup / Recovery</h2>
