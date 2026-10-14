@@ -1,4 +1,6 @@
 import { getSheetSongProject } from './app.js';
+import { songProjectToDemoProject } from '../src/shared/song-project.js';
+import { downloadMidiBundle } from '../src/midi/midi-export.js';
 import { mountSongDataMenu } from '../src/shared/song-data-menu.js';
 
 const fileInput = document.querySelector('#project-file');
@@ -14,6 +16,7 @@ let controller;
 function syncMenu() {
   const ready = hasCurrentSong();
   controller?.setCurrent(ready ? title.textContent : '未選択');
+  controller?.setMidiEnabled(ready);
   controller?.setSaveEnabled(ready);
 }
 
@@ -21,6 +24,7 @@ controller = mountSongDataMenu({
   id: 'project-home-song-data-menu',
   getSheetProject: getSheetSongProject,
   currentLabel: '未選択',
+  midiEnabled: false,
   saveEnabled: false,
   nextLabel: 'Demo Composerへ進む',
   nextNote: '曲づくり画面を開きます',
@@ -28,10 +32,16 @@ controller = mountSongDataMenu({
     fileInput?.click();
     return 'SongProject JSONを選んでください。';
   },
+  onMidi() {
+    const songProject = getSheetSongProject();
+    if (!songProject) throw new Error('先に保存した曲を開いてください。');
+    downloadMidiBundle(songProjectToDemoProject(songProject));
+    return '現在の曲のMIDIを保存しました。';
+  },
   onSave() {
     if (!hasCurrentSong() || !backupButton) throw new Error('先に保存した曲を開いてください。');
     backupButton.click();
-    return `「${title.textContent || 'Untitled Project'}」を保存しました。`;
+    return `「${title.textContent || 'Untitled Project'}」のJSONを保存しました。`;
   },
   onNext() {
     window.location.href = new URL('../', window.location.href).href;
