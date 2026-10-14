@@ -1,9 +1,10 @@
 const BUILD = new URL(self.location.href).searchParams.get('build') || 'local';
-const CACHE = `arrangement-lab-v0.12-dev-${BUILD}`;
+const CACHE = `arrangement-lab-v0.13-dev-${BUILD}`;
 const EXTERNAL_ASSETS = [
   '../src/shared/song-data-menu.js',
   '../src/shared/song-project.js',
   '../src/core/decision-design.js',
+  '../src/core/sound-presets.js',
 ];
 const ASSETS = ['./', './index.html', './styles.css', './v05.css', './v06.css', './manifest.webmanifest', './src/app.js', './src/core.js', './src/music-lab-catalog.js', './src/music-lab-utils.js', './src/harmony-lab.js', './src/counter-lab.js', './src/development-lab.js', './src/music-lab.js', './src/music-lab-ui.js', './src/reharm-theory.js', './src/arrangement-tools.js', './src/feature-ui.js', './src/preview.js', './src/chord-qualities.js', './src/v05-tools.js', './src/v05-workflow.js', './src/v05-ui.js', './src/workflow-boundary-ui.js', './src/beginner-flow.js', './src/song-project-sync.js', './src/song-project-ui.js', './src/song-data-menu-entry.js', ...EXTERNAL_ASSETS, './icons/icon-192.png', './icons/icon-512.png'];
 const buildUrl = (path) => `${path}${path.includes('?') ? '&' : '?'}build=${encodeURIComponent(BUILD)}`;
