@@ -2,28 +2,28 @@
 
 対象Repository: `tamurayuuki46-cpu/demo-composer`
 
-この文書は高推論Workで継続するための引き継ぎ。実行前に必ずRepositoryの現在状態を再取得し、このsnapshotより新しいcommit / PRを優先する。
+高推論Workで継続するためのsnapshot。実行前に必ずRepositoryの現在状態を再取得し、この文書より新しいcommit / PRを優先する。
 
 ## 絶対ルール
 
 - 過去Version / Branch / Tag / Backup / restore pointを削除・上書きしない
 - `main`へ直接変更しない
 - `main` / `develop`へforce pushしない
-- 大きな変更前に新しいrestore pointを作る
-- SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4を、明示したMigrationなしに破壊しない
+- 大きな変更前にrestore pointを作る
+- SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4をMigrationなしに破壊しない
 - PPQ 480 / 4/4固定方針を勝手に変えない
 - stable tagはAndroid実機 + Cubasis実機 + Cubase実機の確認後のみ
 
-## ユーザーが指定した優先順
+## ユーザー指定の優先順
 
 1. SongProject v1テスト強化
 2. main / develop安全整理
 3. VERSION / README / AI_HANDOFF同期
 4. Music Project Home司令塔仕上げ
 5. Android → MIDI → Cubasis / Cubase実機検証
-6. 上記完了後に細かいUX改善
+6. 最後にUX改善
 
-## このチャットで作成したrestore points
+## 作成済みrestore points
 
 - `restore/main-before-songproject-branch-sync-20261015`
 - `restore/develop-before-songproject-branch-sync-20261015`
@@ -35,14 +35,11 @@
 ## 1. SongProject v1テスト強化 — 完了
 
 PR #252を`develop`へmerge済み。
+Merge commit: `1aeb72850adeb435b5692d56774e22e1221a41a2`
 
-Merge commit:
-`1aeb72850adeb435b5692d56774e22e1221a41a2`
+追加: `scripts/song-project-cross-app-boundary-smoke-test.mjs`
 
-追加:
-`script/song-project-cross-app-boundary-smoke-test.mjs`ではなく、正しいpathは `scripts/song-project-cross-app-boundary-smoke-test.mjs`。
-
-検証対象:
+固定した境界:
 
 - MIDI Analyzer-shaped analysis / reference / assets
 - JSON normalize / serialize / parse round-trip
@@ -51,96 +48,115 @@ Merge commit:
 - Composition Sheet編集でAnalyzer / Demo / Arrangement所有領域を保持
 - lineage / assets / compatibility保持
 
-CIへ組み込み済み。PR時点でDemo Composer CI / Song Project Integration CI PASS。
+CI組み込み済み。
 
 ## 2. main / develop整理 — 調査・準備まで完了、本統合は未実施
 
 専用staging branch:
 `integration/main-develop-reconcile-20261015`
 
-読むファイル:
+まず読む:
 
 - `docs/BRANCH_RECONCILIATION_2026-10-15.md`
+- `docs/MAIN_ONLY_RELEASE_ASSETS_2026-10-15.md`
 - `docs/DOC_SYNC_AUDIT_2026-10-15.md`
 - この文書
 
-調査時点でmain/developは大幅にdiverged。commit数だけで判断しないこと。
+2026-10-15の最終確認時点:
 
-重要な観測:
+- main head: `28f85e64adeed26da1d40fc491723438ffecd2f9`
+- developはmainに対して `ahead 397 / behind 114`
+- merge base: `365b577685cf74c512d5f84e3c78ca6ecfb0e7e9`
+
+commit数だけで機能差を判断しない。
+
+重要:
 
 - top-level `VERSION`はmain/developとも`v0.15-dev`
 - `arranger/VERSION`はmain/developとも`v0.13-dev`
 - SongProject coreは履歴分岐に比べ実装差が小さい
-- 一方でComposition Sheet latestとProject Homeには実際のcontent差がある
-- main固有の公開修正を消さず、developの新機能を選択的に統合する必要あり
+- Composition Sheet latest / Project Homeには実content差がある
+- mainにはdevelopに無い公開専用資産がある
+  - `.github/workflows/ai-monitoring-release-ci.yml`
+  - `docs/CURRENT_RELEASE.md`
+  - `docs/MOBILE_FIRST_WORKFLOW_MAIN.md`
+  - `project-home/VERSION`
+  - public-specific changelog / smoke test等
 
-推奨:
+したがってblind `develop → main` merge / resetは禁止。
 
-1. Workでcloneして`git log --graph --all` / merge-base / `git diff main..develop` / `git cherry`等を確認
-2. integration branchを現在main headへ安全に更新する方法を検討
-3. 実ファイル差分を「同等」「develop-only」「main-only」「docs metadata」に分類
-4. blind merge / resetは禁止
-5. 必要な差分のみ統合
-6. 全CI
-7. PR経由でmain
-8. main確定後にdevelopを正常な開発統合線へ戻す。古いdevelop headはrestore branchで保存
+Workではlocal cloneして最低限以下を確認:
+
+```text
+git merge-base main develop
+git log --graph --decorate --oneline --all
+git log develop..main --name-status
+git log main..develop --name-status
+git diff --name-status main..develop
+git diff --name-status develop..main
+```
+
+差分を以下に分類して必要分だけintegration branchへ統合:
+
+- same/equivalent
+- main-only release infrastructure
+- develop-only verified feature
+- stale/generated metadata
+- uncertain / requires test
+
+全CI後、PR経由でmainへ。main確定後にdevelopを正常な開発統合線へ戻す。古いdevelop headはrestore branchで保存する。
 
 ## 3. VERSION / README / AI_HANDOFF同期 — audit済み、更新は②の後
 
-`docs/DOC_SYNC_AUDIT_2026-10-15.md`を参照。
+`docs/DOC_SYNC_AUDIT_2026-10-15.md`参照。
 
 確認済みのズレ:
 
 - `VERSION`: v0.15-dev
-- develop README: v0.14-dev表記が残る
-- main README: v0.5-dev表記が残る
+- develop README: v0.14-dev表記
+- main README: v0.5-dev表記
 - develop package: 0.15.0-dev
 - main package: 0.10.0-dev
-- develop AI_HANDOFF: 新しい追補に加えて古い`現在Version: v0.9-dev`節が残る
-- main AI_HANDOFF: 冒頭がv0.5-dev
+- develop AI_HANDOFF: 古い`現在Version: v0.9-dev`節が残る
+- main AI_HANDOFF: 冒頭v0.5-dev
 - develop Project Home CHANGELOG: v0.18-dev
 - main Project Home CHANGELOG: v0.17-dev
 - develop Composition Sheet latest: v0.9.1-dev
 - main Composition Sheet latest: v0.9-dev
 
-②のlineage確定後に一括同期する。先に同期すると二度手間になる。
+②のlineage確定後に一括同期する。README / AI_HANDOFFでは「development」「published main」「stable」を分けて書く。
 
-## 4. Music Project Home司令塔 — 重要修正をdevelopへmerge済み
+PR #252 / #253 / #254の内容も最終CHANGELOG / VERSION_HISTORYへ反映すること。
 
-PR #253 merge済み。
+## 4. Music Project Home司令塔 — 重要修正完了
 
-Merge commit:
-`0cccda3b4bb055a95f6345b4d00124f3dbb1c22e`
+PR #253を`develop`へmerge済み。
+Merge commit: `0cccda3b4bb055a95f6345b4d00124f3dbb1c22e`
 
-修正内容:
+修正:
 
-- 旧判定はArrangement Labの`arrangerProjectId`があるだけでDAW-readyになっていた
-- 現在は実際の`export.lastSongMidiAt`または`lastDawHandoffAt`が必要
-- Arrangement LabのSong.mid成功時にactive SongProjectへ`lastSongMidiAt`を記録
-- Project Home smoke testで「編曲採用だけではDAW未完」「Song.mid書き出し後にcomplete」を固定
+- Arrangement Labの`arrangerProjectId`だけではDAW-readyにしない
+- `export.lastSongMidiAt`または`lastDawHandoffAt`でDAW-ready判定
+- Arrangement LabのSong.mid成功時にactive SongProjectへ`lastSongMidiAt`記録
+- smoke testで「編曲採用だけではDAW未完」「MIDI書き出し後にcomplete」を固定
 
-PR #253では以下がPASS:
+PR #253でPASS:
 
 - Demo Composer CI
 - Song Project Integration CI
 - Project Home Sheet Link CI
-- Arrangement Lab CI（Mobile Chromium E2E含む）
+- Arrangement Lab CI / Mobile Chromium E2E
 
-追加検討するなら、Arrangement LabからProject Homeへ戻るlocalStorage handoffを設ける余地はある。ただし必須かはUX実機確認後に判断し、先に機能を増やしすぎない。
+Arrangement Lab→Project Homeの自動戻りhandoffは、実機UXで必要性が確認できてから検討。先に機能を増やしすぎない。
 
-## 5. Android → Song.mid → Cubasis / Cubase — 自動化部分を作業中
+## 5. Android → Song.mid → Cubasis / Cubase — 自動化部分完了、実機のみ残り
 
-PR #254:
-`test: strengthen Android to Cubasis/Cubase DAW handoff gate`
+PR #254を`develop`へmerge済み。
+Merge commit: `b322cb47282261db720bf3b74caf455cb56c9cf7`
 
-作業branch:
-`test/daw-handoff-verification-20261015`
+追加・更新:
 
-この文書作成時点ではPR状態を必ず再確認すること。merge済みならやり直さない。
-
-追加内容:
-
-- `arranger/tests/song-midi.test.mjs`強化
+- `arranger/tests/song-midi.test.mjs`
   - SMF Format 1
   - 実MTrk count = 5
   - PPQ 480
@@ -152,50 +168,53 @@ PR #254:
   - Note On / Off
   - Melody / Counter / Bass / Kickの具体的startTick / endTick
 - `docs/DAW_HANDOFF_VERIFICATION.md`
-  - 自動テストと実機テストを分離
-  - Android / Cubasis / CubaseのPASS条件
+  - 自動テストと実機を分離
+  - Android / Cubasis / Cubase PASS条件
   - stable gate
   - 実機結果テンプレート
 - `docs/REAL_SONG_TEST.md`
-  - 旧「Hubから最終Song.mid」導線を修正
-  - Final Song.midはArrangement Lab採用案から出力する正式Workflowへ同期
+  - Final Song.midをArrangement Lab採用案から出力する現行Workflowへ更新
 
-実機でしかできない残作業:
+PR #254でPASS:
 
-- Android Chrome/PWAでSong.midを実際に保存
+- Demo Composer CI
+- Song Project Integration CI
+- Arrangement Lab CI / Mobile Chromium E2E
+
+実機でしかできない残り:
+
+- Android Chrome/PWAからSong.mid実保存
 - Android Files / Download / Share確認
 - Cubasis実機Import / 再生 / Tempo / 4/4 / track分離 / note timing
 - Cubase実機Import / 再生 / channel / marker / note timing
-- 結果をRepositoryへ記録
+- 実機結果をRepositoryへ記録
 
 これらが終わるまでstable tagは禁止。
 
 ## 6. UX改善 — 未着手で正しい
 
-実機テストで見つかった問題だけを優先する。
-
+実機テストで見つかった問題だけを優先。
 まず「減らす / まとめる / 分かりやすくする」で解決できないか確認し、大きな新機能を先に増やさない。
 
 ## Workで次にやること
 
-1. PR #254の現在状態とCIを確認。PASS済み・merge可能ならdevelopへmerge
-2. main/developの最新headを再取得
-3. ②branch reconciliationを高推論で実施
-4. reconciliationの全CIを通す
-5. PR経由でmainへ統合
-6. ③のdocs metadata syncを実施
-7. Project Home / public Pagesの最終回帰
-8. Android/Cubasis/Cubaseの実機部分はユーザーの実機結果を受けて記録・修正
-9. stable条件を満たした場合だけstable tag候補を提示/作成
-10. 最後にUX改善
+1. main/developの最新headを再取得
+2. ②branch reconciliationを高推論で実施
+3. 全CI
+4. PR経由でmainへ統合
+5. ③VERSION / README / AI_HANDOFF / CHANGELOG / VERSION_HISTORY同期
+6. Project Home / public Pages最終回帰
+7. Android/Cubasis/Cubase実機結果を受けて記録・必要修正
+8. stable条件を満たした場合だけstable tag
+9. 最後にUX改善
 
-## 完了報告フォーマット
+## 完了報告
 
 - current develop/main heads
 - mergeしたPR
-- 作成したrestore points
+- restore points
 - CI結果
-- main/develop divergenceがどう解消されたか
+- main/develop divergence解消方法
 - VERSION / README / AI_HANDOFF整合状況
 - Android / Cubasis / Cubase実機状況
 - stable判定: 可 / 不可（理由）
