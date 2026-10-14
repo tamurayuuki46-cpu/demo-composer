@@ -1,3 +1,30 @@
+## v0.9-dev
+更新日: 2026-10-14
+
+【追加】
+・公開版の右上「📦 曲データ」を `全アプリ遷移 / MIDI保存 / JSON保存 / 作曲シート成果物` の4大操作へ統一。
+・Music Project Home / 作曲シート / MIDI Analyzer / Demo Composer / Arrangement Lab への遷移を1か所に集約。
+・Demo Composer / Music Project Home / Arrangement Labから既存MIDI書き出しへ直接到達できるようにした。
+・公開専用smoke testで4操作の配線と非公開Workbook未混入を検証。
+
+【変更】
+・JSON読込と次工程操作は補助導線へ縮小。
+・公開画面Versionを v0.9-dev へ更新。
+
+【互換性】
+・Demo Composer Project Schema 3据え置き。
+・SongProject schemaVersion 1据え置き。
+・IndexedDB / localStorage / JSON形式変更なし。
+・31枚の作曲シート本体は非公開Siteのまま維持。
+
+【復元ポイント】
+・`restore/main-before-song-data-four-actions-v0.9-20261014`
+
+【未対応】
+・Android実機で4操作と複数MIDI保存の確認。
+・Cubasis / Cubase実機確認。
+・stable tag作成（実機確認後のみ）。
+
 ## v0.7-dev
 更新日: 2026-10-14
 
