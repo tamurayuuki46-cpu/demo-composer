@@ -9,7 +9,7 @@ const build = await readFile(new URL('./build-static.mjs', import.meta.url), 'ut
 assert.match(html, /<h1>Music Project Home<\/h1>/);
 assert.match(html, /id="now-card"/);
 assert.match(html, /今やること：作曲シート/);
-assert.match(html, /href="#claude-link-card"[^>]*>作曲シートを開く \/ 登録する/);
+assert.ok(html.includes('href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html"'));
 assert.doesNotMatch(html, /href="\.\.\/sheet-app\//, '公開mainから未公開sheet-appを参照してはいけません');
 assert.match(html, /id="quick-flow-card"/);
 assert.match(html, /<strong>⓪ 方向を決める<\/strong><small>作曲シート<\/small>/);
@@ -34,3 +34,8 @@ assert.equal(
 assert.equal(normalizeSheetLink('https://example.com/not-claude'), null);
 
 console.log('Project Home 5-stage mobile-first flow + Claude sheet link smoke test passed.');
+
+assert.match(html, /id="sheet-transfer-guide"/);
+assert.match(html, /id="open-demo-with-project"/);
+assert.match(html, /<details class="card" id="claude-link-card">/);
+assert.match(app, /queueDemoHandoff\(current\)/);

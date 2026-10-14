@@ -1,3 +1,4 @@
+import { PRIVATE_SHEET_URL, queueDemoHandoff } from './sheet-connection.js';
 import './song-data-menu-entry.js';
 import { loadSheetLink, saveSheetLink } from '../src/hub/sheet-link.js';
 
@@ -45,6 +46,7 @@ function show(p) {
   status('#analysis-status', 'Analysis', hasAnalysis(p));
   status('#composition-status', 'Composition', hasComposition(p));
   status('#arrangement-status', 'Arrangement', hasArrangement(p));
+  document.querySelector('#open-demo-with-project').hidden = false;
   summary.hidden = false;
   exportCard.hidden = false;
 }
@@ -69,6 +71,7 @@ file.addEventListener('change', async () => {
     message.textContent = 'Song Project v1を読み込みました。';
   } catch (error) {
     current = null;
+    document.querySelector('#open-demo-with-project').hidden = true;
     summary.hidden = true;
     exportCard.hidden = true;
     message.textContent = `読み込み失敗: ${error.message}`;
@@ -109,3 +112,10 @@ claudeClear.addEventListener('click', () => {
 });
 
 renderClaudeLink();
+
+// Explicit transfer after the user opens a workbook JSON in this origin.
+document.querySelector('#open-demo-with-project').addEventListener('click', () => {
+  if (!current) return;
+  try { queueDemoHandoff(current); window.location.href = new URL('../?handoff=project-home', window.location.href).href; }
+  catch { document.querySelector('#sheet-transfer-status').textContent = '一時受け渡しを保存できませんでした。Demo Composerの曲データメニューから同じJSONを開いてください。'; }
+});
