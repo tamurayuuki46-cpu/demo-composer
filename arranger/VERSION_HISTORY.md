@@ -15,6 +15,7 @@
 | v0.9-dev | restore/develop-before-onebar-reharm-20261014 / feature/onebar-reharm-20261014 | コード0件の1小節メロディから仮コードを付け、既存リハモ3案を試聴・採用可能 |
 | v0.10-dev | restore/develop-before-onebar-chordonly-20261014 / feature/onebar-chordonly-reharm-20261014 | 1小節コードだけのhandoffを正式対応。A/B/C準備完了を待ってから反映済みにし、固定ナビに隠れる通知も修正 |
 | v0.11-dev | restore/develop-before-arranger-preview-fix-20261014 / fix/arranger-preview-v0.11 | 1小節コードの絶対tick補正、選択案簡易試聴の実発音回帰、Harmony音量/音域調整、Bass無音fallback |
+| v0.12-dev | restore/develop-before-section-audition-v0.12-20261014 / feature/section-audition-v0.12 / PR #221 | ④Section全体試聴、リハモ3案の採用前個別試聴、試聴/採用分離 |
 
 最新は `arranger/VERSION`。本体mainは自動テスト・build・回帰CI合格版。Arrangement LabのAndroid/Cubasis/Cubase実機DAW確認済みstableは未認定。
 各過去版のbranch/archiveを削除・上書きしない。
@@ -28,3 +29,4 @@
 2026-10-14: v0.9-devはコードを持たない1小節SongProjectに限り、Arrangement Labの入力変換内でKeyと主旋律から2つの仮コードを補完する。元SongProjectのcompositionは変更せず、既存コードがある曲・2小節以上には自動補完しない。
 2026-10-14: v0.10-devは1小節コードだけのSongProjectをDemo Composer handoff経由で360/390/430px回帰し、A/B/C候補が準備できるまでhandoffを完了扱いにしない。SongProject v1 / Arrangement Plan Schema 4は変更しない。
 2026-10-14: v0.11-devは曲中絶対tickを持つ1小節抜粋をArrangement Lab入力時だけ0基準へ補正し、「選択案を簡易試聴」押下で実際のAudioイベントが生成されることをMobile Chromiumで確認する。元SongProject compositionと各Schemaは変更しない。
+2026-10-14: v0.12-devは④Sectionの現在調整を対象Sectionだけ試聴でき、リハモ「自然 / 色付け / 大胆」も採用前に個別試聴できる。試聴は候補を変更・保存せず、採用操作だけがstateへ反映する。各Schemaは変更しない。

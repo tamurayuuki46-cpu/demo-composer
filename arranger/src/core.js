@@ -1,5 +1,5 @@
 import { CHORD_QUALITY_DEFINITIONS as QUALITIES } from './chord-qualities.js';
-export const ARRANGER_VERSION = 'v0.11-dev';
+export const ARRANGER_VERSION = 'v0.12-dev';
 export const ARRANGER_SCHEMA_VERSION = 4;
 
 export const STYLE_PROFILES = {
@@ -391,7 +391,6 @@ export function harmonyNotes(source, candidate) {
       const chord = normalizeChord(raw);
       if (!chord || !overlapsRange(chord, section.startTick, section.endTick)) continue;
       const intervals = QUALITIES[chord.quality].intervals;
-      // Keep the defining extension even in a sparse voicing (e.g. maj7/9).
       const chosen = density === 3 ? intervals : intervals.length > 3
         ? (density === 1 ? [intervals[1], intervals.at(-1)] : [0, intervals[1], intervals.at(-1)])
         : intervals.slice(0, density === 1 ? 2 : 3);
