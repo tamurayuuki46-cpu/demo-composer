@@ -21,6 +21,9 @@ jobs:
       - name: JavaScript syntax check
         run: npm run test:syntax
 
+      - name: AI monitoring smoke test
+        run: npm run test:ai-monitoring
+
       - name: Composition Sheet v0.3 syntax check
         run: node --check sheet-app/versions/v0.3/composition_sheet_v0.3.js
 
