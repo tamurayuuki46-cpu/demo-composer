@@ -1,3 +1,4 @@
+import { sheetSummary } from './composition-sheet-summary.js';
 const STYLE_ID = 'song-data-menu-style';
 
 function ensureStyles() {
@@ -47,7 +48,7 @@ export function mountSongDataMenu(options = {}) {
         <button type="button" class="song-data-close" aria-label="曲データメニューを閉じる">×</button>
       </div>
       <p class="song-data-current"><strong>現在：</strong><span data-song-data-current>${normalizeLabel(options.currentLabel)}</span></p>
-      <div class="song-data-actions">
+      <div class="song-data-actions"><button type="button" class="song-data-action" data-song-data-action="sheet"><span>📝 記入シートの簡易版</span><small>テーマ・場面・山谷・パート別のメモを見る</small></button>
         <button type="button" class="song-data-action" data-song-data-action="open"><span>保存した曲を開く</span><small>SongProject JSONを読み込みます</small></button>
         <button type="button" class="song-data-action" data-song-data-action="save"><span>今の曲を保存</span><small>SongProject v1を端末へ保存します</small></button>
         <button type="button" class="song-data-action primary" data-song-data-action="next"><span data-song-data-next-label>${normalizeLabel(options.nextLabel, '次のアプリへ進む')}</span><small data-song-data-next-note>${normalizeLabel(options.nextNote, '保存して次の工程へ進みます')}</small></button>
@@ -56,6 +57,25 @@ export function mountSongDataMenu(options = {}) {
     </section>`;
   document.body.append(root);
 
+  const sheetButton=root.querySelector('[data-song-data-action="sheet"]');
+  sheetButton.addEventListener('click',async()=>{
+    try{
+      const data=sheetSummary(await options.getSheetProject?.());
+      let dialog=document.querySelector('#composition-sheet-summary-dialog');
+      if(!dialog){dialog=document.createElement('dialog');dialog.id='composition-sheet-summary-dialog';dialog.setAttribute('aria-label','記入シートの簡易版');document.body.append(dialog);}
+      dialog.style.cssText='box-sizing:border-box;width:min(580px,calc(100vw - 24px));max-height:85dvh;overflow:auto;border:1px solid #cbd5e1;border-radius:16px;padding:20px;background:#fff;color:#111827;font:16px system-ui;';
+      dialog.replaceChildren();
+      const close=document.createElement('button');close.type='button';close.textContent='閉じる';close.style.cssText='float:right;min-height:44px';close.onclick=()=>dialog.close();
+      const heading=document.createElement('h2');heading.textContent='📝 記入シートの簡易版';
+      const title=document.createElement('p');title.textContent=data.title;
+      dialog.append(close,heading,title);
+      if(!data.rows.length){const empty=document.createElement('p');empty.textContent='この曲の記入内容はまだありません。作曲シートで記入し、保存したSongProject JSONをこのアプリで読み込んでください。';dialog.append(empty);}
+      let group='';
+      for(const row of data.rows){if(row.group!==group){const h=document.createElement('h3');h.textContent=row.group;dialog.append(h);group=row.group;}const p=document.createElement('p'),label=document.createElement('strong'),value=document.createElement('span');label.textContent=row.label+'：';value.textContent=row.value;p.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6';p.append(label,value);dialog.append(p);}
+      const link=document.createElement('a');link.href='https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/';link.target='_blank';link.rel='noopener';link.textContent='作曲シートを開く ↗';dialog.append(link);
+      closePanel();dialog.showModal();close.focus();
+    }catch(error){setStatus(error?.message||'記入シートを表示できませんでした。','error');}
+  });
   const trigger = root.querySelector('.song-data-trigger');
   const panel = root.querySelector('.song-data-panel');
   const closeButton = root.querySelector('.song-data-close');
@@ -79,7 +99,7 @@ export function mountSongDataMenu(options = {}) {
     [openButton, saveButton, nextButton].forEach((button) => { button.dataset.songDataBusy = busy ? 'true' : 'false'; });
   };
 
-  async function run(_action, callback) {
+  async function run(action, callback) {
     if (busy || typeof callback !== 'function') return;
     setBusy(true);
     try {
