@@ -1,0 +1,28 @@
+name: Project Home Sheet Link CI
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'project-home/**'
+      - 'scripts/project-home-sheet-browser.test.cjs'
+      - '.github/workflows/project-home-sheet-ci.yml'
+jobs:
+  home-sheet-link:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Home syntax and smoke
+        run: |
+          node --check project-home/app.js
+          node --check project-home/sheet-connection.js
+          npm run test:project-home
+          npm run build
+      - name: Home mobile and PC link / JSON handoff
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8080 --directory dist > /tmp/home-server.log 2>&1 &
+          node scripts/project-home-sheet-browser.test.cjs

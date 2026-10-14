@@ -1,3 +1,4 @@
+import { PRIVATE_SHEET_URL, queueDemoHandoff } from './sheet-connection.js';
 import './song-data-menu-entry.js';
 import { loadSheetLink, saveSheetLink } from '../src/hub/sheet-link.js';
 import {
@@ -52,7 +53,7 @@ function workflowStatusLabel(statusValue) {
 function renderWorkflow() {
   const sheetLink = loadSheetLink();
   const sheetHandoff = loadCompositionSheetHandoff();
-  const sheetReady = Boolean(sheetLink || sheetHandoff);
+  const sheetReady = Boolean(sheetHandoff || current?.compatibility?.compositionSheet?.fullWorkbook || current?.intent?.scene);
   if (!current) {
     workflowCard.hidden = false;
     workflowList.innerHTML = `
@@ -62,7 +63,7 @@ function renderWorkflow() {
       <li class="workflow-step locked"><strong>③ 編曲</strong><span>1小節のフレーズだけでもArrangement Labを試せます。</span></li>
       <li class="workflow-step locked"><strong>④ DAWへ</strong><span>Cubasis / Cubaseで仕上げます。</span></li>`;
     nextAction.textContent = sheetReady ? '今やること：Demo Composerで1フレーズ作る' : '今やること：作曲シートで方向を決める';
-    nextAction.href = sheetReady ? '../' : '../sheet-app/';
+    nextAction.href = sheetReady ? '../' : PRIVATE_SHEET_URL;
     optionalAnalysis.hidden = !sheetReady;
     return;
   }
@@ -97,6 +98,7 @@ function show(p) {
   status('#analysis-status', 'Analysis', hasAnalysis(p));
   status('#composition-status', 'Composition', hasComposition(p));
   status('#arrangement-status', 'Arrangement', hasArrangement(p));
+  document.querySelector('#open-demo-with-project').hidden = false;
   summary.hidden = false;
   exportCard.hidden = false;
   renderWorkflow();
@@ -125,6 +127,7 @@ file.addEventListener('change', async () => {
     message.textContent = 'Song Project v1を読み込みました。';
   } catch (error) {
     current = null;
+    document.querySelector('#open-demo-with-project').hidden = true;
     summary.hidden = true;
     exportCard.hidden = true;
     message.textContent = `読み込み失敗: ${error.message}`;
@@ -181,3 +184,10 @@ claudeClear.addEventListener('click', () => {
 });
 
 renderClaudeLink();
+
+// Explicit transfer after the user opens a workbook JSON in this origin.
+document.querySelector('#open-demo-with-project').addEventListener('click', () => {
+  if (!current) return;
+  try { queueDemoHandoff(current); window.location.href = new URL('../?handoff=project-home', window.location.href).href; }
+  catch { document.querySelector('#sheet-transfer-status').textContent = '一時受け渡しを保存できませんでした。Demo Composerの曲データメニューから同じJSONを開いてください。'; }
+});
