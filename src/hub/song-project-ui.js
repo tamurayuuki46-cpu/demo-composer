@@ -103,9 +103,15 @@ function ensureGuideStyles() {
   style.textContent = `
     .song-project-handoff{margin:0 0 16px;padding:14px;border:1px solid #4255c7;border-radius:16px;background:rgba(58,72,180,.10)}
     .song-project-handoff h4{margin:0 0 6px}.song-project-handoff p{margin:6px 0;line-height:1.55}
-    .song-project-handoff ol{margin:10px 0;padding-left:22px;display:grid;gap:5px}.song-project-handoff-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-    .song-project-handoff .handoff-primary{background:#4f46e5;color:#fff;border-color:#6366f1;font-weight:800}.song-project-handoff .handoff-status{font-size:.86rem;color:var(--muted,#777)}
-    @media(max-width:560px){.song-project-handoff-actions{grid-template-columns:1fr}}
+    .song-project-handoff-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+    .song-project-handoff .handoff-primary{background:#4f46e5;color:#fff;border-color:#6366f1;font-weight:800}
+    .song-project-handoff .handoff-status{font-size:.86rem;color:var(--muted,#777)}
+    .handoff-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:10px 0}
+    .handoff-flow span{border:1px solid rgba(99,102,241,.28);border-radius:9px;padding:7px 5px;text-align:center;font-size:.73rem;line-height:1.35}
+    .handoff-flow .current{border-width:2px;border-color:#6366f1;font-weight:800;background:rgba(99,102,241,.12)}
+    .handoff-flow .optional{border-style:dashed}
+    .handoff-now{border-radius:12px;background:rgba(99,102,241,.10);padding:10px 12px!important;display:grid;gap:3px}.handoff-now span{font-size:.76rem;font-weight:800;opacity:.75}
+    @media(max-width:560px){.song-project-handoff-actions{grid-template-columns:1fr}.handoff-flow{grid-template-columns:1fr}.handoff-flow span{display:flex;justify-content:space-between;text-align:left}.handoff-flow .current{order:-1}}
   `;
   document.head.append(style);
 }
@@ -113,19 +119,19 @@ function ensureGuideStyles() {
 function handoffGuideHtml(pending) {
   const pendingText = pending
     ? `MIDI Analyzerから「${escapeHtml(pending.songProject.title || 'Untitled Project')}」を受け取り待ちです。`
-    : '前のアプリで保存したSongProjectを読み込み、作曲後はArrangement Labへ渡せます。';
+    : '作曲中の曲をSongProject v1で保存し、Arrangement Labへ渡せます。1小節だけでもOKです。';
+  const nowAction = pending ? '受け取った曲を反映する' : '1小節できたらArrangement Labへ渡す';
   return `
     <section class="song-project-handoff" id="song-project-handoff-guide" aria-label="曲データの受け渡し">
       <h4>曲データの受け渡し</h4>
+      <div class="handoff-flow" aria-label="曲づくり全体の流れ">
+        <span>⓪ 作曲シート</span><span class="optional">① MIDI解析・任意</span><span class="current">② 作曲・今ここ</span><span>③ 編曲</span><span>④ DAWへ</span>
+      </div>
       <p>${pendingText}</p>
-      <ol>
-        <li>前のアプリから受け取る</li>
-        <li>Demo Composerで曲を作る</li>
-        <li>Arrangement Labへ渡す</li>
-      </ol>
+      <p class="handoff-now"><span>今やること</span><strong id="handoff-now-action">${nowAction}</strong></p>
       <div class="song-project-handoff-actions">
-        <button type="button" id="handoff-import-song" class="handoff-primary">${pending ? '受け取った曲を反映' : '前のアプリから受け取る'}</button>
-        <button type="button" id="handoff-export-arranger" class="handoff-primary">Arrangement Labへ渡す</button>
+        <button type="button" id="handoff-import-song" class="${pending ? 'handoff-primary' : ''}">${pending ? '受け取った曲を反映' : '前のアプリから受け取る'}</button>
+        <button type="button" id="handoff-export-arranger" class="${pending ? '' : 'handoff-primary'}">Arrangement Labへ渡す</button>
         <button type="button" id="handoff-open-arranger" disabled>Arrangement Labを開く</button>
         <button type="button" id="handoff-import-file">保存したJSONを選ぶ</button>
       </div>
@@ -136,6 +142,15 @@ function handoffGuideHtml(pending) {
 function updateGuideStatus(message) {
   const status = document.querySelector('#handoff-guide-status');
   if (status) status.textContent = message;
+}
+
+function setPrimaryAction(id, label) {
+  const guide = document.querySelector('#song-project-handoff-guide');
+  if (!guide) return;
+  guide.querySelectorAll('.handoff-primary').forEach((button) => button.classList.remove('handoff-primary'));
+  guide.querySelector(id)?.classList.add('handoff-primary');
+  const nowAction = guide.querySelector('#handoff-now-action');
+  if (nowAction && label) nowAction.textContent = label;
 }
 
 async function currentSongProject() {
@@ -159,6 +174,7 @@ async function exportSongProject({ forArrangement = false } = {}) {
       const shared = writeHandoff(songProject, 'arrangement-lab');
       const openButton = document.querySelector('#handoff-open-arranger');
       if (openButton) openButton.disabled = false;
+      setPrimaryAction('#handoff-open-arranger', 'Arrangement Labを開く');
       const message = shared
         ? '曲データを保存しました。次に「Arrangement Labを開く」を押してください。同じChromeなら受け取り候補が表示されます。'
         : '曲データを保存しました。Arrangement Labを開き、保存したJSONを選んでください。';
@@ -187,9 +203,10 @@ async function importSongProjectData(data, { fromHandoff = false } = {}) {
   target.files = transfer.files;
   target.dispatchEvent(new Event('change', { bubbles: true }));
   if (fromHandoff) clearHandoff('demo-composer');
-  const message = `「${data.title}」をDemo Composerへ反映しました。曲名 / BPM / Keyを確認してから作曲を続けてください。`;
+  const message = `「${data.title}」をDemo Composerへ反映しました。1小節のフレーズだけでもArrangement Labへ進めます。`;
   setStatus(message);
   updateGuideStatus(message);
+  setPrimaryAction('#handoff-export-arranger', '1小節できたらArrangement Labへ渡す');
   window.setTimeout(enhanceExportPanel, 0);
 }
 
