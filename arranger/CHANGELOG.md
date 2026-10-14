@@ -1,5 +1,30 @@
 # CHANGELOG
 
+Version: v0.13-dev
+更新日: 2026-10-14
+
+【追加】
+・Demo Composerで選択したChord / Melody / BassのPreset・ToneをArrangement Labの簡易試聴へ引き継ぐ音色保持を追加
+・DrumsもDemo Composerと同じKick / Snare / Closed Hi-HatのWeb Audio発音方式で試聴
+・360 / 390 / 430px Mobile ChromiumでDemo Composer由来のSound設定がhandoff後も同じwaveform / filterで使われることを回帰確認
+
+【変更】
+・HarmonyはDemo ComposerのChord音色、CounterはMelody音色、BassはBass音色を使用
+・Preset / Toneからwaveform、filter、attack / release、gain、layers、vibrato、formantsをDemo Composerと同じ定義で解決
+・Sound選択情報が無い旧データや他アプリ起点のデータはDemo Composerの既定Presetへフォールバック
+・PWA cacheをv0.13へ更新し、共有 `src/core/sound-presets.js` をオフラインcache対象へ追加
+・SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4は変更しない
+
+【修正】
+・旧v0.5互換の書き出し・判断ログ経路でv0.6-dev固定だった版番号を現在版へ同期
+・古い版番号を待って停止していたブラウザ回帰テストを更新
+・Demo ComposerからArrangement Labへ曲を渡すと、Chord / Melody / Bassの音色が固定の簡易波形へ変わってしまう問題を修正
+・DrumsがArrangement Labでは簡易square波形へ変わってしまう問題を修正
+
+【未対応】
+・Android実機スピーカーでDemo Composer→Arrangement Labの聴感一致を最終確認
+・Cubasis / Cubase実機でのMIDI取込確認
+
 Version: v0.12-dev
 更新日: 2026-10-14
 

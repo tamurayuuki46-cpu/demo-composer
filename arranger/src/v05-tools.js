@@ -1,7 +1,7 @@
-import { arrangedNotes } from './core.js';
+import { arrangedNotes, ARRANGER_VERSION } from './core.js';
 
-// Legacy export name is kept for source compatibility; the current Arrangement Lab build is v0.6-dev.
-export const ARRANGER_V05_VERSION = 'v0.6-dev';
+// Keep the legacy export name, but stamp plans and exports with the current build.
+export const ARRANGER_V05_VERSION = ARRANGER_VERSION;
 
 const PART_NAMES = {
   melody: 'Melody',
