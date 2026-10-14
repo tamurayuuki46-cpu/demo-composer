@@ -1,4 +1,4 @@
-const UI_VERSION = 'v0.12-dev';
+const UI_VERSION = 'v0.13-dev';
 const MODE_KEY = 'arrangement-lab-ui-mode-v0.6';
 const MODES = new Set(['beginner', 'explore']);
 
