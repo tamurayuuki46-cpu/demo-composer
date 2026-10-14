@@ -165,6 +165,9 @@ jobs:
       - name: SongProject ownership / lineage / fork smoke test
         run: npm run test:song-project
 
+      - name: Shared song data menu smoke test
+        run: npm run test:song-data-menu
+
       - name: Update notice smoke test
         run: npm run test:update-notice
 
