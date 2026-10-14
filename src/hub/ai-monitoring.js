@@ -56,7 +56,8 @@ function normalizeState(value) {
 export function summarizeUsage(state, catalog = AI_MONITORING_FEATURES) {
   const normalized = normalizeState(state);
   const used = catalog.filter((feature) => Number(normalized.features?.[feature.id]?.count) > 0);
-  const unused = catalog.filter((feature) => !used.some((entry) => entry.id === feature.id));
+  const usedIds = new Set(used.map((feature) => feature.id));
+  const unused = catalog.filter((feature) => !usedIds.has(feature.id));
   const total = catalog.length || 1;
   const usedPercent = Math.round((used.length / total) * 100);
   const categories = [...new Set(catalog.map((feature) => feature.category))].map((category) => {
@@ -216,8 +217,6 @@ function startAiMonitoring() {
     if (feature) recordFeature(feature.id, "change");
   }, true);
 
-  const screen = document.querySelector("#screen");
-  if (screen) new MutationObserver(scheduleRender).observe(screen, { childList: true, subtree: true });
   installPanel();
 }
 
