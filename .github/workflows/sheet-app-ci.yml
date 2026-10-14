@@ -66,12 +66,16 @@ jobs:
           test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.html
           test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.js
           test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.css
+          test -f dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.html
+          test -f dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.js
+          test -f dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.css
           grep -q 'まずは、2項目だけ。' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.html
           grep -q 'SongProject v1' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.html
           grep -q 'song-data-menu.js?build=' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.js
-          grep -q 'versions/v0.9/composition_sheet_v0.9.html' dist/sheet-app/latest/composition_sheet_latest.html
-          grep -q '"version": "v0.9-dev"' dist/sheet-app/latest/manifest.json
-          grep -q 'id="beginner-card"' dist/sheet-app/versions/v0.9/composition_sheet_v0.9.html
+          grep -q 'versions/v0.9.1/composition_sheet_v0.9.1.html' dist/sheet-app/latest/composition_sheet_latest.html
+          grep -q '"version": "v0.9.1-dev"' dist/sheet-app/latest/manifest.json
+          grep -q 'id="beginner-card"' dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.html
+          grep -q 'data-sheet-embed="1"' dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.css
 
       - name: Full workbook Chromium mobile and desktop
         run: |
@@ -83,6 +87,7 @@ jobs:
           node scripts/composition-sheet-v06-browser.test.cjs
           node scripts/composition-sheet-v08-browser.test.cjs
           node scripts/composition-sheet-v09-browser.test.cjs
+          node scripts/composition-sheet-v091-browser.test.cjs
           node arranger/tests/song-data-menu-browser.test.cjs
 
       - name: Upload full workbook browser evidence
