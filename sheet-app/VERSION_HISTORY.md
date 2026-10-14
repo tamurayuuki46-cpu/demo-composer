@@ -1,5 +1,17 @@
 # 作曲シート Version History
 
+## v0.9-dev — 2026-10-15
+- 初心者向け「かんたん入力」を標準表示に変更
+- 必須入力を「場面・気持ち」「参考曲1曲」の2項目に明確化
+- BPM / Keyは未定のまま進められることを明示
+- ジャンル / 気分 / 歌もの・インスト / 自由メモの簡単入力を追加
+- 「かんたん入力 / 31シート詳細」の段階式UIを追加し、v0.8までの31シートをすべて保持
+- `sheet-app/latest/manifest.json`を追加し、Music Project HomeからVersion固定せず最新版へ追従可能に変更
+- Home内へcanonical `sheet-app/`を埋め込み、常にlatestを表示
+- SongProject v1 / `composition-sheet-full-library-v0.4` / 手動アイデア互換を維持
+- 復元点: `restore/develop-before-sheet-beginner-latest-home-v0.9-20261015`
+- 詳細: `CHANGELOG_v0.9.md`
+
 ## v0.8-dev — 2026-10-14
 - 各シートへ曲ごとの手動アイデアを追加・編集・削除できる機能を追加
 - 「このシート / 全シートのアイデア」切替と元シート移動を追加

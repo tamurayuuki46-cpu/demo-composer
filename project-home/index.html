@@ -17,124 +17,68 @@
     .undecided-item.done{color:#166534;border-color:#86efac;background:#f0fdf4}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
     .stat{background:#f5f5f4;border-radius:12px;padding:12px}
-    .actions{display:grid;gap:10px}
-    .actions.split{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+    .actions{display:grid;gap:10px}.actions.split{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
     a,button,.file{display:block;box-sizing:border-box;width:100%;min-height:48px;border-radius:12px;padding:13px 14px;border:1px solid #9ca3af;background:white;color:#111827;text-decoration:none;font:inherit;text-align:center;cursor:pointer}
-    .primary{background:#111827;color:white;border-color:#111827;font-weight:800}
-    .primary[aria-disabled="true"]{opacity:.7;cursor:default}
-    .ok{color:#166534}.pending{color:#92400e}
-    small{color:#57534e}
+    .primary{background:#111827;color:white;border-color:#111827;font-weight:800}.primary[aria-disabled="true"]{opacity:.7;cursor:default}
+    .ok{color:#166534}.pending{color:#92400e}small{color:#57534e}
     input[type=file],input[type=url],textarea{box-sizing:border-box;width:100%}
     input[type=url],textarea{border:1px solid #9ca3af;border-radius:12px;padding:12px 14px;font:inherit;margin:8px 0 10px;background:white;color:#111827}
-    input[type=url]{min-height:48px}textarea{min-height:92px;resize:vertical;line-height:1.5}
-    label{display:block;font-weight:750;margin-top:12px}
+    input[type=url]{min-height:48px}textarea{min-height:92px;resize:vertical;line-height:1.5}label{display:block;font-weight:750;margin-top:12px}
     .quick-flow{display:grid;grid-template-columns:repeat(5,minmax(118px,1fr));gap:8px;overflow-x:auto;padding:2px 0 6px;scroll-snap-type:x proximity}
-    .quick-flow .flow-step{width:auto;min-width:118px;display:grid;place-content:center;gap:4px;scroll-snap-align:start}
-    .quick-flow .flow-step small{display:block}
+    .quick-flow .flow-step{width:auto;min-width:118px;display:grid;place-content:center;gap:4px;scroll-snap-align:start}.quick-flow .flow-step small{display:block}
     .quick-flow .flow-end{box-sizing:border-box;border:1px solid #9ca3af;border-radius:12px;padding:13px 14px;text-align:center;background:#fafaf9}
     .flow-optional{border-style:dashed!important;background:#fffbeb!important}
     .workflow-list{display:grid;gap:8px;padding:0;margin:14px 0 0;list-style:none}
     .workflow-step{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #d6d3d1;border-radius:12px;background:#fafaf9}
     .workflow-step.done{border-color:#86efac;background:#f0fdf4}.workflow-step.optional{border-style:dashed}.workflow-step.locked{opacity:.55}.workflow-step span{color:#57534e;font-size:.84rem;text-align:right}
-    .hint{color:#57534e;line-height:1.55}
-    hr{border:0;border-top:1px solid #e7e5e4;margin:18px 0}
-    [hidden]{display:none!important}
-    @media(max-width:520px){
-      main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}
-      .quick-flow{grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}.quick-flow .flow-step{min-width:0;min-height:58px;text-align:left;place-content:center start;padding-left:16px}
-      .workflow-step{display:grid}.workflow-step span{text-align:left}.current-stage{font-size:1.2rem}
-    }
+    .hint{color:#57534e;line-height:1.55}.latest-sheet-badge{display:inline-block;padding:7px 10px;border-radius:999px;background:#f0fdf4;color:#166534;font-weight:800}
+    #latest-sheet-frame{display:block;width:100%;min-height:680px;margin-top:14px;border:1px solid #d6d3d1;border-radius:14px;background:#fff}
+    hr{border:0;border-top:1px solid #e7e5e4;margin:18px 0}[hidden]{display:none!important}
+    @media(max-width:520px){main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.quick-flow{grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}.quick-flow .flow-step{min-width:0;min-height:58px;text-align:left;place-content:center start;padding-left:16px}.workflow-step{display:grid}.workflow-step span{text-align:left}.current-stage{font-size:1.2rem}#latest-sheet-frame{min-height:760px}}
   </style>
 </head>
 <body>
 <main>
-  <header>
-    <p>SONG PROJECT v1 · HOME v0.16-dev</p>
-    <h1>Music Project Home</h1>
-    <p>曲の現在地と次の一手を、5秒で確認するための司令塔です。</p>
-  </header>
+  <header><p>SONG PROJECT v1</p><h1>Music Project Home</h1><p>曲の現在地と次の一手を、5秒で確認するための司令塔です。</p></header>
 
   <section id="workflow-card" class="card now-card">
-    <p class="now-label">NOW</p>
-    <h2>今ここ</h2>
-    <p id="current-stage" class="current-stage">作曲シートで方向を決める</p>
-    <h3>未決定</h3>
-    <ul id="undecided-list" class="undecided-list" aria-live="polite"></ul>
-    <p class="now-label">NEXT ACTION</p>
-    <a id="next-action" class="primary">次にやること</a>
+    <p class="now-label">NOW</p><h2>今ここ</h2><p id="current-stage" class="current-stage">作曲シートで方向を決める</p>
+    <h3>未決定</h3><ul id="undecided-list" class="undecided-list" aria-live="polite"></ul>
+    <p class="now-label">NEXT ACTION</p><a id="next-action" class="primary">次にやること</a>
     <p id="optional-analysis" class="hint" hidden>MIDI解析は必須ではありません。参考MIDIを調べたい時だけ寄り道し、そのままDemo Composerへ進んでもOKです。</p>
   </section>
 
-  <section id="quick-flow-card" class="card">
-    <h2>制作フロー</h2>
+  <section id="quick-flow-card" class="card"><h2>制作フロー</h2>
     <nav id="quick-flow" class="quick-flow" aria-label="基本の作曲フロー">
-      <a class="flow-step" href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html"><strong>⓪ 方向を決める</strong><small>作曲シート</small></a>
+      <a class="flow-step" href="../sheet-app/"><strong>⓪ 方向を決める</strong><small>作曲シート・常に最新版</small></a>
       <a class="flow-step flow-optional" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/"><strong>① 必要なら解析</strong><small>MIDI Analyzer・任意</small></a>
       <a class="flow-step" href="../"><strong>② 作曲</strong><small>Demo Composer</small></a>
       <a class="flow-step" href="../arranger/"><strong>③ 編曲</strong><small>Arrangement Lab</small></a>
       <div class="flow-step flow-end"><strong>④ DAWへ</strong><small>Cubasis / Cubase</small></div>
     </nav>
-    <ol id="workflow-list" class="workflow-list"></ol>
-    <p><small>MIDI解析とCubasisは必要な時だけ使えます。最終仕上げはCubase / PC DAWを想定します。</small></p>
-  </section>
-
-  <section id="session-notes-card" class="card">
-    <h2>今日と次回</h2>
-    <label for="today-decisions">今日決めたこと</label>
-    <textarea id="today-decisions" placeholder="例：サビのコードをA案に決定"></textarea>
-    <label for="next-session">次回やること</label>
-    <textarea id="next-session" placeholder="例：裏メロ3案を比較する"></textarea>
-    <button id="session-notes-save" type="button">この端末に保存</button>
-    <p id="session-notes-status" class="hint" aria-live="polite"></p>
+    <ol id="workflow-list" class="workflow-list"></ol><p><small>MIDI解析とCubasisは必要な時だけ使えます。最終仕上げはCubase / PC DAWを想定します。</small></p>
   </section>
 
   <section id="composition-sheet-card" class="card">
-    <h2>⓪ 作曲シート</h2>
-    <p>曲の場面・参考曲など、音を鳴らす前に決められることを短時間で整理します。</p>
-    <a href="https://songwriting-full-workbook-31.yoshitamura.chatgpt.site/sheet-app/versions/v0.5/composition_sheet_v0.5.html">作曲シート全集 v0.5 を開く</a>
+    <h2>⓪ 作曲シート・最新版</h2>
+    <p>初心者は「かんたん入力」から始められます。詳しく決めたくなったら31シートへ切り替えられます。</p>
+    <p id="latest-sheet-version" class="latest-sheet-badge">最新版を確認中…</p>
+    <a href="../sheet-app/">最新版の作曲シートを開く</a>
+    <p><small>このカード内の表示も`sheet-app/`のlatestへ接続しています。作曲シートを更新してもHome側のVersion固定変更は不要です。</small></p>
+    <iframe id="latest-sheet-frame" title="最新版の作曲シート" src="../sheet-app/" loading="lazy"></iframe>
   </section>
 
-  <section class="card">
-    <h2>Song Projectを開く</h2>
-    <input id="project-file" type="file" accept="application/json,text/plain,.json,.txt">
-    <p id="message" aria-live="polite"></p>
-  </section>
+  <section id="session-notes-card" class="card"><h2>今日と次回</h2><label for="today-decisions">今日決めたこと</label><textarea id="today-decisions" placeholder="例：サビのコードをA案に決定"></textarea><label for="next-session">次回やること</label><textarea id="next-session" placeholder="例：裏メロ3案を比較する"></textarea><button id="session-notes-save" type="button">この端末に保存</button><p id="session-notes-status" class="hint" aria-live="polite"></p></section>
 
-  <section class="card" id="sheet-transfer-guide"><h2>シートから曲データを受け取る</h2><ol><li>作曲シートでSong Project JSONを保存</li><li>このHomeの「Song Projectを開く」で、そのJSONを選ぶ</li><li>「読み込んだ曲をDemo Composerへ」で渡し、内容を確認して反映</li></ol><p><small>サイトが異なるため自動同期にはなりません。JSONで記入内容を引き継ぎます。</small></p><button id="open-demo-with-project" type="button" hidden>読み込んだ曲をDemo Composerへ</button><p id="sheet-transfer-status" role="status"></p></section>
+  <section class="card"><h2>Song Projectを開く</h2><input id="project-file" type="file" accept="application/json,text/plain,.json,.txt"><p id="message" aria-live="polite"></p></section>
 
-  <section id="summary" class="card" hidden>
-    <h2 id="title">My Song</h2>
-    <div class="grid">
-      <div class="stat"><small>BPM</small><strong id="bpm"></strong></div>
-      <div class="stat"><small>Key</small><strong id="key"></strong></div>
-      <div class="stat"><small>Schema</small><strong id="schema"></strong></div>
-      <div class="stat"><small>Updated</small><strong id="updated"></strong></div>
-      <div class="stat"><small>Lineage</small><strong id="lineage"></strong></div>
-    </div>
-    <h3>Status</h3>
-    <p id="analysis-status"></p>
-    <p id="composition-status"></p>
-    <p id="arrangement-status"></p>
-  </section>
+  <section class="card" id="sheet-transfer-guide"><h2>シートから曲データを受け取る</h2><ol><li>上の最新版作曲シートで入力して保存</li><li>必要なら「端末へJSONを保存」でバックアップ</li><li>「保存してDemo Composerへ」で同じSongProject v1を受け渡す</li></ol><p><small>Homeと作曲シートは同じRepository内のcanonical latest routeで接続します。JSONバックアップは別端末への移行や復元用として残します。</small></p><button id="open-demo-with-project" type="button" hidden>読み込んだ曲をDemo Composerへ</button><p id="sheet-transfer-status" role="status"></p></section>
 
-  <details class="card" id="claude-link-card"><summary>以前のClaudeリンク（任意）</summary>
-    <h2>Claude Artifact 作曲シート（旧リンク）</h2>
-    <p>必要な場合だけ、Claude Artifact版の作曲シートを登録して開けます。</p>
-    <label for="claude-link-input"><small>claude.ai のリンク</small></label>
-    <input id="claude-link-input" type="url" inputmode="url" autocomplete="off" placeholder="https://claude.ai/artifact/…">
-    <div class="actions split">
-      <button id="claude-link-save" type="button">この端末に保存</button>
-      <a id="claude-link-open" target="_blank" rel="noopener noreferrer" hidden>Claude Artifactを開く</a>
-    </div>
-    <button id="claude-link-clear" type="button" hidden>リンクを消す</button>
-    <p id="claude-link-message" aria-live="polite"></p>
-    <p><small>ArtifactリンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p>
-  </details>
+  <section id="summary" class="card" hidden><h2 id="title">My Song</h2><div class="grid"><div class="stat"><small>BPM</small><strong id="bpm"></strong></div><div class="stat"><small>Key</small><strong id="key"></strong></div><div class="stat"><small>Schema</small><strong id="schema"></strong></div><div class="stat"><small>Updated</small><strong id="updated"></strong></div><div class="stat"><small>Lineage</small><strong id="lineage"></strong></div></div><h3>Status</h3><p id="analysis-status"></p><p id="composition-status"></p><p id="arrangement-status"></p></section>
 
-  <section id="export-card" class="card" hidden>
-    <h2>Backup / Recovery</h2>
-    <button id="backup">Song Projectをバックアップ (.json)</button>
-  </section>
+  <details class="card" id="claude-link-card"><summary>以前のClaudeリンク（任意）</summary><h2>Claude Artifact 作曲シート（旧リンク）</h2><p>必要な場合だけ、Claude Artifact版の作曲シートを登録して開けます。</p><label for="claude-link-input"><small>claude.ai のリンク</small></label><input id="claude-link-input" type="url" inputmode="url" autocomplete="off" placeholder="https://claude.ai/artifact/…"><div class="actions split"><button id="claude-link-save" type="button">この端末に保存</button><a id="claude-link-open" target="_blank" rel="noopener noreferrer" hidden>Claude Artifactを開く</a></div><button id="claude-link-clear" type="button" hidden>リンクを消す</button><p id="claude-link-message" aria-live="polite"></p><hr><label for="sheet-json-file"><strong>Demo Composer引き継ぎJSON</strong></label><input id="sheet-json-file" type="file" accept="application/json,text/plain,.json,.txt"><p id="sheet-json-status" aria-live="polite"></p><p><small>旧形式の作曲シートJSONも互換読み込みできます。Chord / Melody等を自動生成しません。</small></p><p><small>ArtifactリンクはlocalStorageだけに保存し、Song Project JSON・MIDI・公開コードには入れません。</small></p></details>
+
+  <section id="export-card" class="card" hidden><h2>Backup / Recovery</h2><button id="backup">Song Projectをバックアップ (.json)</button><p><small>IndexedDBだけを唯一の保存先にせず、重要な曲は明示Backupしてください。</small></p></section>
 </main>
 <script type="module" src="./app.js"></script>
 </body>
