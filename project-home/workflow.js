@@ -57,24 +57,37 @@ export function isDawReady(project) {
   );
 }
 
+function pushUnique(items, item) {
+  if (!items.some((existing) => existing.id === item.id)) items.push(item);
+}
+
 export function buildUndecidedItems(project, { sheetLinked = false, limit = 3 } = {}) {
   const items = [];
   const composition = project?.composition || {};
   const composed = hasComposition(project);
   const arranged = hasArrangement(project);
+  const dawReady = isDawReady(project);
 
-  if (!sheetLinked) items.push({ id: 'direction', label: '曲の方向性' });
-  if (!composition.chords?.length) items.push({ id: 'chords', label: 'コード進行' });
-  if (!composition.melody?.length) items.push({ id: 'melody', label: '主旋律' });
-
-  if (composed) {
-    if (!composition.sections?.length) items.push({ id: 'sections', label: '曲構成' });
-    if (!composition.counterMelody?.length) items.push({ id: 'counter', label: '裏メロ（必要なら）' });
-    if (!composition.bass?.length) items.push({ id: 'bass', label: 'ベース（必要なら）' });
-    if (!arranged) items.push({ id: 'arrangement', label: '編曲方針' });
+  // First show the decision that belongs to the stage the user is currently in.
+  if (!sheetLinked) pushUnique(items, { id: 'direction', label: '曲の方向性' });
+  else if (!composed) {
+    if (!composition.chords?.length) pushUnique(items, { id: 'chords', label: 'コード進行' });
+    if (!composition.melody?.length) pushUnique(items, { id: 'melody', label: '主旋律' });
+  } else if (!arranged) {
+    pushUnique(items, { id: 'arrangement', label: '編曲方針' });
+  } else if (!dawReady) {
+    pushUnique(items, { id: 'daw-export', label: 'DAWへ渡すデータ' });
   }
 
-  if (arranged && !isDawReady(project)) items.push({ id: 'daw-export', label: 'DAWへ渡すデータ' });
+  // Then surface important unfinished composition decisions without blocking forward progress.
+  if (!composition.chords?.length) pushUnique(items, { id: 'chords', label: 'コード進行' });
+  if (!composition.melody?.length) pushUnique(items, { id: 'melody', label: '主旋律' });
+
+  if (composed) {
+    if (!composition.sections?.length) pushUnique(items, { id: 'sections', label: '曲構成' });
+    if (!composition.counterMelody?.length) pushUnique(items, { id: 'counter', label: '裏メロ（必要なら）' });
+    if (!composition.bass?.length) pushUnique(items, { id: 'bass', label: 'ベース（必要なら）' });
+  }
 
   return items.slice(0, Math.max(1, limit));
 }
