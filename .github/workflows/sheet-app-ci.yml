@@ -101,7 +101,24 @@ jobs:
       - name: v0.9.1 beginner and embed regression
         run: node scripts/composition-sheet-v091-browser.test.cjs
 
-      - name: Song data menu browser regression
+      - name: Song data menu - Composition Sheet
+        env:
+          SONG_DATA_MENU_TARGET: sheet
+        run: node arranger/tests/song-data-menu-browser.test.cjs
+
+      - name: Song data menu - Demo Composer
+        env:
+          SONG_DATA_MENU_TARGET: demo
+        run: node arranger/tests/song-data-menu-browser.test.cjs
+
+      - name: Song data menu - Project Home
+        env:
+          SONG_DATA_MENU_TARGET: home
+        run: node arranger/tests/song-data-menu-browser.test.cjs
+
+      - name: Song data menu - Arrangement Lab
+        env:
+          SONG_DATA_MENU_TARGET: arranger
         run: node arranger/tests/song-data-menu-browser.test.cjs
 
       - name: Upload full workbook browser evidence
