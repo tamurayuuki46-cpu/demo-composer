@@ -1,6 +1,6 @@
 # 1小節スケッチのリハーモナイズ
 
-Version: v0.10-dev
+Version: v0.11-dev
 更新日: 2026-10-14
 
 ## 目的
@@ -13,6 +13,9 @@ Demo Composerなどから1小節だけ作った段階でもArrangement Labを使
 
 - 既存コードをそのままArrangement Lab入力として使用する。
 - A/B/Cの編曲案を生成できる。
+- 「選択案を簡易試聴」でコードだけでもHarmonyを実際に発音する。
+- SongProject側で1小節抜粋が曲中の絶対tickを保持していても、Arrangement Lab入力時だけその抜粋の先頭を0基準へ補正する。
+- コードだけの試聴はスマホスピーカーでも判別しやすいよう、簡易試聴に限ってHarmonyの低い音を1オクターブ上げ、triangle波と調整済みGainで鳴らす。MIDIや元SongProjectの音高は変更しない。
 - Section調整から既存のリハモ3案「自然 / 色付け / 大胆」を利用できる。
 - Demo Composer handoffでは、A/B/C候補が3案生成され試聴可能になるまで「反映済み」にしない。
 
@@ -25,7 +28,8 @@ Demo Composerなどから1小節だけ作った段階でもArrangement Labを使
 
 ## 安全性と互換性
 
-- 元のSongProject v1 `composition.chords` は変更しない。
+- 元のSongProject v1 `composition.chords` / Noteのtickや音高は変更しない。
+- 絶対tickの0基準補正はArrangement Labへ渡す一時入力だけに適用する。
 - メロディだけの場合の仮コードはArrangement Labへ渡す一時入力だけに追加する。
 - 既にコードがある1小節は上書きしない。
 - 2小節以上では自動コード生成を行わない。
@@ -36,21 +40,23 @@ Demo Composerなどから1小節だけ作った段階でもArrangement Labを使
 1. Demo Composerで1小節のコード、または1小節のメロディを作る。
 2. Arrangement Labへ渡す。
 3. 「反映中…」の間は待ち、A/B/C準備完了後に「反映済み」になる。
-4. ②でA/B/Cの編曲案を聴く。必要なら「A/B/Cを作り直す」を押す。
+4. ②で「選択案を簡易試聴」を押してA/B/Cの編曲案を聴く。必要なら「A/B/Cを作り直す」を押す。
 5. ④Section調整の「リハモ → 3案を提案」を押す。
 6. 「自然 / 色付け / 大胆」を比較して採用する。
 
 ## エラー表示
 
-初心者モードのエラー / 成功トーストは、固定下部ナビより上に表示する。赤い枠だけが見えて本文が隠れる状態を避ける。
+- 初心者モードのエラー / 成功トーストは、固定下部ナビより上に表示する。赤い枠だけが見えて本文が隠れる状態を避ける。
+- 発音対象が本当に0件の場合は、無音のまま再生中表示にせず「このSectionに試聴できるコード / Noteがありません」と表示する。
+- Bass単独試聴で元Bass Noteが0件の場合だけ、現在コードのRootを一時ガイド音として鳴らす。SongProjectには書き戻さない。
 
 ## 回帰テスト
 
 - Unit: `arranger/tests/song-project-quick-sketch.test.mjs`
 - Mobile Chromium: `arranger/tests/onebar-reharm-browser.test.cjs`
 - 360 / 390 / 430pxで以下を確認する。
-  - コード0件・主旋律1小節 → 仮コード → A/B/C → リハモ3案 → 採用
-  - コード1小節だけ → Demo Composer handoff → A/B/C準備完了 → A/B/C再生成 → リハモ3案 → 採用
+  - コード0件・主旋律1小節 → 仮コード → A/B/C → 簡易試聴の実発音 → リハモ3案 → 採用
+  - 曲中の後ろの絶対tickを持つコード1小節だけ → Demo Composer handoff → 0基準補正 → A/B/C準備完了 → 「選択案を簡易試聴」押下 → AudioContextへ1音以上の発音予約 → A/B/C再生成 → リハモ3案 → 採用
   - 赤いエラートーストが出ないこと
   - 横スクロールが発生しないこと
   - Console / page errorがないこと
