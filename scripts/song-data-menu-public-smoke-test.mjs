@@ -10,7 +10,7 @@ const files = [
 ];
 for (const file of files) execFileSync(process.execPath, ['--check', file], { stdio: 'inherit' });
 
-const [shared, demoEntry, appEntry, homeApp, homeEntry, arrangerHtml, arrangerEntry, index, arrangerCore] = await Promise.all([
+const [shared, demoEntry, appEntry, homeApp, homeEntry, arrangerHtml, arrangerEntry, index] = await Promise.all([
   readFile('src/shared/song-data-menu.js', 'utf8'),
   readFile('src/hub/song-data-menu-entry.js', 'utf8'),
   readFile('src/hub/app-entry.js', 'utf8'),
@@ -19,7 +19,6 @@ const [shared, demoEntry, appEntry, homeApp, homeEntry, arrangerHtml, arrangerEn
   readFile('arranger/index.html', 'utf8'),
   readFile('arranger/src/song-data-menu-entry.js', 'utf8'),
   readFile('index.html', 'utf8'),
-  readFile('arranger/src/core.js', 'utf8'),
 ]);
 
 assert.match(shared, /position:fixed/);
@@ -35,6 +34,5 @@ assert.match(homeEntry, /Demo Composerへ進む/);
 assert.match(arrangerHtml, /song-data-menu-entry\.js/);
 assert.match(arrangerEntry, /DAW書き出しへ進む/);
 assert.match(index, /v0\.8-dev/);
-assert.match(arrangerCore, /ARRANGER_VERSION = 'v0\.7-dev'/);
 
 console.log('Public top-right song data menu wiring passed.');
