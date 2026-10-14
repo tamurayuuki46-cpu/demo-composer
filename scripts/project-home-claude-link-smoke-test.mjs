@@ -20,7 +20,7 @@ assert.match(html, /id="quick-flow"/);
 assert.match(html, /<h2>制作フロー<\/h2>/);
 assert.match(html, /⓪ 方向を決める/);
 assert.match(html, /① 必要なら解析/);
-assert.match(html, /MIDI Analyzer・任意/);
+assert.match(html, /MIDI Archive\/Analyzer・任意/);
 assert.match(html, /② 作曲/);
 assert.match(html, /③ 編曲/);
 assert.match(html, /④ DAWへ/);
