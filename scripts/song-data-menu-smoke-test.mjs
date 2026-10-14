@@ -14,7 +14,7 @@ const arrangerBoundary = await fs.readFile('arranger/src/workflow-boundary-ui.js
 const arrangerSw = await fs.readFile('arranger/sw.js', 'utf8');
 const sheetLatest = await fs.readFile('sheet-app/latest/composition_sheet_latest.html', 'utf8');
 const sheetHtml = await fs.readFile('sheet-app/versions/v0.4/composition_sheet_v0.4.html', 'utf8');
-const sheetJs = await fs.readFile('sheet-app/versions/v0.6/composition_sheet_v0.6.js', 'utf8');
+const sheetJs = await fs.readFile('sheet-app/versions/v0.8/composition_sheet_v0.8.js', 'utf8');
 
 assert.match(shared, /position:fixed/);
 assert.match(shared, /right:10px/);
@@ -59,7 +59,7 @@ assert.match(arrangerBoundary, /song-data-menu-entry\.js/);
 assert.match(arrangerEntry, /export-song-midi-btn/);
 assert.match(arrangerEntry, /onMidi/);
 assert.match(arrangerEntry, /DAW書き出しへ進む/);
-assert.match(sheetLatest, /versions\/v0\.6\/composition_sheet_v0\.6\.html/);
+assert.match(sheetLatest, /versions\/v0\.8\/composition_sheet_v0\.8\.html/);
 assert.match(sheetHtml, /v0\.4-dev/);
 assert.match(sheetJs, /mountSongDataMenu/);
 assert.match(sheetJs, /downloadMidiBundle/);
@@ -68,4 +68,4 @@ assert.match(sheetJs, /onMidi/);
 assert.match(sheetJs, /Demo Composerへ進む/);
 assert.match(sheetJs, /music-project-songproject-handoff-v1/);
 
-console.log('Four-action song data menu + per-song memo passed across Sheet / Home / Demo / Arrangement');
+console.log('Four-action song data menu + per-song memo passed across Sheet v0.8 / Home / Demo / Arrangement');
