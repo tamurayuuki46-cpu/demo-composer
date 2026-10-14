@@ -22,13 +22,26 @@ async function assertCommonMenu(page, width, nextText) {
   assert.equal(await trigger.textContent(), '📦 曲データ');
   await trigger.click();
   const panel = page.locator('.song-data-panel');
-  await panel.getByText('保存した曲を開く', { exact: true }).waitFor();
-  await panel.getByText('今の曲を保存', { exact: true }).waitFor();
-  await panel.getByText(nextText, { exact: true }).waitFor();
+  for (const label of ['🧭 全アプリ遷移', '🎹 MIDI保存', '💾 JSON保存', '📝 作曲シート成果物']) {
+    await panel.getByText(label, { exact: true }).waitFor();
+  }
+  await panel.getByText('保存JSONを開く', { exact: true }).waitFor();
+  if (nextText) await panel.getByText(nextText, { exact: true }).waitFor();
+  assert.equal(await panel.locator('.song-data-primary-action').count(), 4, 'must show exactly four primary actions');
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `menu overflow at ${width}px`);
+
+  await panel.locator('[data-song-data-action="apps"]').click();
+  const appsDialog = page.locator('[id$="-apps-dialog"]');
+  await appsDialog.waitFor({ state: 'visible' });
+  for (const app of ['Music Project Home', '作曲シート', 'MIDI Analyzer', 'Demo Composer', 'Arrangement Lab']) {
+    await appsDialog.getByText(app, { exact: true }).waitFor();
+  }
+  await appsDialog.locator('.song-data-dialog-close').click();
+
+  await trigger.click();
   await panel.locator('[data-song-data-action="sheet"]').click();
   await page.locator('#composition-sheet-summary-dialog').waitFor({state:'visible'});
-  await page.locator('#composition-sheet-summary-dialog button').click();
+  await page.locator('#composition-sheet-summary-dialog .song-data-dialog-close').click();
   return { trigger, panel };
 }
 
@@ -46,6 +59,7 @@ async function assertCommonMenu(page, width, nextText) {
       const sheetMenu = await assertCommonMenu(page, width, 'Demo Composerへ進む');
       await sheetMenu.trigger.click();
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="save"]').isEnabled(), true, 'Workbook must allow saving partially filled sheets');
+      assert.equal(await sheetMenu.panel.locator('[data-song-data-action="midi"]').isEnabled(), true, 'Workbook MIDI action should be available');
       assert.equal(await sheetMenu.panel.locator('[data-song-data-action="next"]').isDisabled(), true, 'Composition Sheet next must be disabled before required fields');
       await page.locator('.song-data-close').click();
       if(await page.locator('#handoff-form').count()) await page.locator('#handoff-form').evaluate(node=>{node.open=true;});
@@ -57,29 +71,35 @@ async function assertCommonMenu(page, width, nextText) {
       await page.locator('.song-data-close').click();
 
       await page.goto(rootBase);
-      await assertCommonMenu(page, width, 'Arrangement Labへ進む');
+      const demoMenu = await assertCommonMenu(page, width, 'Arrangement Labへ進む');
+      await demoMenu.trigger.click();
+      assert.equal(await demoMenu.panel.locator('[data-song-data-action="midi"]').isEnabled(), true, 'Demo Composer MIDI action should be available');
+      await page.locator('.song-data-close').click();
 
       await page.goto(homeBase);
       const homeMenu = await assertCommonMenu(page, width, '次の工程へ進む');
       await homeMenu.trigger.click();
       assert.equal(await homeMenu.panel.locator('[data-song-data-action="save"]').isDisabled(), true, 'Project Home save must be disabled before a SongProject is loaded');
+      assert.equal(await homeMenu.panel.locator('[data-song-data-action="midi"]').isDisabled(), true, 'Project Home MIDI must be disabled before a SongProject is loaded');
       await page.locator('.song-data-close').click();
 
       await page.goto(arrangerBase);
       const arrangerMenu = await assertCommonMenu(page, width, 'DAW書き出しへ進む');
       await arrangerMenu.trigger.click();
       assert.equal(await arrangerMenu.panel.locator('[data-song-data-action="save"]').isDisabled(), true, 'Arrangement save must be disabled before a project is loaded');
+      assert.equal(await arrangerMenu.panel.locator('[data-song-data-action="midi"]').isDisabled(), true, 'Arrangement MIDI must be disabled before a project is loaded');
       await page.locator('.song-data-close').click();
 
       await page.locator('#project-file').setInputFiles({ name: 'project.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(fixture)) });
       await page.waitForFunction(() => document.querySelector('#export-song-project-btn') && !document.querySelector('#export-song-project-btn').disabled);
       await arrangerMenu.trigger.click();
       assert.equal(await arrangerMenu.panel.locator('[data-song-data-action="save"]').isEnabled(), true);
+      assert.equal(await arrangerMenu.panel.locator('[data-song-data-action="midi"]').isEnabled(), true);
       assert.match(await arrangerMenu.panel.locator('[data-song-data-current]').textContent(), /Song data menu test|読み込み済み/);
       assert.deepEqual(errors, []);
       await context.close();
     }
-    console.log('Composition Sheet / Demo Composer / Project Home / Arrangement Lab 360/390/430px song data menu passed');
+    console.log('Four-action song data menu passed on Sheet / Demo / Home / Arrangement at 360/390/430px');
   } finally {
     await browser.close();
   }
