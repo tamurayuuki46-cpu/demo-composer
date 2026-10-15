@@ -81,6 +81,9 @@ Reconciliation工程で次を確認済みです。
 - 公開済みversion資産: 38件すべて記録済みblobと一致
 - 既存remote restore / backup / tag refs: 162件すべて保持
 - PR #252 / #253 / #254の当時のCI: PASS
+- Music Project Home最終確認: 関連静的・build 16 command PASS、Home browser 360 / 390 / 430 / 1440px PASS、曲データメニュー 360 / 390 / 430px PASS
+- 実ブラウザでArrangement採用だけではDAW-readyにならず、実Song.mid download後のSongProjectだけがHomeで「Cubasis / Cubaseで仕上げる段階」へ進むことを確認
+- Homeメモの再読込、SongProject JSON backup round-trip、Analyzer / Demo所有領域の保持を確認
 
 統合候補commitそのもののhosted CIは未実行です。push / PR作成後に、同一headでhosted CIを確認する必要があります。ローカル結果や過去PRのCIを候補headのCIとして扱わないでください。
 
@@ -139,6 +142,7 @@ Compatibility rules:
 ## Primary references
 
 - `docs/RECONCILIATION_RESULT_2026-10-15.md`
+- `docs/PROJECT_HOME_FINAL_VERIFICATION_2026-10-15.md`
 - `docs/BRANCH_RECONCILIATION_2026-10-15.md`
 - `docs/DOC_SYNC_AUDIT_2026-10-15.md`
 - `docs/DAW_HANDOFF_VERIFICATION.md`

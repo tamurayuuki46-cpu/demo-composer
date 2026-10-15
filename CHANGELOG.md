@@ -19,6 +19,7 @@
 
 【検証】
 - reconciliation工程で静的178件、ブラウザ17件、公開済みversion資産38件、保護対象remote refs 162件の保持確認に成功。
+- Music Project Home最終確認で、関連静的・build 16 command、Home 4 viewport、曲データメニュー3 mobile viewport、実Song.mid後のDAW-ready遷移、保存再読込、SongProject所有境界を確認。詳細は`docs/PROJECT_HOME_FINAL_VERIFICATION_2026-10-15.md`。
 - 統合候補のhosted CIはpush / PR作成後に必要。ローカル結果はhosted CIの代替ではない。
 
 ## 作曲シート v0.6-dev — 2026-10-14
