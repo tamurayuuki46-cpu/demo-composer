@@ -14,10 +14,10 @@ import {
   snapshotDivergence
 } from "../core/divergence.js";
 import { composerDivergenceTransform } from "../core/divergence-demo.js";
+import { APP_VERSION } from "../core/project-schema.js";
 import { getSections } from "../core/section-ops.js";
 import { loadActiveProject, saveProject } from "../storage/indexeddb-storage.js";
 
-const APP_VERSION = "0.17.0-dev";
 const SESSION_KEY_PREFIX = "demo-composer:divergence:v1:";
 
 let sourceProject = null;
@@ -53,8 +53,8 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function sessionKey() {
-  return `${SESSION_KEY_PREFIX}${sourceProject?.id ?? "none"}`;
+function sessionKey(project = sourceProject) {
+  return `${SESSION_KEY_PREFIX}${project?.id ?? "none"}:${project?.revision ?? 0}`;
 }
 
 function saveSession() {
@@ -71,7 +71,12 @@ function loadSession() {
     const raw = sessionStorage.getItem(sessionKey());
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed?.version !== 1 || parsed?.nodes?.root?.payload?.id !== sourceProject.id) return null;
+    const root = parsed?.nodes?.root?.payload;
+    if (
+      parsed?.version !== 1
+      || root?.id !== sourceProject.id
+      || Number(root?.revision ?? 0) !== Number(sourceProject.revision ?? 0)
+    ) return null;
     return parsed;
   } catch {
     return null;
@@ -386,16 +391,15 @@ function bindEvents() {
   document.querySelector("#freeze-active")?.addEventListener("click", async () => {
     try {
       player.stop();
+      const previousSessionKey = sessionKey();
       const frozen = freezeDivergenceBranch(session);
       session = frozen.session;
       const nextProject = clone(frozen.project);
       nextProject.revision = Math.max(sourceProject.revision ?? 0, nextProject.revision ?? 0) + 1;
       nextProject.appVersion = APP_VERSION;
       await saveProject(nextProject);
-      sourceProject = clone(nextProject);
-      statusMessage = `${frozen.node.label}をFreezeし、現在のProjectとして保存しました。通常編集で比較・採用・微調整へ進めます。`;
-      saveSession();
-      render();
+      try { sessionStorage.removeItem(previousSessionKey); } catch {}
+      window.location.href = "./index.html";
     } catch (error) {
       statusMessage = error instanceof Error ? error.message : "Freezeに失敗しました。";
       render();
