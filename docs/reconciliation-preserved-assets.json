@@ -1,0 +1,157 @@
+{
+  "files": [
+    {
+      "blob": "f7dc986ba83ae5ea45735bdf51eebaf80d1de9fe",
+      "path": "sheet-app/versions/v0.1/composition_sheet_v0.1.html"
+    },
+    {
+      "blob": "190a4cb01360e83d74ea624e59e1e9ba464432fc",
+      "path": "sheet-app/versions/v0.2/composition_sheet_v0.2.html"
+    },
+    {
+      "blob": "e1304b8aa7dc2d8490b2a83bb8d7c0c90e4a166c",
+      "path": "sheet-app/versions/v0.2/composition_sheet_v0.2.js"
+    },
+    {
+      "blob": "570e132d08f6670b0b778becfa5355d21c25ff91",
+      "path": "sheet-app/versions/v0.4/sheet_content_v0.4.js"
+    },
+    {
+      "blob": "11f50b2b4d84f5b836a5eb3c80f0053132473cba",
+      "path": "sheet-app/versions/v0.4/sheet_model_v0.4.js"
+    },
+    {
+      "blob": "65138b77f61893b4d34aad77f9bd268e2ad6a4af",
+      "path": "sheet-app/versions/v0.6/composition_sheet_v0.6.css"
+    },
+    {
+      "blob": "c17aad43369d273ba914d2d71b0d7314171c1d57",
+      "path": "sheet-app/versions/v0.7/CHANGELOG_v0.7.txt"
+    },
+    {
+      "blob": "65138b77f61893b4d34aad77f9bd268e2ad6a4af",
+      "path": "sheet-app/versions/v0.7/composition_sheet_v0.7.css"
+    },
+    {
+      "blob": "72e721773c12f194bc147e4d7a0b2148ce6a953b",
+      "path": "sheet-app/versions/v0.7/composition_sheet_v0.7.html"
+    },
+    {
+      "blob": "1cafbb21a6f7cc4d2e3c53736d297c42d92ba9fb",
+      "path": "sheet-app/versions/v0.7/composition_sheet_v0.7.js"
+    },
+    {
+      "blob": "570e132d08f6670b0b778becfa5355d21c25ff91",
+      "path": "sheet-app/versions/v0.7/sheet_content_v0.7.js"
+    },
+    {
+      "blob": "11f50b2b4d84f5b836a5eb3c80f0053132473cba",
+      "path": "sheet-app/versions/v0.7/sheet_model_v0.7.js"
+    },
+    {
+      "blob": "03c1cfbee725961d8c2678d7aaf542f76f893001",
+      "path": "sheet-app/versions/v0.8/composition_sheet_v0.8.css"
+    },
+    {
+      "blob": "a95a28e8fea998c8b5c3e8cade9fa2b252cba7df",
+      "path": "sheet-app/versions/v0.8/composition_sheet_v0.8.html"
+    },
+    {
+      "blob": "832608f5166489a2c631973cf017683d45230e6d",
+      "path": "sheet-app/versions/v0.8/composition_sheet_v0.8.js"
+    },
+    {
+      "blob": "fedd42aae686075f415ec4244744b613e723e1ee",
+      "path": "sheet-app/versions/v0.8/manual_ideas_v0.8.js"
+    },
+    {
+      "blob": "862e98dea0c02f1045539f4a2a56cf1c8b6d1c59",
+      "path": "sheet-app/versions/v0.9/composition_sheet_v0.9.css"
+    },
+    {
+      "blob": "66984a4b3b1f0f5c51122cc799593c1502d54d8d",
+      "path": "sheet-app/versions/v0.9/composition_sheet_v0.9.html"
+    },
+    {
+      "blob": "80979b38097694bb3f7a519b2fcbab5022339cef",
+      "path": "sheet-app/versions/v0.9/composition_sheet_v0.9.js"
+    },
+    {
+      "blob": "d527ca78fe15e46ba1380cb22983eb7e29695251",
+      "path": "versions/arranger-v0.2-before-work-review/CHANGELOG_v0.2-before-work-review.md"
+    },
+    {
+      "blob": "16d1cd5d701cb97b7fb4496440e394a757848156",
+      "path": "versions/arranger-v0.2-before-work-review/arranger_v0.2-dev.tar"
+    },
+    {
+      "blob": "ff07b9570ea41330664b6d3c04abd9c73e50eda8",
+      "path": "versions/arranger-v0.2.1-before-theory/CHANGELOG_v0.2.1-before-theory.md"
+    },
+    {
+      "blob": "caf66ec5c4dd6a013d265e2828640e15d5b2a6ee",
+      "path": "versions/arranger-v0.2.1-before-theory/arranger_v0.2.1-dev.tar"
+    },
+    {
+      "blob": "1924592e7306840826b31c4828f522c23de74a72",
+      "path": "versions/arranger-v0.3-before-music-labs/CHANGELOG_v0.3-before-music-labs.md"
+    },
+    {
+      "blob": "f4aa2d7213aeb82891415add1b415fedbf4df3a8",
+      "path": "versions/arranger-v0.3-before-music-labs/arranger_v0.3-dev.tar.gz"
+    },
+    {
+      "blob": "910e62e28da42fae5e715a176e8f801656940cf0",
+      "path": "versions/v0.1-dev/CHANGELOG_v0.1-dev.md"
+    },
+    {
+      "blob": "9ded9fc923884500ba419cd52cdc9cca37572d3a",
+      "path": "versions/v0.15-dev/CHANGELOG_v0.15-dev.md"
+    },
+    {
+      "blob": "aa504ab036006a94ae83e7fbb85529ef3b18781b",
+      "path": "versions/v0.2-before-decision-support/CHANGELOG_v0.2-before-decision-support.md"
+    },
+    {
+      "blob": "768a7cb91616b0973df9ca9fcb90e807f709dcd8",
+      "path": "versions/v0.2-counter-answer-style/CHANGELOG_v0.2-counter-answer-style.md"
+    },
+    {
+      "blob": "837bbff3170ab8da34d8bd10f55b29e7d2569f6d",
+      "path": "versions/v0.2-dev/CHANGELOG_counter_style_3ways.md"
+    },
+    {
+      "blob": "3ccd0176718c953f6a369948df44163d23c63112",
+      "path": "versions/v0.2-dev/CHANGELOG_melody_degree_analysis.md"
+    },
+    {
+      "blob": "bcefe41c4c1455c97695e673cd76c7d3ac891722",
+      "path": "versions/v0.2-melodic-functions/CHANGELOG_v0.2-melodic-functions.md"
+    },
+    {
+      "blob": "91d5fc61131e3b2ae4454e19e83728824e85db2a",
+      "path": "versions/v0.2-melody-ab/CHANGELOG_v0.2-melody-ab.md"
+    },
+    {
+      "blob": "e1d29394bcddf3c69840cc04bcbb9a8f85fbaffe",
+      "path": "versions/v0.3-dev/CHANGELOG_v0.3-dev.md"
+    },
+    {
+      "blob": "43de21656d420e49264c29517a3b28b2c6bd0dce",
+      "path": "versions/v0.3-dev/VERIFICATION_v0.3-dev.md"
+    },
+    {
+      "blob": "7caa56dded534bdc5770e2730c52aed5069d7a7a",
+      "path": "versions/v0.7-dev/CHANGELOG_v0.7-dev.md"
+    },
+    {
+      "blob": "18e598fa32d7890ca8f77e0ae62f21dafcd6b044",
+      "path": "versions/v0.8-dev/CHANGELOG_v0.8-dev.md"
+    },
+    {
+      "blob": "2879f04f94c65e3f60aedec6403d3df385e36ac1",
+      "path": "versions/v0.8-dev/VERSION_HISTORY.md"
+    }
+  ],
+  "source": "28f85e64adeed26da1d40fc491723438ffecd2f9"
+}

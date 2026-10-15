@@ -2,15 +2,15 @@
 
 Androidスマホ中心の作曲支援PWAです。
 
-## Current Version
+## Version status
 
-`v0.14-dev`
-
-公開中Version: `v0.9-dev`
+- Published main: `v0.15-dev` (`main`; reconciliation PR #255 / merge `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`)
+- Development branch: `develop` / `b322cb47282261db720bf3b74caf455cb56c9cf7`（mainからのcatch-up前）
+- Stable: 未認定
 
 GitHub Pages: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
-`develop`は開発統合、`main`はCI合格版かつGitHub Pages公開元です。stable tagはAndroid実機と必要なCubasis/Cubase実機確認後のみ作成します。
+PR #252 / #253 / #254を含むmain/develop統合候補`8a73fcb55029f4bdb8d191d4e552f5122fc380fd`は、PR #255からmerge commit方式で`main`へ統合・公開済みです。PR headのhosted CI 7件と、main統合後のPages / Release Check / AI Monitoringの3件が成功しています。`main`はCI合格版かつGitHub Pages公開元です。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
 
 ## コンセプト
 
@@ -22,19 +22,33 @@ PC DAWは最終工程として必須です。
 
 ## 正式Workflow
 
-`作曲シート → 必要なら Moises → MIDI Analyzer → Demo Composer → Arrangement Lab → 必要なら Cubasis → PC DAW（必須） → 完成`
+`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → Cubasis / Cubase → 完成`
 
 役割:
 
 - 作曲シート = 決める
-- Moises = 分ける
-- MIDI Analyzer = 集める・理解する
+- MIDI Analyzer = 集める・理解する（任意）
 - Demo Composer = 作る
 - Arrangement Lab = 育てる
-- Music Project Home = 案内する・つなぐ
-- PC DAW = 完成させる
+- Music Project Home = 案内する・次にやることを示す
+- Cubasis / Cubase = 本制作・完成
 
 正本: `docs/WORKFLOW_PRINCIPLES.md`
+
+## v0.15-dev
+
+### Published reconciliation
+
+- 公開済みmainの資産を保持しながら、developの検証済み機能を通常の2-parent mergeで統合
+- PR #252: SongProject v1のMIDI Analyzer → Demo Composer → Arrangement Lab → Composition Sheet境界回帰を追加
+- PR #253: Music Project HomeのDAW-ready判定を実際のSong.mid書き出し記録に連動
+- PR #254: Song.midのFormat 1、5 Track、PPQ 480、Tempo、4/4、Channel、Marker、Note timingを固定する回帰を強化
+- Composition Sheet latestはv0.9.1-dev、Music Project Homeはv0.18-dev、Arrangement Labはv0.13-dev
+- SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4 / PPQ 480 / 4/4は維持
+- ローカル静的178件・ブラウザ17件・公開済みversion資産38件の保持検証が成功
+- PR #255の同一head `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`でhosted CI 7件が成功
+- `main`統合後にPages / Release Check / AI Monitoringが成功し、GitHub Pages公開を確認
+- Android / Cubasis / Cubase実機確認は未実施のためstable未認定
 
 ## v0.14-dev
 

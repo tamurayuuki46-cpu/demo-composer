@@ -6,7 +6,7 @@ import { createEmptySongProject, serializeSongProject, parseProjectJsonToSongPro
 assert.equal(SHEETS.length,31);assert.equal(new Set(SHEETS.map(p=>p.id)).size,31);
 const workbook=normalizeWorkbook();let checks=0,cells=0;
 for(const page of SHEETS){
-  const source=await readFile(`docs/sheet/${page.id}.md`,'utf8');
+  const source=(await readFile(`docs/sheet/${page.id}.md`,'utf8')).replace(/\r\n/g,'\n');
   if(page.id==='04_アイデア帳/03_ベース'){
     for(const line of page.markdown.split('\n').filter(line=>line.trim())) assert.ok(source.includes(line),`v0.7 bass overlay lost v0.4 source line: ${line}`);
     assert.match(source,/The Cardigans \/ The Weeknd/,'v0.7 bass overlay is missing');

@@ -37,3 +37,4 @@ installProjectListUi();
 installDriveExportUi();
 installSongProjectUi();
 await import("./song-data-menu-entry.js");
+await import("./ai-monitoring-entry.js");

@@ -1,0 +1,52 @@
+name: Demo Composer AI Monitoring Release CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'VERSION'
+      - 'src/hub/ai-monitoring.js'
+      - 'src/hub/ai-monitoring.css'
+      - 'src/hub/ai-monitoring-entry.js'
+      - 'src/hub/app-entry.js'
+      - 'scripts/ai-monitoring-smoke-test.mjs'
+      - 'scripts/build-static.mjs'
+      - '.github/workflows/ai-monitoring-release-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'VERSION'
+      - 'src/hub/ai-monitoring.js'
+      - 'src/hub/ai-monitoring.css'
+      - 'src/hub/ai-monitoring-entry.js'
+      - 'src/hub/app-entry.js'
+      - 'scripts/ai-monitoring-smoke-test.mjs'
+      - 'scripts/build-static.mjs'
+      - '.github/workflows/ai-monitoring-release-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-ai-monitoring:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and behavior
+        run: |
+          node --check src/hub/ai-monitoring.js
+          node --check src/hub/ai-monitoring-entry.js
+          node --check src/hub/app-entry.js
+          node scripts/ai-monitoring-smoke-test.mjs
+          test "$(tr -d '\r\n' < VERSION)" = "v0.15-dev"
+          grep -q 'ai-monitoring-entry.js' src/hub/app-entry.js
+      - name: Public build
+        run: |
+          npm run build
+          test -f dist/src/hub/ai-monitoring.js
+          test -f dist/src/hub/ai-monitoring.css
+          test -f dist/src/hub/ai-monitoring-entry.js
+          grep -q 'ai-monitoring-entry.js?build=' dist/src/hub/app-entry.js
