@@ -1,0 +1,58 @@
+name: Divergence v0.17
+
+on:
+  push:
+    branches:
+      - chatgpt/divergence-mode-v0.17
+  pull_request:
+    paths:
+      - 'divergence.html'
+      - 'src/core/divergence.js'
+      - 'src/core/divergence-demo.js'
+      - 'src/core/divergence.css'
+      - 'src/divergence/**'
+      - 'arranger/divergence.html'
+      - 'arranger/divergence.css'
+      - 'arranger/src/divergence.js'
+      - 'arranger/src/divergence-ui.js'
+      - 'project-home/index.html'
+      - 'scripts/divergence-smoke-test.mjs'
+      - 'scripts/arranger-divergence-smoke-test.mjs'
+      - 'scripts/build-static.mjs'
+      - '.github/workflows/divergence-v017.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  divergence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check divergence modules
+        run: |
+          node --check src/core/divergence.js
+          node --check src/core/divergence-demo.js
+          node --check src/divergence/app.js
+          node --check arranger/src/divergence.js
+          node --check arranger/src/divergence-ui.js
+          node --check scripts/divergence-smoke-test.mjs
+          node --check scripts/arranger-divergence-smoke-test.mjs
+          node --check scripts/build-static.mjs
+      - name: Demo Composer divergence smoke test
+        run: node scripts/divergence-smoke-test.mjs
+      - name: Arrangement Lab divergence smoke test
+        run: node scripts/arranger-divergence-smoke-test.mjs
+      - name: Static build
+        run: npm run build
+      - name: Verify built divergence routes
+        run: |
+          test -f dist/divergence.html
+          test -f dist/src/core/divergence.js
+          test -f dist/arranger/divergence.html
+          test -f dist/arranger/src/divergence.js
+          grep -q 'divergence.html' dist/service-worker.js
+          grep -q 'divergence.html' dist/arranger/sw.js

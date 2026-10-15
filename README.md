@@ -5,14 +5,14 @@ Androidスマホ中心の作曲支援PWAです。
 ## Version status
 
 - Published main: `v0.15-dev` (`main`; reconciliation PR #255 / merge `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`)
-- Development candidate: `v0.16-dev` on `chatgpt/decision-progress-home-v0.16`
+- Development integration: `v0.16-dev` on `develop`
+- Divergence development candidate: Demo Composer `v0.17-dev` / Arrangement Lab `v0.14-dev` on `chatgpt/divergence-mode-v0.17`（draft PR #259）
 - Music Project Home development candidate: `v0.19-dev`
-- Development integration branch: `develop`（公開済みmainからcatch-up済み。v0.16-dev候補は未統合）
 - Stable: 未認定
 
 GitHub Pages: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
-公開中GitHub Pagesは引き続き`main`のv0.15-devです。v0.16-dev / Music Project Home v0.19-devは作業Branch上の開発候補であり、CI・PR統合前に公開済みとは扱いません。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
+公開中GitHub Pagesは引き続き`main`のv0.15-devです。`develop`のv0.16-dev、およびPR #259のv0.17-dev / Arrangement Lab v0.14-devは開発版であり、公開済み・stableとは扱いません。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
 
 ## コンセプト
 
@@ -24,7 +24,7 @@ PC DAWは最終工程として必須です。
 
 創作は一本道として扱いません。`発散 ↔ 比較 ↔ 収束`を自由に往復し、探索中・比較中・保留・任意も正常な創作状態として扱います。AIは曲を決めるOwnerではなく、候補・比較材料・説明を提示して人間の判断を支援します。
 
-詳細: `docs/CREATIVE_DECISION_PROGRESS.md`
+詳細: `docs/CREATIVE_DECISION_PROGRESS.md`, `docs/DIVERGENCE_MODE.md`
 
 ## 正式Workflow
 
@@ -33,16 +33,50 @@ PC DAWは最終工程として必須です。
 役割:
 
 - 作曲シート = 考える・意図を決める
-- MIDI Analyzer = 集める・理解する（任意）
-- Demo Composer = 作る・試す
-- Arrangement Lab = 育てる・比較する・決める
+- MIDI Analyzer = 集める・理解する・差を説明する（任意。発散生成はしない）
+- Demo Composer = 作る・試す・曲そのものを発散する
+- Arrangement Lab = 育てる・編曲案を発散する・比較する・決める
 - Music Project Home = 案内する・つなぐ・今できる選択肢を示す
 - Cubasis = 必要に応じたモバイルDAW作業
 - PC DAW / Cubase = 本制作・完成
 
 正本: `docs/WORKFLOW_PRINCIPLES.md`
 
-## v0.16-dev — development candidate
+## v0.17-dev — divergence development candidate
+
+発散モードは既存の比較・採用・判断履歴などの収束機能の前段として、元案を壊さず可能性を増やす探索レイヤーです。
+
+基本フロー:
+
+`Seed → Lock → Branch → Mutate / Transform → 試聴 → Keep → 再Branch → Freeze → 比較 / 採用`
+
+主な追加:
+
+- Seed（元案）と再現可能なSeed値
+- 5軸Lock: 主旋律 / 裏メロ / コード・ハーモニー / リズム・グルーヴ / 音色
+- Divergence Distance 1〜5
+- 決定論的Branch / nested Branch
+- Keep / Freeze
+- Snapshot / Restore
+- Branch Tree
+- 発散中は点数・ランキングを前面に出さず、まず試聴して案を増やす
+- Demo Composerの既存Section Variation / 裏メロ候補 / コード候補 / Sound Presetを再利用し、生成ロジックを二重実装しない
+- Arrangement Labは主旋律を常時固定し、既存Reharm / Density / Counter role / Instrumentationを発散対象にする
+- Music Project Homeは生成せず、Demo Composer / Arrangement Labの発散モードへ案内する
+- MIDI Analyzerは生成せず、Branch差分の分析・説明・実験候補提案を担当する
+
+互換性:
+
+- Demo Project Schema 3変更なし
+- SongProject v1変更なし
+- Arrangement Plan Schema 4変更なし
+- 発散履歴は補助状態として扱い、Freeze前はProject本体を書き換えない
+- 大規模変更前の復元Branch: `restore/v0.16-before-divergence-2026-10-15`
+- stable tagは未作成
+
+詳細: `docs/DIVERGENCE_MODE.md`, `docs/BACKUP_MANIFEST_v0.17-dev.md`, `versions/v0.17-dev/CHANGELOG_v0.17-dev.md`
+
+## v0.16-dev — development integration
 
 ### Decision Progress
 
@@ -132,6 +166,7 @@ Demo Composerは**Composition Owner**です。
 - 作曲判断
 - Lyrics / Vocalの作曲段階メモ
 - Draft.mid
+- Seed / Lock / Branchによる曲そのものの発散
 
 深い参考曲分析やPersonal TrendはMIDI Analyzerへ、高度なReharm / Voicing / Density / DevelopmentはArrangement Labへ、本格音源・Vocal本制作・Mix / MasteringはPC DAWへ任せます。
 
@@ -177,6 +212,7 @@ Chord / Melody等をClaude JSONから自動生成しません。
 - 次にできる選択肢（最大3件程度）
 - 作曲シート入口 / handoff JSON受け入れ
 - MIDI Analyzer / Demo Composer / Arrangement Labへの導線
+- Demo Composer / Arrangement Labの発散モードへの案内
 - Project Lineage表示
 - SongProject Backup
 
@@ -211,6 +247,7 @@ Forkは新Project IDを作り、元Projectを変更せず、root / parent / sour
 
 - Hub / Chord / Melody / Rhythm / Arrange / Sound / Counter Melody
 - Decision Progress（未着手 / 探索中 / 比較中 / 保留 / 採用 / 完了 / 任意）
+- Seed / Lock / Divergence Distance / Branch / Keep / Freeze / Snapshot / Restore / Branch Tree
 - Project Schema 3 / PPQ 480 / 4/4
 - IndexedDB Save / Restore / AutoSave
 - Project一覧 / 開く / 複製 / 削除
@@ -243,6 +280,8 @@ Forkは新Project IDを作り、元Projectを変更せず、root / parent / sour
 - Density
 - Instrument participation
 - Development
+- 編曲Seed / Lock / Branch / Keep / Freeze / Snapshot / Restore
+- 主旋律は常時固定し、Composition Ownerとの責務境界を維持
 - A/B/C comparison
 - Decision Journal
 - Before / After
@@ -273,8 +312,8 @@ Ownership:
 
 ## PWA
 
-Demo Composer root Service Workerは本体とProject Homeをオフライン用にCacheします。
-Arrangement Labは独自PWA Cacheを持ちます。
+Demo Composer root Service Workerは本体、発散モード、Project Homeをオフライン用にCacheします。
+Arrangement Labは独自PWA Cacheを持ち、通常画面と編曲発散モードを管理します。
 
 詳細: `docs/PWA_SERVICE_WORKER.md`
 
@@ -282,6 +321,9 @@ Arrangement Labは独自PWA Cacheを持ちます。
 
 ```bash
 npm run build
+npm run test:syntax
+npm run test:divergence
+npm run test:arranger-divergence
 ```
 
 ローカル起動例:
@@ -297,15 +339,17 @@ python -m http.server 8080
 1. `README.md`
 2. `VERSION`
 3. `docs/AI_HANDOFF.md`
-4. `docs/CREATIVE_DECISION_PROGRESS.md`
-5. `docs/WORKFLOW_PRINCIPLES.md`
-6. `docs/APP_INTEGRATION.md`
-7. `docs/SONG_PROJECT.md`
-8. `docs/VOCAL_LYRICS_BOUNDARY.md`
-9. `docs/DATA_SCHEMA.md`
-10. `arranger/docs/WORKFLOW_BOUNDARY.md`
-11. `CHANGELOG.md`
-12. `docs/SONG_MEMO.md`
+4. `docs/DIVERGENCE_MODE.md`
+5. `docs/CREATIVE_DECISION_PROGRESS.md`
+6. `docs/WORKFLOW_PRINCIPLES.md`
+7. `docs/APP_INTEGRATION.md`
+8. `docs/SONG_PROJECT.md`
+9. `docs/VOCAL_LYRICS_BOUNDARY.md`
+10. `docs/DATA_SCHEMA.md`
+11. `arranger/docs/WORKFLOW_BOUNDARY.md`
+12. `CHANGELOG.md`
+13. `docs/SONG_MEMO.md`
+14. `docs/BACKUP_MANIFEST_v0.17-dev.md`
 
 ## Git / Release
 
@@ -314,9 +358,11 @@ python -m http.server 8080
 - stable tag: Android実機 + 必要なCubasis/Cubase実機確認後のみ
 - mainへの直接変更禁止。main統合 / 公開は既存Release運用に従う
 - 過去Version / Branch / Tagを削除・上書きしない
+- 大規模変更前には復元Branchを作り、Feature Branchで実装する
 
 ## 実機継続課題
 
+- Android: 発散モードのSeed / Lock / Distance / Branch / Keep / Snapshot / Restore / Freezeを縦画面で通し確認
 - Android: Decision Progress / Homeの創作状態・選択肢の縦画面とタップ操作確認
 - Android: Project Home → Sheet → MIDI Analyzer → Demo Composer → Arrangement Lab → DAW Handoffの通し確認
 - Android: メモ帳 → Drive / Notion / ChatGPT共有先の実機確認
