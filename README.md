@@ -5,12 +5,14 @@ Androidスマホ中心の作曲支援PWAです。
 ## Version status
 
 - Published main: `v0.15-dev` (`main`; reconciliation PR #255 / merge `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`)
-- Development branch: `develop` / `b322cb47282261db720bf3b74caf455cb56c9cf7`（mainからのcatch-up前）
+- Development candidate: `v0.16-dev` on `chatgpt/decision-progress-home-v0.16`
+- Music Project Home development candidate: `v0.19-dev`
+- Development integration branch: `develop`（公開済みmainからcatch-up済み。v0.16-dev候補は未統合）
 - Stable: 未認定
 
 GitHub Pages: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
-PR #252 / #253 / #254を含むmain/develop統合候補`8a73fcb55029f4bdb8d191d4e552f5122fc380fd`は、PR #255からmerge commit方式で`main`へ統合・公開済みです。PR headのhosted CI 7件と、main統合後のPages / Release Check / AI Monitoringの3件が成功しています。`main`はCI合格版かつGitHub Pages公開元です。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
+公開中GitHub Pagesは引き続き`main`のv0.15-devです。v0.16-dev / Music Project Home v0.19-devは作業Branch上の開発候補であり、CI・PR統合前に公開済みとは扱いません。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
 
 ## コンセプト
 
@@ -20,20 +22,68 @@ Demo Composerはスマホ版DAWを目指しません。
 
 PC DAWは最終工程として必須です。
 
+創作は一本道として扱いません。`発散 ↔ 比較 ↔ 収束`を自由に往復し、探索中・比較中・保留・任意も正常な創作状態として扱います。AIは曲を決めるOwnerではなく、候補・比較材料・説明を提示して人間の判断を支援します。
+
+詳細: `docs/CREATIVE_DECISION_PROGRESS.md`
+
 ## 正式Workflow
 
-`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → Cubasis / Cubase → 完成`
+`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → 必要ならCubasis → PC DAW / Cubase → 完成`
 
 役割:
 
-- 作曲シート = 決める
+- 作曲シート = 考える・意図を決める
 - MIDI Analyzer = 集める・理解する（任意）
-- Demo Composer = 作る
-- Arrangement Lab = 育てる
-- Music Project Home = 案内する・次にやることを示す
-- Cubasis / Cubase = 本制作・完成
+- Demo Composer = 作る・試す
+- Arrangement Lab = 育てる・比較する・決める
+- Music Project Home = 案内する・つなぐ・今できる選択肢を示す
+- Cubasis = 必要に応じたモバイルDAW作業
+- PC DAW / Cubase = 本制作・完成
 
 正本: `docs/WORKFLOW_PRINCIPLES.md`
+
+## v0.16-dev — development candidate
+
+### Decision Progress
+
+HubのAI Monitoringを「何個の機能を使ったか」中心から「曲について今どんな判断状態にいるか」中心へ変更しました。
+
+状態:
+
+- 未着手
+- 探索中
+- 比較中
+- 保留
+- 採用
+- 完了
+- 任意
+
+100%達成を目的にせず、未使用機能を未完成として扱いません。Feature Usageは端末内の補助情報として残し、Decision Progressの主要KPIには使いません。
+
+Decision Progress専用の必須Schema fieldは追加せず、既存Project内容・採用履歴・端末内の操作履歴から導出します。Demo Project Schema 3 / SongProject v1は維持します。
+
+### Music Project Home v0.19-dev
+
+Project HomeはEditor化せず、司令塔として次を表示します。
+
+- 現在工程
+- 未決定
+- 探索中
+- 比較中
+- 保留 / 任意
+- 次にできる選択肢（最大3件程度）
+
+「次にやること」だけでなく「別案を試す」「もう少し比較する」「今日はここまで」を正式な選択肢として扱います。「今日はここまで」を選んでもSongProjectは変更せず、必要ならHomeの端末内メモだけ残せます。
+
+詳細: `project-home/CHANGELOG.md`, `docs/CREATIVE_DECISION_PROGRESS.md`
+
+### 互換性
+
+- SongProject v1変更なし
+- Demo Project Schema 3変更なし
+- PPQ 480 / 4/4固定を維持
+- 既存Project / Homeメモ / JSON Backup / 作曲シート連携を維持
+- stable tagは未作成
 
 ## v0.15-dev
 
@@ -123,7 +173,8 @@ Chord / Melody等をClaude JSONから自動生成しません。
 - SongProject v1を開く
 - Analysis / Composition / Arrangement状態
 - 現在のWorkflow工程
-- 次の一手
+- 探索中 / 比較中 / 保留・任意の創作状態
+- 次にできる選択肢（最大3件程度）
 - 作曲シート入口 / handoff JSON受け入れ
 - MIDI Analyzer / Demo Composer / Arrangement Labへの導線
 - Project Lineage表示
@@ -159,6 +210,7 @@ Forkは新Project IDを作り、元Projectを変更せず、root / parent / sour
 ## 主要実装
 
 - Hub / Chord / Melody / Rhythm / Arrange / Sound / Counter Melody
+- Decision Progress（未着手 / 探索中 / 比較中 / 保留 / 採用 / 完了 / 任意）
 - Project Schema 3 / PPQ 480 / 4/4
 - IndexedDB Save / Restore / AutoSave
 - Project一覧 / 開く / 複製 / 削除
@@ -245,25 +297,27 @@ python -m http.server 8080
 1. `README.md`
 2. `VERSION`
 3. `docs/AI_HANDOFF.md`
-4. `docs/WORKFLOW_PRINCIPLES.md`
-5. `docs/APP_INTEGRATION.md`
-6. `docs/SONG_PROJECT.md`
-7. `docs/VOCAL_LYRICS_BOUNDARY.md`
-8. `docs/DATA_SCHEMA.md`
-9. `arranger/docs/WORKFLOW_BOUNDARY.md`
-10. `CHANGELOG.md`
-11. `docs/SONG_MEMO.md`
+4. `docs/CREATIVE_DECISION_PROGRESS.md`
+5. `docs/WORKFLOW_PRINCIPLES.md`
+6. `docs/APP_INTEGRATION.md`
+7. `docs/SONG_PROJECT.md`
+8. `docs/VOCAL_LYRICS_BOUNDARY.md`
+9. `docs/DATA_SCHEMA.md`
+10. `arranger/docs/WORKFLOW_BOUNDARY.md`
+11. `CHANGELOG.md`
+12. `docs/SONG_MEMO.md`
 
 ## Git / Release
 
 - `develop`: 開発統合
 - `main`: CI合格版 + GitHub Pages公開元
 - stable tag: Android実機 + 必要なCubasis/Cubase実機確認後のみ
-- mainへの統合 / 公開は明示承認後
+- mainへの直接変更禁止。main統合 / 公開は既存Release運用に従う
 - 過去Version / Branch / Tagを削除・上書きしない
 
 ## 実機継続課題
 
+- Android: Decision Progress / Homeの創作状態・選択肢の縦画面とタップ操作確認
 - Android: Project Home → Sheet → MIDI Analyzer → Demo Composer → Arrangement Lab → DAW Handoffの通し確認
 - Android: メモ帳 → Drive / Notion / ChatGPT共有先の実機確認
 - Android PWA install / standalone / offline / update
