@@ -26,7 +26,10 @@ const workflowList = document.querySelector('#workflow-list');
 const currentStage = document.querySelector('#current-stage');
 const undecidedList = document.querySelector('#undecided-list');
 const nextAction = document.querySelector('#next-action');
+const nextOptions = document.querySelector('#next-options');
 const optionalAnalysis = document.querySelector('#optional-analysis');
+const creativeStateRoot = document.querySelector('#creative-state');
+const pauseMessage = document.querySelector('#pause-message');
 const todayDecisions = document.querySelector('#today-decisions');
 const nextSession = document.querySelector('#next-session');
 const sessionNotesSave = document.querySelector('#session-notes-save');
@@ -107,8 +110,48 @@ function renderUndecided(items) {
   });
 }
 
+function stateList(label, values, className) {
+  const section = document.createElement('section');
+  section.className = `creative-state-group ${className}`;
+  const heading = document.createElement('strong');
+  heading.textContent = label;
+  const list = document.createElement('ul');
+  const displayValues = values.length ? values : ['なし'];
+  for (const value of displayValues) {
+    const item = document.createElement('li');
+    item.textContent = value;
+    if (!values.length) item.className = 'empty';
+    list.append(item);
+  }
+  section.append(heading, list);
+  return section;
+}
+
+function renderCreativeState(state) {
+  if (!creativeStateRoot) return;
+  creativeStateRoot.replaceChildren(
+    stateList('探索中', state.exploring, 'exploring'),
+    stateList('比較中', state.comparing, 'comparing'),
+    stateList('保留 / 任意', state.holding, 'holding'),
+  );
+}
+
+function renderNextOptions(options) {
+  if (!nextOptions) return;
+  nextOptions.replaceChildren();
+  const secondary = options.slice(1);
+  for (const option of secondary) {
+    const element = option.href ? document.createElement('a') : document.createElement('button');
+    element.className = `next-option ${option.kind || 'optional'}`;
+    element.textContent = option.label;
+    element.dataset.nextOption = option.id;
+    if (option.href) element.href = option.href;
+    else element.type = 'button';
+    nextOptions.append(element);
+  }
+}
+
 function renderWorkflow() {
-  const sheetLink = loadSheetLink();
   const sheetHandoff = loadCompositionSheetHandoff();
   const sheetReady = Boolean(sheetHandoff || current?.compatibility?.compositionSheet?.fullWorkbook || current?.intent?.scene);
   const workflow = buildWorkflowState(current, { sheetLinked: sheetReady });
@@ -126,6 +169,8 @@ function renderWorkflow() {
 
   currentStage.textContent = workflow.currentStage.label;
   renderUndecided(workflow.undecidedItems);
+  renderCreativeState(workflow.creativeState);
+  renderNextOptions(workflow.nextOptions);
   nextAction.textContent = workflow.nextAction.label;
   nextAction.removeAttribute('href');
   nextAction.removeAttribute('aria-disabled');
@@ -133,6 +178,7 @@ function renderWorkflow() {
   else nextAction.setAttribute('aria-disabled', 'true');
 
   optionalAnalysis.hidden = !workflow.optionalAnalysisSuggested;
+  if (pauseMessage) pauseMessage.textContent = '';
   workflowCard.hidden = false;
 }
 
@@ -233,12 +279,18 @@ claudeClear.addEventListener('click', () => {
   renderClaudeLink();
 });
 
+nextOptions?.addEventListener('click', (event) => {
+  const pause = event.target.closest('[data-next-option="pause"]');
+  if (!pause) return;
+  if (pauseMessage) pauseMessage.textContent = '今日は決めずに終了してOKです。必要なら下の「今日と次回」に一言だけ残せます。';
+  nextSession?.focus();
+});
+
 sessionNotesSave?.addEventListener('click', saveSessionNotes);
 
 renderClaudeLink();
 loadSessionNotes();
 
-// Explicit transfer after the user opens a workbook JSON in this origin.
 document.querySelector('#open-demo-with-project').addEventListener('click', () => {
   if (!current) return;
   try { queueDemoHandoff(current); window.location.href = new URL('../?handoff=project-home', window.location.href).href; }
