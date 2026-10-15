@@ -33,7 +33,7 @@ const server=http.createServer(async(req,res)=>{
   await page.evaluate(async()=>{localStorage.setItem('demo-composer-arranger-v0.3','old-data-kept');await caches.open('another-pwa-sentinel')});
   phase='current';
   // The old cache owns `/arranger/`; use an uncached index entry to discover the new worker, then verify normal URL recovery below.
-  await page.goto(base+'index.html?v=0.13');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.13-dev');
+  await page.goto(base+'index.html?v=0.14');await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.14-dev');
   const buildWorkerUrl=await page.evaluate(async()=>{
    const deadline=Date.now()+30000;
    while(Date.now()<deadline){
@@ -45,11 +45,11 @@ const server=http.createServer(async(req,res)=>{
    throw new Error(`build worker did not activate: active=${r?.active?.scriptURL||'none'} waiting=${r?.waiting?.scriptURL||'none'} installing=${r?.installing?.scriptURL||'none'}`);
   });
   assert.ok(buildWorkerUrl.includes('?build='));
-  await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.13-dev');
+  await page.reload({waitUntil:'load'});await page.waitForFunction(expected=>navigator.serviceWorker.controller?.scriptURL===expected,buildWorkerUrl);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.14-dev');
   assert.equal(await page.evaluate(()=>localStorage.getItem('demo-composer-arranger-v0.3')),'old-data-kept');
   assert.ok((await page.evaluate(()=>caches.keys())).includes('another-pwa-sentinel'));
-  await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.13-dev');
-  await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.13-dev');
+  await page.goto(base);await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.14-dev');
+  await context.setOffline(true);await page.reload();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.14-dev');
   const offlineProfile = await page.evaluate(async () => {
    const build = new URL(navigator.serviceWorker.controller.scriptURL).searchParams.get('build');
    const {resolveSoundProfile} = await import(`../src/core/sound-presets.js?build=${encodeURIComponent(build)}`);
@@ -58,6 +58,6 @@ const server=http.createServer(async(req,res)=>{
   assert.equal(offlineProfile.filter,2460,'shared Sound Profile resolves offline');
   assert.equal(await page.locator('#beginner-guide').count(),1);
   assert.equal(await page.locator('.song-data-trigger').textContent(),'📦 曲データ');
-  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.13 sound-preserving preview -> normal URL -> offline; shared Sound/SongProject/menu modules, saved data and other caches preserved');
+  assert.deepEqual(errors,[]);console.log('PASS legacy v0.3 PWA -> build-stamped v0.14 sound-preserving preview -> normal URL -> offline; shared Sound/SongProject/menu modules, saved data and other caches preserved');
  }finally{await browser.close();await new Promise(r=>server.close(r))}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1});
