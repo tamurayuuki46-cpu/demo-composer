@@ -1,5 +1,36 @@
 # Music Project Home CHANGELOG
 
+## Version: v0.19-dev
+更新日: 2026-10-15
+
+【追加】
+- Home上部へ「創作状態」を追加し、探索中 / 比較中 / 保留・任意をSongProject既存情報から表示。
+- 「次にやること」1件だけでなく、最大3件の選択肢を表示する`buildNextOptions()`を追加。
+- 「今日はここまで」を正式な選択肢として追加。選択してもSongProjectは変更せず、必要ならHomeメモだけ残せる。
+
+【変更】
+- Homeの役割をEditorではなく司令塔に限定したまま、命令型の「次の1手」から選択肢型の導線へ変更。
+- 作曲済み・未編曲の時は「Arrangement Labへ進む」に加えて「Demo Composerへ戻って別案を試す」を提示可能にした。
+- Arrangement採用後・DAW未書き出し時は「もう少し比較する」と「今日はここまで」を提示可能にした。
+
+【修正】
+- なし。
+
+【互換性】
+- SongProject v1のSchema変更なし。
+- HomeはSongProjectのOwnerにならず、表示用Read Modelとして既存`composition / arrangement / export / lineage`だけを参照。
+- 既存のHomeメモ保存キー、JSON読込 / Backup、作曲シート連携、旧Claudeリンクを維持。
+
+【復元ポイント】
+- `restore/develop-before-decision-progress-home-20261015`
+
+【未対応】
+- Android実機での縦画面・タップ操作最終確認。
+- stable tag（Android実機＋必要なCubasis / Cubase実機確認後のみ）。
+- 統合後Adversarial Review。
+
+---
+
 ## Version: v0.18-dev
 更新日: 2026-10-15
 
