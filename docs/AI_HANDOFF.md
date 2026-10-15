@@ -1,101 +1,152 @@
 # AI_HANDOFF
 
-現在Version:
-v0.5-dev
+更新日: 2026-10-15
 
-最新安定版:
-未認定。mainは自動テスト合格版。stable tagは実機確認後のみ。v0.1機能完成地点は復元可能。
+## 現在の状態
 
-現在実装済み:
-- v0.3作曲判断: 設計メモ5項目、個性の5軸、編集可能なSection役割、コード目的タグ、主旋律/裏メロ分析と手動タグ、未決定項目、採用理由ログ。
-- 各画面の折りたたみから1要素候補（末尾2音/リズム/音高/コード1個/裏メロ/コード音域/音色）→A/B比較→採用。Chord Preset進行全体も比較可。Bass保護あり。理由も同時にUndo1手。
-- Schema 1/2→3は明示Migration。起動前に元ProjectをIndexedDB metaへrevision別に退避して上書きしない。PPQ/拍子/音楽データは保持。詳細 docs/DECISION_SUPPORT.md / DATA_SCHEMA.md。
-- 主旋律1小節A/B比較: 既存候補と現在案を仮Projectで比較、差分表示、B採用はUndo1手。候補はメモリのみ、Project編集で破棄。詳細 `docs/MELODY_AB_COMPARE.md`。Android実機確認は未実施。
-- Android Chrome向け作曲支援PWA。Hub / Chord / Melody / Rhythm / Arrange / Sound Sketch Lite / 裏メロタブ
-- 共通Project State: schemaVersion 3 / PPQ 480 / 4/4固定 / project.json正本
-- IndexedDB保存、起動時Restore、1.5秒AutoSave、hidden時即時Save、Save Now、Persistent Storage要求
-- Hub `＋ 新規Project`: 現在Projectを保存してから別IDの空ProjectをActiveにする。旧Projectは端末内に保持
-- Hub `📂 Project一覧`: IndexedDBに残っているProjectを一覧表示し、`開く / 複製 / 削除`。現在Projectは削除不可。PR #155でdevelop統合済み。詳細 `docs/PROJECT_LIBRARY.md`
-- Hub `🧹 パートを消去`: コード / メロディ / 裏メロ / ベース / ドラムを1パートずつ消去。確認あり、他パートを保持、↶で1手で戻せる。PR #155で裏メロ対応まで統合済み。詳細 `docs/HUB_PART_CLEAR.md`
-- Project全体Undo / Redo（最大50操作、メモリのみ）
-- Hub: Project名 / BPM / Key / Scale、Key変更時のChord / Melody / Bass / Counter Melody Atomic移調、文字サイズ、出発点、骨子チェック、作編曲の手引き、曲の特徴カード、AI相談、Cubaseメモ
-- Chord: ダイアトニック扇形、44 Quality、100 Preset、次コード候補、借用和音、曲想タグ、Backing Pattern、好きな進行ライブラリ、メロディからコード候補、2/4/8小節メロディ候補
-- Melody: Android向けPiano Roll、8/16分、Note長さ、コード/Key度数、役割色分け、候補3種、コピー、Melody Analyzer、Section比較、主旋律/裏メロ編集切替
-- Rhythm: Bass / Kick / Snare / HH、16 step、Bass候補5タイプ、Drum Preset、Section一括Preset、Drum Fill、Copy
-- Arrange: Section Template、小節増減/追加/削除/コピー、Energy、Transition、Section Variation、感情曲線、構成ライブラリ、骨子レシピ、Section再生
-- Counter Melody: Sparse / Active / Hook / Answer / Arpeggio / Riff等の候補、範囲指定、別案、Penta/Character/Motion、通常Noteとして保存、CounterMelody.mid
-- Sound Sketch Lite: Chord / Melody / Bass Preset + Tone方向タグ。Demo Player仮音色だけに反映
-- Demo Player: Play / Stop / Loop / Position、Chord / Melody / Bass / Drums / Counter Melody、パートON/OFF / Solo
-- MIDI Export: Song.mid / Chord.mid / Melody.mid / Bass.mid / Drums.mid / CounterMelody.mid（存在時）
-- MIDI Import: Track役割を確認してからProjectへ取り込み
-- project.json Export / Import、Drive共有補助
-- GitHub Pages公開: `https://tamurayuuki46-cpu.github.io/demo-composer/`
+- Development candidate: Demo Composer `v0.15-dev`
+  - branch: `integration/main-develop-reconcile-20261015`
+  - reconciliation merge: `de64a3323e35cc4915dd1adba8471c296557033f`
+  - main側親: `427bd37`
+  - develop側親: `b322cb47282261db720bf3b74caf455cb56c9cf7`
+- Published main: Demo Composer `v0.15-dev`
+  - remote head: `28f85e64adeed26da1d40fc491723438ffecd2f9`
+  - GitHub Pages公開元は`main`
+- Stable: 未認定
 
-開発中:
-- v0.3の8項目は実装済み。Android実機の表示・音の主観確認、Cubasis/Cubase実機確認は継続課題。
-- Project一覧 / 過去Project管理はdevelopへ統合済み。次はAndroid実機で `開く / 複製 / 削除 / reload切替` を確認する段階
-- v0.2は追加機能より実制作と保存・Exportの回帰確認を優先する
+Development candidateは公開済みmainと同じVersion名ですが、PR #252 / #253 / #254を含む未公開の統合候補です。branch / commitを確認せず「公開済み」と扱わないでください。
 
-次に実装:
-- PWA Service Worker
-- 保存ProjectのSnapshot / 世代履歴は必要性を再評価してから検討
-- Android実機でProject切替 / 複製 / 削除の操作確認
-- Cubasis / CubaseへのMIDI実機取り込み回帰確認
+Component versions:
 
-既知の問題:
-- Project一覧はこのブラウザ/端末のIndexedDBだけ。Cloud同期・別端末同期はしない
-- Project削除はIndexedDB record自体を消すためUndo不可。確認を出し、現在Projectは削除不可
-- ブラウザデータ削除でIndexedDBのProjectが失われる可能性があるため、重要曲はproject.json Backupを併用
-- Drive共有はAndroid/browserの共有制約を受ける
-- Cubasis / Cubase実機取り込みの網羅的Regressionは継続課題
+- Demo Composer: `v0.15-dev` / package `0.15.0-dev`
+- Arrangement Lab: `v0.13-dev`
+- Music Project Home: `v0.18-dev`
+- Composition Sheet latest: `v0.9.1-dev`
+- SongProject: v1
+- Demo Composer Project Schema: 3
+- Arrangement Plan Schema: 4
+- PPQ: 480
+- time signature: 4/4固定
 
-触らない部分:
-- `develop`は開発統合、`main`は自動テスト・build・回帰CI合格版、GitHub Pages公開元。stable tagはAndroid実機と必要なCubasis/Cubase実機確認後のみ作成します。
-- schemaVersion 3 / PPQ 480 / 4/4固定を、明確なSchema変更手順なしに変えない
-- project.jsonをDemo Composer内の正本とする
-- Module間を直接強依存させない。複数Moduleにまたがる変更はCore / Storageの責務として扱う
-- Mixing / Mastering / Plugin Hosting等、Cubasis / Cubaseが担当すべきDAW機能を追加しない
-- 過去Version / 復元Branchを上書きしない
+## Reconciliation status
 
-最近の重要な設計判断:
-- Project一覧は新しいDB/Object Storeを作らず、既存IndexedDB `projects` と `meta.activeProjectId` を利用する。DB_VERSIONは1のまま
-- Project切替は現在Projectの保存完了後、対象IDをsessionStorageへ一時保持してreloadし、`src/hub/app-entry.js` が `main.js` boot前にActive IDを確定する。旧ページのvisibility AutoSave競合対策として短い待機を挟み2回確定する
-- Project複製は元Projectをcloneし、新ID / revision=1 / `元タイトル コピー` として保存する。複製後に自動で開かない
-- 現在開いているProjectは削除不可。削除はUndo対象外
-- Hub個別消去は Chord / Melody / Counter / Bass / Drums を対象にし、選択パートだけを空にする。Schema / MIDI形式は変更しない
-- Project一覧と個別消去のためのSchema Migrationは不要
-- 大規模保存UI変更前の復元点は `restore/v0.2-before-project-list`。重複作業用の `restore/v0.2-before-project-library` も保持する
+公開済みmainの履歴を起点に、検証済みdevelop headを通常の2-parent mergeで統合しました。reset / squash / rebase / force pushは使っていません。
 
-現在のデータSchema:
-追加: metadata.composition / sections[].purpose / chords[].purposes / instruments[part=chord-voicing]。Schema 3のJSONはv0.2で読めない。復元は旧schemaバックアップを使用。
-schemaVersion 3。PPQ 480、4/4固定。`metadata / basic / structure.sections / chords / tracks / instruments / progress / exportSettings`。Counter Melodyは任意の `tracks[role=counter]`。Project一覧はproject.json内に追加フィールドを持たず、IndexedDB `projects` storeの複数recordと `meta.activeProjectId` で管理する。
+保持したもの:
 
-最終更新:
-2026-10-12
+- main-only release workflow / public docs / AI monitoring entry
+- `versions/`、`arranger/versions/`、`sheet-app/versions/`の公開済み資産
+- develop側の全履歴と検証済み機能
+- 既存restore / backup branches / tags
 
-大規模変更前の復元点: `restore/v0.3-before-decision-support` / Commit `6e6933329020d06d75fccadb8637bcc5b3392969`。mainへのstable統合は行っていない。
+この候補はまだremoteへpushされておらず、PRもありません。`main` / `develop`のremote headは変更されていません。
 
-公開検証で旧JSキャッシュと新HTMLが混在する問題を発見。build-static.mjsで全JS/CSS入口と相対Module依存を同じBuild IDのURLへ固定する。test:build-cacheで94 Module / 221依存を検証。
+## 2026-10-15 integration contents
 
-## Arrangement Lab v0.2.1-dev (2026-10-13)
-独立PWA arranger/を修正検証。Demo Composer本体Version/Schemaは変更なし。正本: arranger/docs/PRODUCT_SPEC.md / VERIFICATION_v0.2.1.md。復元点: restore/arranger-v0.1.1-before-v0.2, restore/arranger-v0.2-before-work-review。
+### PR #252 — SongProject v1 boundary
 
-## Arrangement Lab v0.3-dev — seven features
-理論リハモ/相性分析、裏メロスケール案、Section採用、サビ5案、引き算、主役交代をarranger/へ追加。独立Plan Schema 3、旧1/2互換。正本 arranger/docs/PRODUCT_SPEC.md。restore/arranger-v0.2.1-before-seven-features を変更前復元点とする。
+- MIDI Analyzer-shaped `analysis` / `reference` / `assets`を保持
+- JSON normalize / serialize / parse round-tripを確認
+- Demo Composer、Arrangement Lab、Composition Sheetが他app所有領域を消さないことを回帰化
+- lineage / assets / compatibilityを保持
 
-## Arrangement Lab v0.5-dev
-50の音楽変換手法を実装。独立Plan Schema4/旧1〜3互換。正本 arranger/docs/AI_HANDOFF_v0.5-dev.md / PRODUCT_SPEC.md / MUSIC_LAB_METHODS_v0.4.md。本体Schema/Version変更なし。復元点 restore/arranger-v0.3-before-music-labs。
+Merge to develop: `1aeb72850adeb435b5692d56774e22e1221a41a2`
 
-## Arrangement Lab v0.4.1-dev cache correction
-50手法はv0.4としてPR #171統合済み。PWA更新修正はchatgpt/arranger-v0.4-cache-update。旧画面が残る場合の入口は /arranger/?v=0.4.1。Schema4/保存キーv0.4維持。正本 PRODUCT_SPEC / VERIFICATION_v0.4。復元点 restore/arranger-v0.4-before-cache-update。
+### PR #253 — Project Home DAW readiness
 
-## 2026-10-13 現在の統合状態
+- `arrangerProjectId`だけではDAW-readyにしない
+- `export.lastSongMidiAt`または`lastDawHandoffAt`を完了条件に使用
+- Arrangement LabのSong.mid成功時にactive SongProjectへ`lastSongMidiAt`を記録
 
-- PR #177でv0.5-dev / Arrangement Lab v0.5-dev / SongProject v1をmainへ統合済み。
-- PR #180でPages公開元をmainへ変更済み。developへのpushでは公開しない。
-- Legacy Project Schema 3を維持し、共通SongProject v1 Adapterで相互変換。ownership / composition保持をCI確認済み。
-- Draft.midはDemoの草稿、final Song.midはArrangement Labの5Track出力。
-- Android実機の保存・音・PWA更新、Cubasis/Cubase実機取込は未確認。stable tag未作成。
+Merge to develop: `0cccda3b4bb055a95f6345b4d00124f3dbb1c22e`
 
-## Cloud Browser回帰修正 v0.5-dev
-実公開UIでSong.midボタンの出力失敗を再現。src/midi/midi-export.jsのDraft.midとUI/Drive/案内を統一。Schema変更なし。Android実機・Cubasis/Cubase未確認、stable tag未作成。
+### PR #254 — DAW handoff gate
+
+- Song.midをSMF Format 1として検証
+- Track数5、PPQ 480、Tempo、4/4 meta eventをexact検証
+- Chords / Melody / Counter Melody / Bass / Drumsとchannel 1 / 2 / 4 / 3 / 10を検証
+- Section Markerと代表NoteのstartTick / endTickを検証
+- Android / Cubasis / Cubase実機結果テンプレートを追加
+
+Merge to develop: `b322cb47282261db720bf3b74caf455cb56c9cf7`
+
+## Validation evidence
+
+Reconciliation工程で次を確認済みです。
+
+- 静的チェック: 178件PASS
+- Browser: 17 invocation PASS
+  - 初回は15/17。旧Composition Sheet v0.6とv0.8が一時失敗し、コード無変更の単独rerunでPASS
+  - intermittent causeは未確定
+- 公開済みversion資産: 38件すべて記録済みblobと一致
+- 既存remote restore / backup / tag refs: 162件すべて保持
+- PR #252 / #253 / #254の当時のCI: PASS
+- Music Project Home最終確認: 関連静的・build 16 command PASS、Home browser 360 / 390 / 430 / 1440px PASS、曲データメニュー 360 / 390 / 430px PASS
+- 実ブラウザでArrangement採用だけではDAW-readyにならず、実Song.mid download後のSongProjectだけがHomeで「Cubasis / Cubaseで仕上げる段階」へ進むことを確認
+- Homeメモの再読込、SongProject JSON backup round-trip、Analyzer / Demo所有領域の保持を確認
+
+統合候補commitそのもののhosted CIは未実行です。push / PR作成後に、同一headでhosted CIを確認する必要があります。ローカル結果や過去PRのCIを候補headのCIとして扱わないでください。
+
+## 正式Workflow
+
+`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → Cubasis / Cubase → 完成`
+
+- Composition Sheet = 決める
+- MIDI Analyzer = 集める・理解する（任意）
+- Demo Composer = 作る
+- Arrangement Lab = 育てる / Final Song.midを書き出す
+- Music Project Home = 案内する / 次にやることを示す
+- Cubasis / Cubase = 本制作・完成
+
+Project HomeはEditor機能を重複所有しません。Arrangement LabからDemo Composerへ戻す場合は、元Projectを上書きせず明示的にForkします。
+
+## Data ownership
+
+SongProject v1:
+
+- MIDI Analyzer: `analysis`, `reference`, `assets`
+- Demo Composer: `composition`
+- Arrangement Lab: `arrangement`
+- Common: `basic`, `lineage`, `compatibility`
+
+Compatibility rules:
+
+- SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4をMigrationなしに変更しない
+- PPQ 480 / 4/4固定方針を変更しない
+- 他app所有領域を編集時に消さない
+- 過去versionファイル、restore / backup branch、tagを削除・上書きしない
+
+## Branch / release rules
+
+- `develop`: 開発統合用
+- `main`: 自動テスト・build・必要な回帰CIに合格した公開元
+- `stable tag`: Android実機とCubasis / Cubase実機の確認が完了した版のみ
+- `main`へ直接変更しない
+- `main` / `develop`へforce pushしない
+- reconciliation PRはmerge commitで統合し、両親のancestryを保持する
+- main統合後に別PRでmainからdevelopをcatch upする
+
+## Remaining gates
+
+- 統合候補を認証済みremoteへpush
+- main向けPRを作成し、候補headのhosted CIを確認
+- 承認後にmerge commitでmainへ統合
+- mainからdevelopへのcatch-up PR
+- Android Chrome/PWAでSong.midの保存、Files / Download / Shareを確認
+- CubasisでImport / 再生 / Tempo / 4/4 / Track分離 / Note timingを確認
+- CubaseでImport / 再生 / Channel / Marker / Note timingを確認
+- 実機結果を`docs/DAW_HANDOFF_VERIFICATION.md`へ記録
+
+実機gateがすべて完了するまでstable tagは作成しません。
+
+## Primary references
+
+- `docs/RECONCILIATION_RESULT_2026-10-15.md`
+- `docs/PROJECT_HOME_FINAL_VERIFICATION_2026-10-15.md`
+- `docs/BRANCH_RECONCILIATION_2026-10-15.md`
+- `docs/DOC_SYNC_AUDIT_2026-10-15.md`
+- `docs/DAW_HANDOFF_VERIFICATION.md`
+- `docs/SONG_PROJECT.md`
+- `docs/RELEASE_POLICY.md`
+- `VERSION_HISTORY.md`
+- `CHANGELOG.md`

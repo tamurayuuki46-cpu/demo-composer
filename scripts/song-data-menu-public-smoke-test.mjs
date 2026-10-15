@@ -53,9 +53,12 @@ assert.match(demoEntry, /music-project-songproject-handoff-v1/);
 assert.match(homeApp, /song-data-menu-entry\.js/);
 assert.match(homeEntry, /songProjectToDemoProject/);
 assert.match(homeEntry, /onMidi/);
-assert.match(arrangerHtml, /song-data-menu-entry\.js/);
+const arrangerBoundary = await readFile('arranger/src/workflow-boundary-ui.js', 'utf8');
+assert.match(arrangerHtml, /workflow-boundary-ui\.js/);
+assert.match(arrangerBoundary, /song-data-menu-entry\.js/);
 assert.match(arrangerEntry, /export-song-midi-btn/);
 assert.match(arrangerEntry, /onMidi/);
-assert.match(index, /v0\.10-dev/);
+const version = (await readFile('VERSION', 'utf8')).trim();
+assert.ok(index.includes(version), 'public entry must show the selected VERSION');
 
 console.log('Public four-action song data menu + per-song memo wiring passed.');

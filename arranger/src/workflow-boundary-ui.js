@@ -1,3 +1,5 @@
+import './song-data-menu-entry.js';
+
 function clarifyForkAction() {
   const button = document.querySelector('#demo-return-btn');
   if (!button) return false;

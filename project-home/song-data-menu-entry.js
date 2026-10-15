@@ -12,7 +12,7 @@ const nextAction = document.querySelector('#next-action');
 const HOME_APPS = Object.freeze([
   { id: 'home', label: 'Music Project Home', note: '曲づくり全体の入口', href: './' },
   { id: 'sheet', label: '作曲シート', note: '初心者モードから方向を決める・常に最新版', href: '../sheet-app/' },
-  { id: 'analyzer', label: 'MIDI Analyzer', note: '必要な時だけ参考MIDIを分析', href: 'https://tamurayuuki46-cpu.github.io/midi-analyzer/' },
+  { id: 'analyzer', label: 'MIDI Archive/Analyzer', note: '必要な時だけ参考MIDIを保存・分析', href: 'https://tamurayuuki46-cpu.github.io/midi-analyzer/' },
   { id: 'composer', label: 'Demo Composer', note: 'コード・メロ・リズムを作る', href: '../' },
   { id: 'arranger', label: 'Arrangement Lab', note: '編曲案を比較して仕上げる', href: '../arranger/' },
 ]);

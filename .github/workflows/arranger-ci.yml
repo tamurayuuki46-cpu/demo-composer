@@ -38,6 +38,8 @@ jobs:
           node --check arranger/src/workflow-boundary-ui.js
           node --check arranger/src/beginner-flow.js
           node --check arranger/src/song-project-sync.js
+          node --check arranger/src/song-data-menu-entry.js
+          node --check src/shared/song-data-menu.js
           for file in arranger/src/*lab*.js; do node --check "$file"; done
 
       - name: Arrangement Lab core regression
@@ -64,6 +66,8 @@ jobs:
           test -f dist/arranger/src/workflow-boundary-ui.js
           test -f dist/arranger/src/beginner-flow.js
           test -f dist/arranger/src/song-project-sync.js
+          test -f dist/arranger/src/song-data-menu-entry.js
+          test -f dist/src/shared/song-data-menu.js
 
       - name: Mobile Chromium end-to-end
         run: |
@@ -72,6 +76,7 @@ jobs:
           python3 -m http.server 8080 --directory dist > /tmp/arranger-server.log 2>&1 &
           node scripts/browser-export-regression.cjs
           ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=explore' node arranger/tests/browser.test.cjs
+          ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=beginner' node arranger/tests/song-data-menu-browser.test.cjs
           ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=beginner' node arranger/tests/onebar-reharm-browser.test.cjs
           node arranger/tests/v05-browser.test.cjs
           node arranger/tests/v06-browser.test.cjs

@@ -51,7 +51,7 @@
   <section id="quick-flow-card" class="card"><h2>制作フロー</h2>
     <nav id="quick-flow" class="quick-flow" aria-label="基本の作曲フロー">
       <a class="flow-step" href="../sheet-app/"><strong>⓪ 方向を決める</strong><small>作曲シート・常に最新版</small></a>
-      <a class="flow-step flow-optional" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/"><strong>① 必要なら解析</strong><small>MIDI Analyzer・任意</small></a>
+      <a class="flow-step flow-optional" href="https://tamurayuuki46-cpu.github.io/midi-analyzer/"><strong>① 必要なら解析</strong><small>MIDI Archive/Analyzer・任意</small></a>
       <a class="flow-step" href="../"><strong>② 作曲</strong><small>Demo Composer</small></a>
       <a class="flow-step" href="../arranger/"><strong>③ 編曲</strong><small>Arrangement Lab</small></a>
       <div class="flow-step flow-end"><strong>④ DAWへ</strong><small>Cubasis / Cubase</small></div>
@@ -64,8 +64,8 @@
     <p>初心者は「かんたん入力」から始められます。詳しく決めたくなったら31シートへ切り替えられます。</p>
     <p id="latest-sheet-version" class="latest-sheet-badge">最新版を確認中…</p>
     <a href="../sheet-app/">最新版の作曲シートを開く</a>
-    <p><small>このカード内の表示も`sheet-app/`のlatestへ接続しています。作曲シートを更新してもHome側のVersion固定変更は不要です。</small></p>
-    <iframe id="latest-sheet-frame" title="最新版の作曲シート" src="../sheet-app/" loading="lazy"></iframe>
+    <p><small>このカード内の表示も`sheet-app/`のlatestへ接続しています。Home内では重複する「曲データ」メニューを表示しません。</small></p>
+    <iframe id="latest-sheet-frame" title="最新版の作曲シート" src="../sheet-app/?embed=1" loading="lazy"></iframe>
   </section>
 
   <section id="session-notes-card" class="card"><h2>今日と次回</h2><label for="today-decisions">今日決めたこと</label><textarea id="today-decisions" placeholder="例：サビのコードをA案に決定"></textarea><label for="next-session">次回やること</label><textarea id="next-session" placeholder="例：裏メロ3案を比較する"></textarea><button id="session-notes-save" type="button">この端末に保存</button><p id="session-notes-status" class="hint" aria-live="polite"></p></section>

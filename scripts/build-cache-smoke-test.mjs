@@ -15,4 +15,6 @@ async function check(directory){for(const entry of await readdir(directory,{with
   for(const [,dependency] of matches){assert.ok(dependency.includes(`build=${id}`),`${path}: ${dependency}`);dependencies++;}
  }
 }}
-await check('dist/src');assert.ok(modules>30&&dependencies>50);console.log(`Build cache test passed: ${modules} modules, ${dependencies} stamped dependencies`);
+await check('dist/src');assert.ok(modules>30&&dependencies>50);
+await import('./pwa-smoke-test.mjs');
+console.log(`Build cache test passed: ${modules} modules, ${dependencies} stamped dependencies`);

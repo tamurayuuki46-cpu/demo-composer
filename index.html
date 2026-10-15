@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#111111" />
   <title>Demo Composer</title>
   <link rel="manifest" href="./public/manifest.webmanifest" />
+  <link rel="icon" href="./public/icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="./src/core/app.css" />
   <link rel="stylesheet" href="./src/chord/chord-presets.css" />
   <link rel="stylesheet" href="./src/chord/chord-mood-ui.css" />
@@ -38,7 +39,7 @@
           <button id="history-undo" aria-label="元に戻す" disabled>↶</button>
           <button id="history-redo" aria-label="やり直す" disabled>↷</button>
         </div>
-        <span class="version">v0.10-dev</span>
+        <span class="version">v0.15-dev</span>
       </div>
     </header>
 
@@ -83,8 +84,10 @@
 
   <script type="module" src="./src/hub/app-entry.js"></script>
   <script type="module" src="./src/hub/beginner-flow-entry.js"></script>
+  <script type="module" src="./src/hub/composition-sheet-handoff-ui.js"></script>
   <script type="module" src="./src/chord/diatonic-fan.js"></script>
   <script type="module" src="./src/chord/chord-mood-ui.js"></script>
+  <script type="module" src="./src/core/pwa-service-worker.js"></script>
   <script type="module" src="./src/core/update-notice.js"></script>
 </body>
 </html>

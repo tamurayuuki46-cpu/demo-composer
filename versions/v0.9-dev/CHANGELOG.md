@@ -1,0 +1,44 @@
+Version: v0.9-dev
+更新日: 2026-10-13
+
+【追加】
+・Demo Composerの「作曲の判断」にVocal/Lyrics作曲情報を追加。
+  - 歌詞テーマ / 言葉の芯
+  - Vocal音域 / 歌いやすさ
+  - Phrase歌詞 / 音節メモ
+  - 歌詞 / Vocal方針
+・Claude Artifact作曲シートのVocal/Lyrics初期情報を上記作曲メモへ明示反映。
+・Vocal/Lyrics workflow smoke test。旧Project互換、Claude mapping、保存、Undoを検証。
+・Arrangement Labから作るDemo Composer Forkへ`metadata.lineage`を直接付与。
+  - rootProjectId
+  - parentProjectId
+  - sourceApp=arrangement-lab
+  - createdFrom=fork
+  - forkReason
+  - revision=1
+
+【変更】
+・作曲シート引き継ぎボタンを「基本設定 + Vocal設計を反映」に変更。
+・参考曲情報も作曲判断の参考曲メモへ再入力なしで反映可能にした。
+・Arrangement ForkはUI表現だけでなく出力project.json自体で系譜を保持する。
+・APP_VERSION / package / UIをv0.9-devへ更新。
+
+【修正】
+・v0.8時点で設計のみだったPhrase歌詞 / 音節 / Vocal Range責務を実際のProject保存領域へ接続。
+・Arrangement ForkのProject IDは新規だったが、親子関係を機械的に追えなかった穴を修正。
+
+【互換性】
+・Demo Composer Project Schemaは3のまま。
+・旧Schema 3 Projectで新Vocal fieldが欠落していても受理し、読み取り時に空値補完。
+・Vocal/Lyricsはoptionalで、インスト曲に入力を強制しない。
+・Arrangement Plan Schema変更なし。
+・元ProjectをFork時に変更しない。
+
+【復元ポイント】
+・変更前: `restore/v0.8-workflow-boundary-feature-complete`
+
+【未対応】
+・Android実機でClaude Sheet → Vocal設計反映 → 保存 / reloadの通し確認。
+・SynthV本制作 / 本歌 / Phoneme / Vocal MixはPC DAW工程のため非対応。
+・Cubasis / Cubase実機回帰。
+・stable tag作成（実機確認後のみ）。

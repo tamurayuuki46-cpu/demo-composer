@@ -10,23 +10,13 @@ on:
       - 'src/shared/song-project.js'
       - 'src/shared/song-data-menu.js'
       - 'scripts/composition-sheet-app-smoke-test.mjs'
-      - 'scripts/composition-sheet-v08-manual-ideas.test.mjs'
-      - 'scripts/composition-sheet-v08-browser.test.cjs'
-      - 'scripts/composition-sheet-v09-browser.test.cjs'
-      - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
-      - 'scripts/build-static.mjs'
-      - '.github/workflows/sheet-app-ci.yml'
-  push:
-    branches:
-      - main
-    paths:
-      - 'sheet-app/**'
-      - 'src/shared/song-project.js'
-      - 'src/shared/song-data-menu.js'
-      - 'scripts/composition-sheet-app-smoke-test.mjs'
-      - 'scripts/composition-sheet-v08-manual-ideas.test.mjs'
-      - 'scripts/composition-sheet-v08-browser.test.cjs'
-      - 'scripts/composition-sheet-v09-browser.test.cjs'
+      - 'scripts/composition-sheet-full*'
+      - 'scripts/composition-sheet-v06*'
+      - 'scripts/composition-sheet-v08*'
+      - 'scripts/composition-sheet-v09*'
+      - 'scripts/composition-sheet-tabs*'
+      - 'arranger/tests/song-data-menu-browser.test.cjs'
+      - 'docs/sheet/**'
       - 'scripts/song-project-sheet-roundtrip-smoke-test.mjs'
       - 'scripts/build-static.mjs'
       - '.github/workflows/sheet-app-ci.yml'
@@ -49,48 +39,91 @@ jobs:
       - name: Composition Sheet to Demo Composer roundtrip
         run: node scripts/song-project-sheet-roundtrip-smoke-test.mjs
 
-      - name: Manual idea model test
-        run: node scripts/composition-sheet-v08-manual-ideas.test.mjs
+      - name: Full workbook source and round-trip
+        run: |
+          node scripts/composition-sheet-full-smoke-test.mjs
+          node scripts/composition-sheet-summary-smoke-test.mjs
+          node scripts/composition-sheet-v08-manual-ideas.test.mjs
 
       - name: Static build
         run: npm run build
 
       - name: Verify Composition Sheet build output
         run: |
+          test -f dist/sheet-app/versions/v0.4/composition_sheet_v0.4.html
+          test -f dist/sheet-app/versions/v0.4/sheet_content_v0.4.js
           test -f dist/sheet-app/index.html
           test -f dist/sheet-app/latest/composition_sheet_latest.html
           test -f dist/sheet-app/latest/manifest.json
           test -f dist/sheet-app/versions/v0.1/composition_sheet_v0.1.html
           test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.html
-          test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.html
-          test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.css
-          test -f dist/sheet-app/versions/v0.7/composition_sheet_v0.7.js
-          test -f dist/sheet-app/versions/v0.4/sheet_content_v0.4.js
-          test -f dist/sheet-app/versions/v0.4/sheet_model_v0.4.js
-          test -f dist/sheet-app/versions/v0.6/composition_sheet_v0.6.css
+          test -f dist/sheet-app/versions/v0.2/composition_sheet_v0.2.js
+          test -f dist/sheet-app/versions/v0.3/composition_sheet_v0.3.html
+          test -f dist/sheet-app/versions/v0.3/composition_sheet_v0.3.js
           test -f dist/sheet-app/versions/v0.8/composition_sheet_v0.8.html
-          test -f dist/sheet-app/versions/v0.8/composition_sheet_v0.8.css
           test -f dist/sheet-app/versions/v0.8/composition_sheet_v0.8.js
           test -f dist/sheet-app/versions/v0.8/manual_ideas_v0.8.js
           test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.html
-          test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.css
           test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.js
-          grep -q 'versions/v0.9/composition_sheet_v0.9.html' dist/sheet-app/latest/composition_sheet_latest.html
-          grep -q '"version": "v0.9-dev"' dist/sheet-app/latest/manifest.json
-          grep -q 'id="beginner-card"' dist/sheet-app/versions/v0.9/composition_sheet_v0.9.html
-          grep -q '自分のアイデアを追加' dist/sheet-app/versions/v0.9/composition_sheet_v0.9.html
+          test -f dist/sheet-app/versions/v0.9/composition_sheet_v0.9.css
+          test -f dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.html
+          test -f dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.js
+          test -f dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.css
+          grep -q 'まずは、2項目だけ。' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.html
+          grep -q 'SongProject v1' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.html
+          grep -q 'song-data-menu.js?build=' dist/sheet-app/versions/v0.3/composition_sheet_v0.3.js
+          grep -q 'versions/v0.9.1/composition_sheet_v0.9.1.html' dist/sheet-app/latest/composition_sheet_latest.html
+          grep -q '"version": "v0.9.1-dev"' dist/sheet-app/latest/manifest.json
+          grep -q 'id="beginner-card"' dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.html
+          grep -q 'data-sheet-embed="1"' dist/sheet-app/versions/v0.9.1/composition_sheet_v0.9.1.css
 
-      - name: Chromium v0.8 preservation and v0.9 beginner regression
+      - name: Install Chromium test runtime
         run: |
           npm install --no-save --package-lock=false playwright@1.58.2
           npx playwright install --with-deps chromium
           python3 -m http.server 8080 --directory dist > /tmp/sheet-server.log 2>&1 &
-          node scripts/composition-sheet-v08-browser.test.cjs
-          node scripts/composition-sheet-v09-browser.test.cjs
 
-      - name: Upload browser evidence
+      - name: Full workbook v0.4 browser regression
+        run: node scripts/composition-sheet-full-browser.test.cjs
+
+      - name: Sheet tabs browser regression
+        run: node scripts/composition-sheet-tabs-browser.test.cjs
+
+      - name: v0.6 browser regression
+        run: node scripts/composition-sheet-v06-browser.test.cjs
+
+      - name: v0.8 browser regression
+        run: node scripts/composition-sheet-v08-browser.test.cjs
+
+      - name: v0.9 browser regression
+        run: node scripts/composition-sheet-v09-browser.test.cjs
+
+      - name: v0.9.1 beginner and embed regression
+        run: node scripts/composition-sheet-v091-browser.test.cjs
+
+      - name: Song data menu - Composition Sheet
+        env:
+          SONG_DATA_MENU_TARGET: sheet
+        run: node arranger/tests/song-data-menu-browser.test.cjs
+
+      - name: Song data menu - Demo Composer
+        env:
+          SONG_DATA_MENU_TARGET: demo
+        run: node arranger/tests/song-data-menu-browser.test.cjs
+
+      - name: Song data menu - Project Home
+        env:
+          SONG_DATA_MENU_TARGET: home
+        run: node arranger/tests/song-data-menu-browser.test.cjs
+
+      - name: Song data menu - Arrangement Lab
+        env:
+          SONG_DATA_MENU_TARGET: arranger
+        run: node arranger/tests/song-data-menu-browser.test.cjs
+
+      - name: Upload full workbook browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: composition-sheet-public-evidence
+          name: composition-sheet-full-evidence
           path: test-results/
