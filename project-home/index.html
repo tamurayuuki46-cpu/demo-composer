@@ -15,6 +15,8 @@
     .undecided-list{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:8px 0 18px}
     .undecided-item{border:1px solid #d6d3d1;background:#fafaf9;border-radius:999px;padding:8px 12px;font-weight:700}
     .undecided-item.done{color:#166534;border-color:#86efac;background:#f0fdf4}
+    .creative-state-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 18px}.creative-state-group{padding:11px;border:1px solid #e7e5e4;border-radius:12px;background:#fafaf9}.creative-state-group>strong{display:block;margin-bottom:6px;font-size:.86rem}.creative-state-group ul{list-style:none;padding:0;margin:0;display:grid;gap:4px;font-size:.84rem;line-height:1.4}.creative-state-group li.empty{color:#78716c}.creative-state-group.exploring{background:#eff6ff;border-color:#bfdbfe}.creative-state-group.comparing{background:#f5f3ff;border-color:#ddd6fe}.creative-state-group.holding{background:#fffbeb;border-color:#fde68a}
+    .next-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}.next-option{font-weight:700}.next-option.pause{border-style:dashed;background:#fafaf9}.pause-message{min-height:1.3em;margin:8px 0 0;color:#57534e;line-height:1.45}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
     .stat{background:#f5f5f4;border-radius:12px;padding:12px}
     .actions{display:grid;gap:10px}.actions.split{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
@@ -34,17 +36,18 @@
     .hint{color:#57534e;line-height:1.55}.latest-sheet-badge{display:inline-block;padding:7px 10px;border-radius:999px;background:#f0fdf4;color:#166534;font-weight:800}
     #latest-sheet-frame{display:block;width:100%;min-height:680px;margin-top:14px;border:1px solid #d6d3d1;border-radius:14px;background:#fff}
     hr{border:0;border-top:1px solid #e7e5e4;margin:18px 0}[hidden]{display:none!important}
-    @media(max-width:520px){main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.quick-flow{grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}.quick-flow .flow-step{min-width:0;min-height:58px;text-align:left;place-content:center start;padding-left:16px}.workflow-step{display:grid}.workflow-step span{text-align:left}.current-stage{font-size:1.2rem}#latest-sheet-frame{min-height:760px}}
+    @media(max-width:520px){main{padding:12px}.card{padding:14px}.actions.split{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.quick-flow{grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}.quick-flow .flow-step{min-width:0;min-height:58px;text-align:left;place-content:center start;padding-left:16px}.workflow-step{display:grid}.workflow-step span{text-align:left}.current-stage{font-size:1.2rem}.creative-state-grid{grid-template-columns:1fr}.next-options{grid-template-columns:1fr}#latest-sheet-frame{min-height:760px}}
   </style>
 </head>
 <body>
 <main>
-  <header><p>SONG PROJECT v1</p><h1>Music Project Home</h1><p>曲の現在地と次の一手を、5秒で確認するための司令塔です。</p></header>
+  <header><p>SONG PROJECT v1</p><h1>Music Project Home</h1><p>曲の現在地と、今できる選択肢を5秒で確認するための司令塔です。</p></header>
 
   <section id="workflow-card" class="card now-card">
     <p class="now-label">NOW</p><h2>今ここ</h2><p id="current-stage" class="current-stage">作曲シートで方向を決める</p>
     <h3>未決定</h3><ul id="undecided-list" class="undecided-list" aria-live="polite"></ul>
-    <p class="now-label">NEXT ACTION</p><a id="next-action" class="primary">次にやること</a>
+    <h3>創作状態</h3><div id="creative-state" class="creative-state-grid" aria-live="polite"></div>
+    <p class="now-label">NEXT OPTIONS</p><a id="next-action" class="primary">次にやること</a><div id="next-options" class="next-options"></div><p id="pause-message" class="pause-message" aria-live="polite"></p>
     <p id="optional-analysis" class="hint" hidden>MIDI解析は必須ではありません。参考MIDIを調べたい時だけ寄り道し、そのままDemo Composerへ進んでもOKです。</p>
   </section>
 
