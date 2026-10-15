@@ -1,4 +1,4 @@
-const VERSION = 'v0.15-dev';
+const VERSION = 'v0.16-dev';
 const entryUrl = new URL(import.meta.url);
 const build = entryUrl.searchParams.get('build');
 
