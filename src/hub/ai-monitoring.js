@@ -1,3 +1,5 @@
+import { loadActiveProject } from "../storage/indexeddb-storage.js";
+
 const STORAGE_KEY = "demo-composer.ai-monitoring.v1";
 const MAX_EVENTS = 240;
 
@@ -36,6 +38,8 @@ export const AI_MONITORING_FEATURES = [
   { id: "display", name: "表示設定", category: "基本", tip: "スマホで見やすい文字サイズへ調整します。", selector: "[data-text-size-option]" }
 ];
 
+export const DECISION_PROGRESS_STATUSES = Object.freeze(["未着手", "探索中", "比較中", "保留", "採用", "完了", "任意"]);
+
 export function emptyUsageState(now = Date.now()) {
   return { version: 1, createdAt: now, updatedAt: now, sessions: 0, features: {}, events: [] };
 }
@@ -71,23 +75,15 @@ export function summarizeUsage(state, catalog = AI_MONITORING_FEATURES) {
   return { used, unused, usedPercent, unusedPercent: 100 - usedPercent, categories, ranked, sessions: normalized.sessions };
 }
 
+// Kept for backward-compatible callers. Usage is now secondary information, not a completion score.
 export function buildFeedback(summary) {
-  const best = summary.ranked[0];
-  const weakest = [...summary.categories].sort((a, b) => a.percent - b.percent)[0];
-  let positive = "まだ記録が少ないので、まず普段どおりに使うと傾向が見えてきます。";
-  if (summary.usedPercent >= 70) positive = `主要機能の${summary.usedPercent}%を使えています。かなり幅広く機能を活用できています。`;
-  else if (summary.usedPercent >= 40) positive = `主要機能の${summary.usedPercent}%を使えています。基本機能だけでなく複数工程を行き来できています。`;
-  else if (best) positive = `「${best.name}」をよく使えています。得意な工程を軸に作業の流れができ始めています。`;
-
-  let negative = `未使用機能は${summary.unusedPercent}%です。未使用率が下がると、今の作り方に合う機能を見つけやすくなります。`;
-  if (weakest && weakest.percent === 0) negative = `「${weakest.category}」カテゴリがまだ未使用です。必要なときに1機能だけ試すと、作業の選択肢を増やせます。`;
-  else if (summary.usedPercent >= 80) negative = "大きな未使用領域は少なくなっています。今後は使用回数の偏りを見ながら、使う価値の低い機能も見極められます。";
-
-  const priorityOrder = ["作曲", "アレンジ", "試聴", "補助", "入出力", "仕上げ", "基本"];
-  const suggestions = [...summary.unused]
-    .sort((a, b) => priorityOrder.indexOf(a.category) - priorityOrder.indexOf(b.category))
-    .slice(0, 3);
-  return { positive, negative, suggestions };
+  const best = summary.ranked[0] || null;
+  const suggestions = summary.unused.slice(0, 3);
+  return {
+    positive: best ? `よく使っている機能は「${best.name}」です。` : "まだ利用傾向を判断するほど記録がありません。",
+    negative: "未使用機能があっても問題ありません。曲に必要な機能だけ使えば十分です。",
+    suggestions
+  };
 }
 
 export function beginnerRecommendation(summary) {
@@ -97,7 +93,106 @@ export function beginnerRecommendation(summary) {
     positive: feedback.positive,
     improvement: feedback.negative,
     next,
-    nextTitle: next ? `まずは「${next.name}」を1回試す` : "主要機能を一通り使えています"
+    nextTitle: next ? `必要なら「${next.name}」も試せます` : "必要な機能だけ使えていれば十分です"
+  };
+}
+
+function featureCount(usageState, featureId) {
+  return Number(normalizeState(usageState).features?.[featureId]?.count) || 0;
+}
+
+function notesFor(project, role) {
+  return project?.tracks?.find?.((track) => track?.role === role)?.notes ?? [];
+}
+
+function decisionLogs(project) {
+  const logs = project?.metadata?.composition?.decisions;
+  return Array.isArray(logs) ? logs : [];
+}
+
+function hasDecision(project, kind) {
+  return decisionLogs(project).some((entry) => entry?.kind === kind);
+}
+
+function hasDirection(project) {
+  const design = project?.metadata?.composition;
+  if (!design || typeof design !== "object") return false;
+  const fields = [design.hook, design.highlight, design.tension, design.chorus, design.reference];
+  const axes = design.axes && typeof design.axes === "object" ? Object.values(design.axes) : [];
+  return [...fields, ...axes].some((value) => typeof value === "string" && value.trim());
+}
+
+function statusItem(id, label, status, note) {
+  return { id, label, status, note };
+}
+
+export function deriveDecisionProgress(project, usageState = emptyUsageState()) {
+  const normalizedUsage = normalizeState(usageState);
+  const chords = Array.isArray(project?.chords) ? project.chords : [];
+  const melody = notesFor(project, "melody");
+  const bass = notesFor(project, "bass");
+  const counter = notesFor(project, "counter")?.length ? notesFor(project, "counter") : notesFor(project, "counterMelody");
+  const sections = Array.isArray(project?.structure?.sections) ? project.structure.sections : [];
+  const instruments = Array.isArray(project?.instruments) ? project.instruments : [];
+  const checks = project?.metadata?.composition?.checks ?? {};
+
+  const chordCompared = chords.length > 0 && ["chord-candidates", "chord-presets", "chord-spice", "chord-scale-sets", "compare"].some((id) => featureCount(normalizedUsage, id) > 0);
+  const melodyCompared = melody.length > 0 && ["phrase", "melody-chords", "compare"].some((id) => featureCount(normalizedUsage, id) > 0);
+  const sectionCompared = sections.length > 0 && featureCount(normalizedUsage, "compare") > 0;
+  const arrangementTouched = sections.length > 0 || instruments.length > 0 || featureCount(normalizedUsage, "arrange") > 0;
+
+  let directionStatus = "未着手";
+  if (hasDirection(project)) directionStatus = "完了";
+  else if (featureCount(normalizedUsage, "project-settings") > 0 || featureCount(normalizedUsage, "sheet-link") > 0) directionStatus = "探索中";
+
+  let chordStatus = "未着手";
+  if (hasDecision(project, "chord")) chordStatus = "採用";
+  else if (chordCompared) chordStatus = "比較中";
+  else if (chords.length) chordStatus = "探索中";
+
+  let melodyStatus = "未着手";
+  if (hasDecision(project, "melody")) melodyStatus = "採用";
+  else if (melodyCompared) melodyStatus = "比較中";
+  else if (melody.length) melodyStatus = "探索中";
+
+  let sectionStatus = "未着手";
+  if (sections.length && sections.every((section) => typeof section?.purpose === "string" && section.purpose.trim())) sectionStatus = "完了";
+  else if (sectionCompared) sectionStatus = "比較中";
+  else if (sections.length) sectionStatus = "探索中";
+
+  let bassStatus = "未着手";
+  if (bass.length) bassStatus = "探索中";
+  else if ((chords.length || melody.length) && (featureCount(normalizedUsage, "rhythm") > 0 || featureCount(normalizedUsage, "rhythm-presets") > 0)) bassStatus = "保留";
+
+  let counterStatus = "任意";
+  if (checks.counter === "unnecessary") counterStatus = "任意";
+  else if (hasDecision(project, "counter")) counterStatus = "採用";
+  else if (counter.length) counterStatus = "探索中";
+  else if (featureCount(normalizedUsage, "counter") > 0) counterStatus = "保留";
+
+  let arrangementStatus = "未着手";
+  if (arrangementTouched && featureCount(normalizedUsage, "compare") > 0) arrangementStatus = "比較中";
+  else if (arrangementTouched) arrangementStatus = "探索中";
+
+  const handoffStatus = featureCount(normalizedUsage, "export") > 0 ? "探索中" : "未着手";
+
+  const items = [
+    statusItem("direction", "曲の方向性", directionStatus, directionStatus === "完了" ? "意図メモから方向性を確認できます。" : "未定のまま作り始めてもOKです。"),
+    statusItem("chord", "Chord", chordStatus, chordStatus === "採用" ? "採用履歴があります。" : "候補を試しながら保留しても構いません。"),
+    statusItem("melody", "Melody", melodyStatus, melodyStatus === "採用" ? "採用履歴があります。" : "探索中・比較中は正常な状態です。"),
+    statusItem("section", "Section", sectionStatus, "Sectionの役割は後から決め直せます。"),
+    statusItem("bass", "Bass", bassStatus, bassStatus === "保留" ? "いったん入れずに先へ進めます。" : "必要になった段階で追加できます。"),
+    statusItem("counter", "Counter Melody", counterStatus, counterStatus === "任意" ? "曲に不要なら使わなくて構いません。" : "主旋律との関係を見ながら決めます。"),
+    statusItem("arrangement", "Arrangement", arrangementStatus, "発散→比較→収束を行き来できます。"),
+    statusItem("daw", "DAW Handoff", handoffStatus, "書き出し操作は完成率ではなく受け渡し準備として扱います。")
+  ];
+
+  return {
+    items,
+    projectId: project?.id ?? null,
+    revision: Number(project?.revision) || null,
+    hasProject: Boolean(project),
+    message: "100%を目指す進捗表ではありません。探索中・比較中・保留・任意も正常な創作状態です。"
   };
 }
 
@@ -129,6 +224,7 @@ function recordFeature(featureId, source = "ui") {
   state.events = state.events.slice(-MAX_EVENTS);
   writeState(state);
   scheduleRender();
+  if (typeof setTimeout === "function") setTimeout(scheduleRender, 450);
 }
 
 function escapeHtml(value) {
@@ -140,80 +236,55 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function detailedUsageHtml(summary) {
-  const categoryRows = summary.categories.map((item) => `
-    <div class="ai-monitoring-category">
-      <span>${escapeHtml(item.category)}</span>
-      <div class="ai-monitoring-mini-bar"><i style="width:${item.percent}%"></i></div>
-      <strong>${item.percent}%</strong>
+function statusClass(status) {
+  return ({
+    "未着手": "idle",
+    "探索中": "explore",
+    "比較中": "compare",
+    "保留": "hold",
+    "採用": "adopted",
+    "完了": "done",
+    "任意": "optional"
+  })[status] || "idle";
+}
+
+function usageDetailsHtml(summary) {
+  const used = summary.ranked.slice(0, 10);
+  const chips = used.length
+    ? used.map((feature) => `<span class="ai-monitoring-chip">${escapeHtml(feature.name)} × ${feature.count}</span>`).join("")
+    : '<span class="ai-monitoring-chip">まだ操作記録なし</span>';
+  return `
+    <details class="ai-monitoring-details">
+      <summary>機能利用状況を見る（補助情報）</summary>
+      <p class="ai-monitoring-secondary-copy">${summary.used.length} / ${AI_MONITORING_FEATURES.length}機能を使っています。未使用機能があっても完成度とは関係ありません。</p>
+      <div class="ai-monitoring-usage-chips">${chips}</div>
+    </details>`;
+}
+
+function monitoringHtml(progress, usageSummary) {
+  const rows = progress.items.map((item) => `
+    <div class="decision-progress-row" data-decision-progress="${escapeHtml(item.id)}">
+      <div class="decision-progress-label"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.note)}</small></div>
+      <span class="decision-status ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
     </div>`).join("");
-  const unusedList = summary.unused.length
-    ? summary.unused.map((feature) => `<span class="ai-monitoring-chip">${escapeHtml(feature.name)}</span>`).join("")
-    : '<span class="ai-monitoring-chip">未使用なし</span>';
-  return `
-    <div class="ai-monitoring-categories">${categoryRows}</div>
-    <details class="ai-monitoring-unused"><summary>未使用機能を全部見る（${summary.unused.length}）</summary><div>${unusedList}</div></details>`;
-}
-
-function beginnerMonitoringHtml(summary) {
-  const beginner = beginnerRecommendation(summary);
-  const nextHtml = beginner.next
-    ? `<strong>${escapeHtml(beginner.nextTitle)}</strong><p>${escapeHtml(beginner.next.tip)}</p>`
-    : `<strong>${escapeHtml(beginner.nextTitle)}</strong><p>次は使用回数の偏りを見て、自分に必要な機能を絞っていきましょう。</p>`;
 
   return `
-    <section class="ai-monitoring beginner" data-ai-monitoring-panel>
+    <section class="ai-monitoring decision-progress" data-ai-monitoring-panel>
       <div class="ai-monitoring-heading">
-        <div><p class="eyebrow">Usage Monitor</p><h3>AIモニタリング</h3></div>
-        <span class="ai-monitoring-local">初心者表示</span>
+        <div><p class="eyebrow">DECISION PROGRESS</p><h3>作曲判断進捗</h3></div>
+        <span class="ai-monitoring-local">100%不要</span>
       </div>
-      <p class="hint">難しい数字は後回し。今は「できていること」と「次の1つ」だけ見ればOKです。</p>
-      <div class="ai-monitoring-beginner-meter">
-        <div><span>使った機能</span><strong>${summary.usedPercent}%</strong></div>
-        <div><span>まだ未使用</span><strong>${summary.unusedPercent}%</strong></div>
-      </div>
-      <div class="ai-monitoring-progress" role="progressbar" aria-label="主要機能の使用率" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${summary.usedPercent}"><i style="width:${summary.usedPercent}%"></i></div>
-      <div class="ai-monitoring-feedback positive"><strong>できていること</strong><p>${escapeHtml(beginner.positive)}</p></div>
-      <div class="ai-monitoring-feedback negative"><strong>改善ポイント</strong><p>${escapeHtml(beginner.improvement)}</p></div>
-      <div class="ai-monitoring-beginner-next"><small>次はこれだけ</small>${nextHtml}</div>
-      <details class="ai-monitoring-details"><summary>詳しい使用状況を見る</summary>${detailedUsageHtml(summary)}</details>
-      <p class="ai-monitoring-note">記録はこの端末内だけです。音声・MIDI内容・曲データは外部送信しません。</p>
+      <p class="hint">何個の機能を使ったかではなく、曲について今どんな判断状態にいるかを見ます。</p>
+      <div class="decision-progress-list">${rows}</div>
+      <p class="decision-progress-message">${escapeHtml(progress.message)}</p>
+      ${usageDetailsHtml(usageSummary)}
+      <p class="ai-monitoring-note">判断状態はProject内容とこの端末内の操作履歴から推定します。曲データやMIDIを外部送信しません。</p>
     </section>`;
-}
-
-function fullMonitoringHtml(summary) {
-  const feedback = buildFeedback(summary);
-  const suggestions = feedback.suggestions.length
-    ? feedback.suggestions.map((feature) => `<li><strong>${escapeHtml(feature.name)}</strong><span>${escapeHtml(feature.tip)}</span></li>`).join("")
-    : "<li><strong>主要機能を一通り使用済みです</strong><span>今後は使用回数と偏りを見ながら、必要な機能だけを残して使えます。</span></li>";
-
-  return `
-    <section class="ai-monitoring" data-ai-monitoring-panel>
-      <div class="ai-monitoring-heading">
-        <div><p class="eyebrow">Usage Monitor</p><h3>AIモニタリング</h3></div>
-        <span class="ai-monitoring-local">端末内のみ</span>
-      </div>
-      <p class="hint">アプリの使い方を記録し、使えている機能・未使用機能・次に試す機能を自動で整理します。</p>
-      <div class="ai-monitoring-score-grid">
-        <div class="ai-monitoring-score used"><span>使用済み</span><strong>${summary.usedPercent}%</strong><small>${summary.used.length} / ${AI_MONITORING_FEATURES.length}機能</small></div>
-        <div class="ai-monitoring-score unused"><span>未使用</span><strong>${summary.unusedPercent}%</strong><small>${summary.unused.length} / ${AI_MONITORING_FEATURES.length}機能</small></div>
-      </div>
-      <div class="ai-monitoring-progress" role="progressbar" aria-label="主要機能の使用率" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${summary.usedPercent}"><i style="width:${summary.usedPercent}%"></i></div>
-      ${detailedUsageHtml(summary)}
-      <div class="ai-monitoring-feedback positive"><strong>ポジティブフィードバック</strong><p>${escapeHtml(feedback.positive)}</p></div>
-      <div class="ai-monitoring-feedback negative"><strong>ネガティブフィードバック</strong><p>${escapeHtml(feedback.negative)}</p></div>
-      <div class="ai-monitoring-suggestions"><strong>次に試す使い方</strong><ol>${suggestions}</ol></div>
-      <p class="ai-monitoring-note">記録対象はこのDemo Composer内の主要操作です。音声・MIDI内容・入力した曲データを外部送信しません。</p>
-    </section>`;
-}
-
-function monitoringHtml() {
-  const summary = summarizeUsage(readState());
-  const beginnerMode = document.body.classList.contains("beginner-mode");
-  return beginnerMode ? beginnerMonitoringHtml(summary) : fullMonitoringHtml(summary);
 }
 
 let renderQueued = false;
+let renderToken = 0;
+
 function scheduleRender() {
   if (renderQueued || typeof requestAnimationFrame !== "function") return;
   renderQueued = true;
@@ -223,16 +294,28 @@ function scheduleRender() {
   });
 }
 
-function installPanel() {
+async function installPanel() {
+  const token = ++renderToken;
   const screen = document.querySelector("#screen");
   if (!screen) return;
   const hubHeading = [...screen.querySelectorAll("h2")].find((node) => node.textContent?.trim() === "Hub");
   if (!hubHeading) return;
   const card = hubHeading.closest(".card");
   if (!card) return;
+
+  let project = null;
+  try {
+    project = await loadActiveProject();
+  } catch {
+    project = null;
+  }
+  if (token !== renderToken) return;
+
+  const usageSummary = summarizeUsage(readState());
+  const progress = deriveDecisionProgress(project, readState());
   card.querySelector("[data-ai-monitoring-panel]")?.remove();
   const holder = document.createElement("div");
-  holder.innerHTML = monitoringHtml();
+  holder.innerHTML = monitoringHtml(progress, usageSummary);
   const panel = holder.firstElementChild;
   const statusMessage = card.querySelector("#hub-message");
   if (statusMessage) statusMessage.insertAdjacentElement("afterend", panel);
