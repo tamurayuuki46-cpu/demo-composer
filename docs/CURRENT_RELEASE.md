@@ -5,26 +5,26 @@
 ## Published main
 
 - Demo Composer: `v0.15-dev`
-- remote main head: `28f85e64adeed26da1d40fc491723438ffecd2f9`
-- main統合PR: #249
-- Arrangement Lab: `v0.13-dev`
-- Music Project Home: `v0.16-dev`
-- Composition Sheet latest: `v0.9-dev`
-- GitHub Pages公開元: `main`
-
-この節は現在remote `main`から公開されているlineageを示します。
-
-## Development candidate
-
-- Demo Composer: `v0.15-dev`
-- branch: `integration/main-develop-reconcile-20261015`
-- reconciliation merge: `de64a3323e35cc4915dd1adba8471c296557033f`
+- remote reference: `main`
+- reconciliation merge: `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`
+- published candidate head: `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`
+- main統合PR: #255
 - Arrangement Lab: `v0.13-dev`
 - Music Project Home: `v0.18-dev`
 - Composition Sheet latest: `v0.9.1-dev`
-- includes: PR #252 / #253 / #254
+- GitHub Pages公開元: `main`
 
-Development candidateはまだ`main`へ統合・公開されていません。同じDemo Composer Version名でもpublished mainと内容が異なるため、branch / commitを併記します。
+この節は現在remote `main`から公開されているlineageを示します。文書同期commit自身のSHAは自己参照せず、公開を確定したPR #255のmergeと`main`参照で管理します。
+
+## Branch alignment
+
+- published source branch: `integration/main-develop-reconcile-20261015`
+- published source head: `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`
+- reconciliation merge inside source history: `de64a3323e35cc4915dd1adba8471c296557033f`
+- develop head: `b322cb47282261db720bf3b74caf455cb56c9cf7`
+- includes: PR #252 / #253 / #254 / #255
+
+統合候補はPR #255からmerge commit方式で`main`へ統合・公開済みです。`develop`は公開時点では元headのままで、別PRによる`main`からのcatch-upが残っています。
 
 ## Contracts
 
@@ -46,7 +46,7 @@ Development candidateはまだ`main`へ統合・公開されていません。�
 - Music Project Home: 案内する / 次にやることを示す
 - Cubasis / Cubase: 本制作・完成
 
-## Candidate validation
+## Publication validation
 
 - Local static checks: 178 PASS
 - Browser invocations: 17 PASS
@@ -54,9 +54,10 @@ Development candidateはまだ`main`へ統合・公開されていません。�
   - intermittent causeは未確定
 - Published version assets: 38 preserved
 - Existing remote restore / backup / tag refs: 162 preserved
-- Candidate hosted CI: 未実行
-
-push / PR作成後、同一candidate headのhosted CIを確認してからmainへ統合します。
+- PR #255 hosted CI: exact head `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`で7件PASS
+- Post-merge Pages: run `38662526913` PASS
+- Post-merge Release Check: run `38662526696` PASS
+- Post-merge AI Monitoring: run `38662526651` PASS
 
 ## Stable
 

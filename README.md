@@ -4,13 +4,13 @@ Androidスマホ中心の作曲支援PWAです。
 
 ## Version status
 
-- Development candidate: `v0.15-dev` (`integration/main-develop-reconcile-20261015`)
-- Published main: `v0.15-dev` (`main` / `28f85e64adeed26da1d40fc491723438ffecd2f9`)
+- Published main: `v0.15-dev` (`main`; reconciliation PR #255 / merge `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`)
+- Development branch: `develop` / `b322cb47282261db720bf3b74caf455cb56c9cf7`（mainからのcatch-up前）
 - Stable: 未認定
 
 GitHub Pages: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
-Development candidateはPR #252 / #253 / #254を含むmain/develop統合候補で、まだ`main`へ統合・公開されていません。`main`はCI合格版かつGitHub Pages公開元です。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
+PR #252 / #253 / #254を含むmain/develop統合候補`8a73fcb55029f4bdb8d191d4e552f5122fc380fd`は、PR #255からmerge commit方式で`main`へ統合・公開済みです。PR headのhosted CI 7件と、main統合後のPages / Release Check / AI Monitoringの3件が成功しています。`main`はCI合格版かつGitHub Pages公開元です。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
 
 ## コンセプト
 
@@ -37,7 +37,7 @@ PC DAWは最終工程として必須です。
 
 ## v0.15-dev
 
-### Reconciled development candidate
+### Published reconciliation
 
 - 公開済みmainの資産を保持しながら、developの検証済み機能を通常の2-parent mergeで統合
 - PR #252: SongProject v1のMIDI Analyzer → Demo Composer → Arrangement Lab → Composition Sheet境界回帰を追加
@@ -45,7 +45,9 @@ PC DAWは最終工程として必須です。
 - PR #254: Song.midのFormat 1、5 Track、PPQ 480、Tempo、4/4、Channel、Marker、Note timingを固定する回帰を強化
 - Composition Sheet latestはv0.9.1-dev、Music Project Homeはv0.18-dev、Arrangement Labはv0.13-dev
 - SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4 / PPQ 480 / 4/4は維持
-- ローカル静的178件・ブラウザ17件・公開済みversion資産38件の保持検証が成功。統合候補そのもののhosted CIは未実施
+- ローカル静的178件・ブラウザ17件・公開済みversion資産38件の保持検証が成功
+- PR #255の同一head `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`でhosted CI 7件が成功
+- `main`統合後にPages / Release Check / AI Monitoringが成功し、GitHub Pages公開を確認
 - Android / Cubasis / Cubase実機確認は未実施のためstable未認定
 
 ## v0.14-dev

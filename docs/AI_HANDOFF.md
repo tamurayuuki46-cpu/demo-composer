@@ -4,17 +4,18 @@
 
 ## 現在の状態
 
-- Development candidate: Demo Composer `v0.15-dev`
-  - branch: `integration/main-develop-reconcile-20261015`
-  - reconciliation merge: `de64a3323e35cc4915dd1adba8471c296557033f`
-  - main側親: `427bd37`
-  - develop側親: `b322cb47282261db720bf3b74caf455cb56c9cf7`
 - Published main: Demo Composer `v0.15-dev`
-  - remote head: `28f85e64adeed26da1d40fc491723438ffecd2f9`
+  - remote reference: `main`
+  - reconciliation PR: #255
+  - reconciliation merge: `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`
+  - published candidate head: `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`
   - GitHub Pages公開元は`main`
+- Development branch:
+  - `develop`: `b322cb47282261db720bf3b74caf455cb56c9cf7`
+  - 公開済み`main`からのcatch-up PRは未実施
 - Stable: 未認定
 
-Development candidateは公開済みmainと同じVersion名ですが、PR #252 / #253 / #254を含む未公開の統合候補です。branch / commitを確認せず「公開済み」と扱わないでください。
+PR #252 / #253 / #254を含む統合候補は、PR #255からmerge commit方式で`main`へ統合・公開済みです。文書同期commit自身のSHAは自己参照せず、公開を確定したPR #255のmergeと最新`main`参照で管理します。
 
 Component versions:
 
@@ -39,7 +40,7 @@ Component versions:
 - develop側の全履歴と検証済み機能
 - 既存restore / backup branches / tags
 
-この候補はまだremoteへpushされておらず、PRもありません。`main` / `develop`のremote headは変更されていません。
+統合候補head `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`はremoteへpushされ、PR #255のhosted CI 7件が同一headで成功しました。その後、`0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`として`main`へ通常mergeされ、公開後CIも成功しています。`develop`はまだ`b322cb47282261db720bf3b74caf455cb56c9cf7`のため、別PRによるcatch-upが必要です。
 
 ## 2026-10-15 integration contents
 
@@ -85,7 +86,7 @@ Reconciliation工程で次を確認済みです。
 - 実ブラウザでArrangement採用だけではDAW-readyにならず、実Song.mid download後のSongProjectだけがHomeで「Cubasis / Cubaseで仕上げる段階」へ進むことを確認
 - Homeメモの再読込、SongProject JSON backup round-trip、Analyzer / Demo所有領域の保持を確認
 
-統合候補commitそのもののhosted CIは未実行です。push / PR作成後に、同一headでhosted CIを確認する必要があります。ローカル結果や過去PRのCIを候補headのCIとして扱わないでください。
+PR #255の同一head `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`でhosted CI 7件が成功しました。main統合後もPages run `38662526913`、Release Check run `38662526696`、AI Monitoring run `38662526651`がすべて成功しています。
 
 ## 正式Workflow
 
@@ -128,9 +129,6 @@ Compatibility rules:
 
 ## Remaining gates
 
-- 統合候補を認証済みremoteへpush
-- main向けPRを作成し、候補headのhosted CIを確認
-- 承認後にmerge commitでmainへ統合
 - mainからdevelopへのcatch-up PR
 - Android Chrome/PWAでSong.midの保存、Files / Download / Shareを確認
 - CubasisでImport / 再生 / Tempo / 4/4 / Track分離 / Note timingを確認
