@@ -23,7 +23,7 @@ const fixture={
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   await context.addInitScript(()=>{window.AudioContextOriginal=window.AudioContext;window.testContexts=[];window.AudioContext=class extends window.AudioContextOriginal{constructor(...args){super(...args);window.testContexts.push(this)}};});
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
-  await page.goto(base);await page.locator('#version').waitFor();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.14-dev');
+  await page.goto(base);await page.locator('#version').waitFor();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.15-dev');
   await page.locator('#project-file').setInputFiles({name:'project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});
   await page.waitForFunction(()=>document.querySelectorAll('.candidate-tab').length===3);
   assert.equal(await page.locator('#v05-comparison-room').count(),1);assert.equal(await page.locator('#v05-decision-panel').count(),1);assert.equal(await page.locator('#v05-daw-actions').count(),1);

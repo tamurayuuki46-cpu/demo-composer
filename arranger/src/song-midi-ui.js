@@ -1,4 +1,4 @@
-import { restoreArrangerProject } from './core.js';
+import { arrangerSession, confirmCurrentPlanExport } from './app.js';
 import { buildSongMidi } from './song-midi.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.4';
@@ -44,17 +44,14 @@ async function markSongProjectMidiExported(exportedAt) {
 
 button?.addEventListener('click', async () => {
   try {
-    const savedText = localStorage.getItem(STORAGE_KEY);
-    if (!savedText) throw new Error('先に編曲案を「この案を採用」で保存してください。');
-    const saved = JSON.parse(savedText);
-    const { source, candidate } = restoreArrangerProject(saved);
-    if (!source || !candidate) throw new Error('採用済み編曲案からSong.midを復元できませんでした。');
+    if (!await confirmCurrentPlanExport()) return;
+    const { source, candidate, carryOver } = arrangerSession.current();
     const bytes = buildSongMidi(source, candidate);
     const filename = `${safeFileName(source.title)}_Song.mid`;
     downloadBytes(bytes, filename);
     const exportedAt = new Date().toISOString();
     await markSongProjectMidiExported(exportedAt);
-    flash('採用済み編曲案から5トラックのSong.midを書き出しました。');
+    flash(carryOver.length ? '未決定項目はDAWで調整してください。' : 'Current Planから5トラックのSong.midを書き出しました。');
   } catch (error) {
     flash(error instanceof Error ? error.message : 'Song.midを書き出せませんでした。', true);
   }

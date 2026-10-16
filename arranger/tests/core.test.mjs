@@ -46,7 +46,7 @@ const sourceJson = {
   instruments: [], progress: {}, exportSettings: {},
 };
 
-assert.equal(ARRANGER_VERSION, 'v0.14-dev');
+assert.equal(ARRANGER_VERSION, 'v0.15-dev');
 assert.equal(ARRANGER_SCHEMA_VERSION, 4);
 
 const source = normalizeSourceProject(sourceJson);
@@ -90,7 +90,7 @@ assert.equal(withReharm.sections[1].reharmonization.id, 'color');
 
 const plan = createArrangerProject(source, withReharm);
 assert.equal(plan.arrangerSchemaVersion, 4);
-assert.equal(plan.arrangerVersion, 'v0.14-dev');
+assert.equal(plan.arrangerVersion, 'v0.15-dev');
 assert.equal(plan.source.projectId, 'demo-1');
 assert.equal(plan.arrangement.sections[1].reharmonization.id, 'color');
 

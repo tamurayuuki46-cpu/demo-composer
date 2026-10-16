@@ -1,3 +1,5 @@
+import { ConvergenceSession } from './convergence-session.js';
+import { mountConvergence } from './convergence-ui.js';
 import { generateMusicLabCandidates, adoptMusicLabCandidate } from './music-lab.js';
 import { MUSIC_LAB_CATALOG } from './music-lab-catalog.js';
 import { THEORY_METHODS, buildTheorySuggestions, theoryAudition } from './reharm-theory.js';
@@ -35,6 +37,13 @@ const state = {
   features: {},
   previewContext: null,
 };
+
+export const arrangerSession = new ConvergenceSession(state, localStorage, (...args) => flash(...args));
+let convergenceUI;
+export const confirmCurrentPlanExport = () => convergenceUI.confirmExport();
+export function refreshArranger() { renderSource(); renderCandidates(); renderMixControls(); convergenceUI?.render(); }
+export function applyCandidateEdit(before, after) { return arrangerSession.applyCandidateEdit(before, after); }
+export function applyPlanSnapshot(plan) { arrangerSession.applySnapshot(plan); refreshArranger(); }
 
 const $ = (selector) => document.querySelector(selector);
 const els = {
@@ -101,12 +110,21 @@ export async function importFile(file) {
       return true;
     }
     const source = normalizeSourceProject(data);
+    if (state.source && state.arrangerProject && state.source.sourceProjectId === source.sourceProjectId) {
+      const result = arrangerSession.rebase(source);
+      refreshArranger(); renderCollisionSummary();
+      flash(result.warning || '同じ曲の更新を反映しました。判断とPlan IDを保持しました。', !!result.warning);
+      return true;
+    }
     if (state.arrangerProject && !state.arrangerProject.sourceSnapshot && state.arrangerProject.source.projectId === source.sourceProjectId) {
       const restored = restoreArrangerProject(state.arrangerProject, source);
       applyRestored(restored);
+      arrangerSession.initialize();
+      refreshArranger();
       flash('元project.jsonと旧プランから編集を再開しました。');
       return true;
     }
+    arrangerSession.validationReady = false;
     state.source = source;
     state.arrangerProject = null;
     state.reharmSuggestions = {};
@@ -166,10 +184,13 @@ function generateCandidates() {
     return;
   }
   stopPreview();
+  if (arrangerSession.validationReady) arrangerSession.save();
   state.candidates = buildThreeCandidates(state.source, state.styleId);
   state.selectedIndex = 1;
   state.reharmSuggestions = {};
   state.features = {};
+  if (!arrangerSession.validationReady) arrangerSession.initialize();
+  else arrangerSession.save();
   renderCandidates();
   renderMixControls();
 }
@@ -179,6 +200,7 @@ function currentCandidate() {
 }
 
 function renderCandidates() {
+  convergenceUI?.render();
   els.candidateTabs.innerHTML = '';
   state.candidates.forEach((candidate, index) => {
     const button = document.createElement('button');
@@ -321,14 +343,14 @@ function handleSectionChange(event) {
   }
   if (target.dataset.sectionField === 'method') { state.features[sectionId] = { ...state.features[sectionId], method: target.value }; return; }
   if (target.dataset.action === 'decision-note') {
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate,sectionId,{decisionNote:target.value.slice(0,400)}); return;
+    applyCandidateEdit(candidate, updateCandidateSection(candidate,sectionId,{decisionNote:target.value.slice(0,400)})); return;
   }
   if (target.dataset.action === 'density') {
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { density: target.value });
+    applyCandidateEdit(candidate, updateCandidateSection(candidate, sectionId, { density: target.value }));
     renderCandidates();
   } else if (target.dataset.action === 'toggle') {
     const role = target.dataset.role;
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { enabled: { [role]: target.checked } });
+    applyCandidateEdit(candidate, updateCandidateSection(candidate, sectionId, { enabled: { [role]: target.checked } }));
     renderCandidates();
   }
 }
@@ -375,11 +397,11 @@ function handleSectionClick(event) {
     const list = state.reharmSuggestions[sectionId] || buildReharmSuggestions(state.source, sectionId);
     const selected = list.find((item) => item.id === button.dataset.reharm);
     if (!selected) return;
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { reharmonization: selected });
+    applyCandidateEdit(candidate, updateCandidateSection(candidate, sectionId, { reharmonization: selected }));
     renderCandidates();
     flash(`${selected.label}リハモを採用しました。元project.jsonは変更していません。`);
   } else if (action === 'reharm-clear') {
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { reharmonization: null });
+    applyCandidateEdit(candidate, updateCandidateSection(candidate, sectionId, { reharmonization: null }));
     renderCandidates();
   }
 }
@@ -394,7 +416,7 @@ function handleFeatureAction(button) {
   const features = state.features[sectionId] ||= {};
   features.open = true;
   const index = Number(button.dataset.option), mode = button.dataset.mode;
-  const install = candidate => { state.candidates[state.selectedIndex] = adoptSectionFrom(current,candidate,sectionId); renderCandidates(); };
+  const install = candidate => { applyCandidateEdit(current, adoptSectionFrom(current,candidate,sectionId)); renderCandidates(); };
   const preview = (candidate,label,parts) => playSketch({source:state.source,candidate,startTick:section.startTick,endTick:section.endTick,parts},label);
   try {
     if (action.startsWith('music-')) {
@@ -404,7 +426,7 @@ function handleFeatureAction(button) {
       } else {
         const choice=features.musicChoices?.[index]; if(!choice?.available)return true;
         const candidate=adoptMusicLabCandidate(current,choice);
-        if(action === 'music-apply') { state.candidates[state.selectedIndex]=candidate;renderCandidates();flash('対象Sectionへ採用しました。保存するには下の「この案を採用」を押してください。'); }
+        if(action === 'music-apply') { applyCandidateEdit(current,candidate);renderCandidates();flash('対象Sectionへ採用しました。保存するには下の「この案を採用」を押してください。'); }
         else if(action === 'music-original' || action === 'music-preview') {
           const target=state.source.sections.find(s=>s.id===choice.auditionSectionId);
           playSketch({source:state.source,candidate:action === 'music-original'?current:candidate,startTick:target.startTick,endTick:target.endTick},action === 'music-original'?'現在の案':choice.label);
@@ -502,20 +524,11 @@ function handleMidiExport(event) {
 }
 
 function adoptCurrentCandidate() {
-  const candidate = currentCandidate();
-  if (!state.source || !candidate) {
-    flash('採用する候補がありません。', true);
-    return;
-  }
-  state.arrangerProject = createArrangerProject(state.source, candidate, state.arrangerProject);
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.arrangerProject));
-    els.exportBtn.disabled = false;
-    flash(`${candidate.label} を採用して端末に保存しました。`);
-  } catch {
-    flash('端末への保存に失敗しました。JSON書き出しは利用できます。', true);
-    els.exportBtn.disabled = false;
-  }
+  if (!currentCandidate() || !arrangerSession.validationReady) return;
+  arrangerSession.decide('global', 'adopted');
+  refreshArranger();
+  els.exportBtn.disabled = false;
+  flash(`${currentCandidate().label} を全体へ採用しました。`);
 }
 
 function exportPlan() {
@@ -546,6 +559,8 @@ function clearAll() {
   localStorage.removeItem(V03_STORAGE_KEY);
   localStorage.removeItem(PREVIOUS_STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
+  arrangerSession.validationReady = false;
+  arrangerSession.state = null;
   state.source = null;
   state.candidates = [];
   state.arrangerProject = null;
@@ -572,9 +587,12 @@ function applyRestored({ source, candidate }) {
   renderSource(); renderCollisionSummary(); renderCandidates(); renderMixControls();
 }
 function restorePlan(saved) {
+  arrangerSession.validationReady = false;
   const restored = restoreArrangerProject(saved);
   state.arrangerProject = saved;
   applyRestored(restored);
+  arrangerSession.initialize({ restorePool: true });
+  refreshArranger();
   els.exportBtn.disabled = false;
 }
 function restoreSavedPlan() {
@@ -600,6 +618,7 @@ function escapeHtml(value) {
 }
 function escapeAttr(value) { return escapeHtml(value); }
 
+convergenceUI = mountConvergence(arrangerSession, { changed: refreshArranger, preview: ({ source, candidate }) => playSketch({ source, candidate }, 'Current Plan') });
 renderSource();
 renderCollisionSummary();
 renderCandidates();
