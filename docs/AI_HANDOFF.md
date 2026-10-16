@@ -1,37 +1,29 @@
 # AI_HANDOFF
 
-更新日: 2026-10-16
-
-## v0.16.1-dev 公開確認修正
-
-現行sourceは `v0.16.1-dev` / package `0.16.1-dev`。main `54e8e798649bd5e0463f359ccbdce292eff81d44` 基準の `release/handoff-bootstrap-v0.16.1`。
-AI初期化時もVersion / Build IDを維持。Arrangement Lab本体の初期化前に受信イベントが消失する問題を、app.jsへの明示依存と実Import完了のawaitで修正。1.5秒遅延で旧挙動の失敗を再現して回帰に追加。
-
-## v0.16-dev 受け渡し修正（前回記録）
-
-v0.16時点sourceは `v0.16-dev` / package `0.16.0-dev`。main `8661c88a84a5efc051110f089a7e3f8bfd4cbfe7` 基準の `release/handoff-integrity-20261016` で受信曲ID保持・保存完了待ち・曲別交換情報保存を修正。
-以前の公開状態は下記v0.15の履歴を参照。最新の公開確認は `CURRENT_RELEASE.md`。stable tag未作成。
+更新日: 2026-10-15
 
 ## 現在の状態
 
-- Previous publication record (2026-10-15): Demo Composer `v0.15-dev`
+- Published main: Demo Composer `v0.15-dev`
   - remote reference: `main`
   - reconciliation PR: #255
   - reconciliation merge: `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`
-  - published candidate head: `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`
   - GitHub Pages公開元は`main`
-- Development branch:
-  - `develop`: `b322cb47282261db720bf3b74caf455cb56c9cf7`
-  - 公開済み`main`からのcatch-up PRは未実施
+- Development integration branch:
+  - `develop`: 公開済み`main`のcatch-up済み
+- Current feature candidates:
+  - Demo Composer `v0.16-dev`: `chatgpt/decision-progress-home-v0.16`
+  - Music Project Home `v0.19-dev`: 同Branch内
 - Stable: 未認定
 
-PR #252 / #253 / #254を含む統合候補は、PR #255からmerge commit方式で`main`へ統合・公開済みです。文書同期commit自身のSHAは自己参照せず、公開を確定したPR #255のmergeと最新`main`参照で管理します。
+公開中のGitHub Pagesは`main`のv0.15-devです。v0.16-dev / Home v0.19-devは開発候補であり、PR / hosted CI / develop統合前に公開済みとは扱いません。
 
-Component versions:
+Component versions / candidates:
 
-- Demo Composer source: `v0.16.1-dev` / package `0.16.1-dev`
+- Demo Composer published: `v0.15-dev`
+- Demo Composer development candidate: `v0.16-dev` / package `0.16.0-dev`
 - Arrangement Lab: `v0.13-dev`
-- Music Project Home: `v0.18-dev`
+- Music Project Home development candidate: `v0.19-dev`
 - Composition Sheet latest: `v0.9.1-dev`
 - SongProject: v1
 - Demo Composer Project Schema: 3
@@ -39,9 +31,58 @@ Component versions:
 - PPQ: 480
 - time signature: 4/4固定
 
+## 2026-10-15 current feature work
+
+### ① Hub / Decision Progress
+
+`src/hub/ai-monitoring.js`の主表示をFeature Usageの達成率からDecision Progressへ変更。
+
+状態:
+
+- 未着手
+- 探索中
+- 比較中
+- 保留
+- 採用
+- 完了
+- 任意
+
+方針:
+
+- 100%達成を目的にしない
+- 探索中 / 比較中 / 保留 / 任意を正常状態として扱う
+- Feature Usageは端末内の補助情報として残す
+- Decision Progress専用の必須Schema fieldを追加しない
+- 既存Project内容、採用履歴、端末内操作履歴から導出する
+
+詳細: `docs/CREATIVE_DECISION_PROGRESS.md`
+
+### ③ Music Project Home v0.19-dev
+
+HomeはEditor化せず司令塔として維持。
+
+追加したRead Model / UI:
+
+- 探索中
+- 比較中
+- 保留 / 任意
+- 次にできる選択肢を最大3件程度
+- `今日はここまで`
+
+`今日はここまで`を選んでもSongProjectは変更しません。必要なら既存のHome端末内メモだけ残します。
+
+互換性:
+
+- SongProject v1変更なし
+- HomeはSongProjectのOwnerにならない
+- 既存`composition / arrangement / export / lineage`を読み取り専用で使用
+- 既存JSON読込 / Backup / 作曲シート連携 / Claudeリンク / Homeメモを維持
+
+詳細: `project-home/CHANGELOG.md`
+
 ## Reconciliation status
 
-公開済みmainの履歴を起点に、検証済みdevelop headを通常の2-parent mergeで統合しました。reset / squash / rebase / force pushは使っていません。
+PR #252 / #253 / #254を含む統合候補は、PR #255からmerge commit方式で`main`へ統合・公開済みです。reset / squash / rebase / force pushは使用していません。
 
 保持したもの:
 
@@ -50,9 +91,9 @@ Component versions:
 - develop側の全履歴と検証済み機能
 - 既存restore / backup branches / tags
 
-統合候補head `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`はremoteへpushされ、PR #255のhosted CI 7件が同一headで成功しました。その後、`0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`として`main`へ通常mergeされ、公開後CIも成功しています。`develop`はまだ`b322cb47282261db720bf3b74caf455cb56c9cf7`のため、別PRによるcatch-upが必要です。
+PR #255のhosted CIとmain統合後のPages / Release Check / AI Monitoringは成功済みです。その後のmain→develop catch-upも完了しています。
 
-## 2026-10-15 integration contents
+## 2026-10-15 previous integration contents
 
 ### PR #252 — SongProject v1 boundary
 
@@ -61,15 +102,11 @@ Component versions:
 - Demo Composer、Arrangement Lab、Composition Sheetが他app所有領域を消さないことを回帰化
 - lineage / assets / compatibilityを保持
 
-Merge to develop: `1aeb72850adeb435b5692d56774e22e1221a41a2`
-
 ### PR #253 — Project Home DAW readiness
 
 - `arrangerProjectId`だけではDAW-readyにしない
 - `export.lastSongMidiAt`または`lastDawHandoffAt`を完了条件に使用
 - Arrangement LabのSong.mid成功時にactive SongProjectへ`lastSongMidiAt`を記録
-
-Merge to develop: `0cccda3b4bb055a95f6345b4d00124f3dbb1c22e`
 
 ### PR #254 — DAW handoff gate
 
@@ -79,35 +116,34 @@ Merge to develop: `0cccda3b4bb055a95f6345b4d00124f3dbb1c22e`
 - Section Markerと代表NoteのstartTick / endTickを検証
 - Android / Cubasis / Cubase実機結果テンプレートを追加
 
-Merge to develop: `b322cb47282261db720bf3b74caf455cb56c9cf7`
-
 ## Validation evidence
 
-Reconciliation工程で次を確認済みです。
+公開済みv0.15-devのreconciliation工程では次を確認済みです。
 
 - 静的チェック: 178件PASS
 - Browser: 17 invocation PASS
-  - 初回は15/17。旧Composition Sheet v0.6とv0.8が一時失敗し、コード無変更の単独rerunでPASS
-  - intermittent causeは未確定
 - 公開済みversion資産: 38件すべて記録済みblobと一致
 - 既存remote restore / backup / tag refs: 162件すべて保持
 - PR #252 / #253 / #254の当時のCI: PASS
-- Music Project Home最終確認: 関連静的・build 16 command PASS、Home browser 360 / 390 / 430 / 1440px PASS、曲データメニュー 360 / 390 / 430px PASS
-- 実ブラウザでArrangement採用だけではDAW-readyにならず、実Song.mid download後のSongProjectだけがHomeで「Cubasis / Cubaseで仕上げる段階」へ進むことを確認
-- Homeメモの再読込、SongProject JSON backup round-trip、Analyzer / Demo所有領域の保持を確認
+- Music Project Home: Home browser 360 / 390 / 430 / 1440px PASS
+- Arrangement採用だけではDAW-readyにならず、実Song.mid download後のみDAW工程へ進むことを確認
+- Homeメモ再読込、SongProject JSON backup round-trip、Analyzer / Demo所有領域の保持を確認
 
-PR #255の同一head `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`でhosted CI 7件が成功しました。main統合後もPages run `38662526913`、Release Check run `38662526696`、AI Monitoring run `38662526651`がすべて成功しています。
+v0.16-dev / Home v0.19-devについては、新しいfeature branchでsmoke testを追加済みです。hosted CIの結果はPR作成後に確認し、未実行時点ではPASSとみなしません。
 
 ## 正式Workflow
 
-`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → Cubasis / Cubase → 完成`
+`作曲シート → 必要ならMoises → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → 必要ならCubasis → PC DAW / Cubase → 完成`
 
-- Composition Sheet = 決める
+- Composition Sheet = 考える・意図を決める
 - MIDI Analyzer = 集める・理解する（任意）
-- Demo Composer = 作る
-- Arrangement Lab = 育てる / Final Song.midを書き出す
-- Music Project Home = 案内する / 次にやることを示す
-- Cubasis / Cubase = 本制作・完成
+- Demo Composer = 作る・試す
+- Arrangement Lab = 育てる・比較する・決める / Final Song.midを書き出す
+- Music Project Home = 案内する・つなぐ・今できる選択肢を示す
+- Cubasis = 必要に応じたモバイルDAW作業
+- PC DAW / Cubase = 本制作・完成
+
+一本道として強制しません。`発散 ↔ 比較 ↔ 収束`を自由に往復可能にします。
 
 Project HomeはEditor機能を重複所有しません。Arrangement LabからDemo Composerへ戻す場合は、元Projectを上書きせず明示的にForkします。
 
@@ -119,12 +155,14 @@ SongProject v1:
 - Demo Composer: `composition`
 - Arrangement Lab: `arrangement`
 - Common: `basic`, `lineage`, `compatibility`
+- Music Project Home: Navigation / Workflow表示のみ
 
 Compatibility rules:
 
 - SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4をMigrationなしに変更しない
 - PPQ 480 / 4/4固定方針を変更しない
 - 他app所有領域を編集時に消さない
+- Decision Progressだけのために保存Schemaを増やさない
 - 過去versionファイル、restore / backup branch、tagを削除・上書きしない
 
 ## Branch / release rules
@@ -134,27 +172,33 @@ Compatibility rules:
 - `stable tag`: Android実機とCubasis / Cubase実機の確認が完了した版のみ
 - `main`へ直接変更しない
 - `main` / `develop`へforce pushしない
-- reconciliation PRはmerge commitで統合し、両親のancestryを保持する
-- main統合後に別PRでmainからdevelopをcatch upする
+- main統合後は必要に応じて別PRでdevelopをcatch upする
+
+Current restore points:
+
+- `restore/develop-before-decision-progress-home-20261015`
 
 ## Remaining gates
 
-- mainからdevelopへのcatch-up PR
+- v0.16-dev / Home v0.19-devのhosted CI
+- feature branchからdevelopへのPR統合
+- Android Chrome/PWAでDecision Progress / Home選択肢の縦画面・タップ操作確認
 - Android Chrome/PWAでSong.midの保存、Files / Download / Shareを確認
 - CubasisでImport / 再生 / Tempo / 4/4 / Track分離 / Note timingを確認
 - CubaseでImport / 再生 / Channel / Marker / Note timingを確認
 - 実機結果を`docs/DAW_HANDOFF_VERIFICATION.md`へ記録
+- ①〜⑤統合後のAdversarial Review
 
 実機gateがすべて完了するまでstable tagは作成しません。
 
 ## Primary references
 
+- `docs/CREATIVE_DECISION_PROGRESS.md`
 - `docs/RECONCILIATION_RESULT_2026-10-15.md`
 - `docs/PROJECT_HOME_FINAL_VERIFICATION_2026-10-15.md`
-- `docs/BRANCH_RECONCILIATION_2026-10-15.md`
-- `docs/DOC_SYNC_AUDIT_2026-10-15.md`
 - `docs/DAW_HANDOFF_VERIFICATION.md`
 - `docs/SONG_PROJECT.md`
 - `docs/RELEASE_POLICY.md`
 - `VERSION_HISTORY.md`
 - `CHANGELOG.md`
+- `project-home/CHANGELOG.md`

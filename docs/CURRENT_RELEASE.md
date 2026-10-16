@@ -2,41 +2,29 @@
 
 更新日: 2026-10-16
 
-## Current source
+## Published main
 
-- Demo Composer: `v0.16.1-dev`
-- Release Branch: `release/handoff-bootstrap-v0.16.1`（main基準）
-- Restore: `restore/main-before-handoff-bootstrap-20261016` / `54e8e798649bd5e0463f359ccbdce292eff81d44`
-- MIDI Archive/Analyzer: `v0.25-dev` / `5f21e143b0ebf8bc54e539ece08cb4dcf6e04084`
-- Arrangement Lab: `v0.13-dev`、Music Project Home: `v0.18-dev`、Composition Sheet: `v0.9.1-dev`
-- Contracts: Project Schema 3 / SongProject v1 / Arrangement Plan Schema 4
-
-v0.16は曲ID・所有情報の保持と保存完了待ちを修正。v0.16.1はAIモニタリングによる旧Versionへの上書きを除去し、Arrangement Lab本体の初期化と反映完了を直接待つ。360/390/430pxでAnalyzer → Demo → Arrangementの明示反映、キャンセル・保存失敗時の候補保持、元曲保存、再読み込み、一時storage失敗時のJSON復帰と、本体Scriptを1.5秒遅延した受信を検証する。
-実際の公開commitは公開URLの `build.json`、hosted CIと公開結果はGitHub Actionsを正本とする。stable tag未作成。
-
-## Previous publication — v0.15-dev (2026-10-15)
-
-- Demo Composer: `v0.15-dev`
-- remote reference: `main`
-- reconciliation merge: `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`
-- published candidate head: `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`
-- main統合PR: #255
-- Arrangement Lab: `v0.13-dev`
-- Music Project Home: `v0.18-dev`
+- Demo Composer: `v0.17-dev`
+- Arrangement Lab: `v0.14-dev`
+- Music Project Home: `v0.19-dev`
 - Composition Sheet latest: `v0.9.1-dev`
+- MIDI Archive/Analyzer: `v0.25-dev`（別Repository / 公開済み）
 - GitHub Pages公開元: `main`
+- Release source: `release/v0.17-publish-20261016`
+- Reconciliation commit: `7669b6b1a63d5caabf5534101d01338fb6faf2c5`
+- Stable: 未認定
 
-この節は現在remote `main`から公開されているlineageを示します。文書同期commit自身のSHAは自己参照せず、公開を確定したPR #255のmergeと`main`参照で管理します。
+v0.17公開では、develop側の発散モード（Demo Composer v0.17-dev / Arrangement Lab v0.14-dev / Project Home v0.19-dev）を維持したまま、main側で公開確認済みのv0.16 / v0.16.1 SongProject受け渡し修正、保存完了待ち、Arrangement Lab初期化待ち、Version表示修正を2-parent mergeで統合しています。
 
-## Branch alignment
+## Restore points
 
-- published source branch: `integration/main-develop-reconcile-20261015`
-- published source head: `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`
-- reconciliation merge inside source history: `de64a3323e35cc4915dd1adba8471c296557033f`
-- develop head: `b322cb47282261db720bf3b74caf455cb56c9cf7`
-- includes: PR #252 / #253 / #254 / #255
+公開統合前の状態は次のBranchから復元できます。
 
-統合候補はPR #255からmerge commit方式で`main`へ統合・公開済みです。`develop`は公開時点では元headのままで、別PRによる`main`からのcatch-upが残っています。
+- `restore/main-before-v0.17-publish-20261016` → `800cd729da6231bb6820f44b79d15ebe81354233`
+- `restore/develop-before-v0.17-publish-20261016` → `511dda9368bea10191a0eb415d8bd4403d4d1ae5`
+- 発散モード実装前: `restore/v0.16-before-divergence-2026-10-15`
+
+過去Version / Branch / Tagは削除・上書きしません。
 
 ## Contracts
 
@@ -47,30 +35,61 @@ v0.16は曲ID・所有情報の保持と保存完了待ちを修正。v0.16.1は
 - time signature: 4/4固定
 - 一時受け渡しKey: `music-project-songproject-handoff-v1`
 
+今回の公開統合ではSchema変更・Migrationはありません。
+
+## Included release changes
+
+### Demo Composer v0.17-dev
+
+- Seed / Lock / Divergence Distance / Branch / Keep / Freeze
+- Snapshot / Restore / Branch Tree
+- 5軸Lock（主旋律 / 裏メロ / コード・ハーモニー / リズム・グルーヴ / 音色）
+- Decision Progress
+- v0.16 / v0.16.1のSongProject ID保持・保存完了待ち・交換情報保持を統合
+- AI MonitoringがVersion / Build IDを上書きする問題を修正
+
+### Arrangement Lab v0.14-dev
+
+- 編曲Seed / Lock / Branch / Keep / Freeze / Snapshot / Restore
+- 主旋律を固定したままReharm / Density / Counter role / Instrumentationを発散
+- SongProject受信時に本体Import完了を明示的にawaitし、初期化前イベント消失を防止
+
+### Music Project Home v0.19-dev
+
+- 創作状態（探索中 / 比較中 / 保留・任意）
+- 次にできる選択肢を最大3件表示
+- 「今日はここまで」を正式な選択肢として維持
+
+### Composition Sheet v0.9.1-dev
+
+- beginner modeをlatestとして維持
+- Home埋め込み時の曲データメニュー重複を防止
+
 ## Workflow
 
-`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → Cubasis / Cubase → 完成`
+`作曲シート → 必要ならMIDI解析 → Demo Composer → Arrangement Lab → 必要ならCubasis → PC DAW / Cubase → 完成`
 
-- Composition Sheet: 決める
-- MIDI Analyzer: 集める・理解する（任意）
-- Demo Composer: 作る
-- Arrangement Lab: 育てる / Final Song.midを書き出す
-- Music Project Home: 案内する / 次にやることを示す
+- Composition Sheet: 考える・意図を決める
+- MIDI Archive/Analyzer: 集める・理解する・差を説明する
+- Demo Composer: 作る・試す・発散する
+- Arrangement Lab: 育てる・比較する・決める
+- Music Project Home: 案内する・つなぐ
 - Cubasis / Cubase: 本制作・完成
 
-## Publication validation
+## Previous publications
 
-- Local static checks: 178 PASS
-- Browser invocations: 17 PASS
-  - 初回は旧Composition Sheet v0.6とv0.8が失敗し、コード無変更の単独rerunでPASS
-  - intermittent causeは未確定
-- Published version assets: 38 preserved
-- Existing remote restore / backup / tag refs: 162 preserved
-- PR #255 hosted CI: exact head `8a73fcb55029f4bdb8d191d4e552f5122fc380fd`で7件PASS
-- Post-merge Pages: run `38662526913` PASS
-- Post-merge Release Check: run `38662526696` PASS
-- Post-merge AI Monitoring: run `38662526651` PASS
+### v0.16.1-dev — 2026-10-16
+
+mainでArrangement Lab受信初期化待ちとVersion / Build ID表示を修正。公開直前のmainは `800cd729da6231bb6820f44b79d15ebe81354233`。
+
+### v0.16-dev — 2026-10-16
+
+SongProject受信曲ID保持、保存完了待ち、交換情報の曲別保持、JSON復帰を修正。
+
+### v0.15-dev — 2026-10-15
+
+PR #255でmain/develop lineageを統合し、公開済みversion資産とSongProject境界回帰を確認。
 
 ## Stable
 
-未認定です。Android実機での保存・PWA・主要操作・Song.mid書き出しと、Cubasis / Cubase実機でのImport / 再生 / MIDI構造確認が完了し、結果をRepositoryへ記録した場合のみstable tagを作成します。
+未認定です。Android実機での保存・PWA・主要操作・発散モード・Song.mid書き出しと、必要なCubasis / Cubase実機でのImport / 再生 / MIDI構造確認が完了し、結果をRepositoryへ記録した場合のみstable tagを作成します。

@@ -7,6 +7,7 @@ await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir, { recursive: true });
 
 await copyFile('index.html', `${outputDir}/index.html`);
+await copyFile('divergence.html', `${outputDir}/divergence.html`);
 await cp('src', `${outputDir}/src`, { recursive: true });
 await cp('public', `${outputDir}/public`, { recursive: true });
 await cp('arranger', `${outputDir}/arranger`, { recursive: true });
@@ -25,10 +26,14 @@ await writeFile(`${outputDir}/src/core/build-info.js`, `export const BUILD_ID = 
 
 // HTMLだけが新しく、古いModuleが残る混在を避ける。全依存を同じBuild IDで固定。
 const stamp = (path) => `${path}${path.includes('?') ? '&' : '?'}build=${encodeURIComponent(commit)}`;
-const htmlPath = `${outputDir}/index.html`;
-const html = await readFile(htmlPath, 'utf8');
-await writeFile(htmlPath, html.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
-  (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
+async function stampHtml(htmlPath) {
+  const html = await readFile(htmlPath, 'utf8');
+  await writeFile(htmlPath, html.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
+    (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
+}
+
+await stampHtml(`${outputDir}/index.html`);
+await stampHtml(`${outputDir}/divergence.html`);
 
 async function stampModules(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -46,15 +51,12 @@ async function stampModules(directory) {
 await stampModules(`${outputDir}/src`);
 
 const arrangerHtmlPath = `${outputDir}/arranger/index.html`;
-const arrangerHtml = await readFile(arrangerHtmlPath, 'utf8');
-await writeFile(arrangerHtmlPath, arrangerHtml.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
-  (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
+await stampHtml(arrangerHtmlPath);
+await stampHtml(`${outputDir}/arranger/divergence.html`);
 await stampModules(`${outputDir}/arranger/src`);
 
 const projectHomeHtmlPath = `${outputDir}/project-home/index.html`;
-const projectHomeHtml = await readFile(projectHomeHtmlPath, 'utf8');
-await writeFile(projectHomeHtmlPath, projectHomeHtml.replace(/(src|href)=(['"])(\.\/[^'"]+\.(?:js|css))\2/g,
-  (_match, attribute, quote, path) => `${attribute}=${quote}${stamp(path)}${quote}`));
+await stampHtml(projectHomeHtmlPath);
 await stampModules(`${outputDir}/project-home`);
 await stampModules(`${outputDir}/sheet-app`);
 
@@ -71,11 +73,12 @@ async function collectPrecacheUrls(directory, urlPrefix) {
   return urls;
 }
 
-// Demo Composer本体・Project Home・作曲シートをオフライン用に事前Cacheする。
+// Demo Composer本体・発散モード・Project Home・作曲シートをオフライン用に事前Cacheする。
 // Arrangement Labは独自Service Workerを持つため、root workerでは二重管理しない。
 const precacheUrls = Array.from(new Set([
   './',
   './index.html',
+  './divergence.html',
   ...await collectPrecacheUrls(`${outputDir}/src`, './src'),
   ...await collectPrecacheUrls(`${outputDir}/public`, './public'),
   ...await collectPrecacheUrls(`${outputDir}/project-home`, './project-home'),

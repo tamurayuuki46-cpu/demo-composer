@@ -1,30 +1,3 @@
-## Version: v0.16.1-dev
-更新日: 2026-10-16
-
-【追加】
-・Arrangement Lab本体を1.5秒遅延させる通信回帰と、起動完了後のVersion / Build ID表示回帰。
-【変更】
-・受信UIは本体の初期化後に表示し、実Import処理の成功を待って反映済みとする。
-【修正】
-・通信が遅い場合、本体のイベント登録前に押した反映操作が消失する問題。
-・AIモニタリングが表示Versionをv0.15へ上書きし、Build IDを消す問題。
-【未対応】
-・Android / Cubasis / Cubase実機確認。stable tag未作成。
-
-## Version: v0.16-dev
-更新日: 2026-10-16
-
-【追加】
-・受け渡しのID・情報保持・キャンセル・保存失敗・JSON復帰を検証する回帰テスト。
-【変更】
-・SongProject書き出しと共通「曲データ」メニューで、現在曲の保存完了を待つ。
-【修正】
-・受信曲のIDが現在曲のIDへ置き換わり、元の解析・編曲・intentを再出力できなくなる問題。
-・固定120ms待ちにより直前の編集を取りこぼす可能性と、キャンセル前に受信済み扱いになる問題。
-・localStorageの一時キャッシュが使えない場合や別曲への切替後に交換情報を失う問題。
-【未対応】
-・Android / Cubasis / Cubase実機確認。stable tagは未作成。
-
 ## 2026-10-15 — v0.15-dev lineage reconciliation candidate
 
 【状態】
