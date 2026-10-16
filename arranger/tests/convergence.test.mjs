@@ -230,4 +230,41 @@ assert.equal(cv.findStructureBackup(m2, ids, 'other', T + 1), null);
 cv.purgeExpiredBackups(m2, ids, T + cv.RECOVERY_RETENTION_MS + 1);
 assert.equal(cv.findStructureBackup(m2, ids, planFp, T + 1), null);
 
+// --- dirty: 共通入口で編集前後のfingerprintを比較して記録 / 保存は記録済みdirtyだけ更新 / 非dirty不一致は外部変更
+{
+  let d = cv.createDirtyTracker();
+  let ds = cv.setDecision(cv.createEmptyState({ ...ids, planFingerprint: planFp }), cv.GLOBAL_KEY, B.id, 'adopted', { fingerprint: cv.globalFingerprintMap(src, B) });
+  ds = cv.setDecision(ds, cv.sectionKey('c'), B.id, 'adopted', { fingerprint: cv.slotFingerprint(src, B, 'c') });
+  ds = cv.setDecision(ds, cv.elementKey('c', 'drums'), B.id, 'adopted', { fingerprint: cv.slotFingerprint(src, B, 'c', 'drums') });
+  // 見た目だけの宣言ではなく、編集で実発音が変わった枠だけがdirtyになる
+  const edit1 = updateCandidateSection(B, 'c', { enabled: { counter: false } });
+  d = cv.recordEdit(d, ds, { source: src, before: B, after: edit1 });
+  assert.deepEqual(cv.dirtyKeys(d).sort(), ['global:c', 'section:c']); // drums枠・Verse枠は不変
+  // 変化しない編集(同内容)はdirtyにならない
+  assert.deepEqual(cv.dirtyKeys(cv.recordEdit(cv.createDirtyTracker(), ds, { source: src, before: B, after: updateCandidateSection(B, 'c', {}) })), []);
+  // 採用していない候補の編集は記録しない
+  assert.deepEqual(cv.dirtyKeys(cv.recordEdit(cv.createDirtyTracker(), ds, { source: src, before: A, after: updateCandidateSection(A, 'c', { enabled: { counter: false } }) })), []);
+  assert.throws(() => cv.recordEdit(d, ds, { source: src, before: B, after: C }), /一致しません/);
+  // 保存: dirtyは更新され、外部変更扱いにならない
+  const sv = cv.applySave(ds, d, { source: src, candidates: [A, edit1, C], now: T });
+  assert.deepEqual(sv.externalChanges, []);
+  assert.deepEqual(sv.refreshed.sort(), ['global:c', 'section:c']);
+  assert.equal(cv.getAdopted(sv.state, cv.sectionKey('c')).fingerprint, cv.slotFingerprint(src, edit1, 'c'));
+  assert.equal(cv.getAdopted(sv.state, cv.GLOBAL_KEY).fingerprint.c, cv.globalFingerprintMap(src, edit1).c);
+  assert.deepEqual(cv.dirtyKeys(sv.tracker), []);
+  assert.equal(Object.keys(sv.state.recovery).length, 0);
+  // 入口を通らない変更(未記録)は外部変更: Recoveryへ
+  const sneaky = cv.applySave(ds, cv.createDirtyTracker(), { source: src, candidates: [A, edit1, C], now: T });
+  assert.ok(sneaky.externalChanges.some((n) => n.key === 'section:c' && n.reason === 'external-change'));
+  assert.equal(cv.getAdopted(sneaky.state, cv.sectionKey('c')), null);
+  // dirtyとnon-dirtyが混在: dirty枠は更新、非dirty枠の不一致だけ外部変更
+  const edited = JSON.parse(JSON.stringify(src)); edited.tracks.find((t) => t.role === 'drums').notes[1].pitch = 42;
+  const mixed = cv.applySave(ds, d, { source: edited, candidates: [A, edit1, C], now: T });
+  assert.ok(mixed.refreshed.includes('section:c'));
+  assert.ok(mixed.externalChanges.some((n) => n.key === 'element:c:drums')); // drums枠はdirtyでない
+  // 純関数: 入力state・trackerは変更されない
+  assert.deepEqual(cv.dirtyKeys(d).sort(), ['global:c', 'section:c']);
+  assert.equal(cv.getAdopted(ds, cv.sectionKey('c')).fingerprint, cv.slotFingerprint(src, B, 'c'));
+}
+
 console.log('arranger convergence core tests: OK');
