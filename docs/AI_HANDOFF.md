@@ -4,7 +4,7 @@ ChatGPT / Codex と Claude の引き継ぎ正本。**作業を始める前にこ
 
 ## 現在の状態
 
-最終更新: 2026-10-17(Claude / develop `1939b4f` 時点)
+最終更新: 2026-10-17(Claude / branch `claude/real-device-prep-20261017` 時点。develop未merge)
 
 現在Version:
 - Demo Composer `v0.17-dev`(package `0.17.0-dev`) — ルート`VERSION`
@@ -26,7 +26,12 @@ ChatGPT / Codex と Claude の引き継ぎ正本。**作業を始める前にこ
 - Music Project Home v0.19-dev(司令塔。Editorは持たない)
 
 開発中:
-- 開発中のbranchなし(直近のPRはすべてdevelop統合済み)。進行中の作業は**実機1曲通しテストの準備のみ**(`docs/REAL_DEVICE_TEST.md`)。
+- `claude/real-device-prep-20261017`(develop起点・未merge): 実機1曲完走の準備。Work代理E2Eで見つけたバグ3件を修正。
+  - ↶ / ↷ が「📦 曲データ」ボタンに覆われUndo不能(`src/core/edit-history.css`、回帰: `scripts/browser-handoff-regression.cjs`)
+  - DAW引き継ぎZIPが1コーラス規模で書き出せない(`arranger/src/v05-workflow.js`の`createStoreZip`、回帰: `arranger/tests/v05-workflow.test.mjs`)。※`arranger/`の変更なのでChatGPT側にも共有する。
+  - Lab「受け取った曲を反映」直後の再読み込みで曲が消える(P1)。`arranger/src/app.js`の`importFile()`新規曲パスで、検証済みなら`arrangerSession.save()`を1回呼ぶ。回帰: `scripts/browser-handoff-regression.cjs`(修正前は失敗を確認)。※`arranger/`の変更・ユーザー承認済み。ChatGPT側へ共有する。
+- Work代理検証(390px・Android相当UA、**実機ではない**): Test Project `E2E_ONE_CHORUS_TEST`(5 Section / 32小節 / Chord・Main・裏メロ・Bass・Drums)でDemo → Lab → Song.midを通過。Song.mid(5 Track)は独立パーサで元Demoデータと照合して34/34一致。自動テスト164件PASS(Node 147 / Browser 17)。lint / typecheckはscriptなし(NOT AVAILABLE)。
+- 実機で確認する項目(USER TEST REQUIRED): Android PWA起動・再生音、Song.mid保存、Cubasis / BandLab Import・再生、Cubase Import・再生、1コーラス完走。
 
 次に実装:
 - **新機能は止める。** まずAndroid実機で1曲を通す(Demo Composer → Arrangement Lab → Song.mid → Cubasis → Cubase)。
@@ -42,6 +47,11 @@ ChatGPT / Codex と Claude の引き継ぎ正本。**作業を始める前にこ
 - 発散モードがDemo ComposerとArrangement Labの両方にあり、仕様が重複気味(統合は実機後に検討)。
 - `npm test`の一括コマンドはない。`package.json`の`test:*`を個別に実行する(`test:build-cache`は先に`npm run build`が必要)。
 - ルートの`undefined/`フォルダ(スクショ保存先の誤り)は未整理。
+- `arranger/tests/browser.test.cjs` は探索モード専用。初心者モード(既定)では `.mix-row` 等が非表示のため、CIと同じく `ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=explore'` を付けて実行する(付けないと `#mix-btn` でタイムアウトする)。
+- (仕様)Labの初心者モードでは「この案を採用」「Song.mid(採用案)」「編曲プランJSON」が非表示。⑥では「変更後 Song.mid」(6 Track・Chordsはch5)が出る。DAW gate準拠の5 Track版は「📦 曲データ → MIDI保存」か「もっと試す」で出す。両者のNote内容は一致を確認済み。
+- (仕様)Labの編集(Section密度など)は「この案を採用」・判断・Exportで保存される。その前に再読み込みすると失われる。
+- (仕様)Demo ComposerはBassがある間コードを追加できない。テンプレート構成で前のSectionにコードの空きがあると次のSectionへコピーできない(案内文は出る)。Bass候補は現在の1小節にだけ入る。
+- 未commitのbuildでは build idが同じため、Service Workerが古いCSS / JSを返すことがある(公開時はcommitごとにbuild idが変わる)。
 
 触らない部分:
 - SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4 / PPQ 480 / 4/4固定(Migrationなしに変更しない)

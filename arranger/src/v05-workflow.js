@@ -121,7 +121,10 @@ export function createStoreZip(files) {
   for (const entry of entries) {
     const crc = crc32(entry.bytes), size = entry.bytes.length;
     const header = [...le32(0x04034b50), ...le16(20), ...le16(0), ...le16(0), ...le16(stamp.time), ...le16(stamp.date), ...le32(crc), ...le32(size), ...le32(size), ...le16(entry.nameBytes.length), ...le16(0), ...entry.nameBytes];
-    local.push(...header, ...entry.bytes);
+    // Append byte-by-byte: spreading a large file into push() exceeds the JS argument limit
+    // ("Maximum call stack size exceeded") once a plan JSON grows past ~120KB (a 1-chorus song).
+    for (const byte of header) local.push(byte);
+    for (const byte of entry.bytes) local.push(byte);
     central.push(...le32(0x02014b50), ...le16(20), ...le16(20), ...le16(0), ...le16(0), ...le16(stamp.time), ...le16(stamp.date), ...le32(crc), ...le32(size), ...le32(size), ...le16(entry.nameBytes.length), ...le16(0), ...le16(0), ...le16(0), ...le16(0), ...le32(0), ...le32(offset), ...entry.nameBytes);
     offset += header.length + size;
   }
