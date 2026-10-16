@@ -132,6 +132,10 @@ async function downloadedJson(page, button) {
       await page.locator('#source-summary').getByText(editedTitle, { exact: true }).waitFor({ state: 'attached' });
       assert.ok(await page.locator('#candidate-tabs button').count() >= 3, 'received composition produces arrangement candidates');
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Arrangement overflows ${width}`);
+      // Reloading right after the handoff (before any decision/export) must keep the song in the Lab.
+      await page.reload();
+      await page.locator('#source-summary').getByText(editedTitle, { exact: true }).waitFor({ state: 'attached' });
+      assert.ok(await page.locator('#candidate-tabs button').count() >= 3, 'song survives reload right after handoff');
       await page.screenshot({ path: `test-results/handoff-${width}.png` });
       assert.deepEqual(errors, [], 'No application console errors');
       await context.close();

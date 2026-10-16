@@ -132,6 +132,8 @@ export async function importFile(file) {
     renderSource();
     renderCollisionSummary();
     generateCandidates();
+    // 反映直後に再読み込みしても曲が消えないよう、検証済みなら一度保存する(判断・書き出し前の空白をなくす)。
+    if (arrangerSession.validationReady) arrangerSession.save();
     flash(`「${state.source.title}」を読み込みました。`);
     return true;
   } catch (error) {

@@ -5,6 +5,7 @@ Version: v0.17-dev(Demo Composer) / v0.15-dev(Arrangement Lab) / v0.19-dev(Home)
 【修正】
 - スマホ幅(320〜430px)で ↶ / ↷ が「📦 曲データ」ボタンに完全に覆われ、Undoを押せなかった問題を修正(Demo ComposerのCSSのみ)。
 - Arrangement LabのDAW引き継ぎZIPが、1コーラス規模(Plan JSON約120KB超)で「Maximum call stack size exceeded」になり書き出せなかった問題を修正。ZIPの形式・中身は変更なし。
+- Arrangement Labで「受け取った曲を反映」した直後(判断・書き出し前)に再読み込みすると曲が消えていた問題を修正。新しい曲を読み込んだ時点で既存の保存処理を1回呼ぶ(Schema・保存形式は変更なし)。回帰テストを`scripts/browser-handoff-regression.cjs`に追加。
 
 【検証】
 - Demo Composer → Arrangement Lab → Song.midをWork代理E2Eで確認(390px・Android相当UA。実機ではない)。
