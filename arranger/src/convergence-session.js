@@ -19,6 +19,7 @@ export class ConvergenceSession {
     this.warning = null;
     this.structureOffer = null;
     this.undo = null;
+    this.readOnlyAux = false;
   }
   get selected() { return this.model.candidates[this.model.selectedIndex]; }
   makePlan(candidate = this.selected) {
@@ -32,7 +33,6 @@ export class ConvergenceSession {
     if (!this.model.source || !this.selected) return;
     this.model.arrangerProject ||= this.makePlan();
     if (restorePool) {
-      // Candidate pool is auxiliary data, not a Plan/SongProject schema change.
       try {
         const pool = JSON.parse(this.storage.getItem(candidatePoolKey(this.model.arrangerProject)) || 'null');
         if (Array.isArray(pool) && pool.length && pool.every(c => c?.id && this.model.source.sections.every(s => c.sections?.some(p => p.sectionId === s.id && p.bars === s.bars)))) {
@@ -65,8 +65,9 @@ export class ConvergenceSession {
   save({ plan = this.makePlan(), journal = plan.decisionJournal } = {}) {
     if (this.readOnlyAux) return { ok: false, error: 'unsupported-state' };
     const result = saveArrangerPlan({ storage: this.storage, source: this.model.source, candidates: this.model.candidates,
-      plan, convergenceState: this.state, journal, tracker: this.tracker, validationReady: this.validationReady });
-    // Memory stays usable for Export even when localStorage is unavailable.
+      plan, convergenceState: this.state, journal, tracker: this.tracker, validationReady: this.validationReady,
+      persistenceAllowed: !this.readOnlyAux });
+    // Candidate edits remain usable in memory for Export even if storage fails.
     this.model.arrangerProject = { ...plan, decisionJournal: clone(journal) };
     if (result.ok) {
       this.state = result.state;
@@ -77,7 +78,7 @@ export class ConvergenceSession {
   }
   current({ save = true } = {}) {
     if (!this.validationReady || !this.selected) throw new Error('先に曲と編曲案を用意してください。');
-    if (save) this.save(); // also used by implicit saves (comparison, Drum Fill etc.)
+    if (save) this.save(); // implicit saves (comparison, Drum Fill, Export) share the same path.
     const result = cv.resolveCurrentPlan(this.model.source, this.model.candidates, this.state, { defaultCandidateId: this.model.candidates[1]?.id || this.selected.id });
     const plan = this.makePlan(result.candidate);
     return { ...result, plan, source: this.model.source, carryOver: cv.carryOverList(this.state) };
@@ -86,46 +87,87 @@ export class ConvergenceSession {
     if (save) this.save();
     return { plan: this.makePlan(), source: this.model.source, candidate: this.selected };
   }
-  journal(text) {
-    this.model.arrangerProject = this.makePlan();
-    this.model.arrangerProject.decisionJournal = appendConvergenceJournal(this.model.arrangerProject.decisionJournal, text);
-  }
-  mutate(next, text) {
+  mutate(nextState, text) {
     if (!this.validationReady || this.readOnlyAux) throw new Error('収束判断は現在変更できません。');
-    this.undo = { state: this.state, journal: clone(this.model.arrangerProject?.decisionJournal) };
-    this.state = next;
-    this.journal(text);
-    this.save();
+    const previous = {
+      state: this.state,
+      tracker: this.tracker,
+      journal: clone(this.model.arrangerProject?.decisionJournal),
+      plan: this.model.arrangerProject,
+    };
+    const plan = this.makePlan();
+    const journal = appendConvergenceJournal(plan.decisionJournal, text);
+    plan.decisionJournal = journal;
+    const result = saveArrangerPlan({
+      storage: this.storage,
+      source: this.model.source,
+      candidates: this.model.candidates,
+      plan,
+      convergenceState: nextState,
+      journal,
+      tracker: this.tracker,
+      validationReady: this.validationReady,
+      persistenceAllowed: !this.readOnlyAux,
+    });
+    if (!result.ok) {
+      this.notify('判断を保存できませんでした。元の判断とdirty状態を保持します。', true);
+      return result;
+    }
+    this.undo = { state: previous.state, tracker: previous.tracker, journal: previous.journal, plan: previous.plan };
+    this.state = result.state;
+    this.tracker = result.tracker;
+    this.model.arrangerProject = result.plan;
+    if (result.message) this.notify(result.message, true);
+    return result;
   }
   decide(key, status, reasons = []) {
-    this.save();
     const info = cv.parseSlotKey(key), candidate = this.selected;
     const fingerprint = key === cv.GLOBAL_KEY ? cv.globalFingerprintMap(this.model.source, candidate)
       : cv.slotFingerprint(this.model.source, candidate, info.sectionId, info.element || null);
-    this.mutate(cv.setDecision(this.state, key, candidate.id, status, { fingerprint, reasons, now: Date.now() }), `${key} / ${candidate.label}: ${status}${reasons.length ? ` (${reasons.join(' / ')})` : ''}`);
+    return this.mutate(cv.setDecision(this.state, key, candidate.id, status, { fingerprint, reasons, now: Date.now() }), `${key} / ${candidate.label}: ${status}${reasons.length ? ` (${reasons.join(' / ')})` : ''}`);
   }
-  release(key) { this.save(); this.mutate(cv.releaseOverride(this.state, key, Date.now()), `${key} 上書き解除`); }
-  carry(key) { this.save(); this.mutate(cv.setCarryOver(this.state, key, { now: Date.now() }), `${key} DAWで決める`); }
+  release(key) { return this.mutate(cv.releaseOverride(this.state, key, Date.now()), `${key} 上書き解除`); }
+  carry(key) { return this.mutate(cv.setCarryOver(this.state, key, { now: Date.now() }), `${key} DAWで決める`); }
   undoDecision() {
-    if (!this.undo) return;
-    this.state = this.undo.state;
-    this.model.arrangerProject.decisionJournal = this.undo.journal;
+    if (!this.undo) return { ok: false, error: 'no-undo' };
+    const snapshot = this.undo;
+    const plan = this.makePlan();
+    plan.decisionJournal = clone(snapshot.journal);
+    const result = saveArrangerPlan({
+      storage: this.storage,
+      source: this.model.source,
+      candidates: this.model.candidates,
+      plan,
+      convergenceState: snapshot.state,
+      journal: snapshot.journal,
+      tracker: snapshot.tracker,
+      validationReady: this.validationReady,
+      persistenceAllowed: !this.readOnlyAux,
+    });
+    if (!result.ok) {
+      this.notify('Undoを保存できませんでした。現在の判断を保持します。', true);
+      return result;
+    }
+    this.state = result.state;
+    this.tracker = result.tracker;
+    this.model.arrangerProject = result.plan;
     this.undo = null;
-    this.save();
+    return result;
   }
   recover(key) {
     const result = key === 'structure' ? adoptStructureOffer({ offer: this.structureOffer, source: this.model.source, candidates: this.model.candidates })
       : cv.restoreRecovery(this.state, key, { source: this.model.source, candidates: this.model.candidates, now: Date.now() });
     if (!result.ok) throw new Error(`判断を復元できません: ${result.error}`);
-    this.mutate(result.state, result.journalText || '【収束】元の構造の判断を復元');
-    if (key === 'structure') this.structureOffer = null;
+    const saved = this.mutate(result.state, result.journalText || '【収束】元の構造の判断を復元');
+    if (saved.ok && key === 'structure') this.structureOffer = null;
+    return saved;
   }
   applySnapshot(planSnapshot) {
     const after = applySnapshotToCurrentSource({ planSnapshot, source: this.model.source, currentCandidate: this.selected });
     this.applyCandidateEdit(this.selected, after);
     const plan = this.makePlan();
     if (planSnapshot.decisionJournal) plan.decisionJournal = clone(planSnapshot.decisionJournal);
-    this.save({ plan });
+    return this.save({ plan });
   }
   rebase(nextSource) {
     const source = this.model.source;
@@ -141,9 +183,8 @@ export class ConvergenceSession {
     this.model.arrangerProject = this.makePlan();
     this.validationReady = false;
     try {
-    const checked = cv.checkPlanFingerprint(applied.state, { projectId: applied.state.projectId, planId: applied.state.planId, planFingerprint: cv.planStructureFingerprint(nextSource), now: Date.now() });
-    if (checked.backup) cv.writeStructureBackup(this.storage, applied.state, checked.backup);
-    // On structural change the contract resets judgments, retaining a recoverable backup.
+      const checked = cv.checkPlanFingerprint(applied.state, { projectId: applied.state.projectId, planId: applied.state.planId, planFingerprint: cv.planStructureFingerprint(nextSource), now: Date.now() });
+      if (checked.backup) cv.writeStructureBackup(this.storage, applied.state, checked.backup);
       this.state = cv.purgeExpiredRecovery(cv.verifyState(checked.state, { source: nextSource, candidates, now: Date.now() }).state, Date.now());
       this.warning = checked.structureChanged ? `構成変更: 追加 ${nextIds.filter(id => !previousIds.includes(id)).length} / 削除 ${previousIds.filter(id => !nextIds.includes(id)).length}。元の判断は退避しました。` : null;
       this.structureOffer = cv.findStructureBackup(this.storage, this.state, cv.planStructureFingerprint(nextSource), Date.now());
@@ -153,7 +194,8 @@ export class ConvergenceSession {
       this.warning = `収束判断を検証できませんでした: ${error.message}`;
     } finally { this.validationReady = true; }
     if (Number(nextSource.sourceRevision) < Number(source.sourceRevision)) this.warning = '古いrevisionのファイルを読み込みました。元のPlanと判断はバックアップ済みです。';
-    this.save();
-    return { backupKey, warning: this.warning };
+    const persisted = this.save();
+    if (!persisted.ok) this.notify('rebase結果は画面に保持しています。端末保存だけ失敗しました。', true);
+    return { backupKey, warning: this.warning, save: persisted };
   }
 }
