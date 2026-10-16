@@ -1,0 +1,4 @@
+Version: Arrangement Lab v0.14-dev
+更新日: 2026-10-17
+復元元: 7238547df016a3fbcbbb78d67410d64ad735fc7b
+収束UI配線前のArrangement Labと正式契約を保持。

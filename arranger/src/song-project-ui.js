@@ -1,6 +1,6 @@
 import { isSongProject, projectValueToSongProject, serializeSongProject } from '../../src/shared/song-project.js';
 import { songProjectToArrangementSourceInput, mergeArrangementChangesIntoSongProject } from './song-project-sync.js';
-import { importFile as applyArrangementFile } from './app.js';
+import { arrangerSession, confirmCurrentPlanExport, importFile as applyArrangementFile } from './app.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.4';
 const HANDOFF_KEY = 'music-project-songproject-handoff-v1';
@@ -13,7 +13,6 @@ const fileInput = document.querySelector('#project-file');
 const dropZone = document.querySelector('#drop-zone');
 const adoptButton = document.querySelector('#adopt-btn');
 const exportSongButton = document.querySelector('#export-song-project-btn');
-const convergence = () => window.__arrangerConvergence || null;
 
 function flash(message, isError = false) {
   const el = document.querySelector('#message');
@@ -185,54 +184,39 @@ dropZone?.addEventListener('drop', (event) => {
   routeFile(file).catch((error) => flash(error.message || 'SongProjectの読み込みに失敗しました。', true));
 }, true);
 
-function arrangerPlanForSongProject({ save = false } = {}) {
-  const api = convergence();
-  if (api?.currentPlanContext) return api.currentPlanContext({ save, journal: api.loadJournal?.() || null }).plan;
-  const saved = localStorage.getItem(STORAGE_KEY);
-  return saved ? JSON.parse(saved) : null;
-}
-
-function syncCurrentArrangement({ save = false } = {}) {
-  if (!currentSongProject) return false;
+function syncAdoptedArrangement() {
+  if (!currentSongProject) return;
   try {
-    const arrangerProject = arrangerPlanForSongProject({ save });
-    if (!arrangerProject) return false;
+    if (!arrangerSession.validationReady) return;
+    const { plan: arrangerProject } = arrangerSession.current();
     currentSongProject = mergeArrangementChangesIntoSongProject(currentSongProject, arrangerProject);
     exportSongButton.disabled = false;
-    return true;
   } catch (error) {
     flash(error.message || 'SongProjectへの編曲書き戻しに失敗しました。', true);
-    return false;
   }
 }
 
 adoptButton?.addEventListener('click', () => {
-  // app.jsの中央保存が完了した後にCurrent PlanをSongProjectへ反映する。
-  window.setTimeout(() => syncCurrentArrangement({ save: false }), 0);
+  window.setTimeout(syncAdoptedArrangement, 0);
 });
 
 exportSongButton?.addEventListener('click', async () => {
+  if (!await confirmCurrentPlanExport()) return;
   if (!currentSongProject) {
     flash('先に曲のJSONを読み込んでください。', true);
     return;
   }
-  try {
-    const api = convergence();
-    if (api?.prepareExport && !(await api.prepareExport())) return;
-    if (!syncCurrentArrangement({ save: true })) throw new Error('Current PlanをSongProjectへ反映できませんでした。');
-    const blob = new Blob([serializeSongProject(currentSongProject)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${safeFileName(currentSongProject.title)}_song_project_v1.json`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 500);
-    flash('画面のCurrent Planと同じArrangementを保持した共通SongProject v1を書き出しました。');
-  } catch (error) {
-    flash(error.message || 'SongProjectを書き出せませんでした。', true);
-  }
+  syncAdoptedArrangement();
+  const blob = new Blob([serializeSongProject(currentSongProject)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${safeFileName(currentSongProject.title)}_song_project_v1.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 500);
+  flash('Arrangementの変更を保持した共通SongProject v1を書き出しました。');
 });
 
 function safeFileName(value) {

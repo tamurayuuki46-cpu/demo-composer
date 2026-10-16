@@ -13,11 +13,13 @@ import {
   saveState,
   verifyState,
   writeStructureBackup,
+  stateKey,
 } from '../convergence/index.js';
 import { buildThreeCandidates, createArrangerProject, restoreArrangerProject } from './core.js';
 
 export const ARRANGER_PLAN_STORAGE_KEY = 'demo-composer-arranger-v0.4';
 export const ARRANGER_JOURNAL_STORAGE_KEY = 'demo-composer-arranger-decisions-v0.5';
+export const candidatePoolKey = (plan) => `demo-composer-arranger-candidates:${plan.source.projectId}:${plan.id}`;
 export const REBASE_BACKUP_PREFIX = 'demo-composer-arranger-rebase-backup-v1';
 
 const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
@@ -44,26 +46,25 @@ export function initializeConvergence({ storage, source, candidates, plan, journ
   try {
     loaded = loadState(storage, ids, now);
     const diagnosis = diagnoseLoad(loaded, journal);
-    const persistenceAllowed = !['unsupported', 'unavailable'].includes(diagnosis);
     let convergenceState = loaded.status === 'ok'
       ? loaded.state
       : createEmptyState({ ...ids, planFingerprint: fingerprint });
 
     const checked = checkPlanFingerprint(convergenceState, { ...ids, planFingerprint: fingerprint, now });
     let backupWrite = null;
-    if (checked.backup && persistenceAllowed) backupWrite = writeStructureBackup(storage, ids, checked.backup);
+    if (checked.backup) backupWrite = writeStructureBackup(storage, ids, checked.backup);
     convergenceState = checked.state;
 
     const verified = verifyState(convergenceState, { source, candidates, now });
     convergenceState = purgeExpiredRecovery(verified.state, now);
-    const structureOffer = persistenceAllowed ? findStructureBackup(storage, ids, fingerprint, now) : null;
+    const structureOffer = findStructureBackup(storage, ids, fingerprint, now);
 
     return {
       state: convergenceState,
       tracker: createDirtyTracker(),
       validationReady: true,
-      persistenceAllowed,
       diagnosis,
+      persistenceAllowed: !['unsupported', 'unavailable'].includes(diagnosis),
       warning: convergenceWarningFor(diagnosis) || verified.message || null,
       recoveries: listRecoveries(convergenceState, now),
       structureChanged: checked.structureChanged,
@@ -87,8 +88,8 @@ export function initializeConvergence({ storage, source, candidates, plan, journ
       state: fallback,
       tracker: createDirtyTracker(),
       validationReady: true,
-      persistenceAllowed: false,
       diagnosis: 'validation-error',
+      persistenceAllowed: false,
       warning: `収束判断を検証できませんでした: ${error?.message || String(error)}`,
       recoveries: [],
       structureChanged: false,
@@ -123,20 +124,24 @@ export function saveArrangerPlan({
   if (!persistenceAllowed) return { ok: false, error: 'convergence-persistence-blocked', state: convergenceState, tracker };
   if (!plan || !source || !convergenceState || !tracker) return { ok: false, error: 'missing-save-input', state: convergenceState, tracker };
 
-  let oldPlanRaw;
-  let oldJournalRaw;
+  let oldPlanRaw, oldJournalRaw, oldPoolRaw, oldAuxRaw, applied;
+  const poolKey = candidatePoolKey(plan), auxKey = stateKey(convergenceState);
   try {
     oldPlanRaw = storage.getItem(planStorageKey);
     oldJournalRaw = storage.getItem(journalStorageKey);
+    oldPoolRaw = storage.getItem(poolKey);
+    oldAuxRaw = storage.getItem(auxKey);
+    applied = applySave(convergenceState, tracker, { source, candidates, now });
+    const poolText = JSON.stringify(candidates);
+    storage.setItem(poolKey, poolText);
+    if (storage.getItem(poolKey) !== poolText) throw new Error('candidate-readback-mismatch');
   } catch (error) {
-    return { ok: false, error: `storage-read-failed:${error?.message || String(error)}`, state: convergenceState, tracker };
+    try { restoreRaw(storage, poolKey, oldPoolRaw); } catch { /* best effort */ }
+    return { ok: false, error: String(error), state: convergenceState, tracker };
   }
-
-  const applied = applySave(convergenceState, tracker, { source, candidates, now });
   const auxWrite = saveState(storage, applied.state);
   if (!auxWrite.ok) {
-    // readback mismatchを含め、部分書込みの可能性があるので旧stateをbest effortで戻す。
-    try { saveState(storage, convergenceState); } catch { /* best effort */ }
+    try { restoreRaw(storage, poolKey, oldPoolRaw); restoreRaw(storage, auxKey, oldAuxRaw); } catch { /* best effort */ }
     return { ok: false, error: `convergence-save-failed:${auxWrite.error || 'unknown'}`, state: convergenceState, tracker };
   }
 
@@ -154,7 +159,8 @@ export function saveArrangerPlan({
     }
   } catch (error) {
     // Plan/Journal失敗時は先に保存した補助状態も旧stateへ戻す。trackerは呼び出し側の旧値を保持する。
-    try { saveState(storage, convergenceState); } catch { /* best effort */ }
+    try { restoreRaw(storage, auxKey, oldAuxRaw); } catch { /* best effort */ }
+    try { restoreRaw(storage, poolKey, oldPoolRaw); } catch { /* best effort */ }
     try { restoreRaw(storage, planStorageKey, oldPlanRaw); } catch { /* best effort */ }
     try { restoreRaw(storage, journalStorageKey, oldJournalRaw); } catch { /* best effort */ }
     return { ok: false, error: `plan-save-failed:${error?.message || String(error)}`, state: convergenceState, tracker };
@@ -189,7 +195,9 @@ export function appendConvergenceJournal(journal, text, now = Date.now()) {
 }
 
 export function writeRebaseBackup(storage, { plan, convergenceState, tracker, now = Date.now() }) {
-  const key = `${REBASE_BACKUP_PREFIX}:${plan?.id || 'unknown'}:${now}`;
+  const baseKey = `${REBASE_BACKUP_PREFIX}:${plan?.id || 'unknown'}:${now}`;
+  let key = baseKey, suffix = 1;
+  while (storage.getItem(key) !== null) key = `${baseKey}-${suffix++}`;
   const payload = { plan: clone(plan), convergenceState: clone(convergenceState), tracker: clone(tracker), createdAt: now };
   storage.setItem(key, JSON.stringify(payload));
   return key;
@@ -208,6 +216,7 @@ function sourceMeta(source) {
 }
 
 export function rebaseSameProject({ plan, source, candidate, nextSource, convergenceState, tracker }) {
+  if (!persistenceAllowed) return { ok: false, error: 'convergence-persistence-blocked', state: convergenceState, tracker };
   if (!plan || !source || !candidate || !nextSource) throw new Error('rebaseに必要なPlan / source / candidateがありません。');
   const oldProjectId = source.sourceProjectId ?? plan.source?.projectId;
   if (String(oldProjectId) !== String(nextSource.sourceProjectId)) throw new Error('別Projectにはrebaseできません。');
@@ -257,7 +266,10 @@ export function applySnapshotToCurrentSource({ planSnapshot, source, currentCand
     styleName: currentCandidate.styleName,
   };
   const restored = restoreArrangerProject(synthetic, source);
-  return restored.candidate;
+  return { ...restored.candidate, sections: restored.candidate.sections.map((section) => {
+    const current = source.sections.find((item) => item.id === section.sectionId);
+    return { ...section, bars: current.bars, sectionName: current.name, kind: current.kind };
+  }) };
 }
 
 export function adoptStructureOffer({ offer, source, candidates, now = Date.now() }) {
