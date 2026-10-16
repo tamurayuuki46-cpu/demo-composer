@@ -2,6 +2,8 @@
 
 ## Canonical Data
 
+v0.16-devでは任意 `songProjectContext` に交換元SongProject v1を保持する。Schema 3は据え置きで、欠落する旧Projectも有効。IDが一致する場合だけ書き戻しに使用し、`compatibility.demoComposer.legacyProject`からはこの項目を除いて再帰埋め込みを防ぐ。詳細: `JSON_HANDOFF_GUIDE.md`。
+
 Demo Composer内の正本は `project.json`。
 
 現在Schema: **3（v0.3-dev）**。PPQ 480 / 4/4 / project.json正本は維持。以下のv0.2導入機能にある「schemaVersion 2」は導入当時の説明で、現行の音楽フィールドも同じ形を維持してSchema 3へ含めます。

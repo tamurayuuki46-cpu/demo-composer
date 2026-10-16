@@ -1,10 +1,15 @@
 # AI_HANDOFF
 
-更新日: 2026-10-15
+更新日: 2026-10-16
+
+## v0.16-dev 受け渡し修正
+
+現行sourceは `v0.16-dev` / package `0.16.0-dev`。main `8661c88a84a5efc051110f089a7e3f8bfd4cbfe7` 基準の `release/handoff-integrity-20261016` で受信曲ID保持・保存完了待ち・曲別交換情報保存を修正。
+以前の公開状態は下記v0.15の履歴を参照。最新の公開確認は `CURRENT_RELEASE.md`。stable tag未作成。
 
 ## 現在の状態
 
-- Published main: Demo Composer `v0.15-dev`
+- Previous publication record (2026-10-15): Demo Composer `v0.15-dev`
   - remote reference: `main`
   - reconciliation PR: #255
   - reconciliation merge: `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`
@@ -19,7 +24,7 @@ PR #252 / #253 / #254を含む統合候補は、PR #255からmerge commit方式�
 
 Component versions:
 
-- Demo Composer: `v0.15-dev` / package `0.15.0-dev`
+- Demo Composer source: `v0.16-dev` / package `0.16.0-dev`
 - Arrangement Lab: `v0.13-dev`
 - Music Project Home: `v0.18-dev`
 - Composition Sheet latest: `v0.9.1-dev`

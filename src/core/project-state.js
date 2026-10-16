@@ -536,9 +536,9 @@ export function createProjectStore(initialProject = createDefaultProject()) {
     },
 
     // project.jsonの読み込み。現在のProjectのidは維持し、中身だけを置き換える（Undoで戻せる）。
-    replaceProject(project) {
+    replaceProject(project, { preserveId = true } = {}) {
       const next = clone(project);
-      next.id = state.id;
+      if (preserveId) next.id = state.id;
       next.revision = state.revision + 1;
       validateProject(next);
       commit(next);

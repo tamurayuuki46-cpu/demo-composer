@@ -1,8 +1,20 @@
 # Current Release
 
-更新日: 2026-10-15
+更新日: 2026-10-16
 
-## Published main
+## Current source
+
+- Demo Composer: `v0.16-dev`
+- Release Branch: `release/handoff-integrity-20261016`（main基準）
+- Restore: `restore/main-before-handoff-integrity-20261016` / `8661c88a84a5efc051110f089a7e3f8bfd4cbfe7`
+- MIDI Archive/Analyzer: `v0.25-dev` / `5f21e143b0ebf8bc54e539ece08cb4dcf6e04084`
+- Arrangement Lab: `v0.13-dev`、Music Project Home: `v0.18-dev`、Composition Sheet: `v0.9.1-dev`
+- Contracts: Project Schema 3 / SongProject v1 / Arrangement Plan Schema 4
+
+v0.16は曲ID・所有情報の保持と保存完了待ちを修正。360/390/430pxでAnalyzer → Demo → Arrangementの明示反映、キャンセル・保存失敗時の候補保持、元曲保存、再読み込み、一時storage失敗時のJSON復帰を検証する。重大なConsole errorなし。
+実際の公開commitは公開URLの `build.json`、hosted CIと公開結果はGitHub Actionsを正本とする。stable tag未作成。
+
+## Previous publication — v0.15-dev (2026-10-15)
 
 - Demo Composer: `v0.15-dev`
 - remote reference: `main`

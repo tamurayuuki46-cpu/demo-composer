@@ -1,5 +1,11 @@
 # VERSION_HISTORY
 
+## v0.16-dev — 2026-10-16
+
+main基準の `release/handoff-integrity-20261016` でJSON受け渡しを修正。受信曲IDを維持し、元の曲を保存してから反映。解析・編曲・intent等を曲別に保持し、保存完了後に書き出す。
+Demo Project Schema 3 / SongProject v1 / Arrangement Plan Schema 4を維持。復元点: `restore/main-before-handoff-integrity-20261016`（`8661c88a84a5efc051110f089a7e3f8bfd4cbfe7`）。
+stable tagはAndroid・必要なCubasis/Cubase実機確認後のみ。
+
 ## 2026-10-15 — v0.15-dev reconciliation candidate
 
 - Development candidate: `integration/main-develop-reconcile-20261015`。公開済みmainへは未統合。

@@ -1,4 +1,3 @@
-import { loadActiveProject } from '../storage/indexeddb-storage.js';
 import {
   demoProjectToSongProject,
   mergeDemoChangesIntoSongProject,
@@ -12,8 +11,8 @@ const HANDOFF_KEY = 'music-project-songproject-handoff-v1';
 const HANDOFF_KIND = 'music-project-songproject-handoff';
 const HANDOFF_VERSION = 1;
 let installed = false;
+let projectBridge;
 
-function delay(ms) { return new Promise((resolve) => window.setTimeout(resolve, ms)); }
 function safeFileName(value) { return String(value || 'untitled').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80); }
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -154,11 +153,10 @@ function setPrimaryAction(id, label) {
 }
 
 async function currentSongProject() {
-  document.querySelector('#save-project')?.click();
-  await delay(120);
-  const project = await loadActiveProject();
+  const project = await projectBridge.getCurrentProject();
   if (!project) throw new Error('現在のProjectを端末保存から取得できませんでした。');
-  const source = loadSourceSongProject(project.id);
+  const source = project.songProjectContext?.projectId === project.id
+    ? project.songProjectContext : loadSourceSongProject(project.id);
   const songProject = source
     ? mergeDemoChangesIntoSongProject(source, project)
     : demoProjectToSongProject(project);
@@ -192,22 +190,17 @@ async function exportSongProject({ forArrangement = false } = {}) {
   }
 }
 
-async function importSongProjectData(data, { fromHandoff = false } = {}) {
+export async function importSongProjectData(data, { fromHandoff = false } = {}) {
   const demoProject = songProjectToDemoProject(data);
-  const target = document.querySelector('#import-project-file');
-  if (!target || typeof DataTransfer !== 'function') throw new Error('このブラウザではSongProject Importを利用できません。');
+  if (!await projectBridge.applyProject(demoProject)) return false;
   storeSourceSongProject(data);
-  const converted = new File([JSON.stringify(demoProject, null, 2)], `${safeFileName(data.title)}_project.json`, { type: 'application/json' });
-  const transfer = new DataTransfer();
-  transfer.items.add(converted);
-  target.files = transfer.files;
-  target.dispatchEvent(new Event('change', { bubbles: true }));
   if (fromHandoff) clearHandoff('demo-composer');
   const message = `「${data.title}」をDemo Composerへ反映しました。1小節のフレーズだけでもArrangement Labへ進めます。`;
   setStatus(message);
   updateGuideStatus(message);
   setPrimaryAction('#handoff-export-arranger', '1小節できたらArrangement Labへ渡す');
   window.setTimeout(enhanceExportPanel, 0);
+  return true;
 }
 
 async function importSongProject(file) {
@@ -304,8 +297,9 @@ function enhanceExportPanel() {
   revealPendingHandoff();
 }
 
-export function installSongProjectUi() {
+export function installSongProjectUi(bridge) {
   if (installed) return;
+  projectBridge = bridge;
   installed = true;
   enhanceExportPanel();
   const screen = document.querySelector('#screen');

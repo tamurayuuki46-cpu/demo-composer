@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { APP_VERSION } from '../src/core/project-schema.js';
+const version = (await readFile('VERSION', 'utf8')).trim();
+const pkg = JSON.parse(await readFile('package.json', 'utf8'));
+const html = await readFile('index.html', 'utf8');
+assert.equal(APP_VERSION, version, 'Project version must match release version');
+assert.equal(`v${pkg.version.replace(/\.0(?=-)/, '')}`, version, 'Package version must match release version');
+assert.ok(html.includes(`<span class="version">${version}</span>`), 'Visible version must match release version');
+console.log(`Version consistency passed: ${version}`);
