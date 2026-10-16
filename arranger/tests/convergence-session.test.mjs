@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { ConvergenceSession } from '../src/convergence-session.js';
 import { initializeConvergence, ARRANGER_PLAN_STORAGE_KEY, ARRANGER_JOURNAL_STORAGE_KEY } from '../src/convergence-integration.js';
-import { normalizeSourceProject, buildThreeCandidates, updateCandidateSection, createArrangerProject } from '../src/core.js';
+import { normalizeSourceProject, buildThreeCandidates, updateCandidateSection } from '../src/core.js';
 import { createSongMidi } from '../src/v05-tools.js';
 import { createDawHandoffBundle } from '../src/v05-workflow.js';
 import * as cv from '../convergence/index.js';
@@ -27,6 +27,12 @@ session.applyCandidateEdit(before,after); assert.ok(cv.dirtyKeys(session.tracker
 const pendingTracker = session.tracker, priorState = session.state;
 storage.failKey = ARRANGER_JOURNAL_STORAGE_KEY;
 assert.equal(session.save().ok,false); assert.equal(session.tracker,pendingTracker); assert.equal(session.state,priorState);
+storage.failKey = null;
+// Decision mutations are also transactional: failed Journal write cannot replace state/tracker in memory.
+const stateBeforeFailedDecision = session.state, trackerBeforeFailedDecision = session.tracker;
+storage.failKey = ARRANGER_JOURNAL_STORAGE_KEY;
+const failedDecision = session.decide('section:s1','hold',['もう一度比較']);
+assert.equal(failedDecision.ok,false); assert.equal(session.state,stateBeforeFailedDecision); assert.equal(session.tracker,trackerBeforeFailedDecision);
 storage.failKey = null;
 // current() is the implicit save used by comparison/Export; it must apply dirty.
 const current = session.current(); assert.equal(cv.dirtyKeys(session.tracker).length,0); assert.equal(cv.listRecoveries(session.state,Date.now()).length,0);
@@ -60,6 +66,10 @@ storage.setItem(cv.stateKey(reload.state),'broken'); reload.initialize(); assert
 const malformed=cv.createEmptyState({projectId:model.source.sourceProjectId,planId,planFingerprint:cv.planStructureFingerprint(model.source)}); malformed.slots.global=null;
 cv.saveState(storage,malformed); const boot=initializeConvergence({storage,source:model.source,candidates:model.candidates,plan:model.arrangerProject});
 assert.equal(boot.validationReady,true); assert.equal(boot.diagnosis,'validation-error'); assert.ok(boot.warning);
+// A newer auxiliary schema is read-only and must not be overwritten.
+const unsupported=open(); const unsupportedKey=cv.stateKey({projectId:unsupported.model.source.sourceProjectId,planId:unsupported.model.arrangerProject.id});
+const future='{"storageSchemaVersion":999,"future":true}'; unsupported.storage.setItem(unsupportedKey,future); unsupported.initialize();
+assert.equal(unsupported.readOnlyAux,true); assert.equal(unsupported.save().ok,false); assert.equal(unsupported.storage.getItem(unsupportedKey),future);
 // Export works even with every storage write blocked.
 const failing=open(); failing.decide('global','adopted'); failing.storage.failKey='*'; assert.ok(createSongMidi(failing.current().source,failing.current().candidate));
 // Carry-over reaches actual ZIP bytes, while Plan remains schema 4.
@@ -67,8 +77,8 @@ const carry=open(); carry.carry('section:s1'); carry.carry('section:s2');
 const handoff=carry.current(); assert.equal(handoff.unresolved.length,0); assert.equal(handoff.plan.arrangerSchemaVersion,4);
 const zip=createDawHandoffBundle(handoff.source,handoff.candidate,handoff.plan,{carryOver:handoff.carryOver});
 const decoded=new TextDecoder().decode(zip); assert.ok(decoded.includes('## DAWで決める\n- A / section\n- サビ / section'));
-// Structure changes are backed up per contract; returning structure offers recovery.
+// Structure changes are backed up per contract; added sections use a fresh template and removed sections disappear.
 const structural=open(); structural.decide('global','adopted'); const expanded=raw(2); expanded.structure.sections.push({id:'s3',kind:'outro',name:'Outro',bars:1});
-structural.rebase(normalizeSourceProject(expanded)); assert.match(structural.warning,/追加 1 \/ 削除 0/); assert.equal(cv.getAdopted(structural.state,'global'),null);
-structural.rebase(normalizeSourceProject(raw(3))); assert.ok(structural.structureOffer); structural.recover('structure'); assert.equal(structural.current().unresolved.length,0);
-console.log('PASS convergence session: edit/implicit save/rollback/rebase/snapshot/reload/project isolation/warnings/verify gate/Export/ZIP/structure recovery');
+structural.rebase(normalizeSourceProject(expanded)); assert.match(structural.warning,/追加 1 \/ 削除 0/); assert.equal(cv.getAdopted(structural.state,'global'),null); assert.ok(structural.selected.sections.some(s=>s.sectionId==='s3'));
+structural.rebase(normalizeSourceProject(raw(3))); assert.ok(structural.structureOffer); assert.equal(structural.selected.sections.some(s=>s.sectionId==='s3'),false); structural.recover('structure'); assert.equal(structural.current().unresolved.length,0);
+console.log('PASS convergence session: edit/implicit save/transactional rollback/rebase/snapshot/reload/project isolation/warnings/verify gate/read-only state/Export/ZIP/structure recovery');
