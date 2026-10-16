@@ -36,8 +36,6 @@ jobs:
           node --check arranger/src/v05-tools.js
           node --check arranger/src/v05-workflow.js
           node --check arranger/src/v05-ui.js
-          node --check arranger/src/convergence-integration.js
-          node --check arranger/src/convergence-ui.js
           node --check arranger/src/workflow-boundary-ui.js
           node --check arranger/src/beginner-flow.js
           node --check arranger/src/song-project-sync.js
@@ -49,6 +47,7 @@ jobs:
         run: |
           node arranger/tests/convergence.test.mjs
           node arranger/tests/convergence-integration.test.mjs
+          node arranger/tests/convergence-session.test.mjs
           node arranger/tests/core.test.mjs
           node arranger/tests/regression.test.mjs
           node arranger/tests/features.test.mjs
@@ -68,8 +67,6 @@ jobs:
           test -f dist/arranger/src/v05-tools.js
           test -f dist/arranger/src/v05-workflow.js
           test -f dist/arranger/src/v05-ui.js
-          test -f dist/arranger/src/convergence-integration.js
-          test -f dist/arranger/src/convergence-ui.js
           test -f dist/arranger/src/workflow-boundary-ui.js
           test -f dist/arranger/src/beginner-flow.js
           test -f dist/arranger/src/song-project-sync.js
@@ -85,6 +82,7 @@ jobs:
           ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=explore' node arranger/tests/browser.test.cjs
           ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=beginner' node arranger/tests/song-data-menu-browser.test.cjs
           ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=beginner' node arranger/tests/onebar-reharm-browser.test.cjs
+          node arranger/tests/convergence-browser.test.cjs
           node arranger/tests/v05-browser.test.cjs
           node arranger/tests/v06-browser.test.cjs
           node arranger/tests/pwa-update.test.cjs

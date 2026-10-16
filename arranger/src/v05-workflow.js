@@ -129,24 +129,12 @@ export function createStoreZip(files) {
   return new Uint8Array([...local, ...central, ...le32(0x06054b50), ...le16(0), ...le16(0), ...le16(entries.length), ...le16(entries.length), ...le32(central.length), ...le32(centralOffset), ...le16(0)]);
 }
 
-function carryOverInstruction(plan) {
-  const rows = Array.isArray(plan?.convergenceCarryOver) ? plan.convergenceCarryOver : [];
-  if (!rows.length) return '';
-  const lines = ['# DAWで決める', '', 'Arrangement Labで未確定のままDAWへ持ち越した項目。Song.mid単体にはこのメモは含まれません。', ''];
-  for (const row of rows) {
-    const scope = row.level === 'global' ? '曲全体' : row.level === 'element' ? `${row.sectionId} / ${row.element}` : row.sectionId;
-    lines.push(`- ${scope}${row.note ? ` — ${row.note}` : ''}`);
-  }
-  return `${lines.join('\n')}\n\n---\n\n`;
-}
-
-function sectionInstruction(source, candidate, journal, plan) {
+function sectionInstruction(source, candidate, journal) {
   const latest = latestDecisionBySection(journal);
-  const body = source.sections.map((section) => {
-    const sectionPlanValue = sectionPlan(candidate, section.id) || {}, enabled = Object.entries(sectionPlanValue.enabled || {}).filter(([, value]) => value).map(([key]) => key).join(', ') || 'none', decision = latest[section.id];
-    return [`## ${section.name}`, `- Bars: ${section.bars}`, `- Density: ${sectionPlanValue.density || 'standard'}`, `- Active: ${enabled}`, `- Reharm: ${sectionPlanValue.reharmonization?.label || '元コード'}`, `- Harmony pattern: ${sectionPlanValue.harmonyPattern || 'sustain'}`, `- Lead role: ${sectionPlanValue.leadRole || 'melody'}`, `- Decision: ${decision ? `${decision.statusLabel}${decision.reason ? ` — ${decision.reason}` : ''}` : '未記録'}`].join('\n');
+  return source.sections.map((section) => {
+    const plan = sectionPlan(candidate, section.id) || {}, enabled = Object.entries(plan.enabled || {}).filter(([, value]) => value).map(([key]) => key).join(', ') || 'none', decision = latest[section.id];
+    return [`## ${section.name}`, `- Bars: ${section.bars}`, `- Density: ${plan.density || 'standard'}`, `- Active: ${enabled}`, `- Reharm: ${plan.reharmonization?.label || '元コード'}`, `- Harmony pattern: ${plan.harmonyPattern || 'sustain'}`, `- Lead role: ${plan.leadRole || 'melody'}`, `- Decision: ${decision ? `${decision.statusLabel}${decision.reason ? ` — ${decision.reason}` : ''}` : '未記録'}`].join('\n');
   }).join('\n\n');
-  return `${carryOverInstruction(plan)}${body}`;
 }
 function trackInstructions(source, candidate) {
   const lines = ['# Track Instructions', '', 'Cubasis / Cubaseへ読み込んだ後の作業メモ。', ''];
@@ -154,19 +142,19 @@ function trackInstructions(source, candidate) {
   lines.push('', '音色、Humanize、Automation、Mix/MasteringはDAW側で確定する。'); return lines.join('\n');
 }
 function dawChecklist() {
-  return ['# DAW Handoff Checklist', '', '- [ ] Tempoと4/4が正しく読み込まれた', '- [ ] Section Markerを確認した', '- [ ] Melody / Harmony / Bass / Drums / CounterのTrackを確認した', '- [ ] DrumsがMIDI ch10として読み込まれた', '- [ ] 変更前Song.midと変更後Song.midをA/Bした', '- [ ] 「DAWで決める」の項目を確認した', '- [ ] 確定事項だけ本制作へ反映した', '- [ ] 音色・Humanize・MixはDAWで調整した'].join('\n');
+  return ['# DAW Handoff Checklist', '', '- [ ] Tempoと4/4が正しく読み込まれた', '- [ ] Section Markerを確認した', '- [ ] Melody / Harmony / Bass / Drums / CounterのTrackを確認した', '- [ ] DrumsがMIDI ch10として読み込まれた', '- [ ] 変更前Song.midと変更後Song.midをA/Bした', '- [ ] 「保留」「気になる」のSectionを先に確認した', '- [ ] 確定事項だけ本制作へ反映した', '- [ ] 音色・Humanize・MixはDAWで調整した'].join('\n');
 }
 
-export function createDawHandoffBundle(source, candidate, plan) {
+export function createDawHandoffBundle(source, candidate, plan, { carryOver = [] } = {}) {
   const baseline = createBaselineCandidate(source, candidate), before = createSongMidi(source, baseline), after = createSongMidi(source, candidate);
   if (!after) throw new Error('DAWパックに書き出せるNoteがありません。');
   const project = createDemoComposerProject(source, candidate), journal = ensureDecisionJournal(plan, candidate);
-  const manifest = { version: ARRANGER_V05_VERSION, title: source.title, exportedAt: new Date().toISOString(), changedParts: buildChangedPartsManifest(source, candidate), decisionCount: journal.entries.length, carryOverCount: plan?.convergenceCarryOver?.length || 0 };
+  const manifest = { version: ARRANGER_V05_VERSION, title: source.title, exportedAt: new Date().toISOString(), changedParts: buildChangedPartsManifest(source, candidate), decisionCount: journal.entries.length };
   const files = {
     '01_compare/Before_Source_Song.mid': before || new Uint8Array(), '01_compare/After_Arrangement_Song.mid': after,
     '02_plan/Arrangement_Plan.json': JSON.stringify({ ...clone(plan), decisionJournal: journal }, null, 2),
     '02_plan/Demo_Composer_Project.json': JSON.stringify(project, null, 2),
-    '03_notes/TRACK_INSTRUCTIONS.md': trackInstructions(source, candidate), '03_notes/SECTION_INSTRUCTIONS.md': sectionInstruction(source, candidate, journal, plan),
+    '03_notes/TRACK_INSTRUCTIONS.md': trackInstructions(source, candidate), '03_notes/SECTION_INSTRUCTIONS.md': ['# Section Instructions', '', ...(carryOver.length ? ['## DAWで決める', ...carryOver.map(item => `- ${source.sections.find(s => s.id === item.sectionId)?.name || item.sectionId || '全体'} / ${item.element || item.level}${item.note ? `: ${item.note}` : ''}`), ''] : []), sectionInstruction(source, candidate, journal)].join('\n'),
     '03_notes/DAW_CHECKLIST.md': dawChecklist(), '03_notes/DECISIONS.json': JSON.stringify(journal, null, 2), '03_notes/COMPARE_MANIFEST.json': JSON.stringify(manifest, null, 2),
   };
   for (const part of PARTS) { const midi = createPartMidi(source, candidate, part); if (midi) files[`04_parts/${part}.mid`] = midi; }
