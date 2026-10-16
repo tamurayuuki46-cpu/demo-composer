@@ -13,11 +13,13 @@ import {
   saveState,
   verifyState,
   writeStructureBackup,
+  stateKey,
 } from '../convergence/index.js';
 import { buildThreeCandidates, createArrangerProject, restoreArrangerProject } from './core.js';
 
 export const ARRANGER_PLAN_STORAGE_KEY = 'demo-composer-arranger-v0.4';
 export const ARRANGER_JOURNAL_STORAGE_KEY = 'demo-composer-arranger-decisions-v0.5';
+export const candidatePoolKey = (plan) => `demo-composer-arranger-candidates:${plan.source.projectId}:${plan.id}`;
 export const REBASE_BACKUP_PREFIX = 'demo-composer-arranger-rebase-backup-v1';
 
 const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
@@ -118,11 +120,26 @@ export function saveArrangerPlan({
   if (!validationReady) return { ok: false, error: 'validation-not-ready', state: convergenceState, tracker };
   if (!plan || !source || !convergenceState || !tracker) return { ok: false, error: 'missing-save-input', state: convergenceState, tracker };
 
-  const oldPlanRaw = storage.getItem(planStorageKey);
-  const oldJournalRaw = storage.getItem(journalStorageKey);
-  const applied = applySave(convergenceState, tracker, { source, candidates, now });
+  let oldPlanRaw, oldJournalRaw, oldPoolRaw, oldAuxRaw, applied;
+  const poolKey = candidatePoolKey(plan), auxKey = stateKey(convergenceState);
+  try {
+    oldPlanRaw = storage.getItem(planStorageKey);
+    oldJournalRaw = storage.getItem(journalStorageKey);
+    oldPoolRaw = storage.getItem(poolKey);
+    oldAuxRaw = storage.getItem(auxKey);
+    applied = applySave(convergenceState, tracker, { source, candidates, now });
+    const poolText = JSON.stringify(candidates);
+    storage.setItem(poolKey, poolText);
+    if (storage.getItem(poolKey) !== poolText) throw new Error('candidate-readback-mismatch');
+  } catch (error) {
+    try { restoreRaw(storage, poolKey, oldPoolRaw); } catch { /* best effort */ }
+    return { ok: false, error: String(error), state: convergenceState, tracker };
+  }
   const auxWrite = saveState(storage, applied.state);
-  if (!auxWrite.ok) return { ok: false, error: `convergence-save-failed:${auxWrite.error || 'unknown'}`, state: convergenceState, tracker };
+  if (!auxWrite.ok) {
+    try { restoreRaw(storage, poolKey, oldPoolRaw); restoreRaw(storage, auxKey, oldAuxRaw); } catch { /* best effort */ }
+    return { ok: false, error: `convergence-save-failed:${auxWrite.error || 'unknown'}`, state: convergenceState, tracker };
+  }
 
   const nextPlan = clone(plan);
   if (journal) nextPlan.decisionJournal = clone(journal);
@@ -138,7 +155,8 @@ export function saveArrangerPlan({
     }
   } catch (error) {
     // Plan/Journal失敗時は先に保存した補助状態も旧stateへ戻す。trackerは呼び出し側の旧値を保持する。
-    saveState(storage, convergenceState);
+    try { restoreRaw(storage, auxKey, oldAuxRaw); } catch { /* best effort */ }
+    try { restoreRaw(storage, poolKey, oldPoolRaw); } catch { /* best effort */ }
     try { restoreRaw(storage, planStorageKey, oldPlanRaw); } catch { /* best effort */ }
     try { restoreRaw(storage, journalStorageKey, oldJournalRaw); } catch { /* best effort */ }
     return { ok: false, error: `plan-save-failed:${error?.message || String(error)}`, state: convergenceState, tracker };
@@ -173,7 +191,9 @@ export function appendConvergenceJournal(journal, text, now = Date.now()) {
 }
 
 export function writeRebaseBackup(storage, { plan, convergenceState, tracker, now = Date.now() }) {
-  const key = `${REBASE_BACKUP_PREFIX}:${plan?.id || 'unknown'}:${now}`;
+  const baseKey = `${REBASE_BACKUP_PREFIX}:${plan?.id || 'unknown'}:${now}`;
+  let key = baseKey, suffix = 1;
+  while (storage.getItem(key) !== null) key = `${baseKey}-${suffix++}`;
   const payload = { plan: clone(plan), convergenceState: clone(convergenceState), tracker: clone(tracker), createdAt: now };
   storage.setItem(key, JSON.stringify(payload));
   return key;
@@ -241,7 +261,10 @@ export function applySnapshotToCurrentSource({ planSnapshot, source, currentCand
     styleName: currentCandidate.styleName,
   };
   const restored = restoreArrangerProject(synthetic, source);
-  return restored.candidate;
+  return { ...restored.candidate, sections: restored.candidate.sections.map((section) => {
+    const current = source.sections.find((item) => item.id === section.sectionId);
+    return { ...section, bars: current.bars, sectionName: current.name, kind: current.kind };
+  }) };
 }
 
 export function adoptStructureOffer({ offer, source, candidates, now = Date.now() }) {

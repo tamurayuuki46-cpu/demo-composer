@@ -33,7 +33,7 @@ function rawProject(revision = 1, sections = null) {
     chords: [{ root: 0, quality: 'major', startTick: 0, durationTick: 7680 }],
     tracks: [
       { role: 'melody', midiChannel: 2, notes: [{ pitch: 64, startTick: 0, durationTick: 480, velocity: 100 }] },
-      { role: 'drums', midiChannel: 10, notes: [{ pitch: 36, startTick: 0, durationTick: 120, velocity: 110 }] },
+      { role: 'drums', midiChannel: 10, notes: [0, 3840].map(startTick => ({ pitch: 36, startTick, durationTick: 120, velocity: 110 })) },
       { role: 'counter', midiChannel: 4, notes: [{ pitch: 72, startTick: 2400, durationTick: 480, velocity: 90 }] },
     ],
   };
