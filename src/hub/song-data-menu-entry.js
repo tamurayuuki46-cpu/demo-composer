@@ -1,4 +1,5 @@
-import { loadActiveProject } from '../storage/indexeddb-storage.js';
+import { saveSongProjectSnapshot } from '../main.js';
+import { importSongProjectData } from './song-project-ui.js';
 import { downloadMidiBundle } from '../midi/midi-export.js';
 import {
   demoProjectToSongProject,
@@ -60,16 +61,15 @@ function writeHandoff(songProject, targetApp, sourceApp = 'demo-composer') {
 }
 
 async function getCurrentDemoProject() {
-  document.querySelector('#save-project')?.click();
-  await delay(120);
-  const project = await loadActiveProject();
+  const project = await saveSongProjectSnapshot();
   if (!project) throw new Error('現在の曲を取得できませんでした。先にProjectを作成してください。');
   return project;
 }
 
 async function getCurrentSongProject() {
   const project = await getCurrentDemoProject();
-  const source = readSource(project.id);
+  const source = project.songProjectContext?.projectId === project.id
+    ? project.songProjectContext : readSource(project.id);
   const songProject = source ? mergeDemoChangesIntoSongProject(source, project) : demoProjectToSongProject(project);
   writeSource(songProject);
   return songProject;
@@ -77,22 +77,7 @@ async function getCurrentSongProject() {
 
 async function applyImportedSongProject(songProject) {
   document.querySelector('.nav-btn[data-screen="hub"]')?.click();
-  for (let i = 0; i < 16; i += 1) {
-    await delay(50);
-    const input = document.querySelector('#import-song-project-file');
-    if (!input || typeof DataTransfer !== 'function') continue;
-    const file = new File(
-      [serializeSongProject(songProject)],
-      `${safeFileName(songProject.title)}_song_project_v1.json`,
-      { type: 'application/json' },
-    );
-    const transfer = new DataTransfer();
-    transfer.items.add(file);
-    input.files = transfer.files;
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    return;
-  }
-  throw new Error('曲データの受け取り画面を開けませんでした。Hubから保存したJSONを選んでください。');
+  return importSongProjectData(songProject);
 }
 
 const picker = document.createElement('input');
@@ -109,7 +94,10 @@ picker.addEventListener('change', async () => {
   if (!selected) return;
   try {
     const songProject = parseProjectJsonToSongProject(await selected.text());
-    await applyImportedSongProject(songProject);
+    if (!await applyImportedSongProject(songProject)) {
+      controller?.setStatus('曲データの反映をキャンセルしました。');
+      return;
+    }
     controller?.setCurrent(songProject.title);
     controller?.setStatus(`「${songProject.title || 'Untitled Project'}」を開きました。`, 'success');
   } catch (error) {

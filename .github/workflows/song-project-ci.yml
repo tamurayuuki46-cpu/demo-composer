@@ -51,7 +51,9 @@ jobs:
         run: node scripts/song-project-cross-app-boundary-smoke-test.mjs
 
       - name: JSON handoff guide smoke test
-        run: node scripts/json-handoff-guide-smoke-test.mjs
+        run: |
+          node scripts/json-handoff-guide-smoke-test.mjs
+          node scripts/handoff-preservation-smoke-test.mjs
 
       - name: Project Home Claude link smoke test
         run: node scripts/project-home-claude-link-smoke-test.mjs

@@ -4,7 +4,7 @@ Androidスマホ中心の作曲支援PWAです。
 
 ## Version status
 
-- Published main: `v0.15-dev` (`main`; reconciliation PR #255 / merge `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`)
+- Current source: `v0.16-dev`（main基準の受け渡し修正。公開状況は `docs/CURRENT_RELEASE.md`）
 - Development branch: `develop` / `b322cb47282261db720bf3b74caf455cb56c9cf7`（mainからのcatch-up前）
 - Stable: 未認定
 
@@ -34,6 +34,10 @@ PC DAWは最終工程として必須です。
 - Cubasis / Cubase = 本制作・完成
 
 正本: `docs/WORKFLOW_PRINCIPLES.md`
+
+## v0.16-dev
+
+曲データを反映する際は現在の曲を保存して残し、受信曲のIDを維持します。保存完了後にJSONを書き出すため、直前の編集も反映されます。解析・編曲・intent等の交換情報は曲別に端末保存するので、一時受け渡しが使えない場合も保存済みJSONから復帰できます。詳細: `docs/JSON_HANDOFF_GUIDE.md`。
 
 ## v0.15-dev
 

@@ -22,7 +22,9 @@ jobs:
         run: npm run test:syntax
 
       - name: SongProject round-trip
-        run: node scripts/song-project-smoke-test.mjs
+        run: |
+          node scripts/song-project-smoke-test.mjs
+          node scripts/handoff-preservation-smoke-test.mjs
 
       - name: Arrangement Lab regression
         run: |
