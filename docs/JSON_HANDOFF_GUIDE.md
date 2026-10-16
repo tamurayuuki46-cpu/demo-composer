@@ -2,6 +2,20 @@
 
 更新日: 2026-10-14
 
+追記: 2026-10-16 / v0.16-dev
+
+v0.16.1: Arrangement Labの受信UIは本体app.jsへ明示依存し、本体のImport完了をawaitする。初期化前のイベント送出やDOMの変化を反映成功の代わりにしない。本体Scriptを1.5秒遅延すると旧実装では反映に失敗することを再現し、同じ条件で成功を確認する。反映失敗時は受信候補を保持する。
+
+## 保存・反映の完了判定
+
+Demo Composerでは現在曲の保存完了を待ってJSONを書き出す。受信時は元の曲を端末保存してから、受信曲を元のProject IDで保存・反映する。確認のキャンセルや保存失敗時は一時受け渡し候補を保持する。
+共通「曲データ」メニューも同じ完了を待つ処理を使用する。従来のproject.json置き換え・MIDI取り込みでは既存のID保持動作を維持する。
+
+受信曲の解析・編曲・intent・reference等は、Demo Projectの任意 `songProjectContext` に曲別に保持する。IndexedDB保存・再読み込み・project.jsonバックアップを経ても維持する。元のProject IDが一致する場合のみcompositionと共通基本情報を合流し、再出力する。
+legacyProject内からは交換コンテキストを除き、往復による再帰埋め込みを防ぐ。localStorageは引き続き一時受け渡しの補助で、ファイル復帰と曲別情報保持の前提にはしない。
+
+復元点: `restore/main-before-handoff-integrity-20261016`。Schema 3 / SongProject v1 / Arrangement Plan Schema 4は据え置き。
+
 ## 目的
 
 初心者が `JSON` / `Schema` / `Import` という技術用語を意識せず、次のアプリへ曲を渡せるようにする。

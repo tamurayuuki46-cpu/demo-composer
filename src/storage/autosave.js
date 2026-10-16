@@ -6,6 +6,7 @@ export function createAutosave({ projectStore, delay = 1500, onError } = {}) {
   let started = false;
   let saving = false;
   let queuedProject = null;
+  const idleWaiters = [];
 
   function clearTimer() {
     if (timer) clearTimeout(timer);
@@ -28,6 +29,7 @@ export function createAutosave({ projectStore, delay = 1500, onError } = {}) {
       }
     } finally {
       saving = false;
+      idleWaiters.splice(0).forEach((resolve) => resolve());
     }
   }
 
@@ -51,6 +53,9 @@ export function createAutosave({ projectStore, delay = 1500, onError } = {}) {
   }
 
   return {
+    whenIdle() {
+      return saving ? new Promise((resolve) => idleWaiters.push(resolve)) : Promise.resolve();
+    },
     start() {
       if (started) return;
       started = true;

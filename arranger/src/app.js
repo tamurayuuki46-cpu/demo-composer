@@ -90,7 +90,7 @@ els.drop.addEventListener('drop', (event) => {
   if (file) importFile(file);
 });
 
-async function importFile(file) {
+export async function importFile(file) {
   try {
     stopPreview();
     const text = await file.text();
@@ -98,14 +98,14 @@ async function importFile(file) {
     if (data.arrangerSchemaVersion) {
       restorePlan(data);
       flash(state.source ? '編曲プランを復元しました。' : '旧プランを読み込みました。同じrevisionの元project.jsonを選ぶと編集を再開できます。');
-      return;
+      return true;
     }
     const source = normalizeSourceProject(data);
     if (state.arrangerProject && !state.arrangerProject.sourceSnapshot && state.arrangerProject.source.projectId === source.sourceProjectId) {
       const restored = restoreArrangerProject(state.arrangerProject, source);
       applyRestored(restored);
       flash('元project.jsonと旧プランから編集を再開しました。');
-      return;
+      return true;
     }
     state.source = source;
     state.arrangerProject = null;
@@ -115,8 +115,10 @@ async function importFile(file) {
     renderCollisionSummary();
     generateCandidates();
     flash(`「${state.source.title}」を読み込みました。`);
+    return true;
   } catch (error) {
     flash(error.message || '読み込みに失敗しました。', true);
+    return false;
   }
 }
 

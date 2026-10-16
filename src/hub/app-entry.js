@@ -31,10 +31,11 @@ try {
   );
 }
 
-await import("../main.js");
+const main = await import("../main.js");
+await main.ready;
 installNewProjectUi();
 installProjectListUi();
 installDriveExportUi();
-installSongProjectUi();
+installSongProjectUi({ getCurrentProject: main.saveSongProjectSnapshot, applyProject: main.applySongProjectSnapshot });
 await import("./song-data-menu-entry.js");
 await import("./ai-monitoring-entry.js");
