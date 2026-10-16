@@ -214,6 +214,51 @@ export function keepDivergenceBranch(session, nodeId = session?.activeNodeId) {
   return next;
 }
 
+// Keepを外す。Original(root)とFreeze済みの案は外せない。派生関係・Payloadは変えない。
+export function unkeepDivergenceBranch(session, nodeId = session?.activeNodeId) {
+  const node = getDivergenceNode(session, nodeId);
+  if (node.id === "root") throw new Error("Original（元案）のKeepは外せません。");
+  if (node.frozen) throw new Error("Freeze済みの案のKeepは外せません。");
+  const next = clone(session);
+  next.nodes[nodeId].kept = false;
+  return next;
+}
+
+// Keepライブラリの案を、現在のBranch Treeへ「Originalの子」として呼び出す。
+// 同じライブラリ案は1回だけ追加し、2回目以降は選択するだけ(冪等)。branchRoundは進めない。
+export function importDivergenceBranch(session, entry) {
+  if (!entry || typeof entry !== "object" || !entry.id || !entry.payload || typeof entry.payload !== "object") {
+    throw new Error("呼び出すKeep案のデータが不正です。");
+  }
+  const next = clone(session);
+  const root = getDivergenceNode(next, "root");
+  const id = `branch-${hash32(`library:${entry.id}`).toString(16).padStart(8, "0")}`;
+  if (!next.nodes[id]) {
+    next.nodes[id] = {
+      id,
+      parentId: root.id,
+      childIds: [],
+      label: `Keep: ${entry.label ?? "案"}`,
+      seedValue: String(entry.seedValue ?? ""),
+      operation: "library",
+      distance: Number.isFinite(entry.distance) ? entry.distance : 0,
+      changedAxes: Array.isArray(entry.changedAxes) ? [...entry.changedAxes] : [],
+      kept: true,
+      frozen: false,
+      payload: clone(entry.payload),
+      meta: {
+        summary: entry.summary ?? "",
+        fromLibrary: true,
+        libraryId: entry.id,
+        sourceRevision: entry.sourceRevision ?? null
+      }
+    };
+    next.nodes[root.id].childIds = [...new Set([...next.nodes[root.id].childIds, id])];
+  }
+  next.activeNodeId = id;
+  return { session: next, node: clone(next.nodes[id]) };
+}
+
 export function snapshotDivergence(session, label = "") {
   const next = clone(session);
   const id = `snapshot-${next.branchRound}-${Object.keys(next.snapshots).length + 1}`;
