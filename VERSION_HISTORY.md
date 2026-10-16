@@ -1,5 +1,10 @@
 # VERSION_HISTORY
 
+## v0.16.1-dev — 2026-10-16
+
+公開確認で再現したArrangement Lab初期化前の受信イベント消失を修正。1.5秒遅延で再現・修正確認。AI初期化後も実Version / Build IDを維持。
+main基準の `release/handoff-bootstrap-v0.16.1`。復元点: `restore/main-before-handoff-bootstrap-20261016`（`54e8e798649bd5e0463f359ccbdce292eff81d44`）。stable tag未作成。
+
 ## v0.16-dev — 2026-10-16
 
 main基準の `release/handoff-integrity-20261016` でJSON受け渡しを修正。受信曲IDを維持し、元の曲を保存してから反映。解析・編曲・intent等を曲別に保持し、保存完了後に書き出す。

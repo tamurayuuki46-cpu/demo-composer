@@ -1,5 +1,6 @@
 import { isSongProject, projectValueToSongProject, serializeSongProject } from '../../src/shared/song-project.js';
 import { songProjectToArrangementSourceInput, mergeArrangementChangesIntoSongProject } from './song-project-sync.js';
+import { importFile as applyArrangementFile } from './app.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.4';
 const HANDOFF_KEY = 'music-project-songproject-handoff-v1';
@@ -91,54 +92,6 @@ function dispatchOriginal(file) {
   fileInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-function waitForArrangementReady(expectedTitle, timeoutMs = 5000) {
-  const sourceSummary = document.querySelector('#source-summary');
-  const candidateTabs = document.querySelector('#candidate-tabs');
-  const preview = document.querySelector('#preview-btn');
-  if (!sourceSummary || !candidateTabs || !preview) {
-    return Promise.reject(new Error('Arrangement Labの読み込み画面を初期化できませんでした。ページを再読み込みしてください。'));
-  }
-
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const cleanup = () => {
-      observer.disconnect();
-      window.clearTimeout(timer);
-    };
-    const check = () => {
-      const summaryText = sourceSummary.textContent || '';
-      const titleReady = !expectedTitle || summaryText.includes(expectedTitle);
-      const candidatesReady = candidateTabs.querySelectorAll('.candidate-tab').length >= 3;
-      if (titleReady && candidatesReady && !preview.disabled) {
-        settled = true;
-        cleanup();
-        resolve();
-      }
-    };
-    const observer = new MutationObserver(check);
-    observer.observe(sourceSummary, { childList: true, subtree: true, characterData: true });
-    observer.observe(candidateTabs, { childList: true, subtree: true });
-    observer.observe(preview, { attributes: true, attributeFilter: ['disabled'] });
-    const timer = window.setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      reject(new Error('曲データは受け取りましたが、A/B/Cの準備が完了しませんでした。もう一度「受け取った曲を反映」を押してください。'));
-    }, timeoutMs);
-  });
-}
-
-async function replaceInputFile(file, expectedTitle) {
-  if (typeof DataTransfer !== 'function') throw new Error('このブラウザではSongProjectのファイル変換を利用できません。');
-  const transfer = new DataTransfer();
-  transfer.items.add(file);
-  fileInput.files = transfer.files;
-  PASSTHROUGH.add(file);
-  const ready = waitForArrangementReady(expectedTitle);
-  fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-  await ready;
-}
-
 function isLegacyDemoProject(data) {
   return Boolean(data && typeof data === 'object' && Number.isInteger(data.schemaVersion) && data.basic && data.structure);
 }
@@ -172,8 +125,9 @@ async function routeFile(file) {
     return;
   }
 
+  let receivedSongProject;
   try {
-    currentSongProject = projectValueToSongProject(data);
+    receivedSongProject = projectValueToSongProject(data);
   } catch {
     currentSongProject = null;
     exportSongButton.disabled = true;
@@ -181,14 +135,15 @@ async function routeFile(file) {
     return;
   }
 
-  const demoInput = songProjectToArrangementSourceInput(currentSongProject);
+  const demoInput = songProjectToArrangementSourceInput(receivedSongProject);
   const converted = new File(
     [JSON.stringify(demoInput, null, 2)],
-    `${safeFileName(currentSongProject.title)}_arrangement_input.json`,
+    `${safeFileName(receivedSongProject.title)}_arrangement_input.json`,
     { type: 'application/json' }
   );
+  if (!await applyArrangementFile(converted)) throw new Error('曲を反映できませんでした。曲の構成・拍子を確認し、保存したJSONから再試行してください。');
+  currentSongProject = receivedSongProject;
   exportSongButton.disabled = false;
-  await replaceInputFile(converted, currentSongProject.title);
   flash(`共通SongProject v${currentSongProject.schemaVersion}「${currentSongProject.title}」をArrangement Labへ読み込み、A/B/Cを準備しました。`);
   markHandoffReflected(currentSongProject.title);
 }
