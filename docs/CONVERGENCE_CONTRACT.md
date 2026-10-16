@@ -48,6 +48,53 @@ Claudeは既存ファイルを編集しない。GPTは `arranger/convergence/*` 
 3. same-project rebase: 旧Plan・補助状態をバックアップ→新source反映(`sourceSnapshot`/原案更新)。`reimportPlan`(snapshot復元)でsourceを巻き戻さない・Planをnullにしない。
 4. UI(下部固定ボタン/由来表示/Undoトースト)・Export前確認・`SECTION_INSTRUCTIONS.md`冒頭への持ち越し追記・docs・CI(`node arranger/tests/convergence.test.mjs` を `arranger-ci.yml` に追加)。
 
+## 呼び出し順序と使用例(GPT統合用)
+
+### 起動 / Import / 復元(`validationReady` を立てるまで編集・保存を許可しない)
+```js
+const ids = { projectId, planId };
+const planFp = planStructureFingerprint(source);
+const load = loadState(localStorage, ids, Date.now());          // status: ok|missing|corrupt|unsupported|unavailable
+let state = load.status === 'ok' ? load.state : createEmptyState({ ...ids, planFingerprint: planFp });
+const diag = diagnoseLoad(load, journal);                        // 'warn-missing' | 'warn-corrupt' なら「収束判断が見つかりません」を表示
+const chk = checkPlanFingerprint(state, { ...ids, planFingerprint: planFp, now });
+state = chk.state;                                               // 構造変更なら空stateに。chk.backup があれば writeStructureBackup() で退避
+const ver = verifyState(state, { source, candidates, now });     // ver.message があれば1行通知。listRecoveries(ver.state, now) がボタン用データ
+state = purgeExpiredRecovery(ver.state, now);
+let tracker = createDirtyTracker();
+// 例外が出ても validationReady を閉じたままにしない: 旧補助状態を退避→警告つきで開く
+```
+
+### Lab内編集(共通入口の出口で1回)
+```js
+const before = candidate;                       // 編集前
+const after  = updateCandidateSection(before, sectionId, patch);  // 既存の編集関数
+tracker = recordEdit(tracker, state, { source, before, after });  // 変更Sectionは宣言しない
+```
+- `before.id !== after.id` なら例外(`編集前後の候補IDが一致しません。`)。IDは編集で変わらない前提。
+- 採用していない候補・実発音が変わらない編集では何も記録しない(tracker不変)。入力は破壊しない。
+
+### 保存(`saveArrangerPlan` の中。暗黙保存・Export経路も同じ関数)
+```js
+const r = applySave(state, tracker, { source, candidates, now });  // 純関数。副作用なし
+const w = saveState(localStorage, r.state);                         // 補助状態を先に
+if (!w.ok) { /* state と tracker は旧のまま。dirty保持。補助状態は書けていないのでロールバック不要(部分書込みはreadback不一致→{ok:false}) */ }
+else { /* 次にPlan・Journalを保存し、成功後に初めて採用する */ state = r.state; tracker = r.tracker; }
+// r.message があれば通知(外部変更で未決定へ戻った枠がある)。r.externalChanges / r.refreshed は表示・ログ用
+```
+- dirtyの枠だけfingerprintを更新。dirtyでない不一致は外部変更→枠を未決定へ戻し Recovery に退避(元の記録は上書きしない)。
+- Plan/Journalの保存に失敗した場合は、`saveState` で書いた新stateを旧stateで書き戻す(`saveState(storage, oldState)`)。tracker は旧のまま保持。
+
+### 判断操作
+`setDecision` / `releaseOverride` / `setCarryOver` はいずれも新stateを返す。採用時のfingerprintは `slotFingerprint` / `globalFingerprintMap` で計算して渡す。Journalには `【収束】` を先頭に付けた文を残す(`restoreRecovery().journalText` はその形式)。
+
+### Recovery通知
+`listRecoveries(state, now)` の各行 → 「元の判断のまま採用」ボタン → `restoreRecovery(state, row.key, {source, candidates, now})`。
+`ok:false` の `error`: `not-found` / `expired` / `candidate-missing`(再生成で候補が消えた) / `global-changed`(全体判断が別案になった)。失敗時 `state` は変更されない。
+
+### Export
+`resolveCurrentPlan(source, candidates, state, { defaultCandidateId })` の `candidate` を Preview / Song.mid / DAW Handoff / export用plan clone に共通で渡す。`unresolved.length > 0` の時だけ確認画面。`carryOverList(state)` を `SECTION_INSTRUCTIONS.md` 冒頭に書く。ExportはtrackerやsaveStateの成否に依存させない。
+
 ## 未検証・注意
 
 - 実機未確認。`arrangedNotes` の副作用有無(乱数・時刻依存)は純関数前提で使用。ID決定性は `buildThreeCandidates` のテストで確認済み。Mix案のIDは `Date.now()` を含むため再生成で参照切れ→未決定になる(仕様)。
