@@ -73,7 +73,10 @@ export class ConvergenceSession {
       this.state = result.state;
       this.tracker = result.tracker;
       if (result.message) this.notify(result.message, true);
-    } else this.notify('端末への保存に失敗しました。JSON / MIDI書き出しは利用できます。', true);
+    } else {
+      this.notify('端末への保存に失敗しました。JSON / MIDI書き出しは利用できます。', true);
+      this.notifyRollbackFailure(result);
+    }
     return result;
   }
   current({ save = true } = {}) {
@@ -111,6 +114,7 @@ export class ConvergenceSession {
     });
     if (!result.ok) {
       this.notify('判断を保存できませんでした。元の判断とdirty状態を保持します。', true);
+      this.notifyRollbackFailure(result);
       return result;
     }
     this.undo = { state: previous.state, tracker: previous.tracker, journal: previous.journal, plan: previous.plan };
@@ -128,9 +132,14 @@ export class ConvergenceSession {
   }
   release(key) { return this.mutate(cv.releaseOverride(this.state, key, Date.now()), `${key} 上書き解除`); }
   carry(key) { return this.mutate(cv.setCarryOver(this.state, key, { now: Date.now() }), `${key} DAWで決める`); }
+  notifyRollbackFailure(result) {
+    if (result?.rollbackFailed?.length) this.notify('保存の巻き戻しにも失敗しました。端末内の保存が不整合の可能性があります。JSON書き出しで退避してください。', true);
+  }
   undoDecision() {
     if (!this.undo) return { ok: false, error: 'no-undo' };
     const snapshot = this.undo;
+    // 判断後に記録されたdirtyを落とさない(落とすと正規編集が外部変更Recoveryになる)。
+    const mergedTracker = { dirty: { ...(this.tracker?.dirty || {}), ...(snapshot.tracker?.dirty || {}) } };
     const plan = this.makePlan();
     plan.decisionJournal = clone(snapshot.journal);
     const result = saveArrangerPlan({
@@ -140,12 +149,13 @@ export class ConvergenceSession {
       plan,
       convergenceState: snapshot.state,
       journal: snapshot.journal,
-      tracker: snapshot.tracker,
+      tracker: mergedTracker,
       validationReady: this.validationReady,
       persistenceAllowed: !this.readOnlyAux,
     });
     if (!result.ok) {
       this.notify('Undoを保存できませんでした。現在の判断を保持します。', true);
+      this.notifyRollbackFailure(result);
       return result;
     }
     this.state = result.state;
