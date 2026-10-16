@@ -1,5 +1,24 @@
 ## 2026-10-15 — v0.15-dev lineage reconciliation candidate
 
+## 2026-10-17 — Arrangement Lab v0.15-dev（収束モード統合候補）
+
+【追加】
+- 全体 / Section / 個別の採用・まだ迷う・不採用、定型理由、上書き解除、Undo、Recovery。
+- 中央保存、dirty共通入口、validation gate、編集済み候補poolの再読込保持。
+- 同一projectIdのrebase、Current Plan共通Export、未決定のLab/DAW選択とZIP指示。
+
+【修正】
+- 保存失敗でExportまで停止する経路を解消し、state/trackerを保存成功後だけ更新。
+- snapshotによるsource revision巻き戻し、曲間Journal混在、再読込時の編集済み判断参照切れを防止。
+
+【互換性・状態】
+- Plan Schema 4 / SongProject v1 / Demo Schema 3 / PPQ 480 / 4/4を維持。本体とHomeは変更しない。
+- ルートVERSIONはDemo Composer v0.17-devを維持。Labの正本はarranger/VERSION。
+- 収束補助状態はPlan JSONだけでは別端末へ移らない。
+- develop向けPRのみ。main公開・自動merge・stable認定は行わない。
+- Android / Cubasis / Cubase実機未確認。検証結果はdocs/CONVERGENCE_VERIFICATION_v0.15-dev.md。
+
+
 【状態】
 - Development candidate: `integration/main-develop-reconcile-20261015`。公開済みmainへは未統合。
 - Published main: `v0.15-dev` / `28f85e64adeed26da1d40fc491723438ffecd2f9`。
@@ -21,6 +40,21 @@
 - reconciliation工程で静的178件、ブラウザ17件、公開済みversion資産38件、保護対象remote refs 162件の保持確認に成功。
 - Music Project Home最終確認で、関連静的・build 16 command、Home 4 viewport、曲データメニュー3 mobile viewport、実Song.mid後のDAW-ready遷移、保存再読込、SongProject所有境界を確認。詳細は`docs/PROJECT_HOME_FINAL_VERIFICATION_2026-10-15.md`。
 - 統合候補のhosted CIはpush / PR作成後に必要。ローカル結果はhosted CIの代替ではない。
+
+## 2026-10-17 — v0.17-dev 発散モード: 保存とKeepライブラリ(追補)
+
+【追加】
+- 発散セッションを端末内IndexedDB(`meta` store)へ保存。タブ/アプリを閉じても探索の続きとKeep案が残る。旧sessionStorageのセッションは初回に移行。
+- Keepライブラリ(上限40案): Freezeしても他のKeep案が残る。「ツリーに呼び出す」「Keepを外す」「削除」。古い元案から作られた案のFreezeは確認ダイアログ付き。
+- 保存できなかった場合は画面に表示(IndexedDB不可時はsessionStorageへ退避し「タブを閉じると消える」と表示)。
+
+【変更なし】
+- Demo Project Schema 3 / SongProject v1 / Arrangement Plan Schema 4 / PPQ 480 / 4/4 / IndexedDB DB_VERSION 1。
+- Arrangement Labの発散・収束(既存ファイル)。
+
+【検証】
+- `test:divergence`(新規 `divergence-library-smoke-test.mjs` を含む)、Chromium回帰 `divergence-library-browser.test.cjs`、既存のsmoke test 77件とbrowser-export-regressionが通過。
+- Android実機は未確認。詳細: `docs/DIVERGENCE_MODE.md` §12。
 
 ## 作曲シート v0.6-dev — 2026-10-14
 記入用を先頭へ、保存/Drive共有、曲データメニューの簡易版表示。詳細 sheet-app/CHANGELOG_v0.6.md。

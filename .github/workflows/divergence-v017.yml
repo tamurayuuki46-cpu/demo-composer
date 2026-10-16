@@ -9,8 +9,13 @@ on:
       - 'divergence.html'
       - 'src/core/divergence.js'
       - 'src/core/divergence-demo.js'
+      - 'src/core/divergence-library.js'
       - 'src/core/divergence.css'
       - 'src/divergence/**'
+      - 'src/storage/divergence-store.js'
+      - 'src/storage/indexeddb-storage.js'
+      - 'scripts/divergence-library-smoke-test.mjs'
+      - 'scripts/divergence-library-browser.test.cjs'
       - 'arranger/divergence.html'
       - 'arranger/divergence.css'
       - 'arranger/src/divergence.js'
@@ -36,14 +41,21 @@ jobs:
         run: |
           node --check src/core/divergence.js
           node --check src/core/divergence-demo.js
+          node --check src/core/divergence-library.js
+          node --check src/storage/divergence-store.js
+          node --check src/storage/indexeddb-storage.js
           node --check src/divergence/app.js
           node --check arranger/src/divergence.js
           node --check arranger/src/divergence-ui.js
           node --check scripts/divergence-smoke-test.mjs
+          node --check scripts/divergence-library-smoke-test.mjs
+          node --check scripts/divergence-library-browser.test.cjs
           node --check scripts/arranger-divergence-smoke-test.mjs
           node --check scripts/build-static.mjs
       - name: Demo Composer divergence smoke test
         run: node scripts/divergence-smoke-test.mjs
+      - name: Keep library smoke test
+        run: node scripts/divergence-library-smoke-test.mjs
       - name: Arrangement Lab divergence smoke test
         run: node scripts/arranger-divergence-smoke-test.mjs
       - name: Static build
@@ -56,3 +68,13 @@ jobs:
           test -f dist/arranger/src/divergence.js
           grep -q 'divergence.html' dist/service-worker.js
           grep -q 'divergence.html' dist/arranger/sw.js
+          test -f dist/src/core/divergence-library.js
+          test -f dist/src/storage/divergence-store.js
+          grep -q 'divergence-store.js' dist/service-worker.js
+      - name: Keep library browser regression (IndexedDB persistence)
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8080 --directory dist > /tmp/divergence-server.log 2>&1 &
+          sleep 2
+          node scripts/divergence-library-browser.test.cjs

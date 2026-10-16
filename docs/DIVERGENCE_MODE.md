@@ -94,7 +94,7 @@ Demo Composerは「曲そのものを生み出す発散」を担当する。
 - リズム: Section VariationのDrums / Melody Rhythm
 - 音色: 既存Sound Preset / Tone
 
-発散セッションは`sessionStorage`の補助状態で、既存Project Schema v3を変更しない。
+発散セッションは端末内IndexedDB(`meta` store)の補助データで、既存Project Schema v3を変更しない(§12)。
 Freeze時だけ選択BranchのCloneを現在Projectとして保存し、revisionを進める。
 
 ## 7. Arrangement Lab responsibility
@@ -148,7 +148,7 @@ Genre / Mood / BPM / Keyなどの方向性をSeed constraintsとして受け取�
 - Snapshot/Branch historyは補助状態。Project本体のSchema migrationを要求しない。
 - Demo Composer schemaVersion: **3（変更なし）**
 - Arrangement Lab arrangerSchemaVersion: **4（変更なし）**
-- sessionStorage容量不足時でもProject本体を破壊しない。
+- 保存領域の容量不足・書き込み失敗時でもProject本体を破壊しない(§12。保存できなかった場合は画面に表示する)。
 - Freeze前はProject本体へ書き戻さない。
 - 重要な変更前のGit復元点: `restore/v0.16-before-divergence-2026-10-15`
 
@@ -182,3 +182,40 @@ Freezeは「最終採用」ではない。
 発散モードで探索を止める地点を決めた後、既存の通常画面へ戻り、比較・採用・判断履歴・微調整を行う。
 
 これにより、発散と収束をUI・責務の両方で分離する。
+
+## 12. 保存とKeepライブラリ (v0.17-dev追補 / Demo Composerのみ)
+
+背景: 旧実装は発散セッションを`sessionStorage`に置いていたため、タブ/アプリを閉じるとKeep案も消えた。またFreezeは選んだ1案しか残さず、他のKeep案は捨てられていた。「案を安全に保存できる・過去案を再利用できる」(`CREATIVE_DECISION_PROGRESS.md`の成功指標)を満たすため、次の2つを追加した。
+
+### 12.1 セッションの端末内保存
+
+- 保存先: IndexedDB `demo-composer` の `meta` store。**DB_VERSION・Project Schema 3・SongProject v1は変更しない**(`migrationBackup:*`と同じ使い方)。
+- キー: `divergence:session:v1:<projectId>:<revision>`。値は `{version, projectId, revision, savedAt, session}`。
+- 復元条件は従来どおり「同じProject id・同じrevision」。別Project/別revisionのセッションは読まない。
+- 保存は1件ずつ順番に実行(古い内容が新しい内容を上書きしない)。
+- 旧版のsessionStorageセッションは初回読み込み時にIndexedDBへ移行して旧キーを消す。
+- IndexedDBに書けない時はsessionStorageへ退避し、画面に「タブを閉じると消える」と表示する。どちらにも書けない時は「保存できなかった」と表示する(黙って失敗しない)。
+- Freeze後は、使い終わった旧revisionのセッションだけ削除する。
+
+### 12.2 Keepライブラリ (Freezeしても残る)
+
+- 保存先: `divergence:library:v1:<projectId>`(revisionに依存しない)。値は `{version, projectId, entries[]}`。
+- KeepするとBranchのCloneがEntryとして追加される。Entryは `id / label / seedValue / distance / changedAxes / summary / operation / sourceRevision / savedAt / payload`。`payload`は**Demo Project Schema 3の完全なClone**。
+- 上限40案。超える場合は黙って捨てず、「Keepを外してから」と表示してKeepしない。Keepを外す(`Keepを外す`)/ライブラリから削除でき、削除時はツリー側のKeep表示も外す。
+- Keepの保存に失敗した場合はKeep状態にしない(画面とライブラリを食い違わせない)。
+- 「ツリーに呼び出す」で、ライブラリの案を現在のBranch Treeに**Originalの子**として追加できる(同じ案は1回だけ。branchRoundは進めない)。呼び出した案も試聴・Branch・Freezeができる。
+- 元案のrevisionが現在と違うEntryは「前の元案から」と表示する。そのEntryをFreezeすると現在の曲の内容が置き換わるため、確認ダイアログを出し、キャンセルすれば何も変えない。
+- Freezeしてもライブラリは消えない。次の探索で他のKeep案を使える。
+
+### 12.3 他Moduleへの受け渡し口
+
+- 読み取り: `src/storage/divergence-store.js` の `divergenceStore.loadLibrary(projectId)` → `{ entries, error }`。形の検証・整形は `src/core/divergence-library.js`(純関数)。
+- 書き込みは発散画面だけが行う。他Moduleはライブラリを読むだけにする。
+- **Arrangement Lab収束モード(保留への受け渡し)は未接続。** `CONVERGENCE_CONTRACT.md`により、収束モードの既存ファイルへの統合・UIはGPT側の担当。接続する場合は、Demo ComposerのKeep案(曲そのもののProject)をどの収束枠で扱うかを先に決める必要がある。
+- Arrangement Lab自身の発散セッション(`arranger/src/divergence-ui.js`)は従来どおりsessionStorageで、今回は変更していない。
+
+### 12.4 検証
+
+- `scripts/divergence-library-smoke-test.mjs`: Keep解除・ライブラリ呼び出し(冪等)・上限・壊れたEntryの除去・別Project/別revisionの分離・旧sessionStorage移行・IndexedDB書き込み失敗時の退避・予約キー保護。
+- `scripts/divergence-library-browser.test.cjs`(Chromium): タブを閉じて開き直しても残る / Freezeしても他のKeep案が残る / 呼び出し・古い元案のFreeze確認・削除。保存処理を壊したビルドで失敗することを確認済み。
+- 実機(Android + PWA)でのアプリ切替・端末再起動後の保持は**未確認**。

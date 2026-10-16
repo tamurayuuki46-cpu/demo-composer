@@ -23,7 +23,7 @@ const fixture={
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   await context.addInitScript(()=>{window.AudioContextOriginal=window.AudioContext;window.testContexts=[];window.AudioContext=class extends window.AudioContextOriginal{constructor(...args){super(...args);window.testContexts.push(this)}};});
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
-  await page.goto(base);await page.locator('#version').waitFor();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.14-dev');
+  await page.goto(base);await page.locator('#version').waitFor();await page.waitForFunction(()=>document.querySelector('#version')?.textContent==='v0.15-dev');
   await page.locator('#project-file').setInputFiles({name:'project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});
   await page.waitForFunction(()=>document.querySelectorAll('.candidate-tab').length===3);
   assert.equal(await page.locator('#v05-comparison-room').count(),1);assert.equal(await page.locator('#v05-decision-panel').count(),1);assert.equal(await page.locator('#v05-daw-actions').count(),1);
@@ -54,6 +54,10 @@ const fixture={
   await page.locator('[data-v05-action=drum-show][data-section=s2]').click();assert.equal(await page.locator('[data-v05-section=s2] [data-v05-action=apply]').count(),3);await page.locator('[data-v05-section=s2] [data-v05-action=apply]').first().click();
   await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===3);
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.4')));assert.ok(saved.arrangement.sections.find(s=>s.sectionId==='s2').partOverrides.drums.length);
+
+  // Convergence requires an explicit base decision before an unprompted Export.
+  await page.selectOption('#convergence-scope','global');
+  await page.locator('[data-convergence-status=adopted]').click();
 
   // ⑥ One ZIP carries before/after MIDI, per-part MIDI and production notes.
   let downloadP=page.waitForEvent('download');await page.click('#daw-pack-btn');let download=await downloadP;const bytes=await fs.readFile(await download.path());assert.equal(bytes.subarray(0,4).toString('hex'),'504b0304');const latin=bytes.toString('latin1');

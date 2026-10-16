@@ -6,30 +6,46 @@ import {
   createDivergenceSession,
   freezeDivergenceBranch,
   getDivergenceNode,
+  importDivergenceBranch,
   keepDivergenceBranch,
   restoreDivergenceSnapshot,
   selectDivergenceNode,
   setDivergenceDistance,
   setDivergenceLocks,
-  snapshotDivergence
+  snapshotDivergence,
+  unkeepDivergenceBranch
 } from "../core/divergence.js";
 import { composerDivergenceTransform } from "../core/divergence-demo.js";
+import {
+  DIVERGENCE_LIBRARY_LIMIT,
+  entriesFromSession,
+  entryFromNode,
+  isStaleEntry,
+  libraryEntryId,
+  mergeLibrary,
+  removeFromLibrary,
+  sortLibraryEntries
+} from "../core/divergence-library.js";
 import { APP_VERSION } from "../core/project-schema.js";
 import { getSections } from "../core/section-ops.js";
 import { loadActiveProject, saveProject } from "../storage/indexeddb-storage.js";
-
-const SESSION_KEY_PREFIX = "demo-composer:divergence:v1:";
+import { divergenceStore } from "../storage/divergence-store.js";
 
 let sourceProject = null;
 let session = null;
+let library = [];
 let sectionIndex = 0;
 let statusMessage = "";
+let persistNotice = "";
 let playerState = { playing: false };
+let playingKey = "";
+let saveChain = Promise.resolve();
 const player = createDemoPlayer({
   onStateChange(state) {
     playerState = state;
-    document.querySelectorAll("[data-audition]").forEach((button) => {
-      if (button.dataset.audition === session?.activeNodeId) {
+    document.querySelectorAll("[data-audition], [data-library-audition]").forEach((button) => {
+      const key = button.dataset.audition ?? `library:${button.dataset.libraryAudition}`;
+      if (key === playingKey) {
         button.textContent = state.playing ? "■ 停止" : "▶ 試聴";
       }
     });
@@ -53,34 +69,85 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function sessionKey(project = sourceProject) {
-  return `${SESSION_KEY_PREFIX}${project?.id ?? "none"}:${project?.revision ?? 0}`;
+// 発散セッションは端末内(IndexedDB)へ保存し、アプリを閉じても続きから使えるようにする。
+// 保存は1件ずつ順番に行い、古い内容が新しい内容を上書きしないようにする。Project本体は触らない。
+function updatePersistNotice() {
+  const notice = document.querySelector("#persist-notice");
+  if (!notice) return;
+  notice.textContent = persistNotice;
+  notice.hidden = !persistNotice;
 }
 
 function saveSession() {
   if (!sourceProject || !session) return;
-  try {
-    sessionStorage.setItem(sessionKey(), JSON.stringify(session));
-  } catch {
-    // 発散履歴は補助データ。保存容量不足でもProject本体は壊さない。
-  }
+  const project = sourceProject;
+  const snapshot = session;
+  saveChain = saveChain
+    .then(() => divergenceStore.saveSession(project, snapshot))
+    .then((result) => {
+      const note = !result.ok
+        ? "この端末に保存できませんでした。このページを閉じると探索内容が消えます。"
+        : result.where === "session-storage"
+          ? "端末内の保存領域を使えないため、一時保存のみです。タブを閉じると探索内容が消えます。"
+          : "";
+      if (note !== persistNotice) {
+        persistNotice = note;
+        updatePersistNotice();
+      }
+    })
+    .catch(() => {});
 }
 
-function loadSession() {
-  try {
-    const raw = sessionStorage.getItem(sessionKey());
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    const root = parsed?.nodes?.root?.payload;
-    if (
-      parsed?.version !== 1
-      || root?.id !== sourceProject.id
-      || Number(root?.revision ?? 0) !== Number(sourceProject.revision ?? 0)
-    ) return null;
-    return parsed;
-  } catch {
-    return null;
+function entryContext() {
+  return { projectId: sourceProject.id, sourceRevision: sourceProject.revision ?? 0 };
+}
+
+// Keepライブラリ(Freezeしても残る)へ1案を追加して保存する。保存できた時だけKeep状態にする。
+async function keepNode(nodeId) {
+  const node = getDivergenceNode(session, nodeId);
+  const entry = entryFromNode(node, entryContext());
+  if (!entry) return { ok: false, message: "この案はKeepライブラリに入れられません。" };
+  const merged = mergeLibrary(library, [entry]);
+  if (merged.rejected.length) {
+    return { ok: false, message: `Keepライブラリが上限（${DIVERGENCE_LIBRARY_LIMIT}案）です。不要なKeepを外してからKeepしてください。` };
   }
+  if (merged.added.length) {
+    const saved = await divergenceStore.saveLibrary(sourceProject.id, merged.entries);
+    if (!saved.ok) return { ok: false, message: "Keepをこの端末に保存できませんでした。端末の空き容量を確認してください。" };
+    library = merged.entries;
+  }
+  session = keepDivergenceBranch(session, nodeId);
+  saveSession();
+  return { ok: true, message: "" };
+}
+
+async function unkeepNode(nodeId) {
+  const node = getDivergenceNode(session, nodeId);
+  const entryId = libraryEntryId(node, sourceProject.revision ?? 0);
+  const nextLibrary = removeFromLibrary(library, entryId);
+  if (nextLibrary.length !== library.length) {
+    const saved = await divergenceStore.saveLibrary(sourceProject.id, nextLibrary);
+    if (!saved.ok) return { ok: false, message: "Keepを外した内容をこの端末に保存できませんでした。" };
+    library = nextLibrary;
+  }
+  session = unkeepDivergenceBranch(session, nodeId);
+  saveSession();
+  return { ok: true, message: "" };
+}
+
+async function removeLibraryEntry(entryId) {
+  const nextLibrary = removeFromLibrary(library, entryId);
+  const saved = await divergenceStore.saveLibrary(sourceProject.id, nextLibrary);
+  if (!saved.ok) return { ok: false, message: "削除した内容をこの端末に保存できませんでした。" };
+  library = nextLibrary;
+  // ツリー側に同じ案がKeep状態で残っていれば、表示が食い違わないようKeepも外す。
+  for (const node of Object.values(session.nodes)) {
+    if (node.id !== "root" && node.kept && !node.frozen && libraryEntryId(node, sourceProject.revision ?? 0) === entryId) {
+      session = unkeepDivergenceBranch(session, node.id);
+    }
+  }
+  saveSession();
+  return { ok: true, message: "" };
 }
 
 function constraintsText(project) {
@@ -123,10 +190,50 @@ function branchCard(node) {
       <div class="branch-actions">
         <button data-audition="${escapeHtml(node.id)}">▶ 試聴</button>
         <button data-keep="${escapeHtml(node.id)}"${node.kept ? " disabled" : ""}>Keep（保存）</button>
+        ${node.kept && node.id !== "root" && !node.frozen ? `<button data-unkeep="${escapeHtml(node.id)}">Keepを外す</button>` : ""}
         <button data-branch-from="${escapeHtml(node.id)}">この案からBranch</button>
       </div>
     </article>
   `;
+}
+
+function formatSavedAt(value) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "—";
+  return date.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function libraryHtml() {
+  const entries = sortLibraryEntries(library);
+  if (!entries.length) {
+    return `<p class="hint">Keepした案はここに残ります。Freezeしても、アプリを閉じても消えません。</p>`;
+  }
+  const currentRevision = sourceProject.revision ?? 0;
+  return entries.map((entry) => {
+    const stale = isStaleEntry(entry, currentRevision);
+    const axes = DIVERGENCE_AXES.filter((axis) => entry.changedAxes?.includes(axis.id)).map((axis) => axis.label).join(" / ") || "—";
+    return `
+      <article class="divergence-branch" data-library-card="${escapeHtml(entry.id)}">
+        <div class="divergence-branch-head">
+          <div>
+            <span class="branch-state">${stale ? "前の元案から" : "Keep"}</span>
+            <h3>${escapeHtml(entry.label)}</h3>
+          </div>
+        </div>
+        <p>${escapeHtml(entry.summary || axes)}</p>
+        <dl class="branch-meta">
+          <div><dt>保存</dt><dd>${escapeHtml(formatSavedAt(entry.savedAt))}</dd></div>
+          <div><dt>元案</dt><dd>r${entry.sourceRevision}${stale ? `（現在 r${currentRevision}）` : ""}</dd></div>
+          <div><dt>変更軸</dt><dd>${escapeHtml(axes)}</dd></div>
+        </dl>
+        <div class="branch-actions">
+          <button data-library-audition="${escapeHtml(entry.id)}">▶ 試聴</button>
+          <button data-library-import="${escapeHtml(entry.id)}">ツリーに呼び出す</button>
+          <button data-library-remove="${escapeHtml(entry.id)}">削除</button>
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
 function treeHtml() {
@@ -171,6 +278,8 @@ function render() {
       </div>
       <a href="./index.html" class="back-link">通常編集へ戻る</a>
     </header>
+
+    <p id="persist-notice" class="hint-box" role="status" ${persistNotice ? "" : "hidden"}>${escapeHtml(persistNotice)}</p>
 
     <section class="divergence-card seed-card">
       <div class="section-heading">
@@ -230,12 +339,17 @@ function render() {
     </section>
 
     <section class="divergence-card">
-      <div class="section-heading"><div><span class="step">5</span><h2>Branch Tree（派生履歴）</h2></div><span class="hint">◆ Keep / ❄ Freeze</span></div>
+      <div class="section-heading"><div><span class="step">5</span><h2>Keepライブラリ（残した案）</h2></div><span class="hint">${library.length} / ${DIVERGENCE_LIBRARY_LIMIT}案</span></div>
+      <div class="branch-grid">${libraryHtml()}</div>
+    </section>
+
+    <section class="divergence-card">
+      <div class="section-heading"><div><span class="step">6</span><h2>Branch Tree（派生履歴）</h2></div><span class="hint">◆ Keep / ❄ Freeze</span></div>
       <div class="branch-tree">${treeHtml()}</div>
     </section>
 
     <section class="divergence-card">
-      <div class="section-heading"><div><span class="step">6</span><h2>Snapshot / Restore</h2></div></div>
+      <div class="section-heading"><div><span class="step">7</span><h2>Snapshot / Restore</h2></div></div>
       <div class="snapshot-list">${snapshotHtml()}</div>
     </section>
   `;
@@ -267,7 +381,7 @@ function syncControls() {
   }
 }
 
-function generateFrom(nodeId) {
+function generateFrom(nodeId, extraStatus = "") {
   syncControls();
   const result = branchDivergence(session, {
     parentId: nodeId,
@@ -281,7 +395,7 @@ function generateFrom(nodeId) {
     }
   });
   session = result.session;
-  statusMessage = `${getDivergenceNode(session, nodeId).label}から${result.branches.length}案を生成しました。元案は変更していません。`;
+  statusMessage = `${getDivergenceNode(session, nodeId).label}から${result.branches.length}案を生成しました。元案は変更していません。${extraStatus ? ` ${extraStatus}` : ""}`;
   saveSession();
   render();
 }
@@ -333,11 +447,12 @@ function bindEvents() {
     button.addEventListener("click", async () => {
       const node = getDivergenceNode(session, button.dataset.audition);
       try {
-        if (playerState.playing && session.activeNodeId === node.id) {
+        if (playerState.playing && playingKey === node.id) {
           player.stop();
           return;
         }
         session = selectDivergenceNode(session, node.id);
+        playingKey = node.id;
         await player.play(node.payload);
         statusMessage = `${node.label}を試聴中です。まだProject本体には反映していません。`;
         saveSession();
@@ -350,23 +465,95 @@ function bindEvents() {
   });
 
   document.querySelectorAll("[data-keep]").forEach((button) => {
-    button.addEventListener("click", () => {
-      session = keepDivergenceBranch(session, button.dataset.keep);
-      statusMessage = `${getDivergenceNode(session).label}をKeepしました。この案からさらにBranchできます。`;
-      saveSession();
+    button.addEventListener("click", async () => {
+      try {
+        const result = await keepNode(button.dataset.keep);
+        statusMessage = result.ok
+          ? `${getDivergenceNode(session).label}をKeepしました。Freezeしても、アプリを閉じても残ります。この案からさらにBranchできます。`
+          : result.message;
+      } catch (error) {
+        statusMessage = error instanceof Error ? error.message : "Keepできませんでした。";
+      }
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-unkeep]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      try {
+        const result = await unkeepNode(button.dataset.unkeep);
+        statusMessage = result.ok ? "Keepを外し、ライブラリからも削除しました。" : result.message;
+      } catch (error) {
+        statusMessage = error instanceof Error ? error.message : "Keepを外せませんでした。";
+      }
       render();
     });
   });
 
   document.querySelectorAll("[data-branch-from]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       try {
-        session = keepDivergenceBranch(session, button.dataset.branchFrom);
-        generateFrom(button.dataset.branchFrom);
+        // Keepできなくても(上限・保存失敗)、この案からのBranch自体は続ける。
+        const kept = await keepNode(button.dataset.branchFrom);
+        generateFrom(button.dataset.branchFrom, kept.ok ? "" : `（Keepは保存していません：${kept.message}）`);
       } catch (error) {
         statusMessage = error instanceof Error ? error.message : "派生案を作れませんでした。";
         render();
       }
+    });
+  });
+
+  document.querySelectorAll("[data-library-audition]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const entry = library.find((item) => item.id === button.dataset.libraryAudition);
+      if (!entry) return;
+      const key = `library:${entry.id}`;
+      try {
+        if (playerState.playing && playingKey === key) {
+          player.stop();
+          return;
+        }
+        player.stop();
+        playingKey = key;
+        await player.play(entry.payload);
+        statusMessage = `Keep案「${entry.label}」を試聴中です。まだProject本体には反映していません。`;
+        render();
+      } catch (error) {
+        statusMessage = error instanceof Error ? error.message : "試聴できませんでした。";
+        render();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-library-import]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const entry = library.find((item) => item.id === button.dataset.libraryImport);
+      if (!entry) return;
+      try {
+        player.stop();
+        session = importDivergenceBranch(session, entry).session;
+        statusMessage = `Keep案「${entry.label}」をツリーに呼び出しました。試聴・Branch・Freezeができます。`;
+        saveSession();
+      } catch (error) {
+        statusMessage = error instanceof Error ? error.message : "呼び出せませんでした。";
+      }
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-library-remove]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const entry = library.find((item) => item.id === button.dataset.libraryRemove);
+      if (!entry) return;
+      if (!window.confirm(`Keep案「${entry.label}」をライブラリから削除します。元に戻せません。`)) return;
+      try {
+        player.stop();
+        const result = await removeLibraryEntry(entry.id);
+        statusMessage = result.ok ? `Keep案「${entry.label}」を削除しました。` : result.message;
+      } catch (error) {
+        statusMessage = error instanceof Error ? error.message : "削除できませんでした。";
+      }
+      render();
     });
   });
 
@@ -391,14 +578,24 @@ function bindEvents() {
   document.querySelector("#freeze-active")?.addEventListener("click", async () => {
     try {
       player.stop();
-      const previousSessionKey = sessionKey();
+      // ライブラリから呼び出した古い元案の案をFreezeすると、現在の編集内容が置き換わる。確認してから進める。
+      const target = getDivergenceNode(session);
+      const targetRevision = target.meta?.sourceRevision;
+      if (targetRevision !== undefined && targetRevision !== null && isStaleEntry({ sourceRevision: targetRevision }, sourceProject.revision ?? 0)) {
+        const accepted = window.confirm(
+          `この案は元案r${targetRevision}から作られた案です。現在の曲はr${sourceProject.revision ?? 0}です。\nFreezeすると、現在の曲の内容がこの案に置き換わります。続けますか？`
+        );
+        if (!accepted) return;
+      }
       const frozen = freezeDivergenceBranch(session);
       session = frozen.session;
       const nextProject = clone(frozen.project);
       nextProject.revision = Math.max(sourceProject.revision ?? 0, nextProject.revision ?? 0) + 1;
       nextProject.appVersion = APP_VERSION;
       await saveProject(nextProject);
-      try { sessionStorage.removeItem(previousSessionKey); } catch {}
+      // 使い終わった探索セッションだけ消す。Keepライブラリは残る(他のKeep案を次の探索で使える)。
+      await saveChain; // 保存待ちの書き込みが、削除の後に古いセッションを復活させないようにする
+      await divergenceStore.deleteSession(sourceProject);
       window.location.href = "./index.html";
     } catch (error) {
       statusMessage = error instanceof Error ? error.message : "Freezeに失敗しました。";
@@ -420,7 +617,8 @@ async function start() {
         </div>`;
       return;
     }
-    session = loadSession() ?? createDivergenceSession(sourceProject, {
+    const loaded = await divergenceStore.loadSession(sourceProject);
+    session = loaded.session ?? createDivergenceSession(sourceProject, {
       mode: "composer",
       constraints: {
         genre: sourceProject.metadata?.genre ?? "",
@@ -429,6 +627,17 @@ async function start() {
         bpm: sourceProject.basic.bpm
       }
     });
+    const loadedLibrary = await divergenceStore.loadLibrary(sourceProject.id);
+    library = loadedLibrary.entries;
+    if (loadedLibrary.error) {
+      persistNotice = "Keepライブラリを読み込めませんでした。保存済みの案が表示されない場合があります。";
+    }
+    // 旧版のセッションからKeep済みの案があれば、ライブラリへ補う(Freeze後も残るようにする)。
+    const backfill = mergeLibrary(library, entriesFromSession(session, entryContext()));
+    if (backfill.added.length) {
+      const saved = await divergenceStore.saveLibrary(sourceProject.id, backfill.entries);
+      if (saved.ok) library = backfill.entries;
+    }
     const sections = getSections(sourceProject);
     sectionIndex = Math.min(sectionIndex, Math.max(0, sections.length - 1));
     render();

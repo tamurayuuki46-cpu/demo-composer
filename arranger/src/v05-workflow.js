@@ -145,7 +145,7 @@ function dawChecklist() {
   return ['# DAW Handoff Checklist', '', '- [ ] Tempoと4/4が正しく読み込まれた', '- [ ] Section Markerを確認した', '- [ ] Melody / Harmony / Bass / Drums / CounterのTrackを確認した', '- [ ] DrumsがMIDI ch10として読み込まれた', '- [ ] 変更前Song.midと変更後Song.midをA/Bした', '- [ ] 「保留」「気になる」のSectionを先に確認した', '- [ ] 確定事項だけ本制作へ反映した', '- [ ] 音色・Humanize・MixはDAWで調整した'].join('\n');
 }
 
-export function createDawHandoffBundle(source, candidate, plan) {
+export function createDawHandoffBundle(source, candidate, plan, { carryOver = [] } = {}) {
   const baseline = createBaselineCandidate(source, candidate), before = createSongMidi(source, baseline), after = createSongMidi(source, candidate);
   if (!after) throw new Error('DAWパックに書き出せるNoteがありません。');
   const project = createDemoComposerProject(source, candidate), journal = ensureDecisionJournal(plan, candidate);
@@ -154,7 +154,7 @@ export function createDawHandoffBundle(source, candidate, plan) {
     '01_compare/Before_Source_Song.mid': before || new Uint8Array(), '01_compare/After_Arrangement_Song.mid': after,
     '02_plan/Arrangement_Plan.json': JSON.stringify({ ...clone(plan), decisionJournal: journal }, null, 2),
     '02_plan/Demo_Composer_Project.json': JSON.stringify(project, null, 2),
-    '03_notes/TRACK_INSTRUCTIONS.md': trackInstructions(source, candidate), '03_notes/SECTION_INSTRUCTIONS.md': sectionInstruction(source, candidate, journal),
+    '03_notes/TRACK_INSTRUCTIONS.md': trackInstructions(source, candidate), '03_notes/SECTION_INSTRUCTIONS.md': ['# Section Instructions', '', ...(carryOver.length ? ['## DAWで決める', ...carryOver.map(item => `- ${source.sections.find(s => s.id === item.sectionId)?.name || item.sectionId || '全体'} / ${item.element || item.level}${item.note ? `: ${item.note}` : ''}`), ''] : []), sectionInstruction(source, candidate, journal)].join('\n'),
     '03_notes/DAW_CHECKLIST.md': dawChecklist(), '03_notes/DECISIONS.json': JSON.stringify(journal, null, 2), '03_notes/COMPARE_MANIFEST.json': JSON.stringify(manifest, null, 2),
   };
   for (const part of PARTS) { const midi = createPartMidi(source, candidate, part); if (midi) files[`04_parts/${part}.mid`] = midi; }
