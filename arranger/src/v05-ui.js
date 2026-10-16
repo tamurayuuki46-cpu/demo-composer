@@ -1,7 +1,23 @@
 import { createPartMidi, restoreArrangerProject } from './core.js';
 import { startPreview } from './preview.js';
-import { ARRANGER_V05_VERSION, createSongMidi, createDemoComposerProject, buildDrumFillCandidates, buildBassApproachCandidates, applyPerformanceOverride, clearPerformanceOverride } from './v05-tools.js';
-import { createBaselineCandidate, changedPartsForRange, findPrechorusToChorusRange, ensureDecisionJournal, recordDecision, restoreDecisionSnapshot, createDawHandoffBundle } from './v05-workflow.js';
+import {
+  ARRANGER_V05_VERSION,
+  createSongMidi,
+  createDemoComposerProject,
+  buildDrumFillCandidates,
+  buildBassApproachCandidates,
+  applyPerformanceOverride,
+  clearPerformanceOverride,
+} from './v05-tools.js';
+import {
+  createBaselineCandidate,
+  changedPartsForRange,
+  findPrechorusToChorusRange,
+  ensureDecisionJournal,
+  recordDecision,
+  restoreDecisionSnapshot,
+  createDawHandoffBundle,
+} from './v05-workflow.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.4';
 const JOURNAL_KEY = 'demo-composer-arranger-decisions-v0.5';
@@ -10,47 +26,133 @@ let compareContext = null, compareStop = null, blindState = null;
 
 const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
 const safeFileName = (value) => String(value).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80);
+const convergence = () => window.__arrangerConvergence || null;
 function escapeHtml(value) { return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;'); }
 function downloadBlob(blob, filename) { const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 500); }
 function toast(message, isError = false) { const el = document.querySelector('#message'); if (!el) return; el.textContent = message; el.classList.toggle('is-error', isError); el.hidden = false; clearTimeout(toast.timer); toast.timer = setTimeout(() => { el.hidden = true; }, 4200); }
-function loadJournal() { try { const raw = localStorage.getItem(JOURNAL_KEY); if (raw) return JSON.parse(raw); const plan = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); return plan?.decisionJournal || null; } catch { return null; } }
-function persistJournal(journal) { if (!journal) return; localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal)); try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) { const plan = JSON.parse(raw); plan.decisionJournal = clone(journal); localStorage.setItem(STORAGE_KEY, JSON.stringify(plan)); } } catch {} }
-function patchVersion(plan) { const next = clone(plan); next.arrangerVersion = ARRANGER_V05_VERSION; next.updatedAt = new Date().toISOString(); const journal = loadJournal(); if (journal) next.decisionJournal = clone(journal); return next; }
-function currentPlan({ adopt = true } = {}) {
+
+function loadJournal() {
+  const api = convergence();
+  if (api?.loadJournal) return api.loadJournal();
+  try {
+    const raw = localStorage.getItem(JOURNAL_KEY);
+    if (raw) return JSON.parse(raw);
+    const plan = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    return plan?.decisionJournal || null;
+  } catch { return null; }
+}
+
+function persistJournal(journal, plan = null) {
+  if (!journal) return { ok: true };
+  const api = convergence();
+  if (api?.savePlanWithJournal) return api.savePlanWithJournal(plan, journal);
+  localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw); saved.decisionJournal = clone(journal);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    }
+  } catch {}
+  return { ok: true };
+}
+
+function patchVersion(plan) {
+  const next = clone(plan);
+  next.arrangerVersion = ARRANGER_V05_VERSION;
+  next.updatedAt = new Date().toISOString();
+  const journal = loadJournal();
+  if (journal) next.decisionJournal = clone(journal);
+  return next;
+}
+
+// 比較/Preview/Exportは収束resolverのCurrent Planを使う。
+function currentPlan({ save = true } = {}) {
+  const api = convergence();
+  if (api?.currentPlanContext) {
+    const context = api.currentPlanContext({ save, journal: loadJournal() });
+    return { ...context, plan: patchVersion(context.plan) };
+  }
   const adoptButton = document.querySelector('#adopt-btn');
-  if (adopt) { if (!adoptButton || adoptButton.disabled) throw new Error('先にproject.jsonを読み込んで編曲案を用意してください。'); adoptButton.click(); }
+  if (save) {
+    if (!adoptButton || adoptButton.disabled) throw new Error('先にproject.jsonを読み込んで編曲案を用意してください。');
+    adoptButton.click();
+  }
   const raw = localStorage.getItem(STORAGE_KEY); if (!raw) throw new Error('現在の編曲案を保存できませんでした。');
   const plan = patchVersion(JSON.parse(raw)), restored = restoreArrangerProject(plan);
   if (!restored.source || !restored.candidate) throw new Error('元project.jsonを読み直してください。');
-  const journal = ensureDecisionJournal(plan, restored.candidate); plan.decisionJournal = journal; persistJournal(journal); localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
+  const journal = ensureDecisionJournal(plan, restored.candidate); plan.decisionJournal = journal; persistJournal(journal, plan);
   return { plan, source: restored.source, candidate: restored.candidate };
 }
+
+// Candidate編集（Drum Fill / snapshot復元等）は選択中Candidateを対象にする。
+function selectedPlan({ save = true } = {}) {
+  const api = convergence();
+  if (api?.selectedContext) {
+    const context = api.selectedContext({ save, journal: loadJournal() });
+    return { ...context, plan: patchVersion(context.plan) };
+  }
+  return currentPlan({ save });
+}
+
 function reimportPlan(plan) {
-  const next = patchVersion(plan); if (next.decisionJournal) persistJournal(next.decisionJournal); localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  const next = patchVersion(plan);
+  const api = convergence();
+  if (api?.applyPlanSnapshot) {
+    const result = api.applyPlanSnapshot(next);
+    if (!result?.ok) throw new Error(result?.error || 'snapshotを復元できませんでした。');
+    queueMicrotask(() => { updateVersionBadge(); renderDecisionHistory(); });
+    return;
+  }
+  if (next.decisionJournal) persistJournal(next.decisionJournal, next);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   const input = document.querySelector('#project-file');
-  try { if (!input || typeof DataTransfer === 'undefined') throw new Error('reload'); const transfer = new DataTransfer(); transfer.items.add(new File([JSON.stringify(next)], 'arrangement-v0.5.json', { type: 'application/json' })); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true })); }
-  catch { location.reload(); }
+  try {
+    if (!input || typeof DataTransfer === 'undefined') throw new Error('reload');
+    const transfer = new DataTransfer();
+    transfer.items.add(new File([JSON.stringify(next)], 'arrangement-v0.5.json', { type: 'application/json' }));
+    input.files = transfer.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  } catch { location.reload(); }
   queueMicrotask(() => { updateVersionBadge(); renderDecisionHistory(); });
 }
+
 function updateVersionBadge() { const version = document.querySelector('#version'); if (version) version.textContent = ARRANGER_V05_VERSION; document.documentElement.dataset.arrangerVersion = ARRANGER_V05_VERSION; }
 
 function stopComparison() { compareStop?.(); compareStop = null; const ctx = compareContext; compareContext = null; if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {}); }
 async function playComparison(source, candidate, { startTick = 0, endTick, parts, label = '比較' } = {}) {
-  document.querySelector('#stop-btn')?.click(); stopComparison(); const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) throw new Error('このブラウザでは比較試聴を利用できません。');
-  const ctx = new AudioCtx(); compareContext = ctx; await ctx.resume(); if (ctx.state !== 'running') throw new Error('音声を開始できません。');
-  compareStop = startPreview(ctx, source, candidate, startTick, stopComparison, { endTick, parts, normalizeLoudness: true }); toast(`${label}を音量補正して試聴します。`);
+  document.querySelector('#stop-btn')?.click(); stopComparison();
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) throw new Error('このブラウザでは比較試聴を利用できません。');
+  const ctx = new AudioCtx(); compareContext = ctx; await ctx.resume();
+  if (ctx.state !== 'running') throw new Error('音声を開始できません。');
+  compareStop = startPreview(ctx, source, candidate, startTick, stopComparison, { endTick, parts, normalizeLoudness: true });
+  toast(`${label}を音量補正して試聴します。`);
 }
+
 function injectComparisonRoom() {
-  if (document.querySelector('#v05-comparison-room')) return; const curve = document.querySelector('#curve'); if (!curve) return;
+  if (document.querySelector('#v05-comparison-room')) return;
+  const curve = document.querySelector('#curve'); if (!curve) return;
   const room = document.createElement('div'); room.id = 'v05-comparison-room'; room.className = 'feature-block comparison-room';
-  room.innerHTML = `<h3>① 比較試聴室</h3><p>音量差に引っ張られにくい比較。目隠し・変更部分・Bメロ→サビ・消去式を使います。</p><div class="comparison-grid"><button class="secondary" id="blind-start">目隠し消去式を開始</button><button class="secondary" id="changed-only">変更部分だけ再生</button><button class="secondary" id="transition-preview">Bメロ→サビ試聴</button><button class="secondary" id="comparison-stop">比較を停止</button></div><div id="blind-box" class="blind-box" hidden><strong id="blind-round">候補 X vs Y</strong><p>名前を隠したまま聴き、残す方を選びます。</p><div class="blind-listen"><button class="primary" data-blind-play="0">▶ Xを聴く</button><button class="primary" data-blind-play="1">▶ Yを聴く</button></div><div class="blind-choose"><button class="secondary" data-blind-choose="0">Xを残す</button><button class="secondary" data-blind-choose="1">Yを残す</button></div><button class="text-button" id="blind-cancel">目隠し比較を終了</button></div><p id="comparison-result" class="hint">比較試聴は全候補で簡易ラウドネス補正を使います。</p>`;
-  curve.after(room); room.querySelector('#blind-start').addEventListener('click', startBlindComparison); room.querySelector('#changed-only').addEventListener('click', previewChangedOnly); room.querySelector('#transition-preview').addEventListener('click', previewTransition); room.querySelector('#comparison-stop').addEventListener('click', () => { stopComparison(); document.querySelector('#stop-btn')?.click(); }); room.querySelector('#blind-cancel').addEventListener('click', cancelBlindComparison); room.addEventListener('click', handleBlindAction);
+  room.innerHTML = `<h3>① 比較試聴室</h3><p>音量差に引っ張られにくい比較。目隠し・変更部分・Bメロ→サビ・消去式を使います。</p><div class="comparison-grid"><button class="secondary" id="blind-start">目隠し消去式を開始</button><button class="secondary" id="changed-only">変更部分だけ再生</button><button class="secondary" id="transition-preview">Bメロ→サビ試聴</button><button class="secondary" id="comparison-stop">比較を停止</button></div><div id="blind-box" class="blind-box" hidden><strong id="blind-round">候補 X vs Y</strong><p>名前を隠したまま聴き、残す方を選びます。</p><div class="blind-listen"><button class="primary" data-blind-play="0">▶ Xを聴く</button><button class="primary" data-blind-play="1">▶ Yを聴く</button></div><div class="blind-choose"><button class="secondary" data-blind-choose="0">Xを残す</button><button class="secondary" data-blind-choose="1">Yを残す</button></div><button class="text-button" id="blind-cancel">目隠し比較を終了</button></div><p id="comparison-result" class="hint">比較試聴はCurrent Planを全候補と同じ簡易ラウドネス補正で鳴らします。</p>`;
+  curve.after(room);
+  room.querySelector('#blind-start').addEventListener('click', startBlindComparison);
+  room.querySelector('#changed-only').addEventListener('click', previewChangedOnly);
+  room.querySelector('#transition-preview').addEventListener('click', previewTransition);
+  room.querySelector('#comparison-stop').addEventListener('click', () => { stopComparison(); document.querySelector('#stop-btn')?.click(); });
+  room.querySelector('#blind-cancel').addEventListener('click', cancelBlindComparison);
+  room.addEventListener('click', handleBlindAction);
 }
 const candidateTabs = () => [...document.querySelectorAll('.candidate-tab')];
 function shuffle(values) { const out = [...values]; for (let i = out.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; } return out; }
 function renderBlindRound() {
   const box = document.querySelector('#blind-box'); if (!box || !blindState) return; box.hidden = false; const round = document.querySelector('#blind-round');
-  if (blindState.winner != null) { document.body.classList.remove('blind-active'); const tabs = candidateTabs(); tabs[blindState.winner]?.click(); const label = tabs[blindState.winner]?.querySelector('strong')?.textContent || '選択案'; round.textContent = `勝ち残り: ${label}`; box.querySelectorAll('[data-blind-play],[data-blind-choose]').forEach((el) => { el.disabled = true; }); document.querySelector('#comparison-result').textContent = `消去式比較の勝ち残りは「${label}」です。`; return; }
+  if (blindState.winner != null) {
+    document.body.classList.remove('blind-active'); const tabs = candidateTabs(); tabs[blindState.winner]?.click();
+    const label = tabs[blindState.winner]?.querySelector('strong')?.textContent || '選択案'; round.textContent = `勝ち残り: ${label}`;
+    box.querySelectorAll('[data-blind-play],[data-blind-choose]').forEach((el) => { el.disabled = true; });
+    document.querySelector('#comparison-result').textContent = `消去式比較の勝ち残りは「${label}」です。`; return;
+  }
   round.textContent = `Round ${blindState.round}: 候補 X vs Y`;
 }
 function startBlindComparison() { const tabs = candidateTabs(); if (tabs.length < 2) { toast('比較できる候補が2案以上必要です。', true); return; } const queue = shuffle(tabs.map((_, index) => index)); blindState = { pair: [queue.shift(), queue.shift()], queue, round: 1, winner: null }; document.body.classList.add('blind-active'); const box = document.querySelector('#blind-box'); box.querySelectorAll('[data-blind-play],[data-blind-choose]').forEach((el) => { el.disabled = false; }); renderBlindRound(); }
@@ -64,39 +166,46 @@ async function previewTransition() { try { const { source, candidate } = current
 
 function injectDecisionPanel() {
   if (document.querySelector('#v05-decision-panel')) return; const midiPanel = document.querySelector('#midi-buttons')?.closest('.panel'); if (!midiPanel) return;
-  const step = midiPanel.querySelector('.step'); if (step) step.textContent = '6'; const title = midiPanel.querySelector('.panel-title h2'); if (title) title.textContent = 'DAW引き継ぎ / MIDI'; const desc = midiPanel.querySelector('.panel-title p'); if (desc) desc.textContent = '確定した編曲案をパート別または一括でDAWへ渡します。';
+  const step = midiPanel.querySelector('.step'); if (step) step.textContent = '6'; const title = midiPanel.querySelector('.panel-title h2'); if (title) title.textContent = 'DAW引き継ぎ / MIDI'; const desc = midiPanel.querySelector('.panel-title p'); if (desc) desc.textContent = 'Current Planをパート別または一括でDAWへ渡します。';
   const panel = document.createElement('section'); panel.id = 'v05-decision-panel'; panel.className = 'panel';
-  panel.innerHTML = `<div class="panel-title"><span class="step">5</span><div><h2>⑤ 判断の記録と復元</h2><p>何を試し、なぜ選んだかをSection snapshotと一緒に残します。</p></div></div><div class="decision-controls"><label class="field"><span>対象</span><select id="decision-section"><option value="">曲全体</option></select></label><label class="field"><span>判断</span><select id="decision-status"><option value="adopted">採用</option><option value="rejected">不採用</option><option value="hold">保留</option><option value="concern">気になる</option><option value="diary">制作日記</option></select></label></div><label class="field decision-reason"><span>理由 / 制作メモ</span><textarea id="decision-reason" maxlength="1000" placeholder="例: サビで主旋律の余白が残るので採用"></textarea></label><div class="preview-row"><button id="decision-save" class="primary">判断を記録</button><button id="decision-original" class="secondary">このSectionを原案へ戻す</button></div><p class="hint">「原案」はv0.5で判断記録を始めた時点のSection。過去の記録から任意のsnapshotへ戻すこともできます。</p><div id="decision-history" class="decision-history"></div>`;
+  panel.innerHTML = `<div class="panel-title"><span class="step">5</span><div><h2>⑤ 判断の記録と復元</h2><p>制作日記とSection snapshot。収束判断は画面下の固定バーから操作します。</p></div></div><div class="decision-controls"><label class="field"><span>対象</span><select id="decision-section"><option value="">曲全体</option></select></label><label class="field"><span>記録</span><select id="decision-status"><option value="adopted">採用メモ</option><option value="rejected">不採用メモ</option><option value="hold">保留メモ</option><option value="concern">気になる</option><option value="diary">制作日記</option></select></label></div><label class="field decision-reason"><span>理由 / 制作メモ</span><textarea id="decision-reason" maxlength="1000" placeholder="例: サビで主旋律の余白が残るので採用"></textarea></label><div class="preview-row"><button id="decision-save" class="primary">判断を記録</button><button id="decision-original" class="secondary">このSectionを原案へ戻す</button></div><p class="hint">snapshot復元は現在のsourceを巻き戻さず、Candidate部分だけを現在Projectへ適用します。</p><div id="decision-history" class="decision-history"></div>`;
   midiPanel.before(panel); panel.querySelector('#decision-save').addEventListener('click', saveDecision); panel.querySelector('#decision-original').addEventListener('click', restoreOriginalSection); panel.addEventListener('click', handleDecisionHistory); updateDecisionSections(); renderDecisionHistory();
 }
 function updateDecisionSections() { const select = document.querySelector('#decision-section'); if (!select) return; const current = select.value, sections = [...document.querySelectorAll('.section-card')].map((card) => { const input = card.querySelector('[data-action="density"][data-section]'); return { id: input?.dataset.section, name: card.querySelector('h3')?.textContent || input?.dataset.section }; }).filter((item) => item.id); select.innerHTML = '<option value="">曲全体</option>' + sections.map((section) => `<option value="${escapeHtml(section.id)}">${escapeHtml(section.name)}</option>`).join(''); if ([...select.options].some((option) => option.value === current)) select.value = current; }
-function saveDecision() { try { const { plan, candidate } = currentPlan(), sectionId = document.querySelector('#decision-section').value || null, status = document.querySelector('#decision-status').value, reason = document.querySelector('#decision-reason').value, next = recordDecision(plan, candidate, { sectionId, status, reason }); persistJournal(next.decisionJournal); localStorage.setItem(STORAGE_KEY, JSON.stringify(patchVersion(next))); document.querySelector('#decision-reason').value = ''; renderDecisionHistory(); toast('判断とSection snapshotを記録しました。'); } catch (error) { toast(error.message || '判断を記録できませんでした。', true); } }
-function restoreOriginalSection() { try { const sectionId = document.querySelector('#decision-section').value; if (!sectionId) throw new Error('戻すSectionを選んでください。'); const { plan } = currentPlan(), journal = loadJournal(); if (journal) plan.decisionJournal = journal; const next = restoreDecisionSnapshot(plan, { sectionId, original: true }); persistJournal(next.decisionJournal); reimportPlan(next); toast('判断記録開始時の原案へ戻しました。'); } catch (error) { toast(error.message || '原案へ戻せませんでした。', true); } }
+function saveDecision() { try { const { plan, candidate } = selectedPlan(), sectionId = document.querySelector('#decision-section').value || null, status = document.querySelector('#decision-status').value, reason = document.querySelector('#decision-reason').value, next = recordDecision(plan, candidate, { sectionId, status, reason }); const saved = persistJournal(next.decisionJournal, next); if (saved?.ok === false) throw new Error('判断ログを保存できませんでした。'); document.querySelector('#decision-reason').value = ''; renderDecisionHistory(); toast('判断とSection snapshotを記録しました。'); } catch (error) { toast(error.message || '判断を記録できませんでした。', true); } }
+function restoreOriginalSection() { try { const sectionId = document.querySelector('#decision-section').value; if (!sectionId) throw new Error('戻すSectionを選んでください。'); const { plan } = selectedPlan(), journal = loadJournal(); if (journal) plan.decisionJournal = journal; const next = restoreDecisionSnapshot(plan, { sectionId, original: true }); reimportPlan(next); toast('判断記録開始時のCandidate内容を現在sourceへ適用しました。'); } catch (error) { toast(error.message || '原案へ戻せませんでした。', true); } }
 function renderDecisionHistory() { const box = document.querySelector('#decision-history'); if (!box) return; const entries = loadJournal()?.entries || []; if (!entries.length) { box.innerHTML = '<p class="hint">判断記録はまだありません。</p>'; return; } box.innerHTML = `<h3>Section履歴</h3>${entries.slice(-20).reverse().map((entry) => `<article class="decision-entry status-${escapeHtml(entry.status)}"><div><strong>${escapeHtml(entry.statusLabel || entry.status)}</strong><span>${escapeHtml(entry.sectionName || '曲全体')}</span></div><p>${escapeHtml(entry.reason || '理由なし')}</p><small>${escapeHtml(entry.at || '')}</small>${entry.snapshot ? `<button class="text-button" data-decision-restore="${escapeHtml(entry.id)}" data-section="${escapeHtml(entry.sectionId)}">この時点へ戻す</button>` : ''}</article>`).join('')}`; }
-function handleDecisionHistory(event) { const button = event.target.closest('[data-decision-restore]'); if (!button) return; try { const { plan } = currentPlan(), journal = loadJournal(); if (journal) plan.decisionJournal = journal; const next = restoreDecisionSnapshot(plan, { sectionId: button.dataset.section, entryId: button.dataset.decisionRestore }); persistJournal(next.decisionJournal); reimportPlan(next); toast('選んだSection履歴へ復元しました。'); } catch (error) { toast(error.message || '履歴へ戻せませんでした。', true); } }
+function handleDecisionHistory(event) { const button = event.target.closest('[data-decision-restore]'); if (!button) return; try { const { plan } = selectedPlan(), journal = loadJournal(); if (journal) plan.decisionJournal = journal; const next = restoreDecisionSnapshot(plan, { sectionId: button.dataset.section, entryId: button.dataset.decisionRestore }); reimportPlan(next); toast('選んだSection履歴を現在sourceへ適用しました。'); } catch (error) { toast(error.message || '履歴へ戻せませんでした。', true); } }
 
 function injectDawPanel() {
   const midiGrid = document.querySelector('#midi-buttons'), midiPanel = midiGrid?.closest('.panel'); if (!midiPanel || document.querySelector('#v05-daw-actions')) return;
-  const block = document.createElement('div'); block.id = 'v05-daw-actions'; block.className = 'feature-block'; block.innerHTML = `<h3>⑥ DAW引き継ぎ</h3><p>変更前後、トラック指示、確定/実験事項、チェックリストまで本制作用にまとめます。</p><div class="daw-action-grid"><button id="song-midi-btn" class="primary">変更後 Song.mid</button><button id="before-midi-btn" class="secondary">変更前 Song.mid</button><button id="daw-pack-btn" class="secondary">DAW引き継ぎZIP</button><button id="demo-return-btn" class="secondary">Demo Composer用project.json</button></div><p class="hint">ZIPには Before/After Song.mid、各パートMIDI、Arrangement Plan、判断ログ、Track指示、Section指示、作業チェックリスト、比較manifestを収録。</p><a class="text-button" href="../">Demo Composerを開く</a>`;
+  const block = document.createElement('div'); block.id = 'v05-daw-actions'; block.className = 'feature-block'; block.innerHTML = `<h3>⑥ DAW引き継ぎ</h3><p>Current Planの変更前後、トラック指示、収束判断、DAW持ち越しを本制作用にまとめます。</p><div class="daw-action-grid"><button id="song-midi-btn" class="primary">変更後 Song.mid</button><button id="before-midi-btn" class="secondary">変更前 Song.mid</button><button id="daw-pack-btn" class="secondary">DAW引き継ぎZIP</button><button id="demo-return-btn" class="secondary">Demo Composer用project.json</button></div><p class="hint">ZIPのSECTION_INSTRUCTIONS.md冒頭に「DAWで決める」項目を記録します。</p><a class="text-button" href="../">Demo Composerを開く</a>`;
   midiGrid.before(block); block.querySelector('#song-midi-btn').addEventListener('click', exportSongMidi); block.querySelector('#before-midi-btn').addEventListener('click', exportBeforeMidi); block.querySelector('#daw-pack-btn').addEventListener('click', exportDawPack); block.querySelector('#demo-return-btn').addEventListener('click', exportDemoProject);
 }
-function exportSongMidi() { try { const { source, candidate } = currentPlan(), midi = createSongMidi(source, candidate); if (!midi) throw new Error('Song.midに書き出せるNoteがありません。'); downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${safeFileName(source.title)}_After_Song_${ARRANGER_V05_VERSION}.mid`); toast('変更後Song.midを一括書き出ししました。'); } catch (error) { toast(error.message || 'Song.midを書き出せませんでした。', true); } }
-function exportBeforeMidi() { try { const { source, candidate } = currentPlan(), midi = createSongMidi(source, createBaselineCandidate(source, candidate)); if (!midi) throw new Error('変更前Song.midに書き出せるNoteがありません。'); downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${safeFileName(source.title)}_Before_Song_${ARRANGER_V05_VERSION}.mid`); toast('変更前Song.midを書き出しました。'); } catch (error) { toast(error.message || '変更前Song.midを書き出せませんでした。', true); } }
-function exportDawPack() { try { const { plan, source, candidate } = currentPlan(), zip = createDawHandoffBundle(source, candidate, plan); downloadBlob(new Blob([zip], { type: 'application/zip' }), `${safeFileName(source.title)}_DAW_handoff_${ARRANGER_V05_VERSION}.zip`); toast('DAW引き継ぎパックをZIPで書き出しました。'); } catch (error) { toast(error.message || 'DAW引き継ぎパックを書き出せませんでした。', true); } }
-function exportDemoProject() { try { const { source, candidate } = currentPlan(), project = createDemoComposerProject(source, candidate); downloadBlob(new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' }), `${safeFileName(project.metadata?.title || source.title)}_project.json`); toast('Demo Composerへ読み込める複製project.jsonを書き出しました。'); } catch (error) { toast(error.message || 'Demo Composer用JSONを書き出せませんでした。', true); } }
+
+async function prepareExport() {
+  const api = convergence();
+  if (api?.prepareExport) return api.prepareExport();
+  return true;
+}
+function carryOverCount() { return convergence()?.getContext?.()?.carryOver?.length || 0; }
+
+async function exportSongMidi() { try { if (!(await prepareExport())) return; const { source, candidate } = currentPlan(), midi = createSongMidi(source, candidate); if (!midi) throw new Error('Song.midに書き出せるNoteがありません。'); downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${safeFileName(source.title)}_After_Song_${ARRANGER_V05_VERSION}.mid`); toast(carryOverCount() ? 'Song.midを書き出しました。DAWで決める項目はMIDI単体には入らないためZIPの指示も確認してください。' : 'Current PlanのSong.midを書き出しました。'); } catch (error) { toast(error.message || 'Song.midを書き出せませんでした。', true); } }
+async function exportBeforeMidi() { try { if (!(await prepareExport())) return; const { source, candidate } = currentPlan(), midi = createSongMidi(source, createBaselineCandidate(source, candidate)); if (!midi) throw new Error('変更前Song.midに書き出せるNoteがありません。'); downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${safeFileName(source.title)}_Before_Song_${ARRANGER_V05_VERSION}.mid`); toast('変更前Song.midを書き出しました。'); } catch (error) { toast(error.message || '変更前Song.midを書き出せませんでした。', true); } }
+async function exportDawPack() { try { if (!(await prepareExport())) return; const { plan, source, candidate } = currentPlan(), zip = createDawHandoffBundle(source, candidate, plan); downloadBlob(new Blob([zip], { type: 'application/zip' }), `${safeFileName(source.title)}_DAW_handoff_${ARRANGER_V05_VERSION}.zip`); toast('Current PlanとDAW持ち越しをZIPで書き出しました。'); } catch (error) { toast(error.message || 'DAW引き継ぎパックを書き出せませんでした。', true); } }
+async function exportDemoProject() { try { if (!(await prepareExport())) return; const { source, candidate } = currentPlan(), project = createDemoComposerProject(source, candidate); downloadBlob(new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' }), `${safeFileName(project.metadata?.title || source.title)}_project.json`); toast('Current PlanをDemo Composer用JSONへ書き出しました。'); } catch (error) { toast(error.message || 'Demo Composer用JSONを書き出せませんでした。', true); } }
 
 function performanceBlock(sectionId) { const wrapper = document.createElement('div'); wrapper.className = 'reharm-block v05-note-generator'; wrapper.dataset.v05Section = sectionId; wrapper.innerHTML = `<div class="reharm-head"><div><strong>実Note生成</strong><span>Drum Fill / Bass Approachを3案から選択</span></div></div><div class="preview-row"><button class="mini secondary" data-v05-action="drum-show" data-section="${escapeHtml(sectionId)}">Drum Fill 3案</button><button class="mini secondary" data-v05-action="bass-show" data-section="${escapeHtml(sectionId)}">Bass Approach 3案</button></div><div class="v05-choice-area"></div><div class="preview-row v05-clear-row"><button class="text-button" data-v05-action="clear-drums" data-section="${escapeHtml(sectionId)}">生成Drumsを解除</button><button class="text-button" data-v05-action="clear-bass" data-section="${escapeHtml(sectionId)}">生成Bassを解除</button></div>`; return wrapper; }
 function injectPerformanceBlocks() { for (const card of document.querySelectorAll('.section-card')) { if (card.querySelector('.v05-note-generator')) continue; const sectionId = card.querySelector('[data-action="density"][data-section]')?.dataset.section; if (!sectionId) continue; const block = performanceBlock(sectionId), transition = card.querySelector('.transition'); if (transition) transition.before(block); else card.append(block); renderPerformanceChoices(sectionId); } }
 function renderPerformanceChoices(sectionId) { const area = document.querySelector(`[data-v05-section="${CSS.escape(sectionId)}"] .v05-choice-area`); if (!area) return; const entry = suggestions.get(sectionId); if (!entry) { area.innerHTML = '<p class="hint">候補を作ってから選択します。既存の同パートOverrideがある場合は、採用時にバックアップして置き換えます。</p>'; return; } if (!entry.choices.length) { area.innerHTML = '<p class="hint">このSectionでは候補を作れません。Bass Approachは2つ以上のコード変化が必要です。</p>'; return; } area.innerHTML = `<div class="reharm-options">${entry.choices.map((choice, index) => `<button class="reharm-option" data-v05-action="apply" data-section="${escapeHtml(sectionId)}" data-option="${index}"><strong>${escapeHtml(choice.label)}</strong><span>${escapeHtml(choice.description)}</span><small>${choice.notes.length} notes</small></button>`).join('')}</div>`; }
-function showPerformanceChoices(sectionId, part) { try { const { source, candidate } = currentPlan(), choices = part === 'drums' ? buildDrumFillCandidates(source, candidate, sectionId) : buildBassApproachCandidates(source, candidate, sectionId); suggestions.set(sectionId, { part, choices }); renderPerformanceChoices(sectionId); } catch (error) { toast(error.message || '実Note候補を作れませんでした。', true); } }
-function applyPerformanceChoice(sectionId, option) { try { const entry = suggestions.get(sectionId), choice = entry?.choices?.[option]; if (!choice) throw new Error('候補を作り直してください。'); const { plan } = currentPlan(); reimportPlan(applyPerformanceOverride(plan, sectionId, choice)); suggestions.delete(sectionId); toast(`${choice.label}をSectionへ適用しました。`); } catch (error) { toast(error.message || '実Note候補を適用できませんでした。', true); } }
-function clearPerformance(sectionId, part) { try { const { plan } = currentPlan(), next = clearPerformanceOverride(plan, sectionId, part); reimportPlan(next); suggestions.delete(sectionId); toast(`${part}の自動生成Overrideを解除しました。`); } catch (error) { toast(error.message || '生成Overrideを解除できませんでした。', true); } }
+function showPerformanceChoices(sectionId, part) { try { const { source, candidate } = selectedPlan(), choices = part === 'drums' ? buildDrumFillCandidates(source, candidate, sectionId) : buildBassApproachCandidates(source, candidate, sectionId); suggestions.set(sectionId, { part, choices }); renderPerformanceChoices(sectionId); } catch (error) { toast(error.message || '実Note候補を作れませんでした。', true); } }
+function applyPerformanceChoice(sectionId, option) { try { const entry = suggestions.get(sectionId), choice = entry?.choices?.[option]; if (!choice) throw new Error('候補を作り直してください。'); const { plan } = selectedPlan(); reimportPlan(applyPerformanceOverride(plan, sectionId, choice)); suggestions.delete(sectionId); toast(`${choice.label}をSectionへ適用しました。`); } catch (error) { toast(error.message || '実Note候補を適用できませんでした。', true); } }
+function clearPerformance(sectionId, part) { try { const { plan } = selectedPlan(), next = clearPerformanceOverride(plan, sectionId, part); reimportPlan(next); suggestions.delete(sectionId); toast(`${part}の自動生成Overrideを解除しました。`); } catch (error) { toast(error.message || '生成Overrideを解除できませんでした。', true); } }
 function handlePerformanceClick(event) { const button = event.target.closest('[data-v05-action]'); if (!button) return; const sectionId = button.dataset.section; if (button.dataset.v05Action === 'drum-show') showPerformanceChoices(sectionId, 'drums'); else if (button.dataset.v05Action === 'bass-show') showPerformanceChoices(sectionId, 'bass'); else if (button.dataset.v05Action === 'apply') applyPerformanceChoice(sectionId, Number(button.dataset.option)); else if (button.dataset.v05Action === 'clear-drums') clearPerformance(sectionId, 'drums'); else if (button.dataset.v05Action === 'clear-bass') clearPerformance(sectionId, 'bass'); }
 
 function interceptLegacyExports() {
-  document.querySelector('#export-btn')?.addEventListener('click', (event) => { event.preventDefault(); event.stopImmediatePropagation(); try { const { plan, source } = currentPlan(); downloadBlob(new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' }), `${safeFileName(source.title)}_arrangement_${ARRANGER_V05_VERSION}.json`); toast('編曲プランJSONを書き出しました。'); } catch (error) { toast(error.message || '編曲プランを書き出せませんでした。', true); } }, true);
-  document.querySelector('#midi-buttons')?.addEventListener('click', (event) => { const button = event.target.closest('button[data-part]'); if (!button) return; event.preventDefault(); event.stopImmediatePropagation(); try { const { source, candidate } = currentPlan(), midi = createPartMidi(source, candidate, button.dataset.part); if (!midi) throw new Error(`${button.dataset.part} に書き出せるNoteがありません。`); downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${safeFileName(source.title)}_${button.dataset.part}_arranged_${ARRANGER_V05_VERSION}.mid`); toast(`${button.dataset.part}.mid を書き出しました。`); } catch (error) { toast(error.message || 'MIDIを書き出せませんでした。', true); } }, true);
-  document.querySelector('#adopt-btn')?.addEventListener('click', () => queueMicrotask(() => { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) localStorage.setItem(STORAGE_KEY, JSON.stringify(patchVersion(JSON.parse(raw)))); } catch {} }), true);
+  document.querySelector('#export-btn')?.addEventListener('click', async (event) => { event.preventDefault(); event.stopImmediatePropagation(); try { if (!(await prepareExport())) return; const { plan, source } = currentPlan(); downloadBlob(new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' }), `${safeFileName(source.title)}_arrangement_${ARRANGER_V05_VERSION}.json`); toast('Current Planの編曲プランJSONを書き出しました。'); } catch (error) { toast(error.message || '編曲プランを書き出せませんでした。', true); } }, true);
+  document.querySelector('#midi-buttons')?.addEventListener('click', async (event) => { const button = event.target.closest('button[data-part]'); if (!button) return; event.preventDefault(); event.stopImmediatePropagation(); try { if (!(await prepareExport())) return; const { source, candidate } = currentPlan(), midi = createPartMidi(source, candidate, button.dataset.part); if (!midi) throw new Error(`${button.dataset.part} に書き出せるNoteがありません。`); downloadBlob(new Blob([midi], { type: 'audio/midi' }), `${safeFileName(source.title)}_${button.dataset.part}_arranged_${ARRANGER_V05_VERSION}.mid`); toast(carryOverCount() ? `${button.dataset.part}.mid を書き出しました。DAW持ち越しはZIPの指示を確認してください。` : `${button.dataset.part}.mid を書き出しました。`); } catch (error) { toast(error.message || 'MIDIを書き出せませんでした。', true); } }, true);
 }
 
 function init() {
