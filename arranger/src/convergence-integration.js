@@ -44,23 +44,25 @@ export function initializeConvergence({ storage, source, candidates, plan, journ
   try {
     loaded = loadState(storage, ids, now);
     const diagnosis = diagnoseLoad(loaded, journal);
+    const persistenceAllowed = !['unsupported', 'unavailable'].includes(diagnosis);
     let convergenceState = loaded.status === 'ok'
       ? loaded.state
       : createEmptyState({ ...ids, planFingerprint: fingerprint });
 
     const checked = checkPlanFingerprint(convergenceState, { ...ids, planFingerprint: fingerprint, now });
     let backupWrite = null;
-    if (checked.backup) backupWrite = writeStructureBackup(storage, ids, checked.backup);
+    if (checked.backup && persistenceAllowed) backupWrite = writeStructureBackup(storage, ids, checked.backup);
     convergenceState = checked.state;
 
     const verified = verifyState(convergenceState, { source, candidates, now });
     convergenceState = purgeExpiredRecovery(verified.state, now);
-    const structureOffer = findStructureBackup(storage, ids, fingerprint, now);
+    const structureOffer = persistenceAllowed ? findStructureBackup(storage, ids, fingerprint, now) : null;
 
     return {
       state: convergenceState,
       tracker: createDirtyTracker(),
       validationReady: true,
+      persistenceAllowed,
       diagnosis,
       warning: convergenceWarningFor(diagnosis) || verified.message || null,
       recoveries: listRecoveries(convergenceState, now),
@@ -85,6 +87,7 @@ export function initializeConvergence({ storage, source, candidates, plan, journ
       state: fallback,
       tracker: createDirtyTracker(),
       validationReady: true,
+      persistenceAllowed: false,
       diagnosis: 'validation-error',
       warning: `収束判断を検証できませんでした: ${error?.message || String(error)}`,
       recoveries: [],
@@ -111,18 +114,31 @@ export function saveArrangerPlan({
   journal = null,
   tracker,
   validationReady,
+  persistenceAllowed = true,
   now = Date.now(),
   planStorageKey = ARRANGER_PLAN_STORAGE_KEY,
   journalStorageKey = ARRANGER_JOURNAL_STORAGE_KEY,
 }) {
   if (!validationReady) return { ok: false, error: 'validation-not-ready', state: convergenceState, tracker };
+  if (!persistenceAllowed) return { ok: false, error: 'convergence-persistence-blocked', state: convergenceState, tracker };
   if (!plan || !source || !convergenceState || !tracker) return { ok: false, error: 'missing-save-input', state: convergenceState, tracker };
 
-  const oldPlanRaw = storage.getItem(planStorageKey);
-  const oldJournalRaw = storage.getItem(journalStorageKey);
+  let oldPlanRaw;
+  let oldJournalRaw;
+  try {
+    oldPlanRaw = storage.getItem(planStorageKey);
+    oldJournalRaw = storage.getItem(journalStorageKey);
+  } catch (error) {
+    return { ok: false, error: `storage-read-failed:${error?.message || String(error)}`, state: convergenceState, tracker };
+  }
+
   const applied = applySave(convergenceState, tracker, { source, candidates, now });
   const auxWrite = saveState(storage, applied.state);
-  if (!auxWrite.ok) return { ok: false, error: `convergence-save-failed:${auxWrite.error || 'unknown'}`, state: convergenceState, tracker };
+  if (!auxWrite.ok) {
+    // readback mismatchを含め、部分書込みの可能性があるので旧stateをbest effortで戻す。
+    try { saveState(storage, convergenceState); } catch { /* best effort */ }
+    return { ok: false, error: `convergence-save-failed:${auxWrite.error || 'unknown'}`, state: convergenceState, tracker };
+  }
 
   const nextPlan = clone(plan);
   if (journal) nextPlan.decisionJournal = clone(journal);
@@ -138,7 +154,7 @@ export function saveArrangerPlan({
     }
   } catch (error) {
     // Plan/Journal失敗時は先に保存した補助状態も旧stateへ戻す。trackerは呼び出し側の旧値を保持する。
-    saveState(storage, convergenceState);
+    try { saveState(storage, convergenceState); } catch { /* best effort */ }
     try { restoreRaw(storage, planStorageKey, oldPlanRaw); } catch { /* best effort */ }
     try { restoreRaw(storage, journalStorageKey, oldJournalRaw); } catch { /* best effort */ }
     return { ok: false, error: `plan-save-failed:${error?.message || String(error)}`, state: convergenceState, tracker };
