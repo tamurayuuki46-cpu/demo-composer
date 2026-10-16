@@ -267,4 +267,63 @@ assert.equal(cv.findStructureBackup(m2, ids, planFp, T + 1), null);
   assert.equal(cv.getAdopted(ds, cv.sectionKey('c')).fingerprint, cv.slotFingerprint(src, B, 'c'));
 }
 
+// --- 追加検証(follow-up)
+{
+  // Candidate IDの決定性
+  const again = buildThreeCandidates(src, 'jpop-band');
+  assert.deepEqual(again.map((c) => c.id), cands.map((c) => c.id));
+  assert.deepEqual(cands.map((c) => c.id), ['jpop-band-v1', 'jpop-band-v2', 'jpop-band-v3']);
+  // 編集してもIDは変わらない(=fingerprintで失効判定する根拠)
+  assert.equal(updateCandidateSection(B, 'c', { density: 'thin' }).id, B.id);
+  // Mix案はDate.now()依存ID: 再生成するとIDが変わり、判断は candidate-missing で未決定に戻る
+  const { mixCandidates } = await import('../src/core.js');
+  const mix1 = mixCandidates(A, C); await new Promise((r) => setTimeout(r, 3)); const mix2 = mixCandidates(A, C);
+  assert.notEqual(mix1.id, mix2.id);
+  let ms = cv.setDecision(cv.createEmptyState({ ...ids, planFingerprint: planFp }), cv.sectionKey('c'), mix1.id, 'adopted', { fingerprint: cv.slotFingerprint(src, mix1, 'c') });
+  const mv = cv.verifyState(ms, { source: src, candidates: [A, B, C, mix2], now: T });
+  assert.equal(mv.notices[0].reason, 'candidate-missing');
+  // 二重無効化で元のRecoveryを上書きしない(新判断を挟まない)
+  let base = cv.setDecision(cv.createEmptyState({ ...ids, planFingerprint: planFp }), cv.sectionKey('c'), C.id, 'adopted', { fingerprint: cv.slotFingerprint(src, C, 'c') });
+  const e1 = JSON.parse(JSON.stringify(src)); e1.tracks.find((t) => t.role === 'drums').notes[1].pitch = 42;
+  const e2 = JSON.parse(JSON.stringify(src)); e2.tracks.find((t) => t.role === 'drums').notes[1].pitch = 46;
+  const first = cv.verifyState(base, { source: e1, candidates: cands, now: T });
+  const reAdopt = cv.setDecision(first.state, cv.sectionKey('c'), C.id, 'adopted', { fingerprint: cv.slotFingerprint(e1, C, 'c') });
+  assert.equal(reAdopt.recovery['section:c'], undefined); // 新判断でRecoveryは役目を終える
+  // 無効化直後に、同じ枠の別の入れ替え(保留など)を挟んでも…元Recoveryは保持される条件: 採用が無い間のverify
+  const second = cv.verifyState(first.state, { source: e2, candidates: cands, now: T + 5 });
+  assert.equal(second.state.recovery['section:c'].prior.fingerprint, cv.slotFingerprint(src, C, 'c'));
+  assert.equal(second.state.recovery['section:c'].createdAt, T);
+  // listRecoveries
+  const list = cv.listRecoveries(first.state, T + 1);
+  assert.deepEqual(list.map((r) => [r.key, r.level, r.sectionId, r.reason]), [['section:c', 'section', 'c', 'external-change']]);
+  assert.equal(cv.listRecoveries(first.state, T + cv.RECOVERY_RETENTION_MS + 1).length, 0);
+  // 構造復帰: 変更→退避→構造が戻る→退避を再検証して開き直す
+  const origState = cv.setDecision(cv.createEmptyState({ ...ids, planFingerprint: planFp }), cv.sectionKey('c'), C.id, 'adopted', { fingerprint: cv.slotFingerprint(src, C, 'c') });
+  const changed = cv.checkPlanFingerprint(origState, { ...ids, planFingerprint: cv.planStructureFingerprint(s3), now: T });
+  const st2 = new Mem(); cv.writeStructureBackup(st2, ids, changed.backup);
+  const found = cv.findStructureBackup(st2, ids, planFp, T + 10);
+  assert.ok(found);
+  const reopened = cv.adoptStructureBackup(found.backup, { source: src, candidates: cands, planFingerprint: planFp, now: T + 10 });
+  assert.equal(reopened.ok, true); assert.equal(cv.getAdopted(reopened.state, cv.sectionKey('c')).candidateId, C.id); assert.equal(reopened.notices.length, 0);
+  assert.equal(cv.adoptStructureBackup(found.backup, { source: src, candidates: cands, planFingerprint: 'zzz', now: T }).error, 'structure-mismatch');
+  assert.equal(cv.adoptStructureBackup(found.backup, { source: src, candidates: cands, planFingerprint: planFp, now: T + cv.RECOVERY_RETENTION_MS + 1 }).error, 'expired');
+  // 別Project/別Planの状態分離(保存→相互に読めない)
+  const iso = new Mem(); const idsB = { projectId: 'demo-2', planId: 'plan-1' };
+  cv.saveState(iso, origState); cv.saveState(iso, cv.setDecision(cv.createEmptyState({ ...idsB, planFingerprint: planFp }), cv.GLOBAL_KEY, A.id, 'adopted', { fingerprint: cv.globalFingerprintMap(src, A) }));
+  assert.ok(cv.getAdopted(cv.loadState(iso, ids).state, cv.sectionKey('c')));
+  assert.equal(cv.getAdopted(cv.loadState(iso, ids).state, cv.GLOBAL_KEY), null);
+  assert.equal(cv.getAdopted(cv.loadState(iso, idsB).state, cv.GLOBAL_KEY).candidateId, A.id);
+  // recordEdit/applySaveは入力を破壊しない
+  const t0 = cv.createDirtyTracker(); const snap = JSON.stringify([origState, t0]);
+  const t1 = cv.recordEdit(t0, origState, { source: src, before: C, after: updateCandidateSection(C, 'c', { enabled: { counter: false } }) });
+  cv.applySave(origState, t1, { source: src, candidates: cands, now: T });
+  assert.equal(JSON.stringify([origState, t0]), snap);
+  // 編集して元に戻すとdirtyは残るが、保存でfingerprintは同値のまま・外部変更にならない
+  const reverted = cv.recordEdit(cv.createDirtyTracker(), origState, { source: src, before: C, after: C });
+  assert.deepEqual(cv.dirtyKeys(reverted), []);
+  const noop = cv.applySave(origState, cv.recordEdit(cv.createDirtyTracker(), origState, { source: src, before: C, after: updateCandidateSection(C, 'c', { enabled: { counter: false } }) }), { source: src, candidates: cands, now: T });
+  assert.equal(noop.externalChanges.length, 0); // dirty枠は現在値で再リンクされ、外部変更にならない
+  assert.equal(cv.getAdopted(noop.state, cv.sectionKey('c')).fingerprint, cv.slotFingerprint(src, C, 'c'));
+}
+
 console.log('arranger convergence core tests: OK');
