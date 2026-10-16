@@ -47,7 +47,7 @@ ChatGPT / Codex と Claude の引き継ぎ正本。**作業を始める前にこ
 - 発散モードがDemo ComposerとArrangement Labの両方にあり、仕様が重複気味(統合は実機後に検討)。
 - `npm test`の一括コマンドはない。`package.json`の`test:*`を個別に実行する(`test:build-cache`は先に`npm run build`が必要)。
 - ルートの`undefined/`フォルダ(スクショ保存先の誤り)は未整理。
-- `arranger/tests/browser.test.cjs` はこの環境で `#mix-btn` クリックがタイムアウトする(修正前のコードでも同じ。今回の変更と無関係。原因未調査)。
+- `arranger/tests/browser.test.cjs` は探索モード専用。初心者モード(既定)では `.mix-row` 等が非表示のため、CIと同じく `ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=explore'` を付けて実行する(付けないと `#mix-btn` でタイムアウトする)。
 - (仕様)Labの初心者モードでは「この案を採用」「Song.mid(採用案)」「編曲プランJSON」が非表示。⑥では「変更後 Song.mid」(6 Track・Chordsはch5)が出る。DAW gate準拠の5 Track版は「📦 曲データ → MIDI保存」か「もっと試す」で出す。両者のNote内容は一致を確認済み。
 - (仕様)Labの編集(Section密度など)は「この案を採用」・判断・Exportで保存される。その前に再読み込みすると失われる。
 - (仕様)Demo ComposerはBassがある間コードを追加できない。テンプレート構成で前のSectionにコードの空きがあると次のSectionへコピーできない(案内文は出る)。Bass候補は現在の1小節にだけ入る。
