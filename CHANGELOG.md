@@ -1,3 +1,22 @@
+## 2026-10-17 — 実機1曲完走の準備(Work代理検証)
+
+Version: v0.17-dev(Demo Composer) / v0.15-dev(Arrangement Lab) / v0.19-dev(Home) — 変更なし
+
+【修正】
+- スマホ幅(320〜430px)で ↶ / ↷ が「📦 曲データ」ボタンに完全に覆われ、Undoを押せなかった問題を修正(Demo ComposerのCSSのみ)。
+- Arrangement LabのDAW引き継ぎZIPが、1コーラス規模(Plan JSON約120KB超)で「Maximum call stack size exceeded」になり書き出せなかった問題を修正。ZIPの形式・中身は変更なし。
+
+【検証】
+- Demo Composer → Arrangement Lab → Song.midをWork代理E2Eで確認(390px・Android相当UA。実機ではない)。
+- Song.mid(5 Track)を独立パーサで元Demoデータと照合し34/34 PASS(Tempo / 4/4 / Marker / Pitch / Start / Length / Drums ch10)。
+- 自動テスト164件PASS(Node 147 / Browser 17)。
+
+【互換性】
+- Schema変更なし / Migrationなし / PPQ 480・4/4維持。
+
+【実機確認待ち】
+- Android → Song.mid保存、Cubasis / BandLab Import、Cubase Import、1コーラス完走。
+
 ## 2026-10-15 — v0.15-dev lineage reconciliation candidate
 
 ## 2026-10-17 — Arrangement Lab v0.15-dev（収束モード統合候補）
