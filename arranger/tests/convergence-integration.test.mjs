@@ -34,7 +34,10 @@ function rawProject(revision = 1, sections = null) {
     tracks: [
       { role: 'melody', midiChannel: 2, notes: [{ pitch: 64, startTick: 0, durationTick: 480, velocity: 100 }] },
       { role: 'drums', midiChannel: 10, notes: [{ pitch: 36, startTick: 0, durationTick: 120, velocity: 110 }] },
-      { role: 'counter', midiChannel: 4, notes: [{ pitch: 72, startTick: 2400, durationTick: 480, velocity: 90 }] },
+      { role: 'counter', midiChannel: 4, notes: [
+        { pitch: 72, startTick: 2400, durationTick: 480, velocity: 90 },
+        { pitch: 74, startTick: 4800, durationTick: 480, velocity: 90 },
+      ] },
     ],
   };
 }
@@ -69,7 +72,7 @@ assert.ok(storage.getItem(ARRANGER_JOURNAL_STORAGE_KEY));
 
 // 共通入口でdirtyを記録し、保存時にfingerprintを更新する。
 const before = B;
-const after = updateCandidateSection(before, 'chorus', { enabled: { drums: false } });
+const after = updateCandidateSection(before, 'chorus', { enabled: { counter: false } });
 let dirty = cv.recordEdit(result.tracker, result.state, { source, before, after });
 assert.ok(cv.dirtyKeys(dirty).includes('global:chorus'));
 const editedCandidates = [candidates[0], after, candidates[2]];
@@ -80,7 +83,7 @@ assert.equal(cv.dirtyKeys(savedEdit.tracker).length, 0);
 assert.equal(savedEdit.externalChanges.length, 0);
 
 // 共通入口を通らない変更は外部変更としてRecoveryへ送られる。
-const external = updateCandidateSection(after, 'verse', { enabled: { drums: false } });
+const external = updateCandidateSection(after, 'verse', { enabled: { counter: false } });
 const externalCandidates = [candidates[0], external, candidates[2]];
 const externalSave = saveArrangerPlan({ storage, source, candidates: externalCandidates, plan: createArrangerProject(source, external, plan), convergenceState: savedEdit.state, journal, tracker: savedEdit.tracker, validationReady: true, now: now + 3 });
 assert.equal(externalSave.ok, true);
