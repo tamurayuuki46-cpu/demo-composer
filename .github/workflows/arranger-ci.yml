@@ -45,6 +45,7 @@ jobs:
 
       - name: Arrangement Lab core regression
         run: |
+          node arranger/tests/convergence.test.mjs
           node arranger/tests/core.test.mjs
           node arranger/tests/regression.test.mjs
           node arranger/tests/features.test.mjs
