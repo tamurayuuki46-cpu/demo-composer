@@ -1,7 +1,6 @@
 import { arrangerSession, confirmCurrentPlanExport } from './app.js';
 import { buildSongMidi } from './song-midi.js';
 
-const STORAGE_KEY = 'demo-composer-arranger-v0.4';
 const button = document.querySelector('#export-song-midi-btn');
 
 function flash(message, isError = false) {

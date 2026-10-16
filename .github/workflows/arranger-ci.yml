@@ -26,6 +26,7 @@ jobs:
 
       - name: JavaScript syntax check
         run: |
+          for file in arranger/convergence/*.js arranger/src/convergence*.js; do node --check "$file"; done
           node --check arranger/src/core.js
           node --check arranger/src/app.js
           node --check arranger/sw.js

@@ -2,7 +2,7 @@ import { arrangerSession, refreshArranger, applyPlanSnapshot, confirmCurrentPlan
 import { createPartMidi } from './core.js';
 import { startPreview } from './preview.js';
 import { ARRANGER_V05_VERSION, createSongMidi, createDemoComposerProject, buildDrumFillCandidates, buildBassApproachCandidates, applyPerformanceOverride, clearPerformanceOverride } from './v05-tools.js';
-import { createBaselineCandidate, changedPartsForRange, findPrechorusToChorusRange, ensureDecisionJournal, recordDecision, restoreDecisionSnapshot, createDawHandoffBundle } from './v05-workflow.js';
+import { createBaselineCandidate, changedPartsForRange, findPrechorusToChorusRange, recordDecision, restoreDecisionSnapshot, createDawHandoffBundle } from './v05-workflow.js';
 
 const suggestions = new Map();
 let compareContext = null, compareStop = null, blindState = null;

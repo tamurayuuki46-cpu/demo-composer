@@ -1,4 +1,4 @@
-import { listRecoveries, parseSlotKey, sectionKey, elementKey, getStatus } from '../convergence/index.js';
+import { listRecoveries, sectionKey, elementKey, getStatus } from '../convergence/index.js';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export function mountConvergence(session, { changed, preview }) {
   const panel = document.createElement('section');
@@ -8,7 +8,7 @@ export function mountConvergence(session, { changed, preview }) {
     <div class="convergence-controls"><label>判断する範囲<select id="convergence-scope"><option value="global">全体</option></select></label>
     <label>理由（任意）<select id="convergence-reason"><option value="">理由なし</option><option>余白がある</option><option>主旋律が聴きやすい</option><option>勢いがある</option><option>つながりが自然</option><option>もう一度比較</option></select></label></div>
     <button id="convergence-release" class="secondary" hidden>上書き解除</button>
-    <p id="convergence-current-label"></p><div id="convergence-provenance"></div>
+    <p id="convergence-current-label"></p><div id="convergence-provenance"></div><div id="convergence-current-sections"></div>
     <button id="current-plan-preview" class="secondary">▶ Current Planを試聴</button>
     <p class="hint">収束補助状態はPlan JSONだけでは別端末へ移りません。</p>`;
   document.querySelector('#candidate-tabs').closest('.panel').after(panel);
@@ -39,6 +39,7 @@ export function mountConvergence(session, { changed, preview }) {
       const describe = item => `${{ global: '全体', section: 'Section', element: '個別', default: '仮' }[item.origin]}: ${session.model.candidates.find(c => c.id === item.candidateId)?.label || item.candidateId}`;
       return `<p class="convergence-origin"><strong>${esc(name)}</strong> <small>${esc(describe(p.base))} / Drums ${esc(describe(p.elements.drums))} / 裏メロ ${esc(describe(p.elements.counter))}</small></p>`;
     }).join('');
+    panel.querySelector('#convergence-current-sections').innerHTML = result.candidate.sections.map(s => `<p><strong>${esc(s.sectionName)}</strong> ${esc(s.density)} / ${esc(Object.entries(s.enabled || {}).filter(([, enabled]) => enabled).map(([part]) => part).join(' / '))}</p>`).join('');
     const warning = panel.querySelector('#convergence-warning'); warning.hidden = !session.warning; warning.textContent = session.warning || '';
     panel.querySelector('#convergence-recoveries').innerHTML = [...listRecoveries(session.state, Date.now()).map(r => ({ key: r.key, label: `${r.sectionId || '全体'}: 判断の復元候補` })), ...(session.structureOffer ? [{ key: 'structure', label: '元の構成の判断があります' }] : [])].map(r => `<div class="convergence-recovery"><span>${esc(r.label)}</span><button data-recovery="${esc(r.key)}">元の判断のまま採用</button></div>`).join('');
     bar.querySelector('#convergence-target').textContent = `${scope.selectedOptions[0]?.textContent} / ${session.selected.label} / ${{ adopted: '採用', hold: 'まだ迷う', rejected: '不採用', undecided: '未判断' }[getStatus(session.state, scope.value, session.selected.id)]}`;

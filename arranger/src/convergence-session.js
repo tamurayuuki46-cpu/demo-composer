@@ -104,8 +104,8 @@ export class ConvergenceSession {
       : cv.slotFingerprint(this.model.source, candidate, info.sectionId, info.element || null);
     this.mutate(cv.setDecision(this.state, key, candidate.id, status, { fingerprint, reasons, now: Date.now() }), `${key} / ${candidate.label}: ${status}${reasons.length ? ` (${reasons.join(' / ')})` : ''}`);
   }
-  release(key) { this.mutate(cv.releaseOverride(this.state, key, Date.now()), `${key} 上書き解除`); }
-  carry(key) { this.mutate(cv.setCarryOver(this.state, key, { now: Date.now() }), `${key} DAWで決める`); }
+  release(key) { this.save(); this.mutate(cv.releaseOverride(this.state, key, Date.now()), `${key} 上書き解除`); }
+  carry(key) { this.save(); this.mutate(cv.setCarryOver(this.state, key, { now: Date.now() }), `${key} DAWで決める`); }
   undoDecision() {
     if (!this.undo) return;
     this.state = this.undo.state;
@@ -140,10 +140,10 @@ export class ConvergenceSession {
     this.model.candidates = candidates;
     this.model.arrangerProject = this.makePlan();
     this.validationReady = false;
+    try {
     const checked = cv.checkPlanFingerprint(applied.state, { projectId: applied.state.projectId, planId: applied.state.planId, planFingerprint: cv.planStructureFingerprint(nextSource), now: Date.now() });
     if (checked.backup) cv.writeStructureBackup(this.storage, applied.state, checked.backup);
     // On structural change the contract resets judgments, retaining a recoverable backup.
-    try {
       this.state = cv.purgeExpiredRecovery(cv.verifyState(checked.state, { source: nextSource, candidates, now: Date.now() }).state, Date.now());
       this.warning = checked.structureChanged ? `構成変更: 追加 ${nextIds.filter(id => !previousIds.includes(id)).length} / 削除 ${previousIds.filter(id => !nextIds.includes(id)).length}。元の判断は退避しました。` : null;
       this.structureOffer = cv.findStructureBackup(this.storage, this.state, cv.planStructureFingerprint(nextSource), Date.now());

@@ -55,6 +55,10 @@ const fixture={
   await page.waitForFunction(()=>document.querySelectorAll('.section-card').length===3);
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('demo-composer-arranger-v0.4')));assert.ok(saved.arrangement.sections.find(s=>s.sectionId==='s2').partOverrides.drums.length);
 
+  // Convergence requires an explicit base decision before an unprompted Export.
+  await page.selectOption('#convergence-scope','global');
+  await page.locator('[data-convergence-status=adopted]').click();
+
   // ⑥ One ZIP carries before/after MIDI, per-part MIDI and production notes.
   let downloadP=page.waitForEvent('download');await page.click('#daw-pack-btn');let download=await downloadP;const bytes=await fs.readFile(await download.path());assert.equal(bytes.subarray(0,4).toString('hex'),'504b0304');const latin=bytes.toString('latin1');
   for(const name of ['Before_Source_Song.mid','After_Arrangement_Song.mid','Arrangement_Plan.json','TRACK_INSTRUCTIONS.md','SECTION_INSTRUCTIONS.md','DAW_CHECKLIST.md','DECISIONS.json','COMPARE_MANIFEST.json'])assert.ok(latin.includes(name),name);
