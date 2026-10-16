@@ -51,4 +51,17 @@ assert.equal(Buffer.from(bundle.subarray(0, 4)).toString('hex'), '504b0304');
 const bundleText = Buffer.from(bundle).toString('latin1');
 for (const name of ['Before_Source_Song.mid', 'After_Arrangement_Song.mid', 'Arrangement_Plan.json', 'TRACK_INSTRUCTIONS.md', 'SECTION_INSTRUCTIONS.md', 'DAW_CHECKLIST.md', 'DECISIONS.json', 'COMPARE_MANIFEST.json']) assert.ok(bundleText.includes(name), name);
 
+// Regression: a 1-chorus song produces plan JSON larger than ~120KB. Spreading that into
+// Array.push() threw "Maximum call stack size exceeded" and the DAW ZIP could not be exported.
+const largeText = 'x'.repeat(512 * 1024);
+const largeZip = createStoreZip({ '02_plan/Arrangement_Plan.json': largeText, '01_compare/After_Arrangement_Song.mid': new Uint8Array([77, 84, 104, 100]) });
+const largeView = new DataView(largeZip.buffer, largeZip.byteOffset, largeZip.byteLength);
+assert.equal(largeView.getUint32(0, true), 0x04034b50, 'local header signature');
+assert.equal(largeView.getUint32(18, true), largeText.length, 'compressed size of the large entry');
+const eocd = largeZip.byteLength - 22;
+assert.equal(largeView.getUint32(eocd, true), 0x06054b50, 'end of central directory');
+assert.equal(largeView.getUint16(eocd + 10, true), 2, 'both entries listed');
+const firstName = '02_plan/Arrangement_Plan.json';
+assert.equal(Buffer.from(largeZip.subarray(30 + firstName.length, 30 + firstName.length + 8)).toString('latin1'), 'xxxxxxxx', 'large entry payload kept intact');
+
 console.log('PASS v0.5 workflow: comparison ranges/changed parts, decision history/restore, DAW ZIP bundle');

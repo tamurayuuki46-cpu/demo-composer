@@ -36,3 +36,15 @@
 .history-actions button:disabled {
   opacity: .32;
 }
+
+/* 共通の「📦 曲データ」ボタン(position:fixed・右上)が ↶ / ↷ を覆わないよう、
+   ボタンが表示されている間はヘッダー右側にその幅だけ余白を取る。 */
+body:has(.song-data-dock) .topbar {
+  padding-right: 124px;
+}
+
+@media (max-width: 520px) {
+  body:has(.song-data-dock) .topbar {
+    padding-right: 116px;
+  }
+}

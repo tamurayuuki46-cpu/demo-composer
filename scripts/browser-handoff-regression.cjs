@@ -115,6 +115,16 @@ async function downloadedJson(page, button) {
       for (const field of ['analysis', 'arrangement', 'intent', 'reference']) assert.deepEqual(output[field], source[field], `${field} preserved`);
       assert.equal(output.schemaVersion, 1);
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Demo overflows ${width}`);
+      // The fixed song-data button must not cover Undo / Redo on phone widths.
+      for (const id of ['history-undo', 'history-redo']) {
+        const hit = await page.evaluate(buttonId => {
+          const button = document.getElementById(buttonId);
+          const box = button.getBoundingClientRect();
+          const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+          return top === button || button.contains(top) ? 'ok' : (top?.className || top?.tagName || 'none');
+        }, id);
+        assert.equal(hit, 'ok', `#${id} is covered by ${hit} at ${width}px`);
+      }
       await page.getByRole('button', { name: 'Arrangement Labを開く', exact: true }).click();
       await page.getByRole('heading', { name: 'Demo Composerから続ける', exact: true }).waitFor();
       await page.getByRole('button', { name: '受け取った曲を反映', exact: true }).click();
@@ -122,6 +132,10 @@ async function downloadedJson(page, button) {
       await page.locator('#source-summary').getByText(editedTitle, { exact: true }).waitFor({ state: 'attached' });
       assert.ok(await page.locator('#candidate-tabs button').count() >= 3, 'received composition produces arrangement candidates');
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `Arrangement overflows ${width}`);
+      // Reloading right after the handoff (before any decision/export) must keep the song in the Lab.
+      await page.reload();
+      await page.locator('#source-summary').getByText(editedTitle, { exact: true }).waitFor({ state: 'attached' });
+      assert.ok(await page.locator('#candidate-tabs button').count() >= 3, 'song survives reload right after handoff');
       await page.screenshot({ path: `test-results/handoff-${width}.png` });
       assert.deepEqual(errors, [], 'No application console errors');
       await context.close();
