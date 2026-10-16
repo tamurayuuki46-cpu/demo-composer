@@ -132,9 +132,10 @@ export async function importFile(file) {
     renderSource();
     renderCollisionSummary();
     generateCandidates();
+    // 成功表示を先に出す。save()が失敗した場合はその警告が最後に残り、成功表示で隠れない。
+    flash(`「${state.source.title}」を読み込みました。`);
     // 反映直後に再読み込みしても曲が消えないよう、検証済みなら一度保存する(判断・書き出し前の空白をなくす)。
     if (arrangerSession.validationReady) arrangerSession.save();
-    flash(`「${state.source.title}」を読み込みました。`);
     return true;
   } catch (error) {
     flash(error.message || '読み込みに失敗しました。', true);
