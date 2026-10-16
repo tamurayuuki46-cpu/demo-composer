@@ -216,7 +216,6 @@ function sourceMeta(source) {
 }
 
 export function rebaseSameProject({ plan, source, candidate, nextSource, convergenceState, tracker }) {
-  if (!persistenceAllowed) return { ok: false, error: 'convergence-persistence-blocked', state: convergenceState, tracker };
   if (!plan || !source || !candidate || !nextSource) throw new Error('rebaseに必要なPlan / source / candidateがありません。');
   const oldProjectId = source.sourceProjectId ?? plan.source?.projectId;
   if (String(oldProjectId) !== String(nextSource.sourceProjectId)) throw new Error('別Projectにはrebaseできません。');
