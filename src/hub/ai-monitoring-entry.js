@@ -1,4 +1,3 @@
-const VERSION = 'v0.16-dev';
 const entryUrl = new URL(import.meta.url);
 const build = entryUrl.searchParams.get('build');
 
@@ -11,9 +10,6 @@ if (!document.querySelector('link[data-ai-monitoring-style]')) {
   link.dataset.aiMonitoringStyle = 'true';
   document.head.append(link);
 }
-
-const versionLabel = document.querySelector('.version');
-if (versionLabel) versionLabel.textContent = VERSION;
 
 const moduleUrl = new URL('./ai-monitoring.js', import.meta.url);
 if (build) moduleUrl.searchParams.set('build', build);

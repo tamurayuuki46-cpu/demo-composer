@@ -4,15 +4,17 @@ Androidスマホ中心の作曲支援PWAです。
 
 ## Version status
 
-- Published main: `v0.15-dev` (`main`; reconciliation PR #255 / merge `0aa2d4d7ec2329cd01bcef8cca4cc527c0133b19`)
-- Development integration: `v0.16-dev` on `develop`
-- Divergence development candidate: Demo Composer `v0.17-dev` / Arrangement Lab `v0.14-dev` on `chatgpt/divergence-mode-v0.17`（draft PR #259）
-- Music Project Home development candidate: `v0.19-dev`
+- Published main: Demo Composer `v0.17-dev`
+- Arrangement Lab: `v0.14-dev`
+- Music Project Home: `v0.19-dev`
+- Composition Sheet latest: `v0.9.1-dev`
+- MIDI Archive/Analyzer: `v0.25-dev`（別Repository / 公開済み）
+- Release integration: `release/v0.17-publish-20261016` / `7669b6b1a63d5caabf5534101d01338fb6faf2c5`
 - Stable: 未認定
 
 GitHub Pages: `https://tamurayuuki46-cpu.github.io/demo-composer/`
 
-公開中GitHub Pagesは引き続き`main`のv0.15-devです。`develop`のv0.16-dev、およびPR #259のv0.17-dev / Arrangement Lab v0.14-devは開発版であり、公開済み・stableとは扱いません。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
+v0.17公開では、develop側の発散モードとProject Home v0.19を維持しながら、main側で公開確認済みのv0.16 / v0.16.1 SongProject受け渡し修正・保存完了待ち・Arrangement Lab初期化待ち・Version表示修正を統合しています。Demo Project Schema 3 / SongProject v1 / Arrangement Plan Schema 4は変更していません。stableはAndroid実機とCubasis / Cubase実機確認後のみ認定します。
 
 ## コンセプト
 
@@ -42,7 +44,7 @@ PC DAWは最終工程として必須です。
 
 正本: `docs/WORKFLOW_PRINCIPLES.md`
 
-## v0.17-dev — divergence development candidate
+## v0.17-dev — published release
 
 発散モードは既存の比較・採用・判断履歴などの収束機能の前段として、元案を壊さず可能性を増やす探索レイヤーです。
 
@@ -64,6 +66,7 @@ PC DAWは最終工程として必須です。
 - Arrangement Labは主旋律を常時固定し、既存Reharm / Density / Counter role / Instrumentationを発散対象にする
 - Music Project Homeは生成せず、Demo Composer / Arrangement Labの発散モードへ案内する
 - MIDI Analyzerは生成せず、Branch差分の分析・説明・実験候補提案を担当する
+- main v0.16 / v0.16.1のSongProject受け渡し・保存完了待ち・Arrangement Lab初期化待ち修正を統合
 
 互換性:
 
@@ -71,6 +74,8 @@ PC DAWは最終工程として必須です。
 - SongProject v1変更なし
 - Arrangement Plan Schema 4変更なし
 - 発散履歴は補助状態として扱い、Freeze前はProject本体を書き換えない
+- 公開統合前復元Branch: `restore/main-before-v0.17-publish-20261016`
+- 公開統合前復元Branch: `restore/develop-before-v0.17-publish-20261016`
 - 大規模変更前の復元Branch: `restore/v0.16-before-divergence-2026-10-15`
 - stable tagは未作成
 

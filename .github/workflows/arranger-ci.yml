@@ -9,6 +9,7 @@ on:
       - 'arranger/**'
       - 'src/**'
       - 'scripts/browser-export-regression.cjs'
+      - 'scripts/browser-handoff-regression.cjs'
       - '.github/workflows/arranger-ci.yml'
 
 jobs:
@@ -81,6 +82,13 @@ jobs:
           node arranger/tests/v05-browser.test.cjs
           node arranger/tests/v06-browser.test.cjs
           node arranger/tests/pwa-update.test.cjs
+
+      - name: SongProject handoff mobile regression
+        run: |
+          mkdir -p /tmp/handoff-site
+          ln -s "$PWD/dist" /tmp/handoff-site/demo-composer
+          python3 -m http.server 8082 --directory /tmp/handoff-site > /tmp/handoff-server.log 2>&1 &
+          DEMO_URL=http://127.0.0.1:8082/demo-composer/ node scripts/browser-handoff-regression.cjs
 
       - name: Upload mobile evidence
         if: always()

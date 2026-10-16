@@ -268,6 +268,15 @@ export function demoProjectToSongProject(demoProject, { now } = {}) {
     revision: demoProject.revision ?? 1,
     legacyProject: clone(demoProject)
   };
+  delete result.compatibility.demoComposer.legacyProject.songProjectContext;
+  const context = demoProject.songProjectContext;
+  if (context?.projectId === projectId && isSongProject(context)) {
+    const preserved = clone(context);
+    Object.assign(preserved, { title: result.title, updatedAt: stamp, basic: result.basic, composition: result.composition });
+    preserved.compatibility = { ...preserved.compatibility, demoComposer: result.compatibility.demoComposer };
+    validateSongProject(preserved);
+    return preserved;
+  }
   validateSongProject(result);
   return result;
 }
@@ -298,6 +307,8 @@ export function songProjectToDemoProject(songProject) {
   validateSongProject(normalized);
   const legacy = clone(normalized.compatibility?.demoComposer || {});
   const base = clone(legacy.legacyProject || {});
+  const context = clone(normalized);
+  if (context.compatibility?.demoComposer?.legacyProject) delete context.compatibility.demoComposer.legacyProject.songProjectContext;
   const metadata = {
     ...(base.metadata || {}),
     title: normalized.title,
@@ -312,6 +323,7 @@ export function songProjectToDemoProject(songProject) {
     schemaVersion: legacy.schemaVersion ?? base.schemaVersion ?? 3,
     appVersion: legacy.appVersion ?? base.appVersion ?? 'v0.3-dev',
     id: normalized.projectId,
+    songProjectContext: context,
     revision: legacy.revision ?? base.revision ?? 1,
     metadata,
     basic: clone(normalized.basic),

@@ -1335,4 +1335,35 @@ async function boot() {
   render("hub");
 }
 
-boot();
+// Await storage explicitly for inter-app transfers; UI timing is not a save receipt.
+export async function saveSongProjectSnapshot() {
+  autosave.stop();
+  try {
+    await autosave.whenIdle();
+    const snapshot = projectStore.getSnapshot();
+    await saveProject(snapshot);
+    return snapshot;
+  } finally {
+    autosave.start();
+  }
+}
+
+export async function applySongProjectSnapshot(project) {
+  const imported = parseProjectJson(JSON.stringify(project));
+  if (!globalThis.confirm(`「${imported.metadata.title}」を反映します。現在の曲は端末へ保存して残します。よろしいですか？`)) return false;
+  autosave.stop();
+  try {
+    await autosave.whenIdle();
+    await saveProject(projectStore.getSnapshot());
+    await saveProject(imported);
+    demoPlayer.stop();
+    chordRootSelection = null;
+    projectStore.replaceProject(imported, { preserveId: false });
+    render(currentScreen);
+    return true;
+  } finally {
+    autosave.start();
+  }
+}
+
+export const ready = boot();

@@ -41,7 +41,7 @@ jobs:
           node --check src/hub/ai-monitoring-entry.js
           node --check src/hub/app-entry.js
           node scripts/ai-monitoring-smoke-test.mjs
-          test "$(tr -d '\r\n' < VERSION)" = "v0.15-dev"
+          node scripts/version-consistency-smoke-test.mjs
           grep -q 'ai-monitoring-entry.js' src/hub/app-entry.js
       - name: Public build
         run: |
