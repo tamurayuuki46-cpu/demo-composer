@@ -95,3 +95,25 @@ const beforeUndo=transaction.state;transaction.storage.failKey=ARRANGER_JOURNAL_
 assert.equal(transaction.undoDecision().ok,false);assert.equal(transaction.state,beforeUndo);
 transaction.storage.failKey=null;assert.equal(transaction.undoDecision().ok,true);
 console.log('PASS convergence decision/Undo transactional failures preserve state, tracker and journal');
+// Review regression: Undo must not drop dirty marks recorded after the decision (else a normal edit becomes external-change Recovery).
+{
+  const s = open(); s.decide('global','adopted'); s.decide('section:s1','hold',['x']);
+  const b = s.selected; s.applyCandidateEdit(b, updateCandidateSection(b,'s2',{ enabled: { drums: false } }));
+  assert.ok(cv.dirtyKeys(s.tracker).includes('global:s2'));
+  assert.equal(s.undoDecision().ok, true);
+  s.current();
+  assert.equal(cv.listRecoveries(s.state, Date.now()).length, 0);
+}
+// Review regression: rollback failure is surfaced (distinct notice), not swallowed.
+{
+  const st = new MemoryStorage(), s = open(st), notes = [];
+  s.notify = (m) => notes.push(m);
+  s.decide('global','adopted');
+  const realSet = st.setItem.bind(st);
+  st.setItem = (k, v) => { if (k === ARRANGER_JOURNAL_STORAGE_KEY || k.startsWith('demo-composer-arranger-candidates:')) throw Error('quota'); return realSet(k, v); };
+  const r = s.decide('section:s1','hold',['x']);
+  assert.equal(r.ok, false);
+  assert.ok(r.rollbackFailed.length > 0);
+  assert.ok(notes.some(m => m.includes('巻き戻し')));
+}
+console.log('review regressions: OK');

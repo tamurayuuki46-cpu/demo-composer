@@ -105,6 +105,15 @@ function restoreRaw(storage, key, raw) {
   else storage.setItem(key, raw);
 }
 
+// rollback失敗を握りつぶさず、失敗したkeyを返す(UIで別文言を出すため)。
+function rollbackAll(storage, entries) {
+  const failed = [];
+  for (const [key, raw] of entries) {
+    try { restoreRaw(storage, key, raw); } catch { failed.push(key); }
+  }
+  return failed;
+}
+
 export function saveArrangerPlan({
   storage,
   source,
@@ -135,13 +144,13 @@ export function saveArrangerPlan({
     storage.setItem(poolKey, poolText);
     if (storage.getItem(poolKey) !== poolText) throw new Error('candidate-readback-mismatch');
   } catch (error) {
-    try { restoreRaw(storage, poolKey, oldPoolRaw); } catch { /* best effort */ }
-    return { ok: false, error: String(error), state: convergenceState, tracker };
+    const rollbackFailed = rollbackAll(storage, [[poolKey, oldPoolRaw]]);
+    return { ok: false, error: String(error), rollbackFailed, state: convergenceState, tracker };
   }
   const auxWrite = saveState(storage, applied.state);
   if (!auxWrite.ok) {
-    try { restoreRaw(storage, poolKey, oldPoolRaw); restoreRaw(storage, auxKey, oldAuxRaw); } catch { /* best effort */ }
-    return { ok: false, error: `convergence-save-failed:${auxWrite.error || 'unknown'}`, state: convergenceState, tracker };
+    const rollbackFailed = rollbackAll(storage, [[poolKey, oldPoolRaw], [auxKey, oldAuxRaw]]);
+    return { ok: false, error: `convergence-save-failed:${auxWrite.error || 'unknown'}`, rollbackFailed, state: convergenceState, tracker };
   }
 
   const nextPlan = clone(plan);
@@ -156,11 +165,8 @@ export function saveArrangerPlan({
       if (storage.getItem(journalStorageKey) !== journalText) throw new Error('journal-readback-mismatch');
     }
   } catch (error) {
-    try { restoreRaw(storage, auxKey, oldAuxRaw); } catch { /* best effort */ }
-    try { restoreRaw(storage, poolKey, oldPoolRaw); } catch { /* best effort */ }
-    try { restoreRaw(storage, planStorageKey, oldPlanRaw); } catch { /* best effort */ }
-    try { restoreRaw(storage, journalStorageKey, oldJournalRaw); } catch { /* best effort */ }
-    return { ok: false, error: `plan-save-failed:${error?.message || String(error)}`, state: convergenceState, tracker };
+    const rollbackFailed = rollbackAll(storage, [[auxKey, oldAuxRaw], [poolKey, oldPoolRaw], [planStorageKey, oldPlanRaw], [journalStorageKey, oldJournalRaw]]);
+    return { ok: false, error: `plan-save-failed:${error?.message || String(error)}`, rollbackFailed, state: convergenceState, tracker };
   }
 
   return {

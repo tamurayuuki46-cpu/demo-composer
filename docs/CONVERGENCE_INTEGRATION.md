@@ -38,3 +38,9 @@ Arrangement Labのみ v0.14-dev → v0.15-dev。`arranger/VERSION` が正本。�
 - 並行更新は履歴を含むmergeで保持し、保存境界を共通sessionへ統一した。
 
 検証結果は CONVERGENCE_VERIFICATION_v0.15-dev.md、実機確認項目は REAL_DEVICE_TEST.md を参照。
+
+## 独立レビューでの修正（PR #271 対応）
+- Undo: 判断直後に行った正規編集のdirtyは、Undoで旧trackerへ戻しても失わない（旧tracker ∪ 現tracker を保存に渡す）。契約「通常編集は外部変更扱いにしない」の維持。
+- 保存失敗: `saveArrangerPlan` は rollback に失敗した key を `rollbackFailed` で返す。UIは通常の保存失敗とは別に「巻き戻しにも失敗」を通知し、JSON書き出しでの退避を促す。
+- 回帰テスト: `arranger/tests/convergence-session.test.mjs` 末尾。
+- 既知の未対応: `warn-missing` の警告は再読込をまたいで保持されない（Journalに【収束】がある限り再診断されるため実害は限定的）。実機G章で確認する。

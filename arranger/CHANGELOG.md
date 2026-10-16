@@ -9,6 +9,8 @@
 
 【修正】
 - 保存失敗でExportまで停止する経路を解消し、state/trackerを保存成功後だけ更新。
+- 【独立レビュー】Undo時に判断後のdirty記録が失われ、正規編集が外部変更Recoveryになる不具合を修正（Undo保存時にdirtyを合流）。
+- 【独立レビュー】保存失敗時のrollback自体の失敗を握りつぶさず、`rollbackFailed`として返し専用通知を表示。
 - snapshotによるsource revision巻き戻し、曲間Journal混在、再読込時の編集済み判断参照切れを防止。
 
 【互換性・状態】
