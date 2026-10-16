@@ -58,7 +58,7 @@ async function downloadedJson(page, button) {
       }
       const apply = page.getByRole('button', { name: '受け取った曲を反映', exact: true });
       await apply.waitFor();
-      await page.getByRole('heading', { name: 'AIモニタリング', exact: true }).waitFor();
+      await page.locator('[data-ai-monitoring-panel]').waitFor();
       assert.ok((await page.locator('.version').innerText()).startsWith(expectedVersion), 'monitor initialization must retain the current release label');
       assert.equal(await page.locator('.version .build-id').count(), 1, 'monitor initialization must retain build identity');
       assert.notEqual(await page.getByLabel('Project名', { exact: true }).inputValue(), source.title, 'must not auto-apply');
