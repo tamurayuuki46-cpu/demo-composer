@@ -93,7 +93,7 @@
     </section>
 
     <section id="step-daw" class="panel" data-flow-step="6">
-      <div class="panel-title"><span class="step">5</span><div><h2>MIDI / Project書き出し</h2><p>現在選択している編曲案のON/OFFとリハモを反映します。Song Project v1から開いた場合は編曲結果だけを書き戻せます。</p></div></div>
+      <div class="panel-title"><span class="step">5</span><div><h2>MIDI / Project書き出し</h2><p>現在のCurrent PlanをMIDI / Projectへ書き出します。未決定はLabで決めるかDAWへ持ち越せます。</p></div></div>
       <div id="midi-buttons" class="midi-grid">
         <button data-part="melody" class="secondary">Melody.mid</button>
         <button data-part="bass" class="secondary">Bass.mid</button>
@@ -102,17 +102,17 @@
         <button data-part="harmony" class="secondary">Harmony.mid</button>
       </div>
       <div class="sticky-actions">
-        <button id="adopt-btn" class="primary">この案を採用</button>
-        <button id="export-song-midi-btn" class="secondary">Song.mid（採用案）</button>
+        <button id="adopt-btn" class="primary">現在の候補を保存</button>
+        <button id="export-song-midi-btn" class="secondary">Song.mid（Current Plan）</button>
         <button id="export-btn" class="secondary" disabled>編曲プランJSONを書き出す</button>
         <button id="export-song-project-btn" class="secondary" disabled>Song Project v1を書き出す</button>
       </div>
-      <p class="hint">Song.midは採用済み編曲案を5トラック（Chords / Melody / Counter Melody / Bass / Drums）で出力します。Tempo / Time Signature / Section Markerも含みます。Song Project v1の書き戻しはarrangement領域だけを更新し、Demo Composerのcompositionは上書きしません。</p>
+      <p class="hint">Current Planは全体 / Section / 個別の収束判断から合成します。Song.mid単体にDAW持ち越しがある場合は書き出し時に注意を表示します。</p>
     </section>
 
     <section class="panel danger-zone">
       <h2>端末内データ</h2>
-      <p>採用した編曲プランだけを消去します。Demo Composerの曲は消しません。</p>
+      <p>採用した編曲プランと収束判断だけを消去します。Demo Composerの曲は消しません。</p>
       <button id="clear-btn" class="danger">編曲プランを消去</button>
     </section>
   </main>
@@ -121,6 +121,7 @@
   <script type="module" src="./src/song-project-ui.js"></script>
   <script type="module" src="./src/song-midi-ui.js"></script>
   <script type="module" src="./src/app.js"></script>
+  <script type="module" src="./src/convergence-ui.js"></script>
   <script type="module" src="./src/v05-ui.js"></script>
   <script type="module" src="./src/workflow-boundary-ui.js"></script>
   <script type="module" src="./src/beginner-flow.js"></script>
