@@ -1,24 +1,30 @@
 # Current Release
 
-更新日: 2026-10-16
+更新日: 2026-10-17
 
 ## Published main
 
 - Demo Composer: `v0.17-dev`
-- Arrangement Lab: `v0.14-dev`
+- Arrangement Lab: `v0.15-dev`（収束モード統合版を公開）
 - Music Project Home: `v0.19-dev`
 - Composition Sheet latest: `v0.9.1-dev`
-- MIDI Archive/Analyzer: `v0.25-dev`（別Repository / 公開済み）
+- MIDI Archive/Analyzer: `v0.26-dev`（別Repository / 公開済み）
 - GitHub Pages公開元: `main`
-- Release source: `release/v0.17-publish-20261016`
-- Reconciliation commit: `7669b6b1a63d5caabf5534101d01338fb6faf2c5`
+- Release source: `release/v0.17-arranger-v0.15-publish-20261017`
+- Public main commit: `92bdd6b55addf9f42895d8d61ba8a9713c1ad9b2`
+- Develop publication-history sync: PR `#278` / `4e090014f03d8936ba6bee0b30e687312be54843`
 - Stable: 未認定
 
-v0.17公開では、develop側の発散モード（Demo Composer v0.17-dev / Arrangement Lab v0.14-dev / Project Home v0.19-dev）を維持したまま、main側で公開確認済みのv0.16 / v0.16.1 SongProject受け渡し修正、保存完了待ち、Arrangement Lab初期化待ち、Version表示修正を2-parent mergeで統合しています。
+2026-10-17公開では、developで検証済みのArrangement Lab v0.15-dev収束モードと、Demo Composer v0.17-devの発散セッション保存 / Keepライブラリを含むdevelop最新状態をmainへ昇格しました。Demo Composer v0.17-dev / Music Project Home v0.19-dev / Composition Sheet v0.9.1-devのVersionは維持しています。
 
 ## Restore points
 
-公開統合前の状態は次のBranchから復元できます。
+今回の公開直前状態は次のBranchから復元できます。
+
+- `restore/main-before-arranger-v0.15-publish-20261017` → `a92f3511c9e3e7cedb84cfae87266efd99f220ab`
+- `restore/develop-before-arranger-v0.15-publish-20261017` → `9124d41350fd17ed7d76763b0e22e108b3543ba5`
+
+以前の復元点も保持しています。
 
 - `restore/main-before-v0.17-publish-20261016` → `800cd729da6231bb6820f44b79d15ebe81354233`
 - `restore/develop-before-v0.17-publish-20261016` → `511dda9368bea10191a0eb415d8bd4403d4d1ae5`
@@ -35,7 +41,7 @@ v0.17公開では、develop側の発散モード（Demo Composer v0.17-dev / Arr
 - time signature: 4/4固定
 - 一時受け渡しKey: `music-project-songproject-handoff-v1`
 
-今回の公開統合ではSchema変更・Migrationはありません。
+今回の公開統合でもSchema変更・Migrationはありません。
 
 ## Included release changes
 
@@ -45,14 +51,21 @@ v0.17公開では、develop側の発散モード（Demo Composer v0.17-dev / Arr
 - Snapshot / Restore / Branch Tree
 - 5軸Lock（主旋律 / 裏メロ / コード・ハーモニー / リズム・グルーヴ / 音色）
 - Decision Progress
-- v0.16 / v0.16.1のSongProject ID保持・保存完了待ち・交換情報保持を統合
-- AI MonitoringがVersion / Build IDを上書きする問題を修正
+- 発散セッションのIndexedDB保存
+- KeepライブラリとFreeze後の候補保持
+- v0.16 / v0.16.1のSongProject ID保持・保存完了待ち・交換情報保持を維持
 
-### Arrangement Lab v0.14-dev
+### Arrangement Lab v0.15-dev
 
-- 編曲Seed / Lock / Branch / Keep / Freeze / Snapshot / Restore
-- 主旋律を固定したままReharm / Density / Counter role / Instrumentationを発散
-- SongProject受信時に本体Import完了を明示的にawaitし、初期化前イベント消失を防止
+- 全体 / Section / 個別の「採用 / まだ迷う / 不採用」
+- 定型理由、上書き解除、Undo、Recovery
+- 中央保存、dirty共通入口、validation gate
+- 編集済み候補poolの再読込保持
+- 同一projectIdのrebase
+- Current Plan共通Export
+- 未決定項目のLab / DAW持ち越し
+- Preview / Song.mid / DAW ZIP / Plan / SongProjectのCurrent Plan統一
+- 360 / 390 / 430px Mobile ChromiumとSongProject handoff回帰を公開前CIで確認
 
 ### Music Project Home v0.19-dev
 
@@ -64,6 +77,12 @@ v0.17公開では、develop側の発散モード（Demo Composer v0.17-dev / Arr
 
 - beginner modeをlatestとして維持
 - Home埋め込み時の曲データメニュー重複を防止
+
+## Publication verification
+
+公開PR `#277` のheadで、Demo Composer CI / Arrangement Lab CI / Song Project Integration CI / Composition Sheet CI / Divergence v0.17 / GitHub Pages / AI Monitoring Release CIが成功しました。
+
+main merge後のGitHub Pages run `#501` も成功しています。
 
 ## Workflow
 
@@ -77,6 +96,10 @@ v0.17公開では、develop側の発散モード（Demo Composer v0.17-dev / Arr
 - Cubasis / Cubase: 本制作・完成
 
 ## Previous publications
+
+### v0.17-dev — 2026-10-16
+
+発散モードとProject Home v0.19を公開し、main側のv0.16 / v0.16.1 SongProject受け渡し修正・保存完了待ち・Arrangement Lab初期化待ち・Version表示修正を統合。
 
 ### v0.16.1-dev — 2026-10-16
 
@@ -92,4 +115,4 @@ PR #255でmain/develop lineageを統合し、公開済みversion資産とSongPro
 
 ## Stable
 
-未認定です。Android実機での保存・PWA・主要操作・発散モード・Song.mid書き出しと、必要なCubasis / Cubase実機でのImport / 再生 / MIDI構造確認が完了し、結果をRepositoryへ記録した場合のみstable tagを作成します。
+未認定です。Android実機での保存・PWA・主要操作・発散 / 収束モード・Song.mid書き出しと、必要なCubasis / Cubase実機でのImport / 再生 / MIDI構造確認が完了し、結果をRepositoryへ記録した場合のみstable tagを作成します。
