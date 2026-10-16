@@ -18,6 +18,8 @@
 - develop向けPRのみ。main公開・自動merge・stable認定は行わない。
 - Android / Cubasis / Cubase実機未確認。検証結果はdocs/CONVERGENCE_VERIFICATION_v0.15-dev.md。
 
+検証確定: 静的68/68、GitHub Arrangement Lab CI 38938808935（全step成功）。コード確定5d666c4。Android / Cubasis / Cubase実機未確認、stable未認定。PR #271はdevelop向けで、自動merge禁止。
+
 詳細: `docs/CONVERGENCE_INTEGRATION.md` / `docs/REAL_DEVICE_TEST.md`。以下は過去の引き継ぎ記録。
 
 

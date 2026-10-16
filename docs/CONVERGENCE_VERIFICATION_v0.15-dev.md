@@ -33,7 +33,21 @@ GitHub Actions run 38937928138（commit 87fe7b5）で確認:
 - Console例外・横overflowなしは新規3幅と既存browserで確認。
 
 証拠: https://github.com/tamurayuuki46-cpu/demo-composer/actions/runs/38937928138
-最終変更後のCI結果を確認して確定する。
+## 最終結果（確定）
+
+コード・テスト確定commit: `5d666c4aa99d7585b97bb1d66552cf167a82f6bc`。
+最新develop同期 `8393e3b` は実機手順docsのみの追加で、対象コードは同一。
+
+- 最終ローカル静的68コマンド: 68成功 / 0失敗。
+- Arrangement Lab CI run **38938808935**: **全step成功**。core / integration / build / Mobile Chromium / SongProject handoff / 証拠uploadを含む。
+- Mobile Chromium: 360 / 390 / 430px、既存50手法・7機能、新規収束回帰、v0.5 / v0.6、PWA更新・offlineすべて成功。
+- 同一commitのDemo Composer CI / Song Project Integration CI / Divergence v0.17 / Composition Sheet CI / PR Pages buildも成功。
+- mainは `a92f3511c9e3e7cedb84cfae87266efd99f220ab` のまま。main / stableへのmerge・公開を行っていない。
+- Git差分: Demo Composerのsrc/、project-home/、arranger/convergence/とルートVERSIONは変更なし。作業ツリーの未commit変更なし。
+
+最終CI: https://github.com/tamurayuuki46-cpu/demo-composer/actions/runs/38938808935
+
+実装上の残課題なし。実機未確認と別端末移行の制約は以下のとおり。
 
 新規ブラウザ回帰は360 / 390 / 430pxで、判断 / Undo / 上書き解除 / dirty / Current Planと実Song.midのbyte一致 / reload / rebase / Recovery / app data削除後の警告とExport停止 / DAW carry-over ZIP / quota失敗中の実download / 2曲目分離 / Console / 横overflowを検証する。
 

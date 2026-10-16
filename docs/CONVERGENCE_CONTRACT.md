@@ -41,7 +41,7 @@ Claudeは既存ファイルを編集しない。GPTは `arranger/convergence/*` 
 - 全体判断の無効化はSection単位(`state.invalidGlobalSections` + `recovery['global:<sid>']`)。Recoveryは同じ枠に新判断をするか7日で消える。2回目の無効化で元のRecoveryを上書きしない。
 - 保存: 補助状態を先、Journalを後。`saveState`失敗時は `{ok:false}`。呼び出し側はdirtyを保持し補助状態をロールバックする。Exportは保存成功に依存させない。
 
-## GPT側の統合タスク（v0.15-devへ統合・検証中）
+## GPT側の統合タスク（v0.15-devへ統合・自動検証済み）
 
 統合境界と端末補助pool、rebase、保存失敗時の制約は `CONVERGENCE_INTEGRATION.md`。純関数コアのAPI・振る舞いは変更しない。
 
