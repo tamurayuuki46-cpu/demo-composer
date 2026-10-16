@@ -82,3 +82,16 @@ const structural=open(); structural.decide('global','adopted'); const expanded=r
 structural.rebase(normalizeSourceProject(expanded)); assert.match(structural.warning,/追加 1 \/ 削除 0/); assert.equal(cv.getAdopted(structural.state,'global'),null); assert.ok(structural.selected.sections.some(s=>s.sectionId==='s3'));
 structural.rebase(normalizeSourceProject(raw(3))); assert.ok(structural.structureOffer); assert.equal(structural.selected.sections.some(s=>s.sectionId==='s3'),false); structural.recover('structure'); assert.equal(structural.current().unresolved.length,0);
 console.log('PASS convergence session: edit/implicit save/transactional rollback/rebase/snapshot/reload/project isolation/warnings/verify gate/read-only state/Export/ZIP/structure recovery');
+// Decision and Undo writes are transactions too: no optimistic state/journal adoption.
+const transaction=open(); transaction.decide('global','adopted');
+transaction.applyCandidateEdit(transaction.selected,updateCandidateSection(transaction.selected,'s2',{enabled:{drums:false}}));
+const oldAux=transaction.state, oldDirty=transaction.tracker, oldJournal=JSON.stringify(transaction.model.arrangerProject.decisionJournal);
+transaction.storage.failKey=ARRANGER_JOURNAL_STORAGE_KEY;
+assert.equal(transaction.decide('section:s2','hold').ok,false);
+assert.equal(transaction.state,oldAux);assert.equal(transaction.tracker,oldDirty);
+assert.equal(JSON.stringify(transaction.model.arrangerProject.decisionJournal),oldJournal);
+transaction.storage.failKey=null; assert.equal(transaction.decide('section:s2','hold').ok,true);
+const beforeUndo=transaction.state;transaction.storage.failKey=ARRANGER_JOURNAL_STORAGE_KEY;
+assert.equal(transaction.undoDecision().ok,false);assert.equal(transaction.state,beforeUndo);
+transaction.storage.failKey=null;assert.equal(transaction.undoDecision().ok,true);
+console.log('PASS convergence decision/Undo transactional failures preserve state, tracker and journal');

@@ -525,8 +525,9 @@ function handleMidiExport(event) {
 
 function adoptCurrentCandidate() {
   if (!currentCandidate() || !arrangerSession.validationReady) return;
-  arrangerSession.decide('global', 'adopted');
+  const saved = arrangerSession.decide('global', 'adopted');
   refreshArranger();
+  if (!saved?.ok) return;
   els.exportBtn.disabled = false;
   flash(`${currentCandidate().label} を全体へ採用しました。`);
 }

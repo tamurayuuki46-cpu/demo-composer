@@ -17,8 +17,8 @@
 | v0.11-dev | restore/develop-before-arranger-preview-fix-20261014 / fix/arranger-preview-v0.11 | 1小節コードの絶対tick補正、選択案簡易試聴の実発音回帰、Harmony音量/音域調整、Bass無音fallback |
 | v0.12-dev | restore/develop-before-section-audition-v0.12-20261014 / feature/section-audition-v0.12 / PR #221 | ④Section全体試聴、リハモ3案の採用前個別試聴、試聴/採用分離 |
 | v0.13-dev | restore/develop-before-preserve-demo-sound-v0.13-20261014 / PR #227 | Demo ComposerのChord/Melody/Bass Preset・ToneとDrums発音をArrangement Lab試聴へ保持 |
+| v0.15-dev | chatgpt/convergence-integration / PR #271 | 収束判断・中央保存・dirty・rebase・Current Plan Export統合候補。実機未確認 |
 | v0.14-dev | restore/v0.16-before-divergence-2026-10-15 / chatgpt/divergence-mode-v0.17 / PR #259 | Seed / Lock / Distance / Branch / Keep / Freeze / Snapshot / Restoreを追加。主旋律は常時固定、Schema4維持 |
-| v0.15-dev | restore/convergence-integration-before-implementation-20261017 / chatgpt/convergence-integration / PR #271 | 収束モード統合。中央保存、dirty追跡、Current Plan、Recovery、same-project rebase、DAW持ち越し、モバイル判断UI。Schema4維持 |
 
 最新は `arranger/VERSION`。本体mainは自動テスト・build・回帰CI合格版。Arrangement LabのAndroid/Cubasis/Cubase実機DAW確認済みstableは未認定。
 各過去版のbranch/archiveを削除・上書きしない。
