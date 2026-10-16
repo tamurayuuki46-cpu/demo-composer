@@ -19,11 +19,42 @@ import {
   createPartMidi,
   restoreArrangerProject,
 } from './core.js';
+import {
+  GLOBAL_KEY,
+  carryOverList,
+  elementKey,
+  getAdopted,
+  globalFingerprintMap,
+  listRecoveries,
+  parseSlotKey,
+  recordEdit,
+  releaseOverride,
+  resolveCurrentPlan,
+  restoreRecovery,
+  sectionKey,
+  setCarryOver,
+  setDecision,
+  slotFingerprint,
+} from '../convergence/index.js';
+import {
+  ARRANGER_JOURNAL_STORAGE_KEY,
+  ARRANGER_PLAN_STORAGE_KEY,
+  adoptStructureOffer as restoreStructureOffer,
+  appendConvergenceJournal,
+  applySnapshotToCurrentSource,
+  initializeConvergence,
+  rebaseSameProject,
+  saveArrangerPlan as persistArrangerPlan,
+  writeRebaseBackup,
+} from './convergence-integration.js';
 
-const STORAGE_KEY = 'demo-composer-arranger-v0.4';
+const STORAGE_KEY = ARRANGER_PLAN_STORAGE_KEY;
+const JOURNAL_KEY = ARRANGER_JOURNAL_STORAGE_KEY;
 const V03_STORAGE_KEY = 'demo-composer-arranger-v0.3';
 const PREVIOUS_STORAGE_KEY = 'demo-composer-arranger-v0.2';
 const LEGACY_STORAGE_KEY = 'demo-composer-arranger-v0.1';
+
+const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
 
 const state = {
   source: null,
@@ -34,6 +65,13 @@ const state = {
   reharmSuggestions: {},
   features: {},
   previewContext: null,
+  convergenceState: null,
+  tracker: null,
+  validationReady: false,
+  convergenceWarning: null,
+  convergenceDiagnosis: null,
+  structureOffer: null,
+  undoSnapshot: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -90,6 +128,339 @@ els.drop.addEventListener('drop', (event) => {
   if (file) importFile(file);
 });
 
+function loadJournal() {
+  try {
+    const raw = localStorage.getItem(JOURNAL_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* fall through */ }
+  return clone(state.arrangerProject?.decisionJournal || null);
+}
+
+function emitConvergenceChange() {
+  window.dispatchEvent(new CustomEvent('arranger-convergence-change'));
+}
+
+function currentCandidate() {
+  return state.candidates[state.selectedIndex] || null;
+}
+
+function ensurePlan(candidate = currentCandidate()) {
+  if (!state.source || !candidate) return null;
+  if (!state.arrangerProject) state.arrangerProject = createArrangerProject(state.source, candidate, null);
+  return state.arrangerProject;
+}
+
+function planForCandidate(candidate = currentCandidate()) {
+  if (!state.source || !candidate) return state.arrangerProject;
+  return createArrangerProject(state.source, candidate, state.arrangerProject);
+}
+
+function bootConvergence({ preserveTracker = null } = {}) {
+  const candidate = currentCandidate();
+  const plan = ensurePlan(candidate);
+  if (!state.source || !candidate || !plan) {
+    state.validationReady = false;
+    state.convergenceState = null;
+    state.tracker = null;
+    emitConvergenceChange();
+    return null;
+  }
+  const boot = initializeConvergence({
+    storage: localStorage,
+    source: state.source,
+    candidates: state.candidates,
+    plan,
+    journal: loadJournal(),
+    now: Date.now(),
+  });
+  state.convergenceState = boot.state;
+  state.tracker = preserveTracker || boot.tracker;
+  state.validationReady = boot.validationReady;
+  state.convergenceWarning = boot.warning;
+  state.convergenceDiagnosis = boot.diagnosis;
+  state.structureOffer = boot.structureOffer;
+  if (boot.message) flash(boot.message, true);
+  emitConvergenceChange();
+  return boot;
+}
+
+function getResolved() {
+  if (!state.source || !state.candidates.length) return null;
+  if (!state.convergenceState || !state.validationReady) {
+    const candidate = currentCandidate();
+    return candidate ? { candidate, provenance: [], tentative: true, tentativeLabel: candidate.label, unresolved: [] } : null;
+  }
+  return resolveCurrentPlan(state.source, state.candidates, state.convergenceState, {
+    defaultCandidateId: currentCandidate()?.id || state.candidates[1]?.id || state.candidates[0]?.id,
+  });
+}
+
+function getContext() {
+  const resolved = getResolved();
+  return {
+    source: state.source,
+    candidates: state.candidates,
+    selectedCandidate: currentCandidate(),
+    plan: state.arrangerProject,
+    convergenceState: state.convergenceState,
+    tracker: state.tracker,
+    validationReady: state.validationReady,
+    warning: state.convergenceWarning,
+    diagnosis: state.convergenceDiagnosis,
+    structureOffer: state.structureOffer,
+    recoveries: state.convergenceState ? listRecoveries(state.convergenceState, Date.now()) : [],
+    resolved,
+    carryOver: state.convergenceState ? carryOverList(state.convergenceState) : [],
+  };
+}
+
+function saveArrangerPlan({ plan = null, convergenceState = state.convergenceState, journal = loadJournal(), tracker = state.tracker } = {}) {
+  const candidate = currentCandidate();
+  const nextPlan = plan || planForCandidate(candidate);
+  if (!nextPlan || !state.source || !convergenceState || !tracker) return { ok: false, error: 'missing-save-input' };
+  const result = persistArrangerPlan({
+    storage: localStorage,
+    source: state.source,
+    candidates: state.candidates,
+    plan: nextPlan,
+    convergenceState,
+    journal,
+    tracker,
+    validationReady: state.validationReady,
+    now: Date.now(),
+  });
+  if (result.ok) {
+    state.arrangerProject = result.plan;
+    state.convergenceState = result.state;
+    state.tracker = result.tracker;
+    if (result.message) state.convergenceWarning = result.message;
+    els.exportBtn.disabled = false;
+    emitConvergenceChange();
+  }
+  return result;
+}
+
+function applyCandidateEdit(editor, { render = true } = {}) {
+  const before = currentCandidate();
+  if (!before) return null;
+  const after = editor(before);
+  if (!after) return before;
+  if (after.id !== before.id) throw new Error('Candidate編集ではIDを変更できません。');
+  if (state.validationReady && state.convergenceState && state.tracker) {
+    state.tracker = recordEdit(state.tracker, state.convergenceState, { source: state.source, before, after });
+  }
+  state.candidates[state.selectedIndex] = after;
+  if (render) renderCandidates();
+  emitConvergenceChange();
+  return after;
+}
+
+function decisionFingerprint(key, candidate) {
+  if (key === GLOBAL_KEY) return globalFingerprintMap(state.source, candidate);
+  const info = parseSlotKey(key);
+  return slotFingerprint(state.source, candidate, info.sectionId, info.element || null);
+}
+
+function rememberUndo() {
+  state.undoSnapshot = {
+    convergenceState: clone(state.convergenceState),
+    tracker: clone(state.tracker),
+    plan: clone(state.arrangerProject),
+    journal: loadJournal(),
+    warning: state.convergenceWarning,
+  };
+}
+
+function saveConvergenceMutation(nextState, journalText) {
+  const journal = appendConvergenceJournal(loadJournal(), journalText, Date.now());
+  const prior = {
+    convergenceState: clone(state.convergenceState),
+    tracker: clone(state.tracker),
+    plan: clone(state.arrangerProject),
+    journal: loadJournal(),
+    warning: state.convergenceWarning,
+  };
+  const result = saveArrangerPlan({ convergenceState: nextState, journal, tracker: state.tracker });
+  if (result.ok) state.undoSnapshot = prior;
+  else flash('判断の保存に失敗しました。編集内容は保持しています。', true);
+  return result;
+}
+
+function decide(key, status, reason = '') {
+  const candidate = currentCandidate();
+  if (!candidate || !state.convergenceState) return { ok: false, error: 'not-ready' };
+  try {
+    const options = { reasons: reason ? [reason] : [], now: Date.now() };
+    if (status === 'adopted') options.fingerprint = decisionFingerprint(key, candidate);
+    const next = setDecision(state.convergenceState, key, candidate.id, status, options);
+    return saveConvergenceMutation(next, `【収束】${key} / ${candidate.label} / ${status}${reason ? ` / ${reason}` : ''}`);
+  } catch (error) {
+    flash(error.message || '判断を記録できませんでした。', true);
+    return { ok: false, error: error.message };
+  }
+}
+
+function release(key) {
+  if (!state.convergenceState || key === GLOBAL_KEY) return { ok: false, error: 'invalid-scope' };
+  try {
+    const next = releaseOverride(state.convergenceState, key, Date.now());
+    return saveConvergenceMutation(next, `【収束】上書き解除 / ${key}`);
+  } catch (error) {
+    flash(error.message || '上書きを解除できませんでした。', true);
+    return { ok: false, error: error.message };
+  }
+}
+
+function carryOver(key) {
+  if (!state.convergenceState) return { ok: false, error: 'not-ready' };
+  const next = setCarryOver(state.convergenceState, key, { note: 'DAWで決める', now: Date.now() });
+  return saveConvergenceMutation(next, `【収束】DAWで決める / ${key}`);
+}
+
+function restoreRecoveryDecision(key) {
+  if (!state.convergenceState) return { ok: false, error: 'not-ready' };
+  const restored = restoreRecovery(state.convergenceState, key, { source: state.source, candidates: state.candidates, now: Date.now() });
+  if (!restored.ok) return restored;
+  return saveConvergenceMutation(restored.state, restored.journalText);
+}
+
+function adoptStructureRecovery() {
+  const restored = restoreStructureOffer({ offer: state.structureOffer, source: state.source, candidates: state.candidates, now: Date.now() });
+  if (!restored.ok) return restored;
+  const result = saveConvergenceMutation(restored.state, '【収束】以前の構成判断を復元');
+  if (result.ok) state.structureOffer = null;
+  return result;
+}
+
+function undoConvergence() {
+  const snapshot = state.undoSnapshot;
+  if (!snapshot) return { ok: false, error: 'no-undo' };
+  const result = saveArrangerPlan({
+    plan: snapshot.plan || planForCandidate(),
+    convergenceState: snapshot.convergenceState,
+    journal: snapshot.journal,
+    tracker: snapshot.tracker,
+  });
+  if (result.ok) {
+    state.convergenceWarning = snapshot.warning;
+    state.undoSnapshot = null;
+    emitConvergenceChange();
+  }
+  return result;
+}
+
+function scopeOptions() {
+  const options = [{ key: GLOBAL_KEY, label: '曲全体' }];
+  for (const section of state.source?.sections || []) {
+    options.push({ key: sectionKey(section.id), label: `${section.name} / Section` });
+    options.push({ key: elementKey(section.id, 'counter'), label: `${section.name} / 裏メロ` });
+    options.push({ key: elementKey(section.id, 'drums'), label: `${section.name} / Drums` });
+  }
+  return options;
+}
+
+function selectedContext({ save = false, journal = loadJournal() } = {}) {
+  const candidate = currentCandidate();
+  if (!candidate || !state.source) throw new Error('先にproject.jsonを読み込んで編曲案を用意してください。');
+  const plan = planForCandidate(candidate);
+  if (save) {
+    const result = saveArrangerPlan({ plan, journal });
+    if (!result.ok) flash('端末保存には失敗しましたが、現在の案はこのまま利用できます。', true);
+  }
+  return { plan, source: state.source, candidate, saveResult: null };
+}
+
+function currentPlanContext({ save = false, journal = loadJournal() } = {}) {
+  const resolved = getResolved();
+  if (!resolved?.candidate || !state.source) throw new Error('先にproject.jsonを読み込んで編曲案を用意してください。');
+  const selectedPlan = planForCandidate(currentCandidate());
+  let saveResult = null;
+  if (save) {
+    saveResult = saveArrangerPlan({ plan: selectedPlan, journal });
+    if (!saveResult.ok) flash('端末保存には失敗しましたが、書き出しは続行できます。', true);
+  }
+  const exportPlan = createArrangerProject(state.source, resolved.candidate, state.arrangerProject);
+  exportPlan.arrangement = clone(resolved.candidate);
+  exportPlan.selectedCandidateId = resolved.candidate.id;
+  if (journal) exportPlan.decisionJournal = clone(journal);
+  exportPlan.convergenceCarryOver = state.convergenceState ? carryOverList(state.convergenceState) : [];
+  return { plan: exportPlan, source: state.source, candidate: resolved.candidate, resolved, saveResult };
+}
+
+function savePlanWithJournal(planLike, journal = planLike?.decisionJournal || loadJournal()) {
+  const plan = planForCandidate(currentCandidate());
+  if (journal) plan.decisionJournal = clone(journal);
+  return saveArrangerPlan({ plan, journal });
+}
+
+function applyPlanSnapshotBridge(planSnapshot) {
+  try {
+    const before = currentCandidate();
+    if (!before) throw new Error('現在の候補がありません。');
+    const after = applySnapshotToCurrentSource({ planSnapshot, source: state.source, currentCandidate: before });
+    applyCandidateEdit(() => after, { render: true });
+    const journal = planSnapshot?.decisionJournal || loadJournal();
+    const result = saveArrangerPlan({ plan: planForCandidate(after), journal });
+    if (!result.ok) flash('復元内容は画面に保持しました。端末保存だけ失敗しています。', true);
+    return { ...result, candidate: after };
+  } catch (error) {
+    flash(error.message || 'snapshotを復元できませんでした。', true);
+    return { ok: false, error: error.message };
+  }
+}
+
+function handleSameProjectRebase(nextSource) {
+  const plan = state.arrangerProject;
+  const candidate = currentCandidate() || clone(plan?.arrangement);
+  if (!plan || !candidate) return false;
+  const oldSource = state.source || nextSource;
+  try {
+    writeRebaseBackup(localStorage, { plan: planForCandidate(candidate) || plan, convergenceState: state.convergenceState, tracker: state.tracker, now: Date.now() });
+    const rebased = rebaseSameProject({
+      plan,
+      source: oldSource,
+      candidate,
+      nextSource,
+      convergenceState: state.convergenceState,
+      tracker: state.tracker,
+    });
+    state.source = rebased.source;
+    state.arrangerProject = rebased.plan;
+    state.candidates = rebased.candidates;
+    state.selectedIndex = rebased.selectedIndex;
+    state.styleId = rebased.candidate.styleId || state.styleId;
+    els.style.value = state.styleId;
+    state.reharmSuggestions = {};
+    state.features = {};
+    renderSource(); renderCollisionSummary(); renderCandidates(); renderMixControls();
+    bootConvergence({ preserveTracker: rebased.tracker });
+    const verified = saveArrangerPlan({ plan: rebased.plan, tracker: state.tracker });
+    if (!verified.ok) flash('rebase後の内容は画面に保持しています。保存だけ失敗しました。', true);
+    else flash('Demo Composerの更新を取り込み、Plan IDと収束判断を維持しました。');
+    return true;
+  } catch (error) {
+    flash(error.message || '同じProjectの更新を取り込めませんでした。', true);
+    return false;
+  }
+}
+
+window.__arrangerConvergence = {
+  getContext,
+  scopeOptions,
+  decide,
+  release,
+  carryOver,
+  restoreRecovery: restoreRecoveryDecision,
+  adoptStructureOffer: adoptStructureRecovery,
+  undo: undoConvergence,
+  loadJournal,
+  selectedContext,
+  currentPlanContext,
+  saveCurrent: ({ journal = loadJournal() } = {}) => saveArrangerPlan({ plan: planForCandidate(), journal }),
+  savePlanWithJournal,
+  applyPlanSnapshot: applyPlanSnapshotBridge,
+};
+
 export async function importFile(file) {
   try {
     stopPreview();
@@ -97,18 +468,20 @@ export async function importFile(file) {
     const data = JSON.parse(text);
     if (data.arrangerSchemaVersion) {
       restorePlan(data);
-      flash(state.source ? '編曲プランを復元しました。' : '旧プランを読み込みました。同じrevisionの元project.jsonを選ぶと編集を再開できます。');
+      flash(state.source ? '編曲プランを復元しました。' : '旧プランを読み込みました。同じProjectの元project.jsonを選ぶと編集を再開できます。');
       return true;
     }
     const source = normalizeSourceProject(data);
-    if (state.arrangerProject && !state.arrangerProject.sourceSnapshot && state.arrangerProject.source.projectId === source.sourceProjectId) {
-      const restored = restoreArrangerProject(state.arrangerProject, source);
-      applyRestored(restored);
-      flash('元project.jsonと旧プランから編集を再開しました。');
-      return true;
+    if (state.arrangerProject && String(state.arrangerProject.source?.projectId) === String(source.sourceProjectId)) {
+      if (handleSameProjectRebase(source)) return true;
     }
     state.source = source;
     state.arrangerProject = null;
+    state.convergenceState = null;
+    state.tracker = null;
+    state.validationReady = false;
+    state.convergenceWarning = null;
+    state.structureOffer = null;
     state.reharmSuggestions = {};
     state.features = {};
     renderSource();
@@ -170,12 +543,10 @@ function generateCandidates() {
   state.selectedIndex = 1;
   state.reharmSuggestions = {};
   state.features = {};
+  ensurePlan(currentCandidate());
   renderCandidates();
   renderMixControls();
-}
-
-function currentCandidate() {
-  return state.candidates[state.selectedIndex] || null;
+  bootConvergence();
 }
 
 function renderCandidates() {
@@ -190,6 +561,7 @@ function renderCandidates() {
       state.features = {};
       renderCandidates();
       renderMixControls();
+      emitConvergenceChange();
     });
     els.candidateTabs.append(button);
   });
@@ -252,6 +624,7 @@ function createMixCandidate() {
     state.selectedIndex = state.candidates.length - 1;
     renderCandidates();
     renderMixControls();
+    if (state.convergenceState) bootConvergence({ preserveTracker: state.tracker });
     flash(`${a.label} と ${b.label} をMixしました。`);
   } catch (error) {
     flash(error.message || 'Mixに失敗しました。', true);
@@ -321,15 +694,13 @@ function handleSectionChange(event) {
   }
   if (target.dataset.sectionField === 'method') { state.features[sectionId] = { ...state.features[sectionId], method: target.value }; return; }
   if (target.dataset.action === 'decision-note') {
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate,sectionId,{decisionNote:target.value.slice(0,400)}); return;
+    applyCandidateEdit((before) => updateCandidateSection(before,sectionId,{decisionNote:target.value.slice(0,400)}), { render: false }); return;
   }
   if (target.dataset.action === 'density') {
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { density: target.value });
-    renderCandidates();
+    applyCandidateEdit((before) => updateCandidateSection(before, sectionId, { density: target.value }));
   } else if (target.dataset.action === 'toggle') {
     const role = target.dataset.role;
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { enabled: { [role]: target.checked } });
-    renderCandidates();
+    applyCandidateEdit((before) => updateCandidateSection(before, sectionId, { enabled: { [role]: target.checked } }));
   }
 }
 
@@ -375,12 +746,10 @@ function handleSectionClick(event) {
     const list = state.reharmSuggestions[sectionId] || buildReharmSuggestions(state.source, sectionId);
     const selected = list.find((item) => item.id === button.dataset.reharm);
     if (!selected) return;
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { reharmonization: selected });
-    renderCandidates();
+    applyCandidateEdit((before) => updateCandidateSection(before, sectionId, { reharmonization: selected }));
     flash(`${selected.label}リハモを採用しました。元project.jsonは変更していません。`);
   } else if (action === 'reharm-clear') {
-    state.candidates[state.selectedIndex] = updateCandidateSection(candidate, sectionId, { reharmonization: null });
-    renderCandidates();
+    applyCandidateEdit((before) => updateCandidateSection(before, sectionId, { reharmonization: null }));
   }
 }
 
@@ -394,7 +763,7 @@ function handleFeatureAction(button) {
   const features = state.features[sectionId] ||= {};
   features.open = true;
   const index = Number(button.dataset.option), mode = button.dataset.mode;
-  const install = candidate => { state.candidates[state.selectedIndex] = adoptSectionFrom(current,candidate,sectionId); renderCandidates(); };
+  const install = candidate => { applyCandidateEdit((before) => adoptSectionFrom(before,candidate,sectionId)); };
   const preview = (candidate,label,parts) => playSketch({source:state.source,candidate,startTick:section.startTick,endTick:section.endTick,parts},label);
   try {
     if (action.startsWith('music-')) {
@@ -404,7 +773,7 @@ function handleFeatureAction(button) {
       } else {
         const choice=features.musicChoices?.[index]; if(!choice?.available)return true;
         const candidate=adoptMusicLabCandidate(current,choice);
-        if(action === 'music-apply') { state.candidates[state.selectedIndex]=candidate;renderCandidates();flash('対象Sectionへ採用しました。保存するには下の「この案を採用」を押してください。'); }
+        if(action === 'music-apply') { applyCandidateEdit(() => candidate);flash('対象Sectionへ採用しました。保存は下の採用ボタンまたは収束判断から行えます。'); }
         else if(action === 'music-original' || action === 'music-preview') {
           const target=state.source.sections.find(s=>s.id===choice.auditionSectionId);
           playSketch({source:state.source,candidate:action === 'music-original'?current:candidate,startTick:target.startTick,endTick:target.endTick},action === 'music-original'?'現在の案':choice.label);
@@ -449,9 +818,10 @@ function handleFeatureAction(button) {
 }
 
 async function previewCurrentCandidate() {
-  const candidate = currentCandidate();
+  const resolved = getResolved();
+  const candidate = resolved?.candidate || currentCandidate();
   if (!state.source || !candidate) return;
-  return playSketch({ source:state.source, candidate, startTick:Number(els.previewSection.value)||0 },candidate.label);
+  return playSketch({ source:state.source, candidate, startTick:Number(els.previewSection.value)||0 },resolved?.tentativeLabel || candidate.label);
 }
 async function playSketch(sketch,label) {
   stopPreview();
@@ -485,7 +855,7 @@ els.previewSection.addEventListener('change', stopPreview);
 function handleMidiExport(event) {
   const button = event.target.closest('button[data-part]');
   if (!button) return;
-  const candidate = currentCandidate();
+  const candidate = getResolved()?.candidate || currentCandidate();
   if (!state.source || !candidate) {
     flash('先に曲と編曲案を用意してください。', true);
     return;
@@ -507,24 +877,22 @@ function adoptCurrentCandidate() {
     flash('採用する候補がありません。', true);
     return;
   }
-  state.arrangerProject = createArrangerProject(state.source, candidate, state.arrangerProject);
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.arrangerProject));
-    els.exportBtn.disabled = false;
-    flash(`${candidate.label} を採用して端末に保存しました。`);
-  } catch {
+  const plan = planForCandidate(candidate);
+  const result = saveArrangerPlan({ plan });
+  if (result.ok) flash(`${candidate.label} を採用して端末に保存しました。`);
+  else {
     flash('端末への保存に失敗しました。JSON書き出しは利用できます。', true);
     els.exportBtn.disabled = false;
   }
 }
 
 function exportPlan() {
-  const candidate = currentCandidate();
-  if (state.source && candidate) state.arrangerProject = createArrangerProject(state.source, candidate, state.arrangerProject);
-  if (!state.arrangerProject) { flash('先に編曲案を用意してください。', true); return; }
-  const blob = new Blob([JSON.stringify(state.arrangerProject, null, 2)], { type: 'application/json' });
-  downloadBlob(blob, `${safeFileName(state.arrangerProject.source.title || 'untitled')}_arrangement_${ARRANGER_VERSION}.json`);
-  flash('編曲プランJSONを書き出しました。');
+  let context;
+  try { context = currentPlanContext({ save: true }); }
+  catch (error) { flash(error.message || '先に編曲案を用意してください。', true); return; }
+  const blob = new Blob([JSON.stringify(context.plan, null, 2)], { type: 'application/json' });
+  downloadBlob(blob, `${safeFileName(context.plan.source.title || 'untitled')}_arrangement_${ARRANGER_VERSION}.json`);
+  flash(context.saveResult?.ok === false ? '端末保存は失敗しましたが、Current Plan JSONを書き出しました。' : 'Current Planの編曲プランJSONを書き出しました。', context.saveResult?.ok === false);
 }
 
 function downloadBlob(blob, filename) {
@@ -542,16 +910,32 @@ function safeFileName(value) { return String(value).replace(/[\\/:*?"<>|]+/g, '_
 function clearAll() {
   if (!window.confirm('保存した編曲プランを消去しますか？必要なら先にJSONを書き出してください。')) return;
   stopPreview();
+  const planId = state.arrangerProject?.id;
+  const projectId = state.source?.sourceProjectId ?? state.arrangerProject?.source?.projectId;
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(JOURNAL_KEY);
   localStorage.removeItem(V03_STORAGE_KEY);
   localStorage.removeItem(PREVIOUS_STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
+  if (planId != null && projectId != null) {
+    const prefix = `demo-composer-arranger-convergence-v1:${projectId}:${planId}`;
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i += 1) { const key = localStorage.key(i); if (key?.startsWith(prefix)) keys.push(key); }
+    keys.forEach((key) => localStorage.removeItem(key));
+  }
   state.source = null;
   state.candidates = [];
   state.arrangerProject = null;
   state.selectedIndex = 1;
   state.reharmSuggestions = {};
   state.features = {};
+  state.convergenceState = null;
+  state.tracker = null;
+  state.validationReady = false;
+  state.convergenceWarning = null;
+  state.convergenceDiagnosis = null;
+  state.structureOffer = null;
+  state.undoSnapshot = null;
   els.file.value = '';
   els.exportBtn.disabled = true;
   els.preview.disabled = true;
@@ -559,13 +943,22 @@ function clearAll() {
   renderCollisionSummary();
   renderCandidates();
   renderMixControls();
-  flash('端末内の編曲プランを消去しました。元のDemo Composerデータは変更していません。');
+  emitConvergenceChange();
+  flash('端末内の編曲プランと収束判断を消去しました。元のDemo Composerデータは変更していません。');
 }
 
 function applyRestored({ source, candidate }) {
   state.source = source;
-  state.candidates = candidate ? [candidate] : [];
-  state.selectedIndex = 0;
+  if (candidate && source) {
+    const base = buildThreeCandidates(source, candidate.styleId || 'jpop-band');
+    const match = base.findIndex((item) => item.id === candidate.id);
+    if (match >= 0) { base[match] = candidate; state.selectedIndex = match; }
+    else { base.push(candidate); state.selectedIndex = base.length - 1; }
+    state.candidates = base;
+  } else {
+    state.candidates = candidate ? [candidate] : [];
+    state.selectedIndex = 0;
+  }
   state.reharmSuggestions = {};
   state.features = {};
   if (candidate) { state.styleId = candidate.styleId; els.style.value = state.styleId; }
@@ -576,14 +969,18 @@ function restorePlan(saved) {
   state.arrangerProject = saved;
   applyRestored(restored);
   els.exportBtn.disabled = false;
+  if (state.source && currentCandidate()) bootConvergence();
 }
 function restoreSavedPlan() {
   try {
     const text = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(V03_STORAGE_KEY) || localStorage.getItem(PREVIOUS_STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!text) return;
     restorePlan(JSON.parse(text));
-    flash(state.source ? '前回の採用プランを復元しました。' : '旧プランを保持しています。同じrevisionの元project.jsonで編集を再開できます。');
+    flash(state.source ? '前回の採用プランと収束判断を復元しました。' : '旧プランを保持しています。同じProjectの元project.jsonで編集を再開できます。');
   } catch {
+    state.validationReady = true;
+    state.convergenceWarning = '保存プランを読み込めませんでした。保存データは消去せず保持しています。';
+    emitConvergenceChange();
     flash('保存プランを読み込めませんでした。保存データは消去せず保持しています。', true);
   }
 }
@@ -595,6 +992,7 @@ function flash(message, isError = false) {
   window.clearTimeout(flash.timer);
   flash.timer = window.setTimeout(() => { els.message.hidden = true; }, 4200);
 }
+window.addEventListener('arranger-convergence-message', (event) => flash(event.detail?.message || '', Boolean(event.detail?.error)));
 function escapeHtml(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
