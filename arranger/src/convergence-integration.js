@@ -15,7 +15,7 @@ import {
   writeStructureBackup,
   stateKey,
 } from '../convergence/index.js';
-import { buildThreeCandidates, createArrangerProject, restoreArrangerProject } from './core.js';
+import { buildThreeCandidates, createArrangerProject } from './core.js';
 
 export const ARRANGER_PLAN_STORAGE_KEY = 'demo-composer-arranger-v0.4';
 export const ARRANGER_JOURNAL_STORAGE_KEY = 'demo-composer-arranger-decisions-v0.5';
@@ -73,7 +73,6 @@ export function initializeConvergence({ storage, source, candidates, plan, journ
       load: loaded,
     };
   } catch (error) {
-    // validationReady は例外でも開く。読み取れた旧補助状態があれば7日バックアップへ退避する。
     try {
       if (loaded?.state) {
         writeStructureBackup(storage, ids, {
@@ -148,7 +147,6 @@ export function saveArrangerPlan({
   const nextPlan = clone(plan);
   if (journal) nextPlan.decisionJournal = clone(journal);
   try {
-    // 補助状態 → Plan → Journal。Journalは常に最後。
     const planText = JSON.stringify(nextPlan);
     storage.setItem(planStorageKey, planText);
     if (storage.getItem(planStorageKey) !== planText) throw new Error('plan-readback-mismatch');
@@ -158,7 +156,6 @@ export function saveArrangerPlan({
       if (storage.getItem(journalStorageKey) !== journalText) throw new Error('journal-readback-mismatch');
     }
   } catch (error) {
-    // Plan/Journal失敗時は先に保存した補助状態も旧stateへ戻す。trackerは呼び出し側の旧値を保持する。
     try { restoreRaw(storage, auxKey, oldAuxRaw); } catch { /* best effort */ }
     try { restoreRaw(storage, poolKey, oldPoolRaw); } catch { /* best effort */ }
     try { restoreRaw(storage, planStorageKey, oldPlanRaw); } catch { /* best effort */ }
@@ -203,15 +200,40 @@ export function writeRebaseBackup(storage, { plan, convergenceState, tracker, no
   return key;
 }
 
-function sourceMeta(source) {
+function rebaseCandidateToSource(planSnapshot, source, currentCandidate) {
+  const saved = clone(planSnapshot?.arrangement || currentCandidate);
+  const generated = buildThreeCandidates(source, currentCandidate.styleId || saved?.styleId || 'jpop-band');
+  const template = generated.find((item) => item.id === currentCandidate.id)
+    || generated.find((item) => item.id === saved?.id)
+    || generated[1]
+    || generated[0];
+  if (!template) throw new Error('現在source用のCandidateを作れませんでした。');
+
+  const savedBySection = new Map((saved?.sections || []).map((section) => [section.sectionId, section]));
+  const templateBySection = new Map((template.sections || []).map((section) => [section.sectionId, section]));
+  const sections = source.sections.map((sourceSection) => {
+    const prior = savedBySection.get(sourceSection.id);
+    const fallback = templateBySection.get(sourceSection.id);
+    const section = clone(prior || fallback);
+    if (!section) throw new Error(`Section ${sourceSection.id} をrebaseできませんでした。`);
+    return {
+      ...section,
+      sectionId: sourceSection.id,
+      sectionName: sourceSection.name,
+      kind: sourceSection.kind,
+      bars: sourceSection.bars,
+      energy: sourceSection.energy,
+    };
+  });
+
   return {
-    projectId: source.sourceProjectId,
-    revision: source.sourceRevision,
-    schemaVersion: source.sourceSchemaVersion,
-    appVersion: source.sourceAppVersion,
-    title: source.title,
-    basic: clone(source.basic),
-    sections: clone(source.sections),
+    ...clone(template),
+    ...saved,
+    id: currentCandidate.id,
+    label: currentCandidate.label,
+    styleId: currentCandidate.styleId,
+    styleName: currentCandidate.styleName,
+    sections,
   };
 }
 
@@ -220,15 +242,9 @@ export function rebaseSameProject({ plan, source, candidate, nextSource, converg
   const oldProjectId = source.sourceProjectId ?? plan.source?.projectId;
   if (String(oldProjectId) !== String(nextSource.sourceProjectId)) throw new Error('別Projectにはrebaseできません。');
 
-  // 未保存のCandidate編集もPlanバックアップへ含める。
   const workingPlan = createArrangerProject(source, candidate, plan);
-  const synthetic = clone(workingPlan);
-  synthetic.source = sourceMeta(nextSource);
-  synthetic.sourceSnapshot = clone(nextSource.sourceSnapshot);
-  const restored = restoreArrangerProject(synthetic, nextSource);
-  const rebasedCandidate = restored.candidate;
-  const rebasedPlan = createArrangerProject(nextSource, rebasedCandidate, plan); // Plan IDを維持
-
+  const rebasedCandidate = rebaseCandidateToSource(workingPlan, nextSource, candidate);
+  const rebasedPlan = createArrangerProject(nextSource, rebasedCandidate, plan);
   const candidates = buildThreeCandidates(nextSource, rebasedCandidate.styleId || 'jpop-band');
   const matchingIndex = candidates.findIndex((item) => item.id === rebasedCandidate.id);
   let selectedIndex;
@@ -254,21 +270,7 @@ export function rebaseSameProject({ plan, source, candidate, nextSource, converg
 
 export function applySnapshotToCurrentSource({ planSnapshot, source, currentCandidate }) {
   if (!planSnapshot?.arrangement || !source || !currentCandidate) throw new Error('snapshot復元に必要なデータがありません。');
-  const synthetic = clone(planSnapshot);
-  synthetic.source = sourceMeta(source);
-  synthetic.sourceSnapshot = clone(source.sourceSnapshot);
-  synthetic.arrangement = {
-    ...clone(planSnapshot.arrangement),
-    id: currentCandidate.id,
-    label: currentCandidate.label,
-    styleId: currentCandidate.styleId,
-    styleName: currentCandidate.styleName,
-  };
-  const restored = restoreArrangerProject(synthetic, source);
-  return { ...restored.candidate, sections: restored.candidate.sections.map((section) => {
-    const current = source.sections.find((item) => item.id === section.sectionId);
-    return { ...section, bars: current.bars, sectionName: current.name, kind: current.kind };
-  }) };
+  return rebaseCandidateToSource(planSnapshot, source, currentCandidate);
 }
 
 export function adoptStructureOffer({ offer, source, candidates, now = Date.now() }) {
