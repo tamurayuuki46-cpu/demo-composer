@@ -79,6 +79,54 @@ export async function backupProjectForMigration(project) {
   }
 }
 
+// 補助データ(発散セッション等)用のmeta読み書き。DB_VERSION・Project Schemaは変えず、既存のmeta storeを使う。
+// 予約キー(activeProjectId / migrationBackup:*)は上書き・削除できない。
+function assertAuxiliaryKey(key) {
+  if (typeof key !== "string" || !key) throw new Error("保存キーが不正です。");
+  if (key === ACTIVE_PROJECT_KEY || key.startsWith("migrationBackup:")) {
+    throw new Error("予約済みの保存キーは補助データに使えません。");
+  }
+}
+
+export async function saveMetaEntry(key, value) {
+  assertAuxiliaryKey(key);
+  const database = await openDatabase();
+
+  try {
+    const transaction = database.transaction(META_STORE, "readwrite");
+    transaction.objectStore(META_STORE).put({ key, value });
+    await transactionToPromise(transaction);
+  } finally {
+    database.close();
+  }
+}
+
+export async function loadMetaEntry(key) {
+  assertAuxiliaryKey(key);
+  const database = await openDatabase();
+
+  try {
+    const transaction = database.transaction(META_STORE, "readonly");
+    const entry = await requestToPromise(transaction.objectStore(META_STORE).get(key));
+    return entry?.value ?? null;
+  } finally {
+    database.close();
+  }
+}
+
+export async function deleteMetaEntry(key) {
+  assertAuxiliaryKey(key);
+  const database = await openDatabase();
+
+  try {
+    const transaction = database.transaction(META_STORE, "readwrite");
+    transaction.objectStore(META_STORE).delete(key);
+    await transactionToPromise(transaction);
+  } finally {
+    database.close();
+  }
+}
+
 export async function getActiveProjectId() {
   const database = await openDatabase();
 

@@ -31,6 +31,16 @@ Component versions / candidates:
 - PPQ: 480
 - time signature: 4/4固定
 
+## 2026-10-17 Demo Composer 発散モード: 保存とKeepライブラリ (Claude)
+
+Branch: `claude/v0.18-divergence-keep-persist`(develop起点)。詳細・仕様は `docs/DIVERGENCE_MODE.md` §12。
+
+- 発散セッションをsessionStorageからIndexedDB(`meta` store)へ移し、タブ/アプリを閉じても続きから使えるようにした。DB_VERSION / Project Schema 3 / SongProject v1は変更なし。
+- Keepライブラリ(上限40案)を追加。Freezeしても他のKeep案が残り、「ツリーに呼び出す」で次の探索に使える。古い元案の案をFreezeする時は確認ダイアログを出す。
+- 新規: `src/core/divergence-library.js`(純関数) / `src/storage/divergence-store.js` / `scripts/divergence-library-smoke-test.mjs` / `scripts/divergence-library-browser.test.cjs`。変更: `src/core/divergence.js`(`unkeepDivergenceBranch` / `importDivergenceBranch` 追加のみ) / `src/storage/indexeddb-storage.js`(`saveMetaEntry` / `loadMetaEntry` / `deleteMetaEntry` 追加のみ) / `src/divergence/app.js`。
+- **未対応(意図的)**: Arrangement Labの収束モード(保留)へのKeep案の受け渡しと、Arrangement Lab自身の発散セッションの永続化。`docs/CONVERGENCE_CONTRACT.md`の分担(収束の既存ファイル統合はGPT側)に従い、`arranger/`配下の既存ファイルは編集していない。読み取り口は `divergenceStore.loadLibrary(projectId)`。
+- **未確認**: Android実機(PWA)でのアプリ切替・再起動後の保持。`dist/`はGit管理下のため、この作業ではbuild成果物をコミットしていない。
+
 ## 2026-10-15 current feature work
 
 ### ① Hub / Decision Progress

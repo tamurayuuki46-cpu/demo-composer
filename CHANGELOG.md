@@ -22,6 +22,21 @@
 - Music Project Home最終確認で、関連静的・build 16 command、Home 4 viewport、曲データメニュー3 mobile viewport、実Song.mid後のDAW-ready遷移、保存再読込、SongProject所有境界を確認。詳細は`docs/PROJECT_HOME_FINAL_VERIFICATION_2026-10-15.md`。
 - 統合候補のhosted CIはpush / PR作成後に必要。ローカル結果はhosted CIの代替ではない。
 
+## 2026-10-17 — v0.17-dev 発散モード: 保存とKeepライブラリ(追補)
+
+【追加】
+- 発散セッションを端末内IndexedDB(`meta` store)へ保存。タブ/アプリを閉じても探索の続きとKeep案が残る。旧sessionStorageのセッションは初回に移行。
+- Keepライブラリ(上限40案): Freezeしても他のKeep案が残る。「ツリーに呼び出す」「Keepを外す」「削除」。古い元案から作られた案のFreezeは確認ダイアログ付き。
+- 保存できなかった場合は画面に表示(IndexedDB不可時はsessionStorageへ退避し「タブを閉じると消える」と表示)。
+
+【変更なし】
+- Demo Project Schema 3 / SongProject v1 / Arrangement Plan Schema 4 / PPQ 480 / 4/4 / IndexedDB DB_VERSION 1。
+- Arrangement Labの発散・収束(既存ファイル)。
+
+【検証】
+- `test:divergence`(新規 `divergence-library-smoke-test.mjs` を含む)、Chromium回帰 `divergence-library-browser.test.cjs`、既存のsmoke test 77件とbrowser-export-regressionが通過。
+- Android実機は未確認。詳細: `docs/DIVERGENCE_MODE.md` §12。
+
 ## 作曲シート v0.6-dev — 2026-10-14
 記入用を先頭へ、保存/Drive共有、曲データメニューの簡易版表示。詳細 sheet-app/CHANGELOG_v0.6.md。
 
