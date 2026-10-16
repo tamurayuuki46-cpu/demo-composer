@@ -11,16 +11,25 @@ async function downloadedJson(page, button) {
 }
 (async () => {
   const { createEmptySongProject } = await import('../src/shared/song-project.js');
+  const expectedVersion = (await fs.readFile('VERSION', 'utf8')).trim();
   const browser = await chromium.launch({ headless: true });
+  let activePage;
   await fs.mkdir('test-results', { recursive: true });
   try {
     for (const width of [360, 390, 430]) {
-      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true, acceptDownloads: true });
+      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true, acceptDownloads: true, serviceWorkers: width === 430 ? 'block' : 'allow' });
       const page = await context.newPage();
+      activePage = page;
       page.setDefaultTimeout(12000);
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+      if (width === 430) {
+        await page.route('**/arranger/src/app.js*', async route => {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          await route.continue();
+        });
+      }
       let source;
       if (process.env.ANALYZER_URL) {
         await page.goto(process.env.ANALYZER_URL);
@@ -49,6 +58,9 @@ async function downloadedJson(page, button) {
       }
       const apply = page.getByRole('button', { name: '受け取った曲を反映', exact: true });
       await apply.waitFor();
+      await page.getByRole('heading', { name: 'AIモニタリング', exact: true }).waitFor();
+      assert.ok((await page.locator('.version').innerText()).startsWith(expectedVersion), 'monitor initialization must retain the current release label');
+      assert.equal(await page.locator('.version .build-id').count(), 1, 'monitor initialization must retain build identity');
       assert.notEqual(await page.getByLabel('Project名', { exact: true }).inputValue(), source.title, 'must not auto-apply');
       page.once('dialog', dialog => dialog.dismiss());
       await apply.click();
@@ -141,5 +153,12 @@ async function downloadedJson(page, button) {
       }
     }
     console.log('360/390/430px explicit handoff, cancel, download, reload and ownership passed');
+  } catch (error) {
+    if (activePage && !activePage.isClosed()) {
+      await activePage.screenshot({ path: 'test-results/handoff-failure.png' });
+      console.error(await activePage.locator('body').innerText());
+      console.error(await activePage.evaluate(() => ({ url: location.href, pendingTitle: JSON.parse(localStorage.getItem('music-project-songproject-handoff-v1'))?.songProject?.title })));
+    }
+    throw error;
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

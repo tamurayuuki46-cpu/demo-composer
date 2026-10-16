@@ -2,9 +2,14 @@
 
 更新日: 2026-10-16
 
-## v0.16-dev 受け渡し修正
+## v0.16.1-dev 公開確認修正
 
-現行sourceは `v0.16-dev` / package `0.16.0-dev`。main `8661c88a84a5efc051110f089a7e3f8bfd4cbfe7` 基準の `release/handoff-integrity-20261016` で受信曲ID保持・保存完了待ち・曲別交換情報保存を修正。
+現行sourceは `v0.16.1-dev` / package `0.16.1-dev`。main `54e8e798649bd5e0463f359ccbdce292eff81d44` 基準の `release/handoff-bootstrap-v0.16.1`。
+AI初期化時もVersion / Build IDを維持。Arrangement Lab本体の初期化前に受信イベントが消失する問題を、app.jsへの明示依存と実Import完了のawaitで修正。1.5秒遅延で旧挙動の失敗を再現して回帰に追加。
+
+## v0.16-dev 受け渡し修正（前回記録）
+
+v0.16時点sourceは `v0.16-dev` / package `0.16.0-dev`。main `8661c88a84a5efc051110f089a7e3f8bfd4cbfe7` 基準の `release/handoff-integrity-20261016` で受信曲ID保持・保存完了待ち・曲別交換情報保存を修正。
 以前の公開状態は下記v0.15の履歴を参照。最新の公開確認は `CURRENT_RELEASE.md`。stable tag未作成。
 
 ## 現在の状態
@@ -24,7 +29,7 @@ PR #252 / #253 / #254を含む統合候補は、PR #255からmerge commit方式�
 
 Component versions:
 
-- Demo Composer source: `v0.16-dev` / package `0.16.0-dev`
+- Demo Composer source: `v0.16.1-dev` / package `0.16.1-dev`
 - Arrangement Lab: `v0.13-dev`
 - Music Project Home: `v0.18-dev`
 - Composition Sheet latest: `v0.9.1-dev`

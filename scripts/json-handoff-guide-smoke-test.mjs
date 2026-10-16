@@ -20,6 +20,6 @@ assert.match(arranger, /Demo Composerから続ける/);
 assert.match(arranger, /受け取った曲を反映/);
 assert.match(arranger, /targetApp !== 'arrangement-lab'/);
 assert.match(arranger, /A\/B\/Cの準備も完了しています/);
-assert.match(arranger, /waitForArrangementReady/);
+assert.match(arranger, /await applyArrangementFile/);
 
 console.log('JSON handoff guide smoke test passed');

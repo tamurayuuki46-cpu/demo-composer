@@ -4,7 +4,7 @@ Androidスマホ中心の作曲支援PWAです。
 
 ## Version status
 
-- Current source: `v0.16-dev`（main基準の受け渡し修正。公開状況は `docs/CURRENT_RELEASE.md`）
+- Current source: `v0.16.1-dev`（main基準の受け渡し修正。公開状況は `docs/CURRENT_RELEASE.md`）
 - Development branch: `develop` / `b322cb47282261db720bf3b74caf455cb56c9cf7`（mainからのcatch-up前）
 - Stable: 未認定
 
