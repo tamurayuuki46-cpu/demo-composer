@@ -230,4 +230,100 @@ assert.equal(cv.findStructureBackup(m2, ids, 'other', T + 1), null);
 cv.purgeExpiredBackups(m2, ids, T + cv.RECOVERY_RETENTION_MS + 1);
 assert.equal(cv.findStructureBackup(m2, ids, planFp, T + 1), null);
 
+// --- dirty: 共通入口で編集前後のfingerprintを比較して記録 / 保存は記録済みdirtyだけ更新 / 非dirty不一致は外部変更
+{
+  let d = cv.createDirtyTracker();
+  let ds = cv.setDecision(cv.createEmptyState({ ...ids, planFingerprint: planFp }), cv.GLOBAL_KEY, B.id, 'adopted', { fingerprint: cv.globalFingerprintMap(src, B) });
+  ds = cv.setDecision(ds, cv.sectionKey('c'), B.id, 'adopted', { fingerprint: cv.slotFingerprint(src, B, 'c') });
+  ds = cv.setDecision(ds, cv.elementKey('c', 'drums'), B.id, 'adopted', { fingerprint: cv.slotFingerprint(src, B, 'c', 'drums') });
+  // 見た目だけの宣言ではなく、編集で実発音が変わった枠だけがdirtyになる
+  const edit1 = updateCandidateSection(B, 'c', { enabled: { counter: false } });
+  d = cv.recordEdit(d, ds, { source: src, before: B, after: edit1 });
+  assert.deepEqual(cv.dirtyKeys(d).sort(), ['global:c', 'section:c']); // drums枠・Verse枠は不変
+  // 変化しない編集(同内容)はdirtyにならない
+  assert.deepEqual(cv.dirtyKeys(cv.recordEdit(cv.createDirtyTracker(), ds, { source: src, before: B, after: updateCandidateSection(B, 'c', {}) })), []);
+  // 採用していない候補の編集は記録しない
+  assert.deepEqual(cv.dirtyKeys(cv.recordEdit(cv.createDirtyTracker(), ds, { source: src, before: A, after: updateCandidateSection(A, 'c', { enabled: { counter: false } }) })), []);
+  assert.throws(() => cv.recordEdit(d, ds, { source: src, before: B, after: C }), /一致しません/);
+  // 保存: dirtyは更新され、外部変更扱いにならない
+  const sv = cv.applySave(ds, d, { source: src, candidates: [A, edit1, C], now: T });
+  assert.deepEqual(sv.externalChanges, []);
+  assert.deepEqual(sv.refreshed.sort(), ['global:c', 'section:c']);
+  assert.equal(cv.getAdopted(sv.state, cv.sectionKey('c')).fingerprint, cv.slotFingerprint(src, edit1, 'c'));
+  assert.equal(cv.getAdopted(sv.state, cv.GLOBAL_KEY).fingerprint.c, cv.globalFingerprintMap(src, edit1).c);
+  assert.deepEqual(cv.dirtyKeys(sv.tracker), []);
+  assert.equal(Object.keys(sv.state.recovery).length, 0);
+  // 入口を通らない変更(未記録)は外部変更: Recoveryへ
+  const sneaky = cv.applySave(ds, cv.createDirtyTracker(), { source: src, candidates: [A, edit1, C], now: T });
+  assert.ok(sneaky.externalChanges.some((n) => n.key === 'section:c' && n.reason === 'external-change'));
+  assert.equal(cv.getAdopted(sneaky.state, cv.sectionKey('c')), null);
+  // dirtyとnon-dirtyが混在: dirty枠は更新、非dirty枠の不一致だけ外部変更
+  const edited = JSON.parse(JSON.stringify(src)); edited.tracks.find((t) => t.role === 'drums').notes[1].pitch = 42;
+  const mixed = cv.applySave(ds, d, { source: edited, candidates: [A, edit1, C], now: T });
+  assert.ok(mixed.refreshed.includes('section:c'));
+  assert.ok(mixed.externalChanges.some((n) => n.key === 'element:c:drums')); // drums枠はdirtyでない
+  // 純関数: 入力state・trackerは変更されない
+  assert.deepEqual(cv.dirtyKeys(d).sort(), ['global:c', 'section:c']);
+  assert.equal(cv.getAdopted(ds, cv.sectionKey('c')).fingerprint, cv.slotFingerprint(src, B, 'c'));
+}
+
+// --- 追加検証(follow-up)
+{
+  // Candidate IDの決定性
+  const again = buildThreeCandidates(src, 'jpop-band');
+  assert.deepEqual(again.map((c) => c.id), cands.map((c) => c.id));
+  assert.deepEqual(cands.map((c) => c.id), ['jpop-band-v1', 'jpop-band-v2', 'jpop-band-v3']);
+  // 編集してもIDは変わらない(=fingerprintで失効判定する根拠)
+  assert.equal(updateCandidateSection(B, 'c', { density: 'thin' }).id, B.id);
+  // Mix案はDate.now()依存ID: 再生成するとIDが変わり、判断は candidate-missing で未決定に戻る
+  const { mixCandidates } = await import('../src/core.js');
+  const mix1 = mixCandidates(A, C); await new Promise((r) => setTimeout(r, 3)); const mix2 = mixCandidates(A, C);
+  assert.notEqual(mix1.id, mix2.id);
+  let ms = cv.setDecision(cv.createEmptyState({ ...ids, planFingerprint: planFp }), cv.sectionKey('c'), mix1.id, 'adopted', { fingerprint: cv.slotFingerprint(src, mix1, 'c') });
+  const mv = cv.verifyState(ms, { source: src, candidates: [A, B, C, mix2], now: T });
+  assert.equal(mv.notices[0].reason, 'candidate-missing');
+  // 二重無効化で元のRecoveryを上書きしない(新判断を挟まない)
+  let base = cv.setDecision(cv.createEmptyState({ ...ids, planFingerprint: planFp }), cv.sectionKey('c'), C.id, 'adopted', { fingerprint: cv.slotFingerprint(src, C, 'c') });
+  const e1 = JSON.parse(JSON.stringify(src)); e1.tracks.find((t) => t.role === 'drums').notes[1].pitch = 42;
+  const e2 = JSON.parse(JSON.stringify(src)); e2.tracks.find((t) => t.role === 'drums').notes[1].pitch = 46;
+  const first = cv.verifyState(base, { source: e1, candidates: cands, now: T });
+  const reAdopt = cv.setDecision(first.state, cv.sectionKey('c'), C.id, 'adopted', { fingerprint: cv.slotFingerprint(e1, C, 'c') });
+  assert.equal(reAdopt.recovery['section:c'], undefined); // 新判断でRecoveryは役目を終える
+  // 無効化直後に、同じ枠の別の入れ替え(保留など)を挟んでも…元Recoveryは保持される条件: 採用が無い間のverify
+  const second = cv.verifyState(first.state, { source: e2, candidates: cands, now: T + 5 });
+  assert.equal(second.state.recovery['section:c'].prior.fingerprint, cv.slotFingerprint(src, C, 'c'));
+  assert.equal(second.state.recovery['section:c'].createdAt, T);
+  // listRecoveries
+  const list = cv.listRecoveries(first.state, T + 1);
+  assert.deepEqual(list.map((r) => [r.key, r.level, r.sectionId, r.reason]), [['section:c', 'section', 'c', 'external-change']]);
+  assert.equal(cv.listRecoveries(first.state, T + cv.RECOVERY_RETENTION_MS + 1).length, 0);
+  // 構造復帰: 変更→退避→構造が戻る→退避を再検証して開き直す
+  const origState = cv.setDecision(cv.createEmptyState({ ...ids, planFingerprint: planFp }), cv.sectionKey('c'), C.id, 'adopted', { fingerprint: cv.slotFingerprint(src, C, 'c') });
+  const changed = cv.checkPlanFingerprint(origState, { ...ids, planFingerprint: cv.planStructureFingerprint(s3), now: T });
+  const st2 = new Mem(); cv.writeStructureBackup(st2, ids, changed.backup);
+  const found = cv.findStructureBackup(st2, ids, planFp, T + 10);
+  assert.ok(found);
+  const reopened = cv.adoptStructureBackup(found.backup, { source: src, candidates: cands, planFingerprint: planFp, now: T + 10 });
+  assert.equal(reopened.ok, true); assert.equal(cv.getAdopted(reopened.state, cv.sectionKey('c')).candidateId, C.id); assert.equal(reopened.notices.length, 0);
+  assert.equal(cv.adoptStructureBackup(found.backup, { source: src, candidates: cands, planFingerprint: 'zzz', now: T }).error, 'structure-mismatch');
+  assert.equal(cv.adoptStructureBackup(found.backup, { source: src, candidates: cands, planFingerprint: planFp, now: T + cv.RECOVERY_RETENTION_MS + 1 }).error, 'expired');
+  // 別Project/別Planの状態分離(保存→相互に読めない)
+  const iso = new Mem(); const idsB = { projectId: 'demo-2', planId: 'plan-1' };
+  cv.saveState(iso, origState); cv.saveState(iso, cv.setDecision(cv.createEmptyState({ ...idsB, planFingerprint: planFp }), cv.GLOBAL_KEY, A.id, 'adopted', { fingerprint: cv.globalFingerprintMap(src, A) }));
+  assert.ok(cv.getAdopted(cv.loadState(iso, ids).state, cv.sectionKey('c')));
+  assert.equal(cv.getAdopted(cv.loadState(iso, ids).state, cv.GLOBAL_KEY), null);
+  assert.equal(cv.getAdopted(cv.loadState(iso, idsB).state, cv.GLOBAL_KEY).candidateId, A.id);
+  // recordEdit/applySaveは入力を破壊しない
+  const t0 = cv.createDirtyTracker(); const snap = JSON.stringify([origState, t0]);
+  const t1 = cv.recordEdit(t0, origState, { source: src, before: C, after: updateCandidateSection(C, 'c', { enabled: { counter: false } }) });
+  cv.applySave(origState, t1, { source: src, candidates: cands, now: T });
+  assert.equal(JSON.stringify([origState, t0]), snap);
+  // 編集して元に戻すとdirtyは残るが、保存でfingerprintは同値のまま・外部変更にならない
+  const reverted = cv.recordEdit(cv.createDirtyTracker(), origState, { source: src, before: C, after: C });
+  assert.deepEqual(cv.dirtyKeys(reverted), []);
+  const noop = cv.applySave(origState, cv.recordEdit(cv.createDirtyTracker(), origState, { source: src, before: C, after: updateCandidateSection(C, 'c', { enabled: { counter: false } }) }), { source: src, candidates: cands, now: T });
+  assert.equal(noop.externalChanges.length, 0); // dirty枠は現在値で再リンクされ、外部変更にならない
+  assert.equal(cv.getAdopted(noop.state, cv.sectionKey('c')).fingerprint, cv.slotFingerprint(src, C, 'c'));
+}
+
 console.log('arranger convergence core tests: OK');

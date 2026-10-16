@@ -85,3 +85,23 @@ export function checkPlanFingerprint(state, { projectId, planId, planFingerprint
   const backup = { payload: clone(state), createdAt: now, expiresAt: (now ?? 0) + RECOVERY_RETENTION_MS };
   return { state: createEmptyState({ projectId, planId, planFingerprint }), structureChanged: true, backup };
 }
+
+// UI表示用: 現在有効なRecoveryを一覧にする(期限切れは除外)。
+export function listRecoveries(state, now = 0) {
+  return Object.entries(state.recovery || {})
+    .filter(([, r]) => r.expiresAt > now)
+    .map(([key, r]) => {
+      const sectionId = key.startsWith('global:') ? key.slice(7) : parseSlotKey(key).sectionId;
+      const info = key.startsWith('global:') ? { level: 'global' } : parseSlotKey(key);
+      return { key, level: info.level, sectionId, element: info.element || null, candidateId: r.prior.candidateId, reason: r.reason, createdAt: r.createdAt, expiresAt: r.expiresAt };
+    });
+}
+
+// 構造が元に戻った時に退避しておいた旧状態を開き直す。fingerprintは再検証され、合わない枠は通常のRecoveryになる。
+export function adoptStructureBackup(backup, { source, candidates, planFingerprint, now = null }) {
+  const payload = clone(backup.payload);
+  if (payload.planFingerprint !== planFingerprint) return { ok: false, error: 'structure-mismatch' };
+  if (backup.expiresAt <= (now ?? 0) && now !== null) return { ok: false, error: 'expired' };
+  const verified = verifyState(payload, { source, candidates, now });
+  return { ok: true, state: verified.state, notices: verified.notices, message: verified.message };
+}
