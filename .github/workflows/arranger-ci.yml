@@ -26,6 +26,7 @@ jobs:
 
       - name: JavaScript syntax check
         run: |
+          for file in arranger/convergence/*.js arranger/src/convergence*.js; do node --check "$file"; done
           node --check arranger/src/core.js
           node --check arranger/src/app.js
           node --check arranger/sw.js
@@ -45,6 +46,9 @@ jobs:
 
       - name: Arrangement Lab core regression
         run: |
+          node arranger/tests/convergence.test.mjs
+          node arranger/tests/convergence-integration.test.mjs
+          node arranger/tests/convergence-session.test.mjs
           node arranger/tests/core.test.mjs
           node arranger/tests/regression.test.mjs
           node arranger/tests/features.test.mjs
@@ -79,6 +83,7 @@ jobs:
           ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=explore' node arranger/tests/browser.test.cjs
           ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=beginner' node arranger/tests/song-data-menu-browser.test.cjs
           ARRANGER_URL='http://127.0.0.1:8080/arranger/?mode=beginner' node arranger/tests/onebar-reharm-browser.test.cjs
+          node arranger/tests/convergence-browser.test.cjs
           node arranger/tests/v05-browser.test.cjs
           node arranger/tests/v06-browser.test.cjs
           node arranger/tests/pwa-update.test.cjs

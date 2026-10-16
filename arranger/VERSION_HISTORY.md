@@ -17,6 +17,7 @@
 | v0.11-dev | restore/develop-before-arranger-preview-fix-20261014 / fix/arranger-preview-v0.11 | 1小節コードの絶対tick補正、選択案簡易試聴の実発音回帰、Harmony音量/音域調整、Bass無音fallback |
 | v0.12-dev | restore/develop-before-section-audition-v0.12-20261014 / feature/section-audition-v0.12 / PR #221 | ④Section全体試聴、リハモ3案の採用前個別試聴、試聴/採用分離 |
 | v0.13-dev | restore/develop-before-preserve-demo-sound-v0.13-20261014 / PR #227 | Demo ComposerのChord/Melody/Bass Preset・ToneとDrums発音をArrangement Lab試聴へ保持 |
+| v0.15-dev | chatgpt/convergence-integration / PR #271 | 収束判断・中央保存・dirty・rebase・Current Plan Export統合候補。実機未確認 |
 | v0.14-dev | restore/v0.16-before-divergence-2026-10-15 / chatgpt/divergence-mode-v0.17 / PR #259 | Seed / Lock / Distance / Branch / Keep / Freeze / Snapshot / Restoreを追加。主旋律は常時固定、Schema4維持 |
 
 最新は `arranger/VERSION`。本体mainは自動テスト・build・回帰CI合格版。Arrangement LabのAndroid/Cubasis/Cubase実機DAW確認済みstableは未認定。
@@ -35,3 +36,4 @@
 2026-10-14: v0.13-devはDemo ComposerのSound Preset/Toneを既存のSongProject v1互換情報から復元し、Arrangement LabのHarmony/Chord・Melody/Counter・Bass・Drums試聴で同じ音色方向を維持する。Sound選択情報が無いデータはDemo Composerの既定Presetへフォールバックする。SongProject v1 / Demo Project Schema 3 / Arrangement Plan Schema 4は変更しない。
 2026-10-14: v0.13メタデータ確定はPR #228。旧v0.5互換export名を維持し、書き出し・判断記録も現在版へ統一。追補前復元点: `restore/arranger-v0.13-metadata-before-finalize-20261014`。main公開・stable tag作成なし。Android / Cubasis / Cubase実機未確認。
 2026-10-15: v0.14-devは発散専用RouteとBranch engine Adapterを追加。元曲の主旋律を変更せず、Reharm / Counter role / Density / Drums / InstrumentationだけをBranch化し、Freeze結果は既存Arrangement Project Schema 4へ戻す。stable tag作成なし。
+2026-10-17: v0.15-devはClaude収束コア(PR #265/#266/#268)を既存Labへ統合。Candidate編集を共通入口 `recordEdit` へ接続し、中央保存で `applySave`、Recovery、validation gate、same-project rebase、Current Plan統一Export、DAW持ち越しを実装。補助状態は端末localStorage専用でPlan JSON単体では別端末へ移らない。Android/Cubasis/Cubase実機確認前のためstable tagは作成しない。

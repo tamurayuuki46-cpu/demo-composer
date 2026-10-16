@@ -41,7 +41,9 @@ Claudeは既存ファイルを編集しない。GPTは `arranger/convergence/*` 
 - 全体判断の無効化はSection単位(`state.invalidGlobalSections` + `recovery['global:<sid>']`)。Recoveryは同じ枠に新判断をするか7日で消える。2回目の無効化で元のRecoveryを上書きしない。
 - 保存: 補助状態を先、Journalを後。`saveState`失敗時は `{ok:false}`。呼び出し側はdirtyを保持し補助状態をロールバックする。Exportは保存成功に依存させない。
 
-## GPT側の統合タスク(未実装・契約外)
+## GPT側の統合タスク（v0.15-devへ統合・自動検証済み）
+
+統合境界と端末補助pool、rebase、保存失敗時の制約は `CONVERGENCE_INTEGRATION.md`。純関数コアのAPI・振る舞いは変更しない。
 
 1. 中央保存関数 `saveArrangerPlan({plan, convergenceState, journal, tracker})` と `validationReady` ゲート。起動→復元→`loadState`→`checkPlanFingerprint`→`verifyState`→ready。**検証で例外が出てもゲートを閉じたままにしない**(補助状態をバックアップし警告つきで開く)。
 2. dirty判定: **Lab内編集の共通入口(候補を編集する全関数の出口)で `recordEdit` を呼ぶ**(編集前後のfingerprint比較で記録)。保存は `saveArrangerPlan` 内で `applySave`(dirtyだけ更新、非dirtyの不一致=外部変更)。暗黙保存・Export・Drum Fill表示などの保存経路も全て同じ関数を通す。共通入口を通らない書き換えは外部変更として扱われる(Recoveryで救える)。

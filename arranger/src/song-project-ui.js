@@ -1,6 +1,6 @@
 import { isSongProject, projectValueToSongProject, serializeSongProject } from '../../src/shared/song-project.js';
 import { songProjectToArrangementSourceInput, mergeArrangementChangesIntoSongProject } from './song-project-sync.js';
-import { importFile as applyArrangementFile } from './app.js';
+import { arrangerSession, confirmCurrentPlanExport, importFile as applyArrangementFile } from './app.js';
 
 const STORAGE_KEY = 'demo-composer-arranger-v0.4';
 const HANDOFF_KEY = 'music-project-songproject-handoff-v1';
@@ -187,9 +187,8 @@ dropZone?.addEventListener('drop', (event) => {
 function syncAdoptedArrangement() {
   if (!currentSongProject) return;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
-    const arrangerProject = JSON.parse(saved);
+    if (!arrangerSession.validationReady) return;
+    const { plan: arrangerProject } = arrangerSession.current();
     currentSongProject = mergeArrangementChangesIntoSongProject(currentSongProject, arrangerProject);
     exportSongButton.disabled = false;
   } catch (error) {
@@ -201,7 +200,8 @@ adoptButton?.addEventListener('click', () => {
   window.setTimeout(syncAdoptedArrangement, 0);
 });
 
-exportSongButton?.addEventListener('click', () => {
+exportSongButton?.addEventListener('click', async () => {
+  if (!await confirmCurrentPlanExport()) return;
   if (!currentSongProject) {
     flash('先に曲のJSONを読み込んでください。', true);
     return;

@@ -5,7 +5,7 @@ Androidスマホ中心の作曲支援PWAです。
 ## Version status
 
 - Published main: Demo Composer `v0.17-dev`
-- Arrangement Lab: `v0.14-dev`
+- Arrangement Lab development: `v0.15-dev`（収束モード統合候補、未公開・実機未確認）
 - Music Project Home: `v0.19-dev`
 - Composition Sheet latest: `v0.9.1-dev`
 - MIDI Archive/Analyzer: `v0.25-dev`（別Repository / 公開済み）

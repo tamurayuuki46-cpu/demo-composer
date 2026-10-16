@@ -54,6 +54,7 @@ const arrangerHtmlPath = `${outputDir}/arranger/index.html`;
 await stampHtml(arrangerHtmlPath);
 await stampHtml(`${outputDir}/arranger/divergence.html`);
 await stampModules(`${outputDir}/arranger/src`);
+await stampModules(`${outputDir}/arranger/convergence`);
 
 const projectHomeHtmlPath = `${outputDir}/project-home/index.html`;
 await stampHtml(projectHomeHtmlPath);
