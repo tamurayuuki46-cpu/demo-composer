@@ -21,6 +21,10 @@ assert.equal(project.chords[15].durationTick, 960);
 assert.equal(project.tracks.length, 0);
 assert.ok(aiChordImportHtml(data, "C08").includes("C08"));
 assert.ok(aiChordImportHtml(null, null).includes("候補JSONを読み込む"));
+assert.ok(aiChordImportHtml(null, null).includes("8案一括インポート"));
+const mainSource = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
+assert.ok(mainSource.includes("open-ai-chord-import-from-chord"));
+assert.ok(mainSource.includes("ai-chord-import-panel"));
 assert.throws(() => makeAiChordPreviewProject(data, "NOT_FOUND"));
 
 function invalid(mutator) {

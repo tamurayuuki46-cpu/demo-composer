@@ -1,3 +1,9 @@
+## 2026-11-11 — Import入口の視認性改善
+
+- Demo Composer v0.17-devのまま、Hubの「8案一括インポート」表記とChordからの入口を追加。
+- Demo Project Schema 3 / SongProject v1変更なし。
+- デプロイ後のAndroidでの画面確認は別途必要。
+
 ## 2026-11-11 — Demo Composer v0.17-dev（AIコード進行Import追加）
 
 - 機能: 8小節×2コード候補（最大8案）を一括JSONで読み込み、元Projectを変更せず試聴。
