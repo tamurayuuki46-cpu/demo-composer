@@ -309,6 +309,8 @@ function chordScreen() {
         </div>
         <button id="clear-chords" class="small-action"${project.chords.length ? "" : " disabled"}>Clear</button>
       </div>
+      <div class="actions"><button id="open-ai-chord-import-from-chord" class="primary-action" type="button">🎹 AIコード進行8案 一括インポート</button></div>
+      <p class="hint">取り込み・試聴はHub内で行います。現在の曲は変更されません。</p>
       <button id="clear-all-music" class="danger"${hasAnyMusic(project) ? "" : " disabled"}>全てのMIDIをクリア</button>
       <p class="hint">コード・メロディ・ベース・ドラム・裏メロをすべて空にします（Key・BPM・構成・音色は残ります。↶ で戻せます）。</p>
 
@@ -840,6 +842,10 @@ function commitChordUpdate(chords, successMessage) {
 }
 
 function bindChordControls() {
+  document.querySelector("#open-ai-chord-import-from-chord")?.addEventListener("click", () => {
+    render("hub");
+    document.querySelector("#ai-chord-import-panel")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  });
   const project = projectStore.getSnapshot();
   const candidates = getDiatonicChords(project.basic.key, project.basic.scale);
   const selectedRoot = Number.isInteger(chordRootSelection)
