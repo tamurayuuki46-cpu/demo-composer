@@ -104,10 +104,10 @@ export function makeAiChordPreviewProject(batch, candidateId) {
 }
 
 export function aiChordImportHtml(batch, selectedId) {
-  const intro = '<section class="card" aria-label="AIコード進行の読み込みと試聴">' +
-    '<h3>🎹 AIコード進行 Import（試聴専用）</h3>' +
+  const intro = '<section id="ai-chord-import-panel" class="card" aria-label="AIコード進行の読み込みと試聴">' +
+    '<h3>🎹 AIコード進行8案 一括インポート（試聴専用）</h3>' +
     '<p class="hint">候補JSONを読み込み、現在の曲を変更せずに聴き比べます。</p>' +
-    '<div class="actions"><button id="ai-chord-import-open" class="small-action" type="button">候補JSONを読み込む</button>' +
+    '<div class="actions"><button id="ai-chord-import-open" class="small-action" type="button">8案一括インポート（候補JSONを読み込む）</button>' +
     '<input id="ai-chord-import-file" type="file" accept=".json,application/json" hidden>' +
     (batch ? '<button id="ai-chord-import-clear" class="small-action" type="button">候補を閉じる</button>' : '') +
     '</div>';
