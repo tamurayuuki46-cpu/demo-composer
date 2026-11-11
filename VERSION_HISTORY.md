@@ -1,3 +1,12 @@
+## 2026-11-11 — Demo Composer v0.17-dev（AIコード進行Import追加）
+
+- 機能: 8小節×2コード候補（最大8案）を一括JSONで読み込み、元Projectを変更せず試聴。
+- 開発PR: #286。main公開はPages Deployの成功で判定。
+- Version名はv0.17-devを維持。同じVersionでもcommit/Build IDを区別。
+- 互換性: Demo Schema 3 / SongProject v1 / PPQ480 / 4/4、IndexedDB変更なし。
+- Tests: Demo Composer CI / Arrangement Lab CI / Pages Buildを確認。Android実機未確認、stable tagなし。
+- 復元: restore/main-before-ai-chord-import-20261111（公開前main head）。
+
 # VERSION_HISTORY
 
 ## 2026-10-15 — v0.15-dev reconciliation candidate

@@ -1,3 +1,22 @@
+## 2026-11-11 — AIコード進行8案 Import（公開版への追加）
+
+Version: v0.17-dev（継続） / Demo Project Schema 3（変更なし）
+
+【追加】
+- Demo Composer Hubに「AIコード進行 Import（試聴専用）」を追加。AI候補JSON（chord-candidate-batch schemaVersion 1）を1〜8案まとめて読み込み、1案ずつ再生・停止・比較できる。
+- サンプル examples/S001_ai_chord_candidates_v1.json（C01〜C08、各8小節・16コード、C Major・BPM105）を収録。
+- 入力検証（JSON・位置・ルート・コード種類・サイズ）とHTMLエスケープ回帰を追加。
+
+【互換性】
+- 既存Project Schema 3 / SongProject v1 / IndexedDB / PPQ480 / 4/4を維持。
+- 再生時は一時Projectを作成し、現在の保存曲を上書きしない。候補セッションの保存や採用編集は対象外。
+- 既存1小節1コード前提の編集機能と混在させず、Import機能は試聴専用。
+
+【検証・制約】
+- PR #286のDemo Composer CI / Arrangement Lab CI / Pages Buildを確認。正式公開はmain統合後のPages Deployで確認する。
+- Android実機・Cubase Pro 12実機は未確認のためstable tagは付けない。
+- 詳細はdocs/AI_CHORD_IMPORT_MVP.md、公開前復元ブランチはrestore/main-before-ai-chord-import-20261111。
+
 ## 2026-10-17 — 実機1曲完走の準備(Work代理検証)
 
 Version: v0.17-dev(Demo Composer) / v0.15-dev(Arrangement Lab) / v0.19-dev(Home) — 変更なし
