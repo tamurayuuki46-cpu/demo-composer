@@ -1,0 +1,845 @@
+{
+  "kind": "chord-candidate-batch",
+  "schemaVersion": 1,
+  "songId": "S001",
+  "version": "v0.1",
+  "generatorVersion": "manual-proposal-v0.1",
+  "settings": {
+    "key": "C",
+    "scale": "major",
+    "bpm": 105,
+    "meter": "4/4",
+    "ppq": 480,
+    "bars": 8,
+    "chordsPerBar": 2,
+    "chordDurationBeats": 2,
+    "noteDurationBeats": 1.8,
+    "velocity": 80
+  },
+  "candidates": [
+    {
+      "candidateId": "C01",
+      "version": 1,
+      "description": "王道・爽やか",
+      "chords": [
+        {
+          "bar": 1,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 1,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 3,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 3,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 4,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 4,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 5,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 5,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 6,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 6,
+          "beat": 3,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 7,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 7,
+          "beat": 3,
+          "root": "F",
+          "quality": "m7"
+        },
+        {
+          "bar": 8,
+          "beat": 1,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 8,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj7"
+        }
+      ]
+    },
+    {
+      "candidateId": "C02",
+      "version": 1,
+      "description": "切なさから開放",
+      "chords": [
+        {
+          "bar": 1,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 1,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 2,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 3,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 3,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 4,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 4,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 5,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 5,
+          "beat": 3,
+          "root": "E",
+          "quality": "7"
+        },
+        {
+          "bar": 6,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 6,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 7,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 7,
+          "beat": 3,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 8,
+          "beat": 1,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 8,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj7"
+        }
+      ]
+    },
+    {
+      "candidateId": "C03",
+      "version": 1,
+      "description": "洗練・推進力",
+      "chords": [
+        {
+          "bar": 1,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 1,
+          "beat": 3,
+          "root": "A",
+          "quality": "7"
+        },
+        {
+          "bar": 2,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 3,
+          "beat": 1,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 3,
+          "beat": 3,
+          "root": "A",
+          "quality": "7"
+        },
+        {
+          "bar": 4,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 4,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 5,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 5,
+          "beat": 3,
+          "root": "E",
+          "quality": "7"
+        },
+        {
+          "bar": 6,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 6,
+          "beat": 3,
+          "root": "D",
+          "quality": "7"
+        },
+        {
+          "bar": 7,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 7,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 8,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj9"
+        },
+        {
+          "bar": 8,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj7"
+        }
+      ]
+    },
+    {
+      "candidateId": "C04",
+      "version": 1,
+      "description": "懐かしさ・ほろ苦さ",
+      "chords": [
+        {
+          "bar": 1,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 1,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 2,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 3,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 3,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 4,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 4,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 5,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 5,
+          "beat": 3,
+          "root": "Bb",
+          "quality": "maj7"
+        },
+        {
+          "bar": 6,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 6,
+          "beat": 3,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 7,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 7,
+          "beat": 3,
+          "root": "F",
+          "quality": "m7"
+        },
+        {
+          "bar": 8,
+          "beat": 1,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 8,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj7"
+        }
+      ]
+    },
+    {
+      "candidateId": "C05",
+      "version": 1,
+      "description": "軽快・都会的",
+      "chords": [
+        {
+          "bar": 1,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 1,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 2,
+          "beat": 1,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 3,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 3,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 3,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 4,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 4,
+          "beat": 3,
+          "root": "E",
+          "quality": "7"
+        },
+        {
+          "bar": 5,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 5,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 6,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 6,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 7,
+          "beat": 1,
+          "root": "D",
+          "quality": "m9"
+        },
+        {
+          "bar": 7,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 8,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj9"
+        },
+        {
+          "bar": 8,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj7"
+        }
+      ]
+    },
+    {
+      "candidateId": "C06",
+      "version": 1,
+      "description": "繊細・切ない",
+      "chords": [
+        {
+          "bar": 1,
+          "beat": 1,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 1,
+          "beat": 3,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 3,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 3,
+          "beat": 3,
+          "root": "B",
+          "quality": "m7b5"
+        },
+        {
+          "bar": 4,
+          "beat": 1,
+          "root": "E",
+          "quality": "7"
+        },
+        {
+          "bar": 4,
+          "beat": 3,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 5,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 5,
+          "beat": 3,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 6,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 6,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 7,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 7,
+          "beat": 3,
+          "root": "F",
+          "quality": "m7"
+        },
+        {
+          "bar": 8,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 8,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj9"
+        }
+      ]
+    },
+    {
+      "candidateId": "C07",
+      "version": 1,
+      "description": "滑らか・開放的",
+      "chords": [
+        {
+          "bar": 1,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 1,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 2,
+          "beat": 1,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 2,
+          "beat": 3,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 3,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 3,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 4,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 4,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj9"
+        },
+        {
+          "bar": 5,
+          "beat": 1,
+          "root": "B",
+          "quality": "m7b5"
+        },
+        {
+          "bar": 5,
+          "beat": 3,
+          "root": "E",
+          "quality": "7"
+        },
+        {
+          "bar": 6,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 6,
+          "beat": 3,
+          "root": "D",
+          "quality": "7"
+        },
+        {
+          "bar": 7,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 7,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 8,
+          "beat": 1,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 8,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj9"
+        }
+      ]
+    },
+    {
+      "candidateId": "C08",
+      "version": 1,
+      "description": "切なさと爽やかさ",
+      "chords": [
+        {
+          "bar": 1,
+          "beat": 1,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 1,
+          "beat": 3,
+          "root": "F",
+          "quality": "maj7"
+        },
+        {
+          "bar": 2,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj7"
+        },
+        {
+          "bar": 2,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 3,
+          "beat": 1,
+          "root": "E",
+          "quality": "m7"
+        },
+        {
+          "bar": 3,
+          "beat": 3,
+          "root": "A",
+          "quality": "7"
+        },
+        {
+          "bar": 4,
+          "beat": 1,
+          "root": "D",
+          "quality": "m7"
+        },
+        {
+          "bar": 4,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 5,
+          "beat": 1,
+          "root": "C",
+          "quality": "maj9"
+        },
+        {
+          "bar": 5,
+          "beat": 3,
+          "root": "B",
+          "quality": "m7b5"
+        },
+        {
+          "bar": 6,
+          "beat": 1,
+          "root": "E",
+          "quality": "7"
+        },
+        {
+          "bar": 6,
+          "beat": 3,
+          "root": "A",
+          "quality": "m7"
+        },
+        {
+          "bar": 7,
+          "beat": 1,
+          "root": "D",
+          "quality": "m9"
+        },
+        {
+          "bar": 7,
+          "beat": 3,
+          "root": "G",
+          "quality": "7"
+        },
+        {
+          "bar": 8,
+          "beat": 1,
+          "root": "F",
+          "quality": "m7"
+        },
+        {
+          "bar": 8,
+          "beat": 3,
+          "root": "C",
+          "quality": "maj9"
+        }
+      ]
+    }
+  ]
+}
