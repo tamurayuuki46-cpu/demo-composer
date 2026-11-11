@@ -29,6 +29,7 @@ import { songCardHtml } from "./hub/song-card.js";
 import { skeletonCheckHtml, skeletonCheckSummary } from "./hub/skeleton-check-ui.js";
 import { guideHtml, guideSummary, refreshGuideDom } from "./hub/guide-ui.js";
 import { midiImportConvert, midiImportHtml } from "./hub/midi-import-ui.js";
+import { MAX_AI_CHORD_IMPORT_BYTES, parseAiChordBatch, makeAiChordPreviewProject, aiChordImportHtml } from "./hub/ai-chord-import.js";
 import { MAX_MIDI_BYTES, parseMidi } from "./midi/midi-reader.js";
 import { suggestRoles } from "./midi/midi-import.js";
 import { loadGuideProgress, saveGuideProgress, toggleGuideStep } from "./hub/guide.js";
@@ -113,6 +114,8 @@ let melodyChordBar = 0;
 let songCardOpen = false;
 let skeletonOpen = false;
 let midiImport = null; // MIDI取り込みの確認中の状態（画面だけ。取り込むまでProjectは変えない）
+let aiChordBatch = null; // AIコード候補: セッション内だけ保持し、Projectには保存しない
+let aiChordSelectedId = null;
 let guideOpen = false;
 let guideDone = null; // 手引きの✓（この端末のlocalStorageだけ。初めて開くときに読む）
 function getGuideDone() {
@@ -180,6 +183,7 @@ function hubScreen() {
       </div>
 
       ${midiImport ? midiImportHtml(midiImport) : ""}
+      ${aiChordImportHtml(aiChordBatch, aiChordSelectedId)}
 
       <button id="toggle-skeleton" class="song-card-toggle" aria-expanded="${skeletonOpen}">✅ ${escapeHtml(skeletonCheckSummary(project))}${skeletonOpen ? " ▲" : " ▼"}</button>
       ${skeletonOpen ? skeletonCheckHtml(project) : ""}
@@ -568,6 +572,55 @@ function bindHubControls() {
   const saveButton = document.querySelector("#save-project");
   const exportToggle = document.querySelector("#toggle-export");
   const exportPanel = document.querySelector("#export-panel");
+
+  const aiChordFile = document.querySelector("#ai-chord-import-file");
+  document.querySelector("#ai-chord-import-open")?.addEventListener("click", () => aiChordFile?.click());
+  aiChordFile?.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      if (file.size > MAX_AI_CHORD_IMPORT_BYTES) throw new Error("候補JSONは128KBまでです。");
+      const batch = parseAiChordBatch(await file.text());
+      demoPlayer.stop();
+      aiChordBatch = batch;
+      aiChordSelectedId = batch.candidates[0].candidateId;
+      render("hub");
+      setHubMessage(batch.candidates.length + "案を読み込みました。「▶」で候補を試聴できます。元の曲は変更していません。");
+    } catch (error) {
+      setHubMessage(error instanceof Error ? error.message : "AI候補を読み込めませんでした。", true);
+    }
+  });
+  document.querySelectorAll("[data-ai-chord-play]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const id = button.dataset.aiChordPlay;
+      if (!aiChordBatch) return;
+      try {
+        const project = makeAiChordPreviewProject(aiChordBatch, id);
+        aiChordSelectedId = id;
+        render("hub");
+        await requestAuditionFor({
+          project, lengthTick: 8 * 4 * 480,
+          label: aiChordBatch.songId + " / " + id
+        });
+      } catch (error) {
+        demoPlayer.stop();
+        setHubMessage(error instanceof Error ? error.message : "試聴できませんでした。", true);
+      }
+    });
+  });
+  document.querySelector("#ai-chord-import-stop")?.addEventListener("click", () => {
+    stopDecisionAudition();
+    setHubMessage("AIコード候補の試聴を停止しました。");
+  });
+  document.querySelector("#ai-chord-import-clear")?.addEventListener("click", () => {
+    stopDecisionAudition();
+    aiChordBatch = null;
+    aiChordSelectedId = null;
+    render("hub");
+    setHubMessage("AIコード候補を閉じました。元の曲には変更ありません。");
+  });
+
   bindConsultPanel({ projectStore, setMessage: setHubMessage });
   bindSheetLink({ setMessage: setHubMessage, rerender: () => render("hub") });
   bindCubaseMemo({ projectStore, setMessage: setHubMessage, rerender: () => render("hub") });
